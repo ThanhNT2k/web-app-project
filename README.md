@@ -7,16 +7,16 @@ Kho lưu trữ này chứa toàn bộ mã nguồn, tài liệu và các bài t�
 
 ## 📝 Thông tin Đề tài & Thành viên
 
-*   **Tên đề tài/Đồ án:** 
+*   **Tên đề tài/Đồ án:** Xây dựng website đọc truyện online
 *   **Giảng viên hướng dẫn:** Nguyễn Đức Giang
 *   **Thông tin nhóm:**
 
 | STT | Họ và Tên | MSSV | Vai trò trong dự án | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
-| 1 | Nguyễn Thị Thùy | BAI252513 | Fullstack / Team Leader | Đóng góp 100% |
-| 2 | 	Trần Thị Kim Uyên | BAI250072 | Frontend Developer | Đóng góp 100% |
-| 3 | Nguyễn Hải Dương | BAI250020 | Backend Developer | Đóng góp 100% |
-| 4 | Nguyễn Tuấn Thành | BAI252417 | Backend Developer | Đóng góp 100% |
+| 1 | Nguyễn Thị Thùy | BAI252513 |  | |
+| 2 | 	Trần Thị Kim Uyên | BAI250072 | | |
+| 3 | Nguyễn Hải Dương | BAI250020 | | |
+| 4 | Nguyễn Tuấn Thành | BAI252417 | | |
 
 ---
 
