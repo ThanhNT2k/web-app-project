@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thể loại truyện - CMC Truyện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#f8fafc] text-slate-900">
+    <header class="bg-[#3c6ad3] text-white sticky top-0 z-50 shadow-lg shadow-blue-900/20">
+        <div class="main-container px-4 py-4 flex flex-wrap justify-between items-center gap-4">
+            <a href="../index.html" class="text-xl font-bold">CMC Truyện</a>
+            <nav class="flex flex-wrap gap-4 text-sm">
+                <a href="../index.html" class="hover:text-blue-100">Trang Chủ</a>
+                <a href="stories.html" class="hover:text-blue-100">Tìm Truyện</a>
+                <a href="genres.html" class="hover:text-blue-100">Thể Loại</a>
+                <a href="profile.html" class="hover:text-blue-100">Profile</a>
+                <a href="login.html" class="hover:text-blue-100">Đăng Nhập</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-container px-4 py-10">
+        <section class="mb-8">
+            <h1 class="text-3xl font-semibold">Chọn thể loại truyện</h1>
+            <p class="text-slate-600 mt-2">Lọc truyện theo thể loại để tìm đúng bộ mình thích.</p>
+        </section>
+
+        <section class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <article class="rounded-3xl bg-white p-6 card-shadow">
+                <h2 class="text-xl font-semibold mb-3">Hành động</h2>
+                <p class="text-slate-700 mb-4">Tập trung vào thế lực, võ thuật và những trận chiến quyết liệt.</p>
+                <a href="stories.html" class="inline-flex items-center gap-2 rounded-full bg-[#3c6ad3] px-4 py-2 text-white hover:bg-blue-600 transition">Xem truyện</a>
+            </article>
+            <article class="rounded-3xl bg-white p-6 card-shadow">
+                <h2 class="text-xl font-semibold mb-3">Lãng mạn</h2>
+                <p class="text-slate-700 mb-4">Những câu chuyện tình cảm ấm áp và cảm động.</p>
+                <a href="stories.html" class="inline-flex items-center gap-2 rounded-full bg-[#3c6ad3] px-4 py-2 text-white hover:bg-blue-600 transition">Xem truyện</a>
+            </article>
+            <article class="rounded-3xl bg-white p-6 card-shadow">
+                <h2 class="text-xl font-semibold mb-3">Kỳ ảo</h2>
+                <p class="text-slate-700 mb-4">Thế giới phép thuật, hành trình phiêu lưu và khám phá.</p>
+                <a href="stories.html" class="inline-flex items-center gap-2 rounded-full bg-[#3c6ad3] px-4 py-2 text-white hover:bg-blue-600 transition">Xem truyện</a>
+            </article>
+        </section>
+    </main>
+
+    <script src="../js/auth-modals.js"></script>
+</body>
+</html>

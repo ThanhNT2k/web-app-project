@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách truyện - CMC Truyện</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#eef2ff] text-slate-900">
+    <header class="bg-[#3c6ad3] text-white sticky top-0 z-50 shadow-lg shadow-blue-900/20">
+        <div class="main-container px-4 py-4 flex flex-wrap justify-between items-center gap-4">
+            <a href="../index.html" class="text-xl font-bold">CMC Truyện</a>
+            <nav class="flex flex-wrap gap-4 text-sm">
+                <a href="../index.html" class="hover:text-blue-100">Trang Chủ</a>
+                <a href="stories.html" class="hover:text-blue-100">Tìm Truyện</a>
+                <a href="genres.html" class="hover:text-blue-100">Thể Loại</a>
+                <a href="profile.html" class="hover:text-blue-100">Profile</a>
+                <a href="login.html" class="hover:text-blue-100">Đăng Nhập</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-container px-4 py-10">
+        <section class="mb-8">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-semibold">Tìm truyện theo điều kiện</h1>
+                    <p class="text-slate-600 mt-2">Lọc truyện theo trạng thái, thể loại và tác giả yêu thích.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <button class="rounded-full bg-white px-4 py-2 text-slate-700 border border-slate-300 hover:bg-slate-100">Full</button>
+                    <button class="rounded-full bg-white px-4 py-2 text-slate-700 border border-slate-300 hover:bg-slate-100">Ongoing</button>
+                    <button class="rounded-full bg-white px-4 py-2 text-slate-700 border border-slate-300 hover:bg-slate-100">Drop</button>
+                    <button class="rounded-full bg-white px-4 py-2 text-slate-700 border border-slate-300 hover:bg-slate-100">Tác giả</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid gap-6 lg:grid-cols-3">
+            <article class="rounded-3xl bg-white p-6 card-shadow">
+                <h2 class="text-xl font-semibold mb-2">Truyện Đại Chiến</h2>
+                <p class="text-sm text-slate-600 mb-4">Tác giả: Nguyễn Văn A · Full · Hành động</p>
+                <p class="text-slate-700 mb-4">Một bộ truyện kiếm hiệp đậm chất hành động và tình bạn.</p>
+                <a href="story.html" class="inline-flex items-center gap-2 rounded-full bg-[#3c6ad3] px-4 py-2 text-white text-sm hover:bg-blue-600">Xem chi tiết <i class="fa-solid fa-arrow-right"></i></a>
+            </article>
+            <article class="rounded-3xl bg-white p-6 card-shadow">
+                <h2 class="text-xl font-semibold mb-2">Hoa Anh Đào</h2>
+                <p class="text-sm text-slate-600 mb-4">Tác giả: Lê Thị B · Ongoing · Lãng mạn</p>
+                <p class="text-slate-700 mb-4">Câu chuyện ngôn tình nhẹ nhàng về cô gái và mối tình tuổi trẻ.</p>
+                <a href="story.html" class="inline-flex items-center gap-2 rounded-full bg-[#3c6ad3] px-4 py-2 text-white text-sm hover:bg-blue-600">Xem chi tiết <i class="fa-solid fa-arrow-right"></i></a>
+            </article>
+            <article class="rounded-3xl bg-white p-6 card-shadow">
+                <h2 class="text-xl font-semibold mb-2">Hành Trình Azure</h2>
+                <p class="text-sm text-slate-600 mb-4">Tác giả: Trần Minh C · Drop · Fantasy</p>
+                <p class="text-slate-700 mb-4">Một hành trình kỳ ảo trong thế giới phép thuật và thử thách.</p>
+                <a href="story.html" class="inline-flex items-center gap-2 rounded-full bg-[#3c6ad3] px-4 py-2 text-white text-sm hover:bg-blue-600">Xem chi tiết <i class="fa-solid fa-arrow-right"></i></a>
+            </article>
+        </section>
+    </main>
+
+    <script src="../js/auth-modals.js"></script>
+</body>
+</html>

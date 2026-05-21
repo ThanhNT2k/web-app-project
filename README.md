@@ -53,19 +53,17 @@ Hệ thống được xây dựng dựa trên các công nghệ hiện đại sa
 ## 📂 Cấu trúc Thư mục Dự án
 
 ```text
-📁 web-app-repo/
-├── 📁 client/                 # Mã nguồn Frontend (React/Vue/HTML...)
-│   ├── 📁 public/
-│   └── 📁 src/
-│       ├── 📁 components/     # Các thành phần giao diện dùng chung
-│       ├── 📁 pages/          # Các trang chính (Home, Login, Admin...)
-│       └── App.js
-├── 📁 server/                 # Mã nguồn Backend (NodeJS/Python...)
-│   ├── 📁 config/             # Cấu hình kết nối DB, biến môi trường
-│   ├── 📁 controllers/        # Điều hướng và xử lý logic
-│   ├── 📁 models/             # Định nghĩa Schema/Bảng Cơ sở dữ liệu
-│   ├── 📁 routes/             # Định nghĩa các endpoints API
-│   └── server.js              # File chạy chính của Backend
-├── .gitignore                 # Các file bỏ qua không push lên GitHub
-├── README.md                  # Tài liệu hướng dẫn này
-└── docker-compose.yml         # Cấu hình Docker (nếu có)
+web-app-project/
+├── server/                  # Backend (hiện dùng Node/Express, roadmap gốc là ASP.NET MVC)
+│   ├── Controllers/         # Controllers (page + api)
+│   ├── Models/              # Models / Entities (placeholder)
+│   ├── Data/                # DB configuration / context (scaffold here)
+│   ├── Repositories/        # Data access layer (placeholder)
+│   ├── Services/            # Business logic (AI, Identity)
+│   ├── Views/               # Server-side templates (EJS placeholders)
+│   ├── Routes/              # Express routers (pages, api)
+│   ├── wwwroot/             # Static frontend files (HTML/CSS/JS)
+│   └── server.js            # App entry point
+├── AGENTS.md                # Notes for AI agents and repo mapping
+└── README.md                # Project documentation (this file)
+```
