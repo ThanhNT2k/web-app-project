@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Truyện - CMC Truyện</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Header / Navbar -->
+    <header>
+        <div class="navbar">
+            <a href="/index.html" class="logo">📚 CMC Truyện</a>
+            <nav>
+                <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
+                <a href="/pages/story.html?genre=all" class="nav-link">Thể Loại</a>
+                <div id="auth-links">
+                    <a href="/pages/account.html" class="nav-link">Đăng nhập</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <h1 style="margin-bottom: 2rem;">📚 Tìm Truyện</h1>
+
+        <!-- Search & Filter -->
+        <section style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: var(--shadow);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="search-input">🔍 Tìm kiếm:</label>
+                    <input type="text" id="search-input" placeholder="Nhập tên truyện...">
+                </div>
+                <div class="form-group">
+                    <label for="genre-filter">📁 Thể loại:</label>
+                    <select id="genre-filter">
+                        <option value="">-- Tất cả --</option>
+                        <option value="hanh-dong">Hành động</option>
+                        <option value="lang-man">Lãng mạn</option>
+                        <option value="ky-ao">Kỳ ảo</option>
+                        <option value="tinh-cam">Tình cảm</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="status-filter">📊 Trạng thái:</label>
+                    <select id="status-filter">
+                        <option value="">-- Tất cả --</option>
+                        <option value="Full">Hoàn thành</option>
+                        <option value="Ongoing">Đang cập nhật</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sort-filter">⬇️ Sắp xếp:</label>
+                    <select id="sort-filter">
+                        <option value="newest">Mới nhất</option>
+                        <option value="popular">Phổ biến nhất</option>
+                        <option value="rating">Đánh giá cao</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="applyFilters()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Tìm kiếm</button>
+        </section>
+
+        <!-- Results -->
+        <section>
+            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="results-title">Kết quả tìm kiếm</h2>
+                <span id="results-count" style="color: var(--text-light);">0 truyện</span>
+            </div>
+            <div id="stories-results" class="stories-grid">
+                <div class="loading">Đang tải...</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 CMC Truyện. Tất cả quyền được bảo lưu.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        let allStories = [];
+
+        // Load dữ liệu khi trang tải
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                allStories = await getStories() || [];
+                displayStories(allStories);
+            } catch (error) {
+                showNotification('Lỗi tải dữ liệu', 'error');
+            }
+
+            // Attach filter listeners
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('genre-filter').addEventListener('change', applyFilters);
+            document.getElementById('status-filter').addEventListener('change', applyFilters);
+            document.getElementById('sort-filter').addEventListener('change', applyFilters);
+        });
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const genreFilter = document.getElementById('genre-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const sortFilter = document.getElementById('sort-filter').value;
+
+            let filtered = allStories.filter(story => {
+                const matchSearch = story.title.toLowerCase().includes(searchTerm) || 
+                                  story.author.toLowerCase().includes(searchTerm);
+                const matchGenre = !genreFilter || story.genre.includes(genreFilter);
+                const matchStatus = !statusFilter || story.status === statusFilter;
+                
+                return matchSearch && matchGenre && matchStatus;
+            });
+
+            // Sắp xếp
+            if (sortFilter === 'popular') {
+                filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
+            } else if (sortFilter === 'rating') {
+                filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            }
+            // 'newest' là mặc định
+
+            displayStories(filtered);
+            updateResultsCount(filtered.length);
+        }
+
+        function displayStories(stories) {
+            renderStories(stories, 'stories-results');
+        }
+
+        function updateResultsCount(count) {
+            document.getElementById('results-count').textContent = `${count} truyện`;
+        }
+    </script>
+</body>
+</html>
