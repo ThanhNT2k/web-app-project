@@ -55,8 +55,12 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 /**
  * Lấy danh sách tất cả các truyện
  */
+// async function getStories() {
+//   return apiCall('/story'); 
+// }
+
 async function getStories() {
-  return apiCall('/story'); 
+  return apiCall('/story/test-connection'); // 👈 Đổi tạm dòng này để test mạch kết nối
 }
 
 /**
