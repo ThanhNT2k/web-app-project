@@ -2,175 +2,50 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Kiểm Thử API Truyện Tranh</title>
+    <title>Test API - CMC Truyện</title>
+    <link rel="stylesheet" href="../css/style.css">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 30px;
-            background-color: #f4f6f9;
-            color: #333;
-        }
-        h1 { color: #2c3e50; border-bottom: 2px solid #34495e; padding-bottom: 10px; }
-        h3 { margin-top: 25px; color: #2980b9; }
-        .control-group {
-            background: white; padding: 15px; border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;
-        }
-        button {
-            background-color: #2ecc71; color: white; border: none;
-            padding: 10px 15px; font-size: 14px; border-radius: 4px;
-            cursor: pointer; font-weight: bold; margin-right: 10px;
-            transition: background 0.2s;
-        }
-        button:hover { background-color: #27ae60; }
-        button.btn-blue { background-color: #3498db; }
-        button.btn-blue:hover { background-color: #2980b9; }
-        input {
-            padding: 8px; width: 150px; margin-right: 10px;
-            border: 1px solid #ccc; border-radius: 4px;
-        }
-        pre {
-            background-color: #2c3e50; color: #ecf0f1; padding: 15px;
-            border-radius: 6px; max-height: 400px; overflow-y: auto;
-            font-family: 'Courier New', Courier, monospace; font-size: 13px;
-        }
-        .status-badge {
-            font-weight: bold; padding: 5px 10px; border-radius: 4px;
-            display: inline-block; margin-bottom: 10px;
-        }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
+        .test-box { background: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: var(--shadow); }
+        pre { background: #1f2937; color: #10b981; padding: 1rem; border-radius: 8px; overflow-x: auto; margin-top: 1rem; }
     </style>
 </head>
 <body>
-
-    <h1>Dashboard Kiểm Thử Kết Nối Hệ Thống API</h1>
-    <p>Kiểm tra trạng thái phản hồi của các API Genres, Comics, và Chapters từ Backend .NET</p>
-
-    <!-- KHỐI 1: TEST GENRES API -->
-    <div class="control-group">
-        <h3>1. Khối Thể Loại (Genres API)</h3>
-        <button onclick="testFetchGenres()">Chạy Test: Lấy Thể Loại</button>
-    </div>
-
-    <!-- KHỐI 2: TEST COMICS API -->
-    <div class="control-group">
-        <h3>2. Khối Truyện Tranh (Comics API)</h3>
-        <button class="btn-blue" onclick="testFetchComics()">Lấy Danh Sách Truyện (Mặc định)</button>
+    <main style="max-width: 800px; margin: 2rem auto;">
+        <h1>🧪 Debug API</h1>
         
-        <label for="genreIdInput">| Lọc theo Genre ID:</label>
-        <input type="number" id="genreIdInput" placeholder="Nhập ID (Ví dụ: 1)">
-        <button class="btn-blue" onclick="testFetchComicsByGenre()">Chạy Lọc Thể Loại</button>
-        
-        <label for="slugInput">| Xem chi tiết theo Slug:</label>
-        <input type="text" id="slugInput" placeholder="Ví dụ: solo-leveling">
-        <button class="btn-blue" onclick="testFetchComicBySlug()">Xem Chi Tiết Truyện</button>
-    </div>
+        <div class="test-box">
+            <h3>1. Kiểm tra trạng thái User</h3>
+            <button class="btn btn-primary" onclick="testAuth()">Xem User hiện tại</button>
+            <pre id="auth-output">Chưa kiểm tra...</pre>
+        </div>
 
-    <!-- KHỐI 3: TEST CHAPTERS API -->
-    <div class="control-group">
-        <h3>3. Khối Chương Truyện (Chapters API)</h3>
-        <label for="comicIdInput">Nhập Comic ID để lấy Chapters:</label>
-        <input type="number" id="comicIdInput" placeholder="Ví dụ: 1">
-        <button onclick="testFetchChapters()">Lấy Danh Sách Chương</button>
+        <div class="test-box">
+            <h3>2. Lấy lịch sử đọc (History)</h3>
+            <button class="btn btn-primary" onclick="testHistory()">Fetch History API</button>
+            <pre id="history-output">Chưa kiểm tra...</pre>
+        </div>
+    </main>
 
-        <label for="chapterIdInput">| Nhập Chapter ID để đọc ảnh:</label>
-        <input type="number" id="chapterIdInput" placeholder="Ví dụ: 10">
-        <button onclick="testFetchChapterImages()">Lấy Nội Dung Ảnh</button>
-    </div>
-
-    <!-- KHỐI HIỂN THỊ KẾT QUẢ -->
-    <h2>Kết Quả Phản Hồi Từ API:</h2>
-    <div id="statusContainer"></div>
-    <pre id="jsonResult">Bấm vào các nút phía trên để kiểm tra kết quả...</pre>
-
-    <!-- NHÚNG FILE API.JS CỦA BẠN ĐỂ ĐỒNG BỘ LOGIC -->
-    <script src="js/api.js"></script>
-
+    <script src="../js/auth.js"></script>
+    <script src="../js/api.js"></script>
     <script>
-        const jsonPre = document.getElementById('jsonResult');
-        const statusBox = document.getElementById('statusContainer');
-
-        function renderResult(success, data) {
-            if (success) {
-                statusBox.innerHTML = '<span class="status-badge success">✔ KẾT NỐI THÀNH CÔNG (200 OK)</span>';
-                jsonPre.innerText = JSON.stringify(data, null, 2);
-                jsonPre.style.color = "#2ecc71"; // Màu xanh lá khi thành công
-            } else {
-                statusBox.innerHTML = '<span class="status-badge error">❌ LỖI HỆ THỐNG / THẤT BẠI</span>';
-                jsonPre.innerText = JSON.stringify(data, null, 2);
-                jsonPre.style.color = "#e74c3c"; // Màu đỏ khi lỗi
-            }
+        // Kiểm tra Auth từ localStorage
+        function testAuth() {
+            const user = getCurrentUser();
+            document.getElementById('auth-output').textContent = JSON.stringify(user, null, 2);
         }
 
-        // 1. Test Genres
-        async function testFetchGenres() {
+        // Kiểm tra gọi API thật
+        async function testHistory() {
+            const output = document.getElementById('history-output');
+            output.textContent = "Đang tải...";
+            
             try {
-                const data = await getGenres();
-                renderResult(true, data);
+                // Giả sử bạn có hàm getReadingHistory trong api.js
+                const data = await getReadingHistory();
+                output.textContent = JSON.stringify(data, null, 2);
             } catch (err) {
-                renderResult(false, { error_message: err.message });
-            }
-        }
-
-        // 2. Test Comics Chung
-        async function testFetchComics() {
-            try {
-                const data = await getComics(1, 12, null, 'created_at');
-                renderResult(true, data);
-            } catch (err) {
-                renderResult(false, { error_message: err.message });
-            }
-        }
-
-        // 3. Test Lọc Truyện theo Thể Loại thông qua bảng trung gian
-        async function testFetchComicsByGenre() {
-            const genreId = document.getElementById('genreIdInput').value;
-            if(!genreId) { alert('Vui lòng nhập ID thể loại trước!'); return; }
-            try {
-                // Tận dụng hàm getComics sẵn có, nối chuỗi tham số phụ genreId
-                let url = `/comics?page=1&limit=12&sortBy=created_at&genreId=${genreId}`;
-                const data = await apiCall(url);
-                renderResult(true, data);
-            } catch (err) {
-                renderResult(false, { error_message: err.message });
-            }
-        }
-
-        // 4. Test Lấy chi tiết truyện theo Slug
-        async function testFetchComicBySlug() {
-            const slug = document.getElementById('slugInput').value;
-            if(!slug) { alert('Vui lòng nhập slug truyện trước!'); return; }
-            try {
-                const data = await getComicBySlug(slug);
-                renderResult(true, data);
-            } catch (err) {
-                renderResult(false, { error_message: err.message });
-            }
-        }
-
-        // 5. Test Lấy danh sách chương truyện
-        async function testFetchChapters() {
-            const comicId = document.getElementById('comicIdInput').value;
-            if(!comicId) { alert('Vui lòng nhập Comic ID trước!'); return; }
-            try {
-                const data = await getChaptersByComic(comicId);
-                renderResult(true, data);
-            } catch (err) {
-                renderResult(false, { error_message: err.message });
-            }
-        }
-
-        // 6. Test Lấy nội dung ảnh của chương để đọc
-        async function testFetchChapterImages() {
-            const chapterId = document.getElementById('chapterIdInput').value;
-            if(!chapterId) { alert('Vui lòng nhập Chapter ID trước!'); return; }
-            try {
-                const data = await getChapterImages(chapterId);
-                renderResult(true, data);
-            } catch (err) {
-                renderResult(false, { error_message: err.message });
+                output.textContent = "Lỗi: " + err.message;
             }
         }
     </script>

@@ -83,3 +83,10 @@ main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
     position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #9ca3af;
 }
 .close-modal:hover { color: var(--danger-color); }
+.history-item {
+    transition: transform 0.2s;
+}
+.history-item:hover {
+    transform: translateX(5px);
+    border-left: 4px solid var(--primary-color);
+}

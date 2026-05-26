@@ -178,3 +178,23 @@ async function createComment(comicId, content, parentId = null) {
 async function adminDeleteUser(userId) {
   return apiCall(`/users/admin/manage-user/${userId}`, 'DELETE');
 }
+// Thêm vào file api.js
+async function getReadingHistory() {
+    try {
+        // Giả sử API trả về mảng các đối tượng truyện đã đọc
+        // Bạn cần thay đường dẫn '/api/history' bằng endpoint thật của bạn
+        const response = await fetch('/api/history', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) throw new Error('Không thể tải lịch sử đọc');
+        return await response.json();
+    } catch (error) {
+        console.error('Lỗi lấy lịch sử:', error);
+        return []; // Trả về mảng rỗng nếu lỗi để không làm hỏng giao diện
+    }
+}

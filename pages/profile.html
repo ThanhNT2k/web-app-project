@@ -3,339 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - CMC Truyện</title>
+    <title>Hồ Sơ Cá Nhân - CMC Truyện</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .profile-header {
             background: var(--primary-color);
             color: white;
             padding: 2rem;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 2rem;
             display: flex;
             gap: 2rem;
             align-items: center;
-        }
-
-        .profile-avatar {
-            width: 100px;
-            height: 100px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-        }
-
-        .profile-info h1 {
-            margin-bottom: 0.5rem;
-        }
-
-        .profile-role {
-            background: rgba(255,255,255,0.2);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            display: inline-block;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .tab-btn {
-            padding: 1rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-light);
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .history-item {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             box-shadow: var(--shadow);
         }
-
-        .history-story {
-            flex: 1;
+        .profile-avatar {
+            width: 100px; height: 100px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem;
         }
-
-        .history-story h3 {
-            margin-bottom: 0.5rem;
+        .history-item {
+            background: white; padding: 1.25rem; border-radius: 10px;
+            margin-bottom: 1rem; display: flex; justify-content: space-between;
+            align-items: center; box-shadow: var(--shadow);
+            transition: transform 0.2s;
         }
-
-        .history-story p {
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-            .profile-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .profile-avatar {
-                width: 80px;
-                height: 80px;
-                font-size: 2rem;
-            }
-
-            .history-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .tabs {
-                flex-wrap: wrap;
-            }
-        }
+        .history-item:hover { transform: translateX(5px); border-left: 4px solid var(--primary-color); }
     </style>
 </head>
 <body>
     <header>
         <div class="navbar">
             <a href="/index.html" class="logo">📚 CMC Truyện</a>
-            <nav>
-                <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
-                <a href="/pages/profile.html" class="nav-link">Profile</a>
-                <div id="auth-links">
-                    <a href="javascript:void(0)" class="nav-link" onclick="toggleAuthModal(true)">Đăng nhập</a>
-                </div>
-            </nav>
+            <nav id="auth-links"></nav>
         </div>
     </header>
 
     <main>
-        <div class="profile-header" id="profile-header">
+        <section class="profile-header">
             <div class="profile-avatar">👤</div>
             <div class="profile-info">
-                <h1 id="user-name">Thành viên</h1>
-                <p id="user-email">Đã xác thực qua Supabase</p>
-                <p class="profile-role" id="user-role">User</p>
+                <h1 id="user-name-display">Đang tải...</h1>
+                <p id="user-role-display" class="profile-role">...</p>
+                <button onclick="deleteAccount()" class="btn" style="background: var(--danger-color); color: white; margin-top: 1rem; padding: 0.5rem 1rem;">Xóa tài khoản</button>
             </div>
-        </div>
-
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="history">📖 Lịch Sử Đọc</button>
-            <button class="tab-btn" data-tab="favorites">❤️ Truyện Yêu Thích</button>
-            <button class="tab-btn" data-tab="settings">⚙️ Cài Đặt</button>
-        </div>
-
-        <div id="history" class="tab-content active">
-            <h2 style="margin-bottom: 2rem;">📖 Lịch Sử Đọc</h2>
-            <div id="history-list">
-                <div class="loading">Đang tải...</div>
-            </div>
-        </div>
-
-        <div id="favorites" class="tab-content">
-            <h2 style="margin-bottom: 2rem;">❤️ Truyện Yêu Thích</h2>
-            <div id="favorites-list" class="stories-grid">
-                <div class="loading">Đang tải...</div>
-            </div>
-        </div>
-
-        <div id="settings" class="tab-content">
-            <h2 style="margin-bottom: 2rem;">⚙️ Cài Đặt</h2>
-            <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 600px;">
-                <form id="settings-form">
-                    <div class="form-group">
-                        <label for="setting-fullname">Tên đầy đủ:</label>
-                        <input type="text" id="setting-fullname" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="setting-bio">Tiểu sử:</label>
-                        <textarea id="setting-bio" rows="4" placeholder="Viết gì đó về bạn..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="setting-theme">Chủ đề:</label>
-                        <select id="setting-theme">
-                            <option value="light">Sáng</option>
-                            <option value="dark">Tối</option>
-                            <option value="auto">Tự động</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Lưu Cài Đặt</button>
-                </form>
-
-                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
-                    <h3 style="color: var(--danger-color); margin-bottom: 1rem;">⚠️ Nguy Hiểm</h3>
-                    <button onclick="deleteAccount()" class="btn btn-danger">Xóa Tài Khoản</button>
-                </div>
-            </div>
+        </section>
+        
+        <h2>Lịch sử đọc gần đây</h2>
+        <div id="history-container" style="margin-top: 1rem;">
+            <p>Đang tải dữ liệu lịch sử...</p>
         </div>
     </main>
 
-    <footer>
-        <p>&copy; 2026 CMC Truyện. Tất cả quyền được bảo lưu.</p>
-    </footer>
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
+            <h2>Đăng Nhập</h2>
+            <form id="login-form">
+                <div class="form-group"><input type="email" placeholder="Email" required></div>
+                <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
+                <button type="submit" class="btn btn-primary">ĐĂNG NHẬP</button>
+            </form>
+        </div>
+    </div>
 
-    <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
     <script>
-        // Chặn truy cập nếu chưa đăng nhập
-        requireLogin();
-
         document.addEventListener('DOMContentLoaded', async () => {
-            // 1. Nạp thông tin cơ bản từ Token / LocalStorage thông qua auth.js
-            try {
-                const user = getCurrentUser();
-                document.getElementById('user-name').textContent = user.userName || 'Thành viên';
-                document.getElementById('user-email').textContent = user.userId || 'Đã xác thực qua Supabase';
-                document.getElementById('user-role').textContent = user.role || 'User';
-            } catch (error) {
-                console.error('Error loading basic user info:', error);
-            }
-
-            // 2. Gọi API nạp dữ liệu lịch sử đọc thực tế từ Backend
-            try {
-                const history = await getReadingHistory().catch(() => []);
-                displayHistory(history);
-            } catch (error) {
-                console.error('Error loading history:', error);
-            }
-
-            // 3. Gọi API nạp danh sách truyện yêu thích từ Backend
-            try {
-                const favorites = await getFavoriteComics().catch(() => []);
-                if (typeof renderComics === 'function') {
-                    renderComics(favorites, 'favorites-list');
-                } else if (typeof renderStories === 'function') {
-                    renderStories(favorites, 'favorites-list');
-                }
-            } catch (error) {
-                console.error('Error loading favorites:', error);
-            }
-
-            // 4. Nạp dữ liệu cấu hình sâu (Profile Table từ Database công khai)
-            try {
-                const profile = await getProfile().catch(() => null);
-                if (profile) {
-                    document.getElementById('setting-fullname').value = profile.username || '';
-                    document.getElementById('setting-bio').value = profile.bio || '';
-                }
-            } catch (error) {
-                console.error('Error loading deep profile:', error);
-            }
-
-            // 5. Gắn sự kiện chuyển đổi Tab giao diện mượt mà
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const tabName = btn.getAttribute('data-tab');
-                    switchTab(tabName, e.currentTarget);
-                });
-            });
-
-            // 6. Xử lý sự kiện gửi biểu mẫu cập nhật profile
-            document.getElementById('settings-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                try {
-                    const updatedName = document.getElementById('setting-fullname').value;
-                    const updatedBio = document.getElementById('setting-bio').value;
-
-                    await updateProfile({
-                        username: updatedName,
-                        bio: updatedBio
-                    });
-                    
-                    if (typeof showNotification === 'function') {
-                        showNotification('Cập nhật thông tin tài khoản thành công!', 'success');
-                    } else {
-                        alert('Cập nhật thông tin tài khoản thành công!');
-                    }
-                    
-                    // Đồng bộ hóa lại tên hiển thị mới vào LocalStorage
-                    localStorage.setItem('userName', updatedName);
-                    setTimeout(() => location.reload(), 800);
-                } catch (error) {
-                    if (typeof showNotification === 'function') {
-                        showNotification('Lỗi cập nhật cài đặt', 'error');
-                    } else {
-                        alert('Lỗi cập nhật cài đặt');
-                    }
-                }
-            });
-        });
-
-        // Hàm xử lý chuyển đổi Tab (Đã fix lỗi targetBtn)
-        function switchTab(tabName, targetBtn) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
-            const targetTab = document.getElementById(tabName);
-            if (targetTab) targetTab.classList.add('active');
-            if (targetBtn) targetBtn.classList.add('active');
-        }
-
-        // Hàm render cấu trúc Lịch sử đọc dựa theo DTO mới (comicSlug, comicTitle, chapterNumber)
-        function displayHistory(history) {
-            const container = document.getElementById('history-list');
-            if (!history || history.length === 0) {
-                container.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 1rem;">Chưa có lịch sử đọc</p>';
+            // 1. Kiểm tra đăng nhập
+            if (!isLoggedIn()) {
+                window.location.href = '/pages/account.html';
                 return;
             }
 
-            container.innerHTML = history.map(item => `
-                <div class="history-item">
-                    <div class="history-story">
-                        <h3><a href="/pages/comic.html?slug=${item.comicSlug}" style="color: var(--primary-color); text-decoration: none;">${item.comicTitle || 'Truyện không tên'}</a></h3>
-                        <p>Chương hiện tại: ${item.chapterNumber || 0} - Đọc ngày: ${formatDate(item.updatedAt || item.readDate)}</p>
-                    </div>
-                    <a href="/pages/comic.html?slug=${item.comicSlug}" class="btn btn-primary">Tiếp tục đọc</a>
-                </div>
-            `).join('');
-        }
+            // 2. Hiển thị thông tin
+            const user = getCurrentUser();
+            document.getElementById('user-name-display').textContent = user.userName || 'Người dùng';
+            document.getElementById('user-role-display').textContent = user.role || 'Member';
+            
+            // Cập nhật lại Navbar
+            if (typeof syncNavbarUI === 'function') syncNavbarUI();
 
-        // Định dạng thời gian DD/MM/YYYY
+            // 3. Load lịch sử đọc
+            const container = document.getElementById('history-container');
+            try {
+                // Giả sử bạn có hàm getReadingHistory() trong api.js hoặc định nghĩa ở đây
+                const history = await getReadingHistory(); 
+                if (!history || history.length === 0) {
+                    container.innerHTML = '<p>Bạn chưa đọc bộ truyện nào gần đây.</p>';
+                } else {
+                    container.innerHTML = history.map(item => `
+                        <div class="history-item">
+                            <div class="history-story">
+                                <h3><a href="/pages/comic.html?slug=${item.comicSlug}" style="color: var(--primary-color); text-decoration: none;">${item.comicTitle}</a></h3>
+                                <p style="font-size: 0.85rem; color: #666;">Chương ${item.chapterNumber} • ${formatDate(item.updatedAt)}</p>
+                            </div>
+                            <a href="/pages/comic.html?slug=${item.comicSlug}" class="btn btn-primary" style="width: auto;">Đọc tiếp</a>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                container.innerHTML = '<p style="color: var(--danger-color);">Không thể tải lịch sử đọc.</p>';
+            }
+        });
+
         function formatDate(dateString) {
             if (!dateString) return '';
             const d = new Date(dateString);
-            if (isNaN(d.getTime())) return dateString;
             return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-        }
-
-        // Hàm xử lý xóa tài khoản
-        function deleteAccount() {
-            if (confirm('Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác!')) {
-                if (typeof logout === 'function') {
-                    logout();
-                } else {
-                    localStorage.clear();
-                    window.location.href = '/index.html';
-                }
-            }
         }
     </script>
 </body>

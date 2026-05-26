@@ -80,3 +80,26 @@ function requireAdmin() {
     window.location.href = '/index.html';
   }
 }
+/**
+ * Tự động cập nhật nút Đăng nhập thành Thông tin người dùng
+ */
+function syncNavbarUI() {
+    const authLinks = document.getElementById('auth-links');
+    if (!authLinks) return;
+
+    const user = getCurrentUser(); // Hàm này đã có sẵn trong file auth.js của bạn
+
+    if (user && user.token) {
+        authLinks.innerHTML = `
+            <a href="/pages/profile.html" class="nav-link">👤 ${user.userName || 'Tài khoản'}</a>
+            <a href="javascript:void(0)" onclick="logout()" class="nav-link">Đăng xuất</a>
+        `;
+    } else {
+        authLinks.innerHTML = `
+            <a href="javascript:void(0)" class="nav-link" onclick="toggleAuthModal(true)">Đăng nhập</a>
+        `;
+    }
+}
+
+// Chạy hàm này khi trang vừa load
+document.addEventListener('DOMContentLoaded', syncNavbarUI);
