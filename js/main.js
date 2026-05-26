@@ -52,3 +52,28 @@ function renderChapters(chapters, containerId) {
     </div>
   `).join('');
 }
+// Đóng/Mở Modal
+function toggleAuthModal(show) {
+    document.getElementById('auth-modal').style.display = show ? 'flex' : 'none';
+}
+
+// Chuyển đổi giữa Login và Register
+function switchForm(type) {
+    const container = document.getElementById('auth-form-container');
+    const title = document.getElementById('modal-title');
+    if (type === 'register') {
+        title.innerText = "Đăng Ký";
+        container.innerHTML = `
+            <form>
+                <div class="form-group"><input type="text" placeholder="Tên đăng nhập" required></div>
+                <div class="form-group"><input type="email" placeholder="Email" required></div>
+                <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
+                <button class="btn btn-primary">Đăng Ký</button>
+            </form>
+            <p style="margin-top: 1rem; text-align: center;">Đã có tài khoản? <a href="#" onclick="switchForm('login')">Đăng nhập</a></p>
+        `;
+    } else {
+        // Tái tạo lại form login y hệt lúc đầu
+        location.reload(); 
+    }
+}
