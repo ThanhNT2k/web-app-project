@@ -3,37 +3,44 @@
  */
 
 const AUTH_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5221/api/auth'
-    : 'https://webappbackend-jrto.onrender.com/api/auth'; // ⚠️ HÃY THAY ĐƯỜNG DẪN RENDER THẬT CỦA BẠN VÀO ĐÂY
+    ? 'http://localhost:5221/api/Auth'                  // 🟢 Đổi thành Auth viết hoa
+    : 'https://webappbackend-jrto.onrender.com/api/Auth'; // 🟢 Đổi thành Auth viết hoa
 
 /**
  * Đăng nhập người dùng
- * @param {string} email - Email người dùng
- * @param {string} password - Mật khẩu
  */
-async function login(email, password) {
+async function login(username, password) { // Đổi từ email thành username theo AuthController
   try {
-    const response = await fetch(`${AUTH_API_URL}/login`, {
+    const response = await fetch(`${AUTH_URL}/login`, { // Sửa từ AUTH_API_URL thành AUTH_URL cho đúng khai báo biến trên đầu
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email, password })
+      // 🟢 Đổi key sang Chữ Hoa Đầu (Username, Password) để khớp C# LoginRequest Class
+      body: JSON.stringify({ Username: username, Password: password }) 
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Đăng nhập thất bại');
+      // Vì trả về Unauthorized thuần túy từ Controller, ta bẫy lỗi hợp lý
+      throw new Error('Tài khoản hoặc mật khẩu không chính xác!');
     }
 
     const data = await response.json();
     
-    // Lưu token vào localStorage
+    // 🟢 Lưu dữ liệu dựa theo LoginResponse trả về từ C# (Token, Username)
     if (data.token) {
       localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('userName', data.userName);
-      localStorage.setItem('role', data.role);
+      localStorage.setItem('userName', data.username); // .NET trả về chữ thường trong thuộc tính JSON mặc định
+      
+      // Tách và giải mã vai trò (Role) từ JWT token để gán quyền (Tùy chọn nâng cao)
+      try {
+        const payload = JSON.parse(atob(data.token.split('.')[1]));
+        const roleKey = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+        localStorage.setItem('role', payload[roleKey] || payload['role'] || 'User');
+      } catch (e) {
+        localStorage.setItem('role', 'User');
+      }
+      
       return data;
     }
   } catch (error) {
@@ -43,14 +50,11 @@ async function login(email, password) {
 }
 
 /**
- * Đăng ký người dùng mới
- * @param {string} email - Email
- * @param {string} password - Mật khẩu
- * @param {string} fullName - Tên đầy đủ
+ * Đăng ký người dùng mới (Giữ nguyên cấu trúc đợi bạn làm Controller)
  */
 async function register(email, password, fullName) {
   try {
-    const response = await fetch(`${AUTH_API_URL}/register`, {
+    const response = await fetch(`${AUTH_URL}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -70,102 +74,30 @@ async function register(email, password, fullName) {
   }
 }
 
-/**
- * Đăng xuất (xóa token từ localStorage)
- */
 function logout() {
   localStorage.removeItem('token');
-  localStorage.removeItem('userId');
   localStorage.removeItem('userName');
   localStorage.removeItem('role');
   window.location.href = '/index.html';
 }
 
-/**
- * Kiểm tra xem người dùng đã đăng nhập chưa
- */
 function isLoggedIn() {
   return !!localStorage.getItem('token');
 }
 
-/**
- * Lấy thông tin người dùng hiện tại
- */
 function getCurrentUser() {
   return {
-    userId: localStorage.getItem('userId'),
     userName: localStorage.getItem('userName'),
     role: localStorage.getItem('role'),
     token: localStorage.getItem('token')
   };
 }
 
-/**
- * Kiểm tra xem người dùng có phải Admin không
- */
 function isAdmin() {
   return localStorage.getItem('role') === 'Admin';
 }
 
-/**
- * Kiểm tra xem người dùng có phải Uploader không
- */
 function isUploader() {
   const role = localStorage.getItem('role');
   return role === 'Uploader' || role === 'Admin';
-}
-
-/**
- * Refresh token (nếu backend hỗ trợ)
- */
-async function refreshToken() {
-  try {
-    const response = await fetch(`${AUTH_API_URL}/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      localStorage.setItem('token', data.token);
-      return data.token;
-    } else {
-      logout();
-    }
-  } catch (error) {
-    console.error('Token refresh error:', error);
-    logout();
-  }
-}
-
-/**
- * Redirect tới trang đăng nhập nếu chưa đăng nhập
- */
-function requireLogin() {
-  if (!isLoggedIn()) {
-    window.location.href = '/pages/account.html';
-  }
-}
-
-/**
- * Redirect tới trang đăng nhập nếu không phải Admin
- */
-function requireAdmin() {
-  if (!isAdmin()) {
-    alert('Bạn không có quyền truy cập trang này');
-    window.location.href = '/index.html';
-  }
-}
-
-/**
- * Redirect tới trang đăng nhập nếu không phải Uploader/Admin
- */
-function requireUploader() {
-  if (!isUploader()) {
-    alert('Bạn không có quyền truy cập trang này');
-    window.location.href = '/index.html';
-  }
 }

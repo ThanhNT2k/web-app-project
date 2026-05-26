@@ -18,7 +18,6 @@ function updateHeader() {
   if (!authLinksContainer) return;
 
   if (isLoggedIn()) {
-    // Người dùng đã đăng nhập - hiển thị tên và nút đăng xuất
     authLinksContainer.innerHTML = `
       <div class="user-menu">
         <span class="user-name">${user.userName || 'Người dùng'}</span>
@@ -28,7 +27,6 @@ function updateHeader() {
       </div>
     `;
   } else {
-    // Chưa đăng nhập - hiển thị nút đăng nhập/đăng ký
     authLinksContainer.innerHTML = `
       <a href="/pages/account.html" class="nav-link">Đăng nhập</a>
       <a href="/pages/account.html" class="nav-link">Đăng ký</a>
@@ -40,7 +38,6 @@ function updateHeader() {
  * Gắn event listeners chung cho toàn bộ trang
  */
 function attachGlobalEventListeners() {
-  // Handle navigation
   const navLinks = document.querySelectorAll('a[data-page]');
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
@@ -49,27 +46,12 @@ function attachGlobalEventListeners() {
       navigateToPage(page);
     });
   });
-
-  // Handle logout button
-  const logoutBtn = document.querySelector('.logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', logout);
-  }
 }
 
-/**
- * Điều hướng tới trang khác
- * @param {string} page - Tên trang
- */
 function navigateToPage(page) {
   window.location.href = `/pages/${page}.html`;
 }
 
-/**
- * Hiển thị thông báo (Toast/Alert)
- * @param {string} message - Nội dung thông báo
- * @param {string} type - Loại thông báo: 'success', 'error', 'info'
- */
 function showNotification(message, type = 'info') {
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
@@ -83,44 +65,15 @@ function showNotification(message, type = 'info') {
     color: white;
     border-radius: 5px;
     z-index: 9999;
-    animation: slideIn 0.3s ease;
   `;
 
   document.body.appendChild(notification);
-
-  setTimeout(() => {
-    notification.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
+  setTimeout(() => notification.remove(), 3000);
 }
 
 /**
- * Format ngày tháng năm
- * @param {string} dateString - Chuỗi ngày tháng
- */
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('vi-VN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
-
-/**
- * Cắt ngắn văn bản
- * @param {string} text - Văn bản cần cắt
- * @param {number} length - Độ dài tối đa
- */
-function truncateText(text, length = 100) {
-  if (text.length <= length) return text;
-  return text.substring(0, length) + '...';
-}
-
-/**
- * Render danh sách truyện thành HTML
- * @param {array} stories - Danh sách truyện
- * @param {string} containerId - ID container để render
+ * 🟢 CẬP NHẬT RENDER TRUYỆN THEO ĐÚNG THUỘC TÍNH CỦA StoryDTO C#
+ * Các trường dữ liệu nhận về từ .NET sẽ tự chuyển thành chữ thường: id, name, slug, coverUrl, status
  */
 function renderStories(stories, containerId) {
   const container = document.getElementById(containerId);
@@ -129,89 +82,44 @@ function renderStories(stories, containerId) {
   container.innerHTML = stories.map(story => `
     <article class="story-card">
       <div class="story-image">
-        <img src="${story.coverImage || '/assets/placeholder.jpg'}" alt="${story.title}">
+        <img src="${story.coverUrl || '/assets/placeholder.jpg'}" alt="${story.name}">
       </div>
       <div class="story-info">
         <h3 class="story-title">
-          <a href="/pages/story.html?id=${story.id}">${story.title}</a>
+          <a href="/pages/story.html?slug=${story.slug}">${story.name}</a>
         </h3>
-        <p class="story-author">Tác giả: ${story.author}</p>
-        <p class="story-genre">Thể loại: ${story.genre}</p>
         <div class="story-meta">
-          <span class="story-status">${story.status}</span>
-          <span class="story-rating">⭐ ${story.rating || 'N/A'}</span>
+          <span class="story-status">${story.status || 'Đang tiến hành'}</span>
         </div>
-        <p class="story-description">${truncateText(story.description, 150)}</p>
-        <a href="/pages/story.html?id=${story.id}" class="btn btn-primary">Đọc truyện</a>
+        <a href="/pages/story.html?slug=${story.slug}" class="btn btn-primary">Đọc truyện</a>
       </div>
     </article>
   `).join('');
 }
 
 /**
- * Render danh sách thể loại thành HTML
- * @param {array} genres - Danh sách thể loại
- * @param {string} containerId - ID container để render
+ * 🟢 CẬP NHẬT RENDER CHƯƠNG THEO ĐÚNG THUỘC TÍNH CỦA ChapterDTO C#
+ * Các trường dữ liệu: id, name, chapterNo
  */
-function renderGenres(genres, containerId) {
+function renderChapters(chapters, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  container.innerHTML = genres.map(genre => `
-    <div class="genre-card">
-      <h3>${genre.name}</h3>
-      <p>${genre.description}</p>
-      <a href="/pages/story.html?genre=${genre.id}" class="btn btn-secondary">
-        Xem truyện (${genre.storyCount || 0})
+  container.innerHTML = chapters.map(chapter => `
+    <div class="chapter-item">
+      <a href="/pages/chapter.html?id=${chapter.id}">
+        Chương ${chapter.chapterNo}: ${chapter.name}
       </a>
     </div>
   `).join('');
 }
 
-/**
- * Lấy query parameter từ URL
- * @param {string} param - Tên parameter
- */
+function truncateText(text, length = 100) {
+  if (!text || text.length <= length) return text || '';
+  return text.substring(0, length) + '...';
+}
+
 function getQueryParam(param) {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(param);
-}
-
-/**
- * Xây dựng URL với query parameters
- * @param {string} baseUrl - URL cơ bản
- * @param {object} params - Object chứa các parameters
- */
-function buildUrl(baseUrl, params) {
-  const url = new URL(baseUrl, window.location.origin);
-  Object.keys(params).forEach(key => {
-    if (params[key] !== null && params[key] !== undefined) {
-      url.searchParams.append(key, params[key]);
-    }
-  });
-  return url.toString();
-}
-
-/**
- * Gọi API với xử lý loading
- * @param {function} apiFunc - Hàm API cần gọi
- * @param {string} loadingContainerId - ID container hiển thị loading
- */
-async function callApiWithLoading(apiFunc, loadingContainerId = null) {
-  try {
-    if (loadingContainerId) {
-      const container = document.getElementById(loadingContainerId);
-      if (container) container.innerHTML = '<div class="loading">Đang tải...</div>';
-    }
-    
-    const result = await apiFunc();
-    return result;
-  } catch (error) {
-    showNotification(`Lỗi: ${error.message}`, 'error');
-    if (loadingContainerId) {
-      const container = document.getElementById(loadingContainerId);
-      if (container) container.innerHTML = `<div class="error">Lỗi tải dữ liệu: ${error.message}</div>`;
-    }
-    throw error;
-  }
 }
