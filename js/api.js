@@ -1,12 +1,13 @@
 /**
- * api.js - Gọi API từ Backend ASP.NET Core (.NET 9/10)
+ * api.js - Gọi API từ Backend ASP.NET Core (.NET 10)
  * Tự động cấu hình linh hoạt giữa Local và Render Online
+ * ĐÃ ĐỒNG BỘ CHUẨN ĐÉT VỚI DATABASE TRUYỆN TRANH (COMIC/CHAPTER/GENRE)
  */
 
 // 🟢 TỰ ĐỘNG CẤU HÌNH ĐỊA CHỈ BASE URL THÔNG MINH
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5221'                               // Khi bạn chạy test ở máy cục bộ
-    : 'https://webappbackend-jrto.onrender.com';             // Địa chỉ Render của bạn
+    ? 'http://localhost:5221'                               // Khi bạn chạy test ở máy cục bộ (Cập nhật lại port nếu cần, ví dụ: 5000 hoặc 5221)
+    : 'https://webappbe-fzz7.onrender.com';                 // Địa chỉ Render của bạn
 
 const API_BASE_URL = `${BACKEND_URL}/api`;
 
@@ -19,20 +20,23 @@ async function apiCall(endpoint, method = 'GET', data = null) {
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      // Đồng bộ Key lấy token dạng 'token' giống như auth.js đang lưu trữ
+      // Gửi Token bảo mật phục vụ Middleware Auth phân quyền
       'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
     }
   };
 
-  if (data && (method === 'POST' || method === 'PUT')) {
+  if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
     options.body = JSON.stringify(data);
   }
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
     
+    // Thêm xử lý bóc tách lỗi chi tiết từ AuthorizeRolesAttribute (401, 403)
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || `API error: ${response.status}`;
+      throw new Error(errorMessage);
     }
     
     return await response.json();
@@ -44,57 +48,63 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
 /**
  * =========================================================================
- * 📚 PHẦN QUẢN LÝ TRUYỆN (ĐỒNG BỘ CHỮ HOA/THƯỜNG VÀ ROUTE THEO .NET CONTROLLER)
+ * 📚 PHẦN QUẢN LÝ TRUYỆN TRANH (ĐỒNG BỘ 100% VỚI COMICSCONTROLLER)
  * =========================================================================
  */
 
 /**
- * Lấy danh sách tất cả các truyện
+ * Lấy danh sách tất cả các truyện (Có hỗ trợ phân trang và bộ lọc trạng thái)
+ * @param {number} page - Trang hiện tại
+ * @param {number} limit - Số lượng truyện mỗi trang
+ * @param {string} status - Bộ lọc trạng thái ('Ongoing', 'Completed')
+ * @param {string} sortBy - Sắp xếp theo ('created_at', 'total_views')
  */
-async function getStories() {
-  return apiCall('/Story'); // 🟢 Đã uncomment để chạy thật và đổi chữ S hoa
+async function getComics(page = 1, limit = 12, status = null, sortBy = 'created_at') {
+  let url = `/comics?page=${page}&limit=${limit}&sortBy=${sortBy}`;
+  if (status) url += `&status=${status}`;
+  return apiCall(url);
 }
 
 /**
- * Lấy chi tiết một bộ truyện
+ * Lấy chi tiết một bộ truyện dựa vào Slug (Xử lý lỗi 404 cũ)
+ * @param {string} slug - Đường dẫn định danh truyện (Ví dụ: 'solo-leveling')
  */
-async function getStory(storyId) {
-  return apiCall(`/Story/${storyId}`); // 🟢 Đổi sang chữ S hoa
+async function getComicBySlug(slug) {
+  return apiCall(`/comics/${slug}`);
 }
 
 /**
- * API ĐẶC BIỆT DÀNH CHO ADMIN: Tạo truyện mới (Yêu cầu quyền Admin)
+ * API PHÂN QUYỀN: Tạo truyện mới (Yêu cầu quyền Uploader hoặc Admin)
  */
-async function createStory(storyData) {
-  return apiCall('/Story/create', 'POST', storyData); // 🟢 Đổi sang chữ S hoa
+async function createComic(comicData) {
+  return apiCall('/comics/create', 'POST', comicData);
 }
 
 /**
- * Lấy danh sách các thể loại truyện
+ * Lấy danh sách các thể loại truyện công khai
  */
 async function getGenres() {
-  return apiCall('/Genre'); // 🟢 Đổi sang chữ G hoa để khớp GenreController (nếu có)
+  return apiCall('/genres'); 
 }
 
 /**
- * Lấy danh sách chương của một truyện
- * (Đồng bộ theo ChapterController: api/Chapter)
+ * Lấy danh sách chương của một bộ truyện dựa trên Comic ID
+ * @param {number} comicId - ID của bộ truyện
  */
-async function getChapters(storyId) {
-  // Vì ChapterController đang để [HttpGet] lấy toàn bộ, nếu sau này bạn sửa 
-  // [HttpGet("story/{storyId}")] thì giữ nguyên, còn hiện tại gọi tạm qua /Chapter
-  return apiCall(`/Chapter?storyId=${storyId}`); 
+async function getChaptersByComic(comicId) {
+  return apiCall(`/chapters/comic/${comicId}`); 
 }
 
 /**
- * Lấy nội dung chi tiết một chương truyện
+ * Lấy nội dung chi tiết ảnh của một chương truyện
+ * @param {number} chapterId - ID của chương cần đọc
  */
-async function getChapterContent(storyId, chapterId) {
-  return apiCall(`/Chapter/${chapterId}`);
+async function getChapterImages(chapterId) {
+  return apiCall(`/chapters/${chapterId}`);
 }
 
 /**
- * Gọi gợi ý truyện từ AI (Đồng bộ AIController.cs)
+ * Gọi gợi ý truyện từ AI thông minh (Đồng bộ AIController)
  */
 async function getAIRecommendations(preference) {
   return apiCall(`/AI/recommend?preference=${encodeURIComponent(preference)}`);
@@ -102,34 +112,69 @@ async function getAIRecommendations(preference) {
 
 /**
  * =========================================================================
- * 👤 PHẦN QUẢN LÝ TÀI KHOẢN & LỊCH SỬ (Đồng bộ chữ cái viết hoa)
+ * 👤 PHẦN QUẢN LÝ USER, TƯƠNG TÁC & PHÂN QUYỀN (Đồng bộ UsersController)
  * =========================================================================
  */
 
+/**
+ * Lấy thông tin Profile cá nhân của người dùng đang đăng nhập
+ */
 async function getProfile() {
-  return apiCall('/Profile');
+  return apiCall('/users/profile');
 }
 
+/**
+ * Cập nhật thông tin cá nhân (Username, Avatar)
+ */
 async function updateProfile(profileData) {
-  return apiCall('/Profile', 'PUT', profileData);
+  return apiCall('/users/profile', 'PUT', profileData);
 }
 
+/**
+ * Lấy lịch sử đọc truyện của User
+ */
 async function getReadingHistory() {  
-  return apiCall('/Profile/history');
+  return apiCall('/users/history');
 }
 
-async function getFavoriteStories() {
-  return apiCall('/Profile/favorites');
+/**
+ * Lưu lịch sử tiến độ khi User đọc đến một chương truyện cụ thể
+ */
+async function updateReadProgress(comicId, chapterId) {
+  return apiCall('/users/history', 'POST', { comicId, chapterId });
 }
 
-async function addFavoriteStory(storyId) {
-  return apiCall('/Profile/favorites', 'POST', { storyId });
+/**
+ * Lấy danh sách truyện đang theo dõi/yêu thích của User
+ */
+async function getFavoriteComics() {
+  return apiCall('/users/favorites');
 }
 
-async function removeFavoriteStory(storyId) {
-  return apiCall(`/Profile/favorites/${storyId}`, 'DELETE');
+/**
+ * Đổi trạng thái Theo dõi / Bỏ theo dõi một bộ truyện (Toggle Follow)
+ */
+async function toggleFollowComic(comicId) {
+  return apiCall('/users/follow', 'POST', { comicId });
 }
 
-async function updateReadProgress(storyId, chapterId) {
-  return apiCall('/Profile/history', 'POST', { storyId, chapterId });
+/**
+ * Đăng bình luận mới vào một bộ truyện
+ */
+async function createComment(comicId, content, parentId = null) {
+  return apiCall('/users/comment', 'POST', { comicId, content, parentId });
+}
+
+/**
+ * =========================================================================
+ * 🛡️ BIẾN ĐỘC QUYỀN CHO ADMIN (ADMIN MANAGEMENT)
+ * =========================================================================
+ */
+
+/**
+ * API HỦY DIỆT: Xóa toàn bộ thông tin một User ra khỏi hệ thống (Chỉ đích danh Admin)
+ * @param {string} userId - UUID của User cần xóa
+ */
+async function adminDeleteUser(userId) {
+  return apiCall(`/users/admin/manage-user/${userId}`, 'DELETE');
 }

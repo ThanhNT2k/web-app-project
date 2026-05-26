@@ -2,14 +2,13 @@
  * main.js - Xử lý logic DOM chung cho tất cả các trang
  */
 
-// Cập nhật header (navbar) khi trang load
 document.addEventListener('DOMContentLoaded', () => {
   updateHeader();
   attachGlobalEventListeners();
 });
 
 /**
- * Cập nhật header dựa trên trạng thái đăng nhập
+ * Cập nhật thanh điều hướng (Navbar) thông minh dựa trên Roles
  */
 function updateHeader() {
   const user = getCurrentUser();
@@ -19,24 +18,21 @@ function updateHeader() {
 
   if (isLoggedIn()) {
     authLinksContainer.innerHTML = `
-      <div class="user-menu">
-        <span class="user-name">${user.userName || 'Người dùng'}</span>
-        <a href="/pages/profile.html" class="nav-link">Profile</a>
-        ${isAdmin() ? '<a href="/pages/admin.html" class="nav-link">Admin</a>' : ''}
-        <button onclick="logout()" class="nav-link logout-btn">Đăng xuất</button>
+      <div class="user-menu" style="display: flex; align-items: center; gap: 15px;">
+        <span class="user-name" style="font-weight: bold; color: var(--primary-color);">👤 ${user.userName || 'Người dùng'}</span>
+        <span class="user-role" style="font-size: 0.75rem; padding: 2px 6px; background: #3b82f6; color: white; border-radius: 4px;">${user.role}</span>
+        <a href="/pages/profile.html" class="nav-link">Hồ sơ</a>
+        ${isAdmin() ? '<a href="/pages/admin.html" class="nav-link" style="color: #ef4444; font-weight: bold;">Admin</a>' : ''}
+        <button onclick="logout()" class="nav-link logout-btn" style="background: none; border: none; cursor: pointer; color: #6b7280;">Đăng xuất</button>
       </div>
     `;
   } else {
     authLinksContainer.innerHTML = `
-      <a href="/pages/account.html" class="nav-link">Đăng nhập</a>
-      <a href="/pages/account.html" class="nav-link">Đăng ký</a>
+      <a href="/pages/account.html" class="nav-link">Đăng nhập / Đăng ký</a>
     `;
   }
 }
 
-/**
- * Gắn event listeners chung cho toàn bộ trang
- */
 function attachGlobalEventListeners() {
   const navLinks = document.querySelectorAll('a[data-page]');
   navLinks.forEach(link => {
@@ -65,6 +61,7 @@ function showNotification(message, type = 'info') {
     color: white;
     border-radius: 5px;
     z-index: 9999;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   `;
 
   document.body.appendChild(notification);
@@ -72,43 +69,52 @@ function showNotification(message, type = 'info') {
 }
 
 /**
- * 🟢 CẬP NHẬT RENDER TRUYỆN THEO ĐÚNG THUỘC TÍNH CỦA StoryDTO C#
- * Các trường dữ liệu nhận về từ .NET sẽ tự chuyển thành chữ thường: id, name, slug, coverUrl, status
+ * 🟢 RENDER DANH SÁCH TRUYỆN TRANH (Đồng bộ chuẩn hóa trường dữ liệu Database)
  */
-function renderStories(stories, containerId) {
+function renderComics(comics, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  container.innerHTML = stories.map(story => `
+  if (!comics || comics.length === 0) {
+    container.innerHTML = '<p class="no-data" style="text-align:center; color:#6b7280;">Không tìm thấy truyện nào.</p>';
+    return;
+  }
+
+  container.innerHTML = comics.map(comic => `
     <article class="story-card">
       <div class="story-image">
-        <img src="${story.coverUrl || '/assets/placeholder.jpg'}" alt="${story.name}">
+        <img src="${comic.coverUrl || '/assets/placeholder.jpg'}" alt="${comic.title}">
       </div>
       <div class="story-info">
         <h3 class="story-title">
-          <a href="/pages/story.html?slug=${story.slug}">${story.name}</a>
+          <a href="/pages/comic.html?slug=${comic.slug}">${comic.title}</a>
         </h3>
         <div class="story-meta">
-          <span class="story-status">${story.status || 'Đang tiến hành'}</span>
+          <span class="story-status">${comic.status || 'Ongoing'}</span>
+          <span class="story-views" style="font-size: 0.85rem; color: #6b7280;">👁️ ${comic.totalViews || 0}</span>
         </div>
-        <a href="/pages/story.html?slug=${story.slug}" class="btn btn-primary">Đọc truyện</a>
+        <a href="/pages/comic.html?slug=${comic.slug}" class="btn btn-primary" style="display:inline-block; margin-top:10px;">Đọc truyện</a>
       </div>
     </article>
   `).join('');
 }
 
 /**
- * 🟢 CẬP NHẬT RENDER CHƯƠNG THEO ĐÚNG THUỘC TÍNH CỦA ChapterDTO C#
- * Các trường dữ liệu: id, name, chapterNo
+ * 🟢 RENDER DANH SÁCH CHƯƠNG TRUYỆN
  */
 function renderChapters(chapters, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
+  if (!chapters || chapters.length === 0) {
+    container.innerHTML = '<p class="no-data" style="text-align:center; color:#6b7280;">Truyện hiện chưa có chương nào.</p>';
+    return;
+  }
+
   container.innerHTML = chapters.map(chapter => `
-    <div class="chapter-item">
-      <a href="/pages/chapter.html?id=${chapter.id}">
-        Chương ${chapter.chapterNo}: ${chapter.name}
+    <div class="chapter-item" style="padding: 12px; border-bottom: 1px solid var(--border-color);">
+      <a href="/pages/chapter.html?id=${chapter.id}" style="text-decoration: none; color: var(--text-color); font-weight: 500;">
+        Chương ${chapter.chapterNumber}: ${chapter.chapterName || 'Nội dung chương'}
       </a>
     </div>
   `).join('');
@@ -122,4 +128,11 @@ function truncateText(text, length = 100) {
 function getQueryParam(param) {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(param);
+}
+
+// Hàm format ngày tháng cơ bản
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }

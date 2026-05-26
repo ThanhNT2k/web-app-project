@@ -1,84 +1,45 @@
 /**
- * auth.js - Xử lý Authentication (Đăng nhập, Token JWT, Phân quyền)
+ * auth.js - Xử lý Authentication & Phân quyền ứng dụng
+ * ĐÃ ĐỒNG BỘ CHUẨN XÁC VỚI CƠ CHẾ AUTH SUPABASE + BACKEND ROLES
  */
-
-const AUTH_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5221/api/Auth'                  // 🟢 Đổi thành Auth viết hoa
-    : 'https://webappbackend-jrto.onrender.com/api/Auth'; // 🟢 Đổi thành Auth viết hoa
 
 /**
- * Đăng nhập người dùng
+ * Hàm hỗ trợ xử lý sau khi đăng nhập thành công từ giao diện Supabase Auth
+ * @param {string} token - Access Token do Supabase cấp sau khi login thành công
  */
-async function login(username, password) { // Đổi từ email thành username theo AuthController
+async function handleLoginSuccess(token) {
   try {
-    const response = await fetch(`${AUTH_URL}/login`, { // Sửa từ AUTH_API_URL thành AUTH_URL cho đúng khai báo biến trên đầu
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      // 🟢 Đổi key sang Chữ Hoa Đầu (Username, Password) để khớp C# LoginRequest Class
-      body: JSON.stringify({ Username: username, Password: password }) 
-    });
+    // 1. Lưu token trước để hàm apiCall trong api.js có quyền truy cập headers
+    localStorage.setItem('token', token);
 
-    if (!response.ok) {
-      // Vì trả về Unauthorized thuần túy từ Controller, ta bẫy lỗi hợp lý
-      throw new Error('Tài khoản hoặc mật khẩu không chính xác!');
-    }
+    // 2. Gọi API profile từ backend để lấy thông tin thực tế trong bảng public.profiles
+    const profile = await getProfile(); 
 
-    const data = await response.json();
-    
-    // 🟢 Lưu dữ liệu dựa theo LoginResponse trả về từ C# (Token, Username)
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userName', data.username); // .NET trả về chữ thường trong thuộc tính JSON mặc định
-      
-      // Tách và giải mã vai trò (Role) từ JWT token để gán quyền (Tùy chọn nâng cao)
-      try {
-        const payload = JSON.parse(atob(data.token.split('.')[1]));
-        const roleKey = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
-        localStorage.setItem('role', payload[roleKey] || payload['role'] || 'User');
-      } catch (e) {
-        localStorage.setItem('role', 'User');
-      }
-      
-      return data;
-    }
+    // 3. Lưu trữ thông tin sạch vào LocalStorage để render giao diện nhanh
+    localStorage.setItem('userName', profile.username || 'Thành viên');
+    localStorage.setItem('role', profile.role || 'User'); // 'User', 'Uploader', 'Admin'
+    localStorage.setItem('avatarUrl', profile.avatarUrl || '');
+    localStorage.setItem('userId', profile.id || '');
+
+    return profile;
   } catch (error) {
-    console.error('Login error:', error);
-    throw error;
-  }
-}
-
-/**
- * Đăng ký người dùng mới (Giữ nguyên cấu trúc đợi bạn làm Controller)
- */
-async function register(email, password, fullName) {
-  try {
-    const response = await fetch(`${AUTH_URL}/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password, fullName })
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Đăng ký thất bại');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Register error:', error);
-    throw error;
+    console.error('Lỗi thiết lập thông tin phân quyền:', error);
+    clearAuthStorage();
+    throw new Error('Không thể đồng bộ quyền hạn từ hệ thống!');
   }
 }
 
 function logout() {
+  clearAuthStorage();
+  window.location.href = '/index.html';
+}
+
+function clearAuthStorage() {
   localStorage.removeItem('token');
   localStorage.removeItem('userName');
   localStorage.removeItem('role');
-  window.location.href = '/index.html';
+  localStorage.removeItem('avatarUrl');
+  localStorage.removeItem('userId');
 }
 
 function isLoggedIn() {
@@ -89,7 +50,9 @@ function getCurrentUser() {
   return {
     userName: localStorage.getItem('userName'),
     role: localStorage.getItem('role'),
-    token: localStorage.getItem('token')
+    token: localStorage.getItem('token'),
+    avatarUrl: localStorage.getItem('avatarUrl'),
+    userId: localStorage.getItem('userId')
   };
 }
 
@@ -100,4 +63,20 @@ function isAdmin() {
 function isUploader() {
   const role = localStorage.getItem('role');
   return role === 'Uploader' || role === 'Admin';
+}
+
+// Chặn truy cập nếu chưa đăng nhập
+function requireLogin() {
+  if (!isLoggedIn()) {
+    alert('Vui lòng đăng nhập để tiếp tục!');
+    window.location.href = '/pages/account.html';
+  }
+}
+
+// Chặn truy cập nếu không phải Admin
+function requireAdmin() {
+  if (!isAdmin()) {
+    alert('Thẩm quyền tối cao bị từ chối! Bạn không có quyền truy cập khu vực này.');
+    window.location.href = '/index.html';
+  }
 }

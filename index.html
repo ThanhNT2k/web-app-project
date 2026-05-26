@@ -69,29 +69,59 @@
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
     <script>
-        // Load dữ liệu trang chủ
+        // Load dữ liệu trang chủ từ ASP.NET Core Backend
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Load truyện nổi bật
-                const stories = await getStories();
-                if (stories && stories.length > 0) {
-                    const featuredStories = stories.slice(0, 6); // Lấy 6 truyện đầu
-                    renderStories(featuredStories, 'featured-stories');
+                // 1. Gọi hàm getComics công khai mới từ api.js (Trang 1, tối đa 12 bộ)
+                const response = await getComics(1, 12, null, 'created_at');
+                
+                // Hỗ trợ bóc tách linh hoạt nếu Backend trả về dạng Object phân trang { items: [...] } hoặc mảng thuần
+                const comics = response.items || response || [];
+
+                if (comics && comics.length > 0) {
+                    // Lấy 6 truyện đầu tiên để hiển thị vào mục "Truyện Nổi Bật"
+                    const featuredComics = comics.slice(0, 6); 
+                    renderComics(featuredComics, 'featured-stories'); // Sử dụng hàm renderComics trong main.js mới
                     
-                    // Duplicate cho phần "Cập nhật gần đây"
-                    renderStories(stories.slice(0, 3), 'recent-stories');
+                    // Lấy 3 truyện để render vào phần "Cập nhật gần đây"
+                    const recentComics = comics.slice(0, 3);
+                    renderComics(recentComics, 'recent-stories');
+                } else {
+                    document.getElementById('featured-stories').innerHTML = '<p class="no-data">Hiện tại chưa có truyện nào được đăng tải.</p>';
+                    document.getElementById('recent-stories').innerHTML = '<p class="no-data">Không có cập nhật mới.</p>';
                 }
 
-                // Load thể loại
-                const genres = await getGenres();
+                // 2. Load danh sách các thể loại truyện công khai từ DB
+                const genres = await getGenres().catch(() => []);
                 if (genres && genres.length > 0) {
-                    renderGenres(genres.slice(0, 6), 'genres-list');
+                    // Sử dụng hàm render genres đồng bộ (hoặc tự render nhanh nếu main.js chưa bọc)
+                    renderHomeGenres(genres.slice(0, 6), 'genres-list');
+                } else {
+                    document.getElementById('genres-list').innerHTML = '<p class="no-data">Đang cập nhật thể loại...</p>';
                 }
             } catch (error) {
-                console.error('Lỗi tải dữ liệu:', error);
-                showNotification('Không thể tải dữ liệu', 'error');
+                console.error('Lỗi tải dữ liệu trang chủ:', error);
+                showNotification('Không thể kết nối tới máy chủ Backend!', 'error');
+                
+                document.getElementById('featured-stories').innerHTML = '<p class="no-data" style="color:#ef4444;">Lỗi tải dữ liệu. Vui lòng thử lại sau.</p>';
+                document.getElementById('recent-stories').innerHTML = '<p class="no-data" style="color:#ef4444;">Lỗi tải dữ liệu.</p>';
             }
         });
+
+        /**
+         * Hàm bổ trợ kết xuất danh sách Thể loại ngay tại trang chủ
+         * Đọc đúng thuộc tính camelCase của .NET (id, name, slug)
+         */
+        function renderHomeGenres(genres, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.innerHTML = genres.map(genre => `
+                <a href="/pages/story.html?genre=${genre.slug || genre.id}" class="genre-item" style="text-decoration: none; display: inline-block;">
+                    ${genre.name}
+                </a>
+            `).join('');
+        }
     </script>
 </body>
 </html>
