@@ -2,7 +2,9 @@
  * auth.js - Xử lý Authentication (Đăng nhập, Token JWT, Phân quyền)
  */
 
-const AUTH_API_URL = 'http://localhost:3000/auth';
+const AUTH_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5221/api/auth'
+    : 'https://webappbackend-jrto.onrender.com/api/auth'; // ⚠️ HÃY THAY ĐƯỜNG DẪN RENDER THẬT CỦA BẠN VÀO ĐÂY
 
 /**
  * Đăng nhập người dùng
