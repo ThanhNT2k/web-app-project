@@ -1,47 +1,89 @@
-<script>
-    let allComics = [];
+<script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script> <script>
+        let allComics = [];
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            // Gọi hàm getComics công khai mới từ api.js (Lấy tối đa 50 bản ghi làm mẫu để filter)
-            const response = await getComics(1, 50) || {};
-            allComics = response.items || response || []; 
-            displayComics(allComics);
-        } catch (error) {
-            showNotification('Lỗi tải dữ liệu truyện tranh', 'error');
-        }
+        // Load dữ liệu khi trang tải
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Tải danh sách Thể loại thực tế từ DB để đổ vào ô Select filter
+            try {
+                const genres = await getGenres() || [];
+                const genreFilterSelect = document.getElementById('genre-filter');
+                if (genreFilterSelect && genres.length > 0) {
+                    // Giữ lại option đầu tiên ("Tất cả") và append thêm dữ liệu động từ API
+                    genreFilterSelect.innerHTML = '<option value="">-- Tất cả --</option>' + 
+                        genres.map(g => `<option value="${g.slug || g.id}">${g.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Không thể tải danh sách thể loại:', error);
+            }
 
-        document.getElementById('search-input').addEventListener('input', applyFilters);
-        document.getElementById('genre-filter').addEventListener('change', applyFilters);
-        document.getElementById('status-filter').addEventListener('change', applyFilters);
-        document.getElementById('sort-filter').addEventListener('change', applyFilters);
-    });
+            // 2. Tải danh sách truyện tranh công khai (Tối đa 50 bản ghi mẫu để filter)
+            try {
+                const response = await getComics(1, 50) || {};
+                allComics = response.items || response || []; 
+                displayComics(allComics);
+                updateResultsCount(allComics.length);
+            } catch (error) {
+                // Do main.js được tải trước, showNotification chắc chắn đã được định nghĩa tại đây
+                if (typeof showNotification === 'function') {
+                    showNotification('Lỗi tải dữ liệu truyện tranh', 'error');
+                } else {
+                    alert('Lỗi tải dữ liệu truyện tranh');
+                }
+            }
 
-    function applyFilters() {
-        const searchTerm = document.getElementById('search-input').value.toLowerCase();
-        const statusFilter = document.getElementById('status-filter').value;
-        const sortFilter = document.getElementById('sort-filter').value;
-
-        let filtered = allComics.filter(comic => {
-            const matchSearch = comic.title.toLowerCase().includes(searchTerm) || 
-                              (comic.author && comic.author.toLowerCase().includes(searchTerm));
-            const matchStatus = !statusFilter || comic.status === statusFilter;
-            return matchSearch && matchStatus;
+            // Gắn các trình lắng nghe sự kiện thay đổi bộ lọc
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('genre-filter').addEventListener('change', applyFilters);
+            document.getElementById('status-filter').addEventListener('change', applyFilters);
+            document.getElementById('sort-filter').addEventListener('change', applyFilters);
         });
 
-        if (sortFilter === 'popular') {
-            filtered.sort((a, b) => (b.totalViews || 0) - (a.totalViews || 0));
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const genreFilter = document.getElementById('genre-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const sortFilter = document.getElementById('sort-filter').value;
+
+            let filtered = allComics.filter(comic => {
+                // Khớp dữ liệu theo Tên truyện hoặc Tác giả (hỗ trợ camelCase từ database mới)
+                const title = comic.title || comic.name || '';
+                const author = comic.author || '';
+                const matchSearch = title.toLowerCase().includes(searchTerm) || 
+                                    author.toLowerCase().includes(searchTerm);
+                
+                // Khớp dữ liệu trạng thái
+                const matchStatus = !statusFilter || comic.status === statusFilter;
+                
+                // Khớp dữ liệu thể loại (Kiểm tra qua mảng genres hoặc chuỗi genreSlug/genreId của truyện)
+                const matchGenre = !genreFilter || 
+                                   (comic.genreSlug && comic.genreSlug === genreFilter) ||
+                                   (comic.genreId && comic.genreId.toString() === genreFilter) ||
+                                   (comic.genres && comic.genres.some(g => (g.slug === genreFilter || g.id.toString() === genreFilter)));
+                
+                return matchSearch && matchStatus && matchGenre;
+            });
+
+            // Sắp xếp dữ liệu theo yêu cầu
+            if (sortFilter === 'popular') {
+                filtered.sort((a, b) => (b.totalViews || b.views || 0) - (a.totalViews || a.views || 0));
+            } else if (sortFilter === 'rating') {
+                filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            } else if (sortFilter === 'newest') {
+                filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+            }
+
+            displayComics(filtered);
+            updateResultsCount(filtered.length);
         }
-        
-        displayComics(filtered);
-        updateResultsCount(filtered.length);
-    }
 
-    function displayComics(comics) {
-        renderComics(comics, 'stories-results'); // Sử dụng hàm renderComics chuẩn mới trong main.js
-    }
+        function displayComics(comics) {
+            renderComics(comics, 'stories-results'); // Sử dụng hàm kết xuất chuẩn hóa trong main.js
+        }
 
-    function updateResultsCount(count) {
-        document.getElementById('results-count').textContent = `${count} truyện`;
-    }
-</script>
+        function updateResultsCount(count) {
+            const el = document.getElementById('results-count');
+            if (el) el.textContent = `${count} truyện`;
+        }
+    </script>

@@ -1,79 +1,95 @@
-<script>
-    requireLogin();
+<script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        requireLogin();
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            const user = getCurrentUser();
-            document.getElementById('user-name').textContent = user.userName || 'Thành viên';
-            document.getElementById('user-email').textContent = user.userId || 'Đã xác thực qua Supabase';
-            document.getElementById('user-role').textContent = user.role || 'User';
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const user = getCurrentUser();
+                document.getElementById('user-name').textContent = user.userName || 'Thành viên';
+                document.getElementById('user-email').textContent = user.userId || 'Đã xác thực qua Supabase';
+                document.getElementById('user-role').textContent = user.role || 'User';
 
-            // Nạp lịch sử đọc thực tế từ backend
-            const history = await getReadingHistory().catch(() => []);
-            displayHistory(history);
+                // Nạp lịch sử đọc thực tế từ backend
+                const history = await getReadingHistory().catch(() => []);
+                displayHistory(history);
 
-            // Nạp danh sách yêu thích thực tế
-            const favorites = await getFavoriteComics().catch(() => []);
-            renderComics(favorites, 'favorites-list');
+                // Nạp danh sách yêu thích thực tế
+                const favorites = await getFavoriteComics().catch(() => []);
+                renderComics(favorites, 'favorites-list');
 
-            // Nạp thông tin cài đặt sâu
-            const profile = await getProfile().catch(() => null);
-            if (profile) {
-                document.getElementById('setting-fullname').value = profile.username || '';
-                document.getElementById('setting-bio').value = profile.bio || '';
+                // Nạp thông tin cấu hình tài khoản sâu từ DB public.profiles
+                const profile = await getProfile().catch(() => null);
+                if (profile) {
+                    document.getElementById('setting-fullname').value = profile.username || '';
+                    document.getElementById('setting-bio').value = profile.bio || '';
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
             }
-        } catch (error) {
-            console.error('Error loading profile:', error);
-        }
 
-        // Tab switching logic
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tabName = btn.getAttribute('data-tab');
-                switchTab(tabName, e.target);
+            // Xử lý chuyển đổi giữa các Tab giao diện
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tabName = btn.getAttribute('data-tab');
+                    switchTab(tabName, e.target);
+                });
+            });
+
+            // Gửi biểu mẫu cập nhật thông tin cá nhân
+            document.getElementById('settings-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    await updateProfile({
+                        username: document.getElementById('setting-fullname').value,
+                        bio: document.getElementById('setting-bio').value
+                    });
+                    
+                    if (typeof showNotification === 'function') {
+                        showNotification('Cập nhật thông tin tài khoản thành công!', 'success');
+                    }
+                    
+                    localStorage.setItem('userName', document.getElementById('setting-fullname').value);
+                    setTimeout(() => location.reload(), 800);
+                } catch (error) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Lỗi cập nhật cài đặt', 'error');
+                    }
+                }
             });
         });
 
-        // Form submit
-        document.getElementById('settings-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await updateProfile({
-                    username: document.getElementById('setting-fullname').value,
-                    bio: document.getElementById('setting-bio').value
-                });
-                showNotification('Cập nhật thông tin tài khoản thành công!', 'success');
-                localStorage.setItem('userName', document.getElementById('setting-fullname').value);
-                setTimeout(() => location.reload(), 800);
-            } catch (error) {
-                showNotification('Lỗi cập nhật cài đặt', 'error');
-            }
-        });
-    });
+        function switchTab(tabName, targetBtn) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-    function switchTab(tabName, targetBtn) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
-        document.getElementById(tabName).classList.add('active');
-        targetBtn.classList.add('active');
-    }
-
-    function displayHistory(history) {
-        const container = document.getElementById('history-list');
-        if (!history || history.length === 0) {
-            container.innerHTML = '<p class="text-center" style="color: var(--text-light);">Chưa có lịch sử đọc</p>';
-            return;
+            document.getElementById(tabName).classList.add('active');
+            targetBtn.classList.add('active');
         }
 
-        container.innerHTML = history.map(item => `
-            <div class="history-item">
-                <div class="history-story">
-                    <h3><a href="/pages/comic.html?slug=${item.comicSlug}" style="color: var(--primary-color); text-decoration: none;">${item.comicTitle}</a></h3>
-                    <p>Chương hiện tại: ${item.chapterNumber} - Đọc ngày: ${formatDate(item.updatedAt)}</p>
+        function displayHistory(history) {
+            const container = document.getElementById('history-list');
+            if (!history || history.length === 0) {
+                container.innerHTML = '<p class="text-center" style="color: var(--text-light);">Chưa có lịch sử đọc</p>';
+                return;
+            }
+
+            container.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="history-story">
+                        <h3><a href="/pages/comic.html?slug=${item.comicSlug}" style="color: var(--primary-color); text-decoration: none;">${item.comicTitle}</a></h3>
+                        <p>Chương hiện tại: ${item.chapterNumber} - Đọc ngày: ${formatDate(item.updatedAt)}</p>
+                    </div>
+                    <a href="/pages/comic.html?slug=${item.comicSlug}" class="btn btn-primary">Tiếp tục đọc</a>
                 </div>
-                <a href="/pages/comic.html?slug=${item.comicSlug}" class="btn btn-primary">Tiếp tục đọc</a>
-            </div>
-        `).join('');
-    }
-</script>
+            `).join('');
+        }
+
+        // Hàm định dạng ngày tháng bổ trợ
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+        }
+    </script>

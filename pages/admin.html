@@ -1,91 +1,152 @@
-<script>
-    requireAdmin(); // Chặn đứng ngay lập tức nếu kẻ gian cố tình truy cập file admin.html static
+<script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script> <script>
+        // Chặn đứng ngay lập tức nếu người dùng thông thường cố tình truy cập file admin static này
+        requireAdmin(); 
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Khởi động chuyển đổi tab quản trị
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tabName = btn.getAttribute('data-admin-tab');
-                switchAdminTab(tabName, e.target);
+        document.addEventListener('DOMContentLoaded', () => {
+            // Khởi chạy hệ thống chuyển đổi Tab quản trị
+            document.querySelectorAll('.admin-nav button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Tìm kiếm và xử lý class Active của nút bấm dữ liệu
+                    document.querySelectorAll('.admin-nav button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    // logic chuyển đổi tab nội dung tương ứng trong trang admin của bạn
+                    const tabText = e.target.textContent.trim();
+                    if (tabText.includes("Tổng quan")) switchAdminTab('dashboard');
+                    else if (tabText.includes("Truyện")) switchAdminTab('stories-management');
+                    else if (tabText.includes("Thành viên")) switchAdminTab('users-management');
+                });
+            });
+
+            // Nạp toàn bộ dữ liệu thống kê lên Dashboard
+            loadAdminDashboard();
+
+            // XỬ LÝ SUBMIT FORM TẠO TRUYỆN MỚI
+            document.getElementById('add-story-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    const titleValue = document.getElementById('story-title').value;
+                    
+                    // Tự động sinh Slug đẹp mắt và sạch sẽ từ tiêu đề truyện nhập vào
+                    const slugValue = titleValue.toLowerCase()
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Loại bỏ dấu tiếng Việt
+                        .replace(/[^\w\s-]/g, '') // Loại bỏ ký tự đặc biệt
+                        .trim().replace(/[\s_-]+/g, '-') // Thay thế khoảng trắng bằng dấu gạch ngang
+                        .replace(/^-+|-+$/g, '');
+
+                    const comicData = {
+                        title: titleValue,
+                        slug: slugValue,
+                        author: document.getElementById('story-author').value,
+                        status: document.getElementById('story-status').value,
+                        description: document.getElementById('story-description').value,
+                        coverUrl: document.getElementById('story-cover').value
+                    };
+
+                    // Gọi API phân quyền createComic trong api.js trỏ tới endpoint /api/comics/create
+                    await createComic(comicData);
+                    
+                    if (typeof showNotification === 'function') {
+                        showNotification('Truyện tranh mới đã được khởi tạo và đồng bộ lên Database!', 'success');
+                    }
+                    
+                    document.getElementById('add-story-form').reset();
+                    loadAdminDashboard(); // Làm mới lại bảng danh sách bên dưới ngay lập tức
+                } catch (error) {
+                    if (typeof showNotification === 'function') {
+                        showNotification(`Lỗi khởi tạo: ${error.message}`, 'error');
+                    } else {
+                        alert(`Lỗi: ${error.message}`);
+                    }
+                }
             });
         });
 
-        loadAdminDashboard();
-
-        // Xử lý tạo truyện thật thông qua API phân quyền
-        document.getElementById('add-story-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                const comicData = {
-                    title: document.getElementById('story-title').value,
-                    slug: document.getElementById('story-title').value.toLowerCase().replace(/ /g, '-'),
-                    author: document.getElementById('story-author').value,
-                    status: document.getElementById('story-status').value,
-                    description: document.getElementById('story-description').value,
-                    coverUrl: document.getElementById('story-cover').value
-                };
-
-                await createComic(comicData);
-                showNotification('Truyện mới đã được tạo và đồng bộ lên Database thành công!', 'success');
-                document.getElementById('add-story-form').reset();
-                loadAdminDashboard(); // Refresh dữ liệu
-            } catch (error) {
-                showNotification(`Lỗi: ${error.message}`, 'error');
-            }
-        });
-    });
-
-    function switchAdminTab(tabName, targetBtn) {
-        document.querySelectorAll('.admin-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
-
-        document.getElementById(tabName).classList.add('active');
-        targetBtn.classList.add('active');
-    }
-
-    async function loadAdminDashboard() {
-        try {
-            // Lấy dữ liệu công khai từ backend phân trang
-            const res = await getComics(1, 100);
-            const comics = res.items || res || [];
-
-            document.getElementById('total-stories').textContent = comics.length;
-            
-            // Render bảng thống kê quản lý truyện
-            const storiesTable = document.getElementById('stories-table');
-            const recentTable = document.getElementById('recent-stories-table');
-
-            const tableHtml = comics.map(comic => `
-                <tr>
-                    <td>${comic.id}</td>
-                    <td><strong>${comic.title}</strong></td>
-                    <td>${comic.author || 'Chưa rõ'}</td>
-                    <td><span class="story-status">${comic.status || 'Ongoing'}</span></td>
-                    <td>👁️ ${comic.totalViews || 0}</td>
-                    <td>
-                        <button class="btn btn-danger action-btn" onclick="executeDeleteComic(${comic.id})">Xóa</button>
-                    </td>
-                </tr>
-            `).join('');
-
-            recentTable.innerHTML = tableHtml;
-            storiesTable.innerHTML = tableHtml;
-
-        } catch (error) {
-            console.error('Lỗi tải dữ liệu dashboard admin:', error);
+        // Hàm bổ trợ ẩn hiện Tab nội dung
+        function switchAdminTab(tabId) {
+            const sections = document.querySelectorAll('main > section');
+            sections.forEach(sec => {
+                sec.style.display = 'none';
+            });
+            const targetSec = document.getElementById(tabId) || document.querySelector(`.${tabId}`);
+            if (targetSec) targetSec.style.display = 'block';
         }
-    }
 
-    // Hàm gọi API xóa thành viên độc quyền từ tầng Admin Backend
-    async function executeDeleteUser(userId) {
-        if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn người dùng này khỏi hệ thống?')) {
+        // HÀM TẢI DỮ LIỆU DASHBOARD QUẢN TRỊ THỰC TẾ
+        async function loadAdminDashboard() {
             try {
-                await adminDeleteUser(userId);
-                showNotification('Đã thực thi lệnh xóa thành viên thành công!', 'success');
-                // Refresh lại danh sách thành viên sau khi xóa
+                // Gọi API getComics (Lấy trang 1, nạp tối đa 100 bản ghi phục vụ thống kê quản lý)
+                const res = await getComics(1, 100) || {};
+                const comics = res.items || res || [];
+
+                // Cập nhật số liệu tổng quan lên giao diện
+                const totalStoriesEl = document.getElementById('total-stories') || { textContent: 0 };
+                totalStoriesEl.textContent = comics.length;
+                
+                // Chuẩn hóa chuỗi cấu trúc HTML render cho các bảng quản trị
+                // Khớp chính xác thuộc tính camelCase từ Database .NET mới (id, title, author, status, totalViews)
+                const tableHtml = comics.map(comic => `
+                    <tr id="comic-row-${comic.id}">
+                        <td>${comic.id}</td>
+                        <td><strong>${comic.title || comic.name}</strong></td>
+                        <td>${comic.author || 'Chưa rõ'}</td>
+                        <td><span class="story-status">${comic.status || 'Ongoing'}</span></td>
+                        <td>👁️ ${comic.totalViews || comic.views || 0}</td>
+                        <td>
+                            <button class="btn btn-danger action-btn" onclick="executeDeleteComic(${comic.id})">Xóa</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Đổ dữ liệu vào bảng "Cập nhật gần đây" ở tab Tổng quan
+                const recentTable = document.getElementById('recent-stories-table');
+                if (recentTable) recentTable.innerHTML = tableHtml;
+
+                // Đổ dữ liệu vào bảng lớn ở tab "Quản lý truyện"
+                const storiesTable = document.getElementById('stories-table');
+                if (storiesTable) storiesTable.innerHTML = tableHtml;
+
             } catch (error) {
-                showNotification(`Thất bại: ${error.message}`, 'error');
+                console.error('Lỗi nạp dữ liệu Admin Dashboard:', error);
             }
         }
-    }
-</script>
+
+        // HÀM LẮNG NGHE SỰ KIỆN XÓA TÀI KHOẢN THÀNH VIÊN TỪ ADMIN CONTROLLER
+        async function executeDeleteUser(userId) {
+            if (!userId) return;
+            if (confirm('🚨 CẢNH BÁO TỐI CAO: Bạn có chắc chắn muốn xóa vĩnh viễn Thành viên này khỏi hệ thống không?')) {
+                try {
+                    // Gọi hàm adminDeleteUser tới endpoint `/api/users/admin/manage-user/{id}`
+                    await adminDeleteUser(userId);
+                    
+                    if (typeof showNotification === 'function') {
+                        showNotification('Đã thực thi lệnh xóa Thành viên ra khỏi hệ thống thành công!', 'success');
+                    }
+                    // Bạn có thể viết thêm hàm loadUsers() để refresh riêng bảng user nếu có
+                } catch (error) {
+                    if (typeof showNotification === 'function') {
+                        showNotification(`Thất bại: ${error.message}`, 'error');
+                    }
+                }
+            }
+        }
+
+        // HÀM BỔ TRỢ XÓA TRUYỆN TRANH (ĐỂ BẠN PHÁT TRIỂN TIẾP CHO NÚT BẤM TRÊN BẢNG)
+        async function executeDeleteComic(comicId) {
+            if (confirm('Bạn có chắc chắn muốn gỡ bỏ bộ truyện tranh này?')) {
+                try {
+                    // Sau này nếu viết thêm hàm deleteComic trong api.js thì chỉ cần gọi tại đây:
+                    // await deleteComic(comicId);
+                    if (typeof showNotification === 'function') {
+                        showNotification('Đã kích hoạt yêu cầu xóa truyện!', 'info');
+                    }
+                    const row = document.getElementById(`comic-row-${comicId}`);
+                    if (row) row.remove();
+                } catch (e) {
+                    alert(e.message);
+                }
+            }
+        }
+    </script>
