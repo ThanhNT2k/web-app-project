@@ -1,97 +1,121 @@
 /**
  * auth.js - Xử lý Authentication & Phân quyền ứng dụng
- * ĐÃ ĐỒNG BỘ CHUẨN XÁC VỚI CƠ CHẾ AUTH SUPABASE + BACKEND ROLES
  */
+
+// 1. Import cấu hình bảo mật
+// Nếu dùng type="module", hãy giữ import này. 
+// Nếu không, hãy đảm bảo config.js được load trước file này trong HTML
+import { supabaseConfig } from './config.js';
+
+// Khởi tạo Supabase client dùng cấu hình từ config.js
+const supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
 
 /**
- * Hàm hỗ trợ xử lý sau khi đăng nhập thành công từ giao diện Supabase Auth
- * @param {string} token - Access Token do Supabase cấp sau khi login thành công
+ * Xử lý sau khi đăng nhập thành công (Đã gộp logic)
  */
 async function handleLoginSuccess(token) {
-  try {
-    // 1. Lưu token trước để hàm apiCall trong api.js có quyền truy cập headers
-    localStorage.setItem('token', token);
+    try {
+        localStorage.setItem('token', token);
 
-    // 2. Gọi API profile từ backend để lấy thông tin thực tế trong bảng public.profiles
-    const profile = await getProfile(); 
+        // Gọi API profile để lấy thông tin (đảm bảo hàm getProfile có trong api.js)
+        const profile = await getProfile(); 
 
-    // 3. Lưu trữ thông tin sạch vào LocalStorage để render giao diện nhanh
-    localStorage.setItem('userName', profile.username || 'Thành viên');
-    localStorage.setItem('role', profile.role || 'User'); // 'User', 'Uploader', 'Admin'
-    localStorage.setItem('avatarUrl', profile.avatarUrl || '');
-    localStorage.setItem('userId', profile.id || '');
+        localStorage.setItem('userName', profile.username || 'Thành viên');
+        localStorage.setItem('role', profile.role || 'User');
+        localStorage.setItem('avatarUrl', profile.avatarUrl || '');
+        localStorage.setItem('userId', profile.id || '');
 
-    return profile;
-  } catch (error) {
-    console.error('Lỗi thiết lập thông tin phân quyền:', error);
-    clearAuthStorage();
-    throw new Error('Không thể đồng bộ quyền hạn từ hệ thống!');
-  }
+        return profile;
+    } catch (error) {
+        console.error('Lỗi đồng bộ thông tin phân quyền:', error);
+        clearAuthStorage();
+        throw new Error('Không thể thiết lập phiên đăng nhập!');
+    }
 }
 
+// ĐĂNG NHẬP
+async function login(email, password) {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    await handleLoginSuccess(data.session.access_token);
+    return data;
+}
+
+// ĐĂNG KÝ
+async function register(email, password, username) {
+    const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { data: { username: username } }
+    });
+    if (error) throw error;
+    return data;
+}
+
+// --- CÁC HÀM QUẢN LÝ TRẠNG THÁI ---
+
 function logout() {
-  clearAuthStorage();
-  window.location.href = '/index.html';
+    clearAuthStorage();
+    window.location.href = '/index.html';
 }
 
 function clearAuthStorage() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('userName');
-  localStorage.removeItem('role');
-  localStorage.removeItem('avatarUrl');
-  localStorage.removeItem('userId');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('role');
+    localStorage.removeItem('avatarUrl');
+    localStorage.removeItem('userId');
 }
 
 function isLoggedIn() {
-  return !!localStorage.getItem('token');
+    return !!localStorage.getItem('token');
 }
 
 function getCurrentUser() {
-  return {
-    userName: localStorage.getItem('userName'),
-    role: localStorage.getItem('role'),
-    token: localStorage.getItem('token'),
-    avatarUrl: localStorage.getItem('avatarUrl'),
-    userId: localStorage.getItem('userId')
-  };
+    return {
+        userName: localStorage.getItem('userName'),
+        role: localStorage.getItem('role'),
+        token: localStorage.getItem('token'),
+        avatarUrl: localStorage.getItem('avatarUrl'),
+        userId: localStorage.getItem('userId')
+    };
 }
 
+// --- PHÂN QUYỀN ---
+
 function isAdmin() {
-  return localStorage.getItem('role') === 'Admin';
+    return localStorage.getItem('role') === 'Admin';
 }
 
 function isUploader() {
-  const role = localStorage.getItem('role');
-  return role === 'Uploader' || role === 'Admin';
+    const role = localStorage.getItem('role');
+    return role === 'Uploader' || role === 'Admin';
 }
 
-// Chặn truy cập nếu chưa đăng nhập
 function requireLogin() {
-  if (!isLoggedIn()) {
-    alert('Vui lòng đăng nhập để tiếp tục!');
-    window.location.href = '/pages/account.html';
-  }
+    if (!isLoggedIn()) {
+        alert('Vui lòng đăng nhập để tiếp tục!');
+        window.location.href = '/pages/account.html';
+    }
 }
 
-// Chặn truy cập nếu không phải Admin
 function requireAdmin() {
-  if (!isAdmin()) {
-    alert('Thẩm quyền tối cao bị từ chối! Bạn không có quyền truy cập khu vực này.');
-    window.location.href = '/index.html';
-  }
+    if (!isAdmin()) {
+        alert('Truy cập bị từ chối!');
+        window.location.href = '/index.html';
+    }
 }
-/**
- * Tự động cập nhật nút Đăng nhập thành Thông tin người dùng
- */
+
+// --- GIAO DIỆN NAVBAR ---
+
 function syncNavbarUI() {
     const authLinks = document.getElementById('auth-links');
     if (!authLinks) return;
 
-    const user = getCurrentUser(); // Hàm này đã có sẵn trong file auth.js của bạn
-
+    const user = getCurrentUser();
     if (user && user.token) {
         authLinks.innerHTML = `
-            <a href="/pages/profile.html" class="nav-link">👤 ${user.userName || 'Tài khoản'}</a>
+            <a href="/pages/profile.html" class="nav-link">👤 ${user.userName}</a>
             <a href="javascript:void(0)" onclick="logout()" class="nav-link">Đăng xuất</a>
         `;
     } else {
@@ -101,5 +125,4 @@ function syncNavbarUI() {
     }
 }
 
-// Chạy hàm này khi trang vừa load
 document.addEventListener('DOMContentLoaded', syncNavbarUI);

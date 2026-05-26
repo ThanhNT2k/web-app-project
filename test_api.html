@@ -2,50 +2,75 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Test API - CMC Truyện</title>
+    <title>API Testing Dashboard - CMC Truyện</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .test-box { background: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: var(--shadow); }
-        pre { background: #1f2937; color: #10b981; padding: 1rem; border-radius: 8px; overflow-x: auto; margin-top: 1rem; }
+        .test-section { background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: var(--shadow); }
+        pre { background: #1f2937; color: #10b981; padding: 1rem; border-radius: 8px; overflow-x: auto; margin-top: 1rem; font-size: 0.9rem; }
+        .grid-tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
     </style>
 </head>
 <body>
-    <main style="max-width: 800px; margin: 2rem auto;">
-        <h1>🧪 Debug API</h1>
+    <main style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
+        <h1>🧪 Debug & Test API Dashboard</h1>
         
-        <div class="test-box">
-            <h3>1. Kiểm tra trạng thái User</h3>
-            <button class="btn btn-primary" onclick="testAuth()">Xem User hiện tại</button>
-            <pre id="auth-output">Chưa kiểm tra...</pre>
-        </div>
+        <div class="grid-tests">
+            <div class="test-section">
+                <h3>1. Kiểm tra Auth</h3>
+                <button class="btn btn-primary" onclick="testAuth()">Xem User Local</button>
+                <button class="btn" style="background:var(--danger-color); color:white" onclick="logout()">Đăng xuất</button>
+                <pre id="auth-output">Chưa test...</pre>
+            </div>
 
-        <div class="test-box">
-            <h3>2. Lấy lịch sử đọc (History)</h3>
-            <button class="btn btn-primary" onclick="testHistory()">Fetch History API</button>
-            <pre id="history-output">Chưa kiểm tra...</pre>
+            <div class="test-section">
+                <h3>2. Kiểm tra Profile API</h3>
+                <button class="btn btn-primary" onclick="testProfile()">Fetch Profile</button>
+                <pre id="profile-output">Chưa test...</pre>
+            </div>
+
+            <div class="test-section">
+                <h3>3. Kiểm tra Lịch sử đọc</h3>
+                <button class="btn btn-primary" onclick="testHistory()">Fetch History</button>
+                <pre id="history-output">Chưa test...</pre>
+            </div>
+
+            <div class="test-section">
+                <h3>4. Quyền Admin</h3>
+                <button class="btn" style="background:var(--warning-color)" onclick="testAdminAccess()">Test Admin Access</button>
+                <pre id="admin-output">Chưa test...</pre>
+            </div>
         </div>
     </main>
 
     <script src="../js/auth.js"></script>
     <script src="../js/api.js"></script>
     <script>
-        // Kiểm tra Auth từ localStorage
+        // Hiển thị helper
+        const log = (id, data) => document.getElementById(id).textContent = JSON.stringify(data, null, 2);
+
         function testAuth() {
-            const user = getCurrentUser();
-            document.getElementById('auth-output').textContent = JSON.stringify(user, null, 2);
+            log('auth-output', getCurrentUser());
         }
 
-        // Kiểm tra gọi API thật
-        async function testHistory() {
-            const output = document.getElementById('history-output');
-            output.textContent = "Đang tải...";
-            
+        async function testProfile() {
             try {
-                // Giả sử bạn có hàm getReadingHistory trong api.js
-                const data = await getReadingHistory();
-                output.textContent = JSON.stringify(data, null, 2);
-            } catch (err) {
-                output.textContent = "Lỗi: " + err.message;
+                const data = await getProfile(); // Hàm trong api.js
+                log('profile-output', data);
+            } catch (err) { log('profile-output', { error: err.message }); }
+        }
+
+        async function testHistory() {
+            try {
+                const data = await getReadingHistory(); // Hàm trong api.js
+                log('history-output', data);
+            } catch (err) { log('history-output', { error: err.message }); }
+        }
+
+        function testAdminAccess() {
+            if (isAdmin()) {
+                document.getElementById('admin-output').textContent = "✅ Quyền hạn: ADMIN (Có quyền truy cập)";
+            } else {
+                document.getElementById('admin-output').textContent = "❌ Quyền hạn: USER (Từ chối truy cập)";
             }
         }
     </script>
