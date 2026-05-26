@@ -1,26 +1,170 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập / Đăng Ký - CMC Truyện</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .auth-container {
+            display: flex;
+            gap: 2rem;
+            max-width: 900px;
+            margin: 3rem auto;
+        }
+
+        .auth-box {
+            flex: 1;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .auth-box h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            color: var(--text-light);
+        }
+
+        .divider::before {
+            content: '';
+            display: block;
+            height: 1px;
+            background: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .divider::after {
+            content: '';
+            display: block;
+            height: 1px;
+            background: var(--border-color);
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                flex-direction: column;
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/index.html" class="logo">📚 CMC Truyện</a>
+            <nav>
+                <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
+                <a href="/pages/story.html?genre=all" class="nav-link">Thể Loại</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <div class="auth-box">
+                <h2>🔐 Đăng Nhập</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Mật khẩu:</label>
+                        <input type="password" id="login-password" name="password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; font-weight: normal;">
+                            <input type="checkbox" style="width: auto; margin-right: 0.5rem;">
+                            Nhớ tôi
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Đăng Nhập</button>
+                </form>
+
+                <p style="text-align: center; margin-top: 1rem; color: var(--text-light);">
+                    <a href="#" onclick="resetPassword(); return false;" style="color: var(--primary-color);">Quên mật khẩu?</a>
+                </p>
+            </div>
+
+            <div class="divider" style="writing-mode: horizontal-tb; margin: 0; padding: 0; width: auto; min-height: 300px;">
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%; width: 1px; background: var(--border-color); margin: 0 auto;"></div>
+            </div>
+
+            <div class="auth-box">
+                <h2>✍️ Đăng Ký</h2>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-name">Tên đầy đủ:</label>
+                        <input type="text" id="register-name" name="fullName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-email">Email:</label>
+                        <input type="email" id="register-email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password">Mật khẩu:</label>
+                        <input type="password" id="register-password" name="password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password-confirm">Xác nhận mật khẩu:</label>
+                        <input type="password" id="register-password-confirm" name="passwordConfirm" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; font-weight: normal;">
+                            <input type="checkbox" style="width: auto; margin-right: 0.5rem;" required>
+                            Tôi đồng ý với <a href="#" style="color: var(--primary-color);">điều khoản sử dụng</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-secondary" style="width: 100%;">Đăng Ký</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 CMC Truyện. Tất cả quyền được bảo lưu.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
-    <script src="../js/main.js"></script> <script>
-        // Khởi tạo cấu hình Supabase Client (Thay đổi thông tin nếu bạn dùng URL dự án riêng)
+    <script src="../js/main.js"></script>
+
+    <script>
+        // Khởi tạo Supabase Client với URL của bạn
         const SUPABASE_URL = "https://webappbe-fzz7.onrender.com"; 
-        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; // Nhớ thay key này bằng Anon Key Supabase thật của bạn nhé!
         
         let supabaseClient = null;
         if (typeof supabase !== 'undefined') {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // Điều hướng an toàn: Nếu đã đăng nhập thành công thì tự động đá về trang chủ luôn
+        // Chuyển hướng nếu đã đăng nhập thành công
         if (isLoggedIn()) {
             window.location.href = '/index.html';
         }
 
-        // 🛠️ SỬA LỖI: Bọc toàn bộ trình lắng nghe sự kiện Form vào DOMContentLoaded
+        // Bọc sự kiện lắng nghe vào DOMContentLoaded để sửa triệt để lỗi addEventListener rỗng
         document.addEventListener('DOMContentLoaded', () => {
             
-            // XỬ LÝ BIỂU MẪU ĐĂNG NHẬP QUA SUPABASE AUTH
+            // XỬ LÝ BIỂU MẪU ĐĂNG NHẬP
             const loginForm = document.getElementById('login-form');
             if (loginForm) {
                 loginForm.addEventListener('submit', async (e) => {
@@ -35,7 +179,7 @@
                         if (error) throw error;
 
                         if (data?.session) {
-                            // Kích hoạt hàm đồng bộ Profile & Vai trò độc quyền từ Backend C# (.NET Core)
+                            // Gọi hàm đồng bộ token sang hệ thống .NET Core backend
                             await handleLoginSuccess(data.session.access_token);
                             
                             if (typeof showNotification === 'function') {
@@ -51,11 +195,9 @@
                         }
                     }
                 });
-            } else {
-                console.error("Không tìm thấy phần tử HTML với id='login-form'. Hãy kiểm tra lại thẻ <form> của bạn.");
             }
 
-            // XỬ LÝ BIỂU MẪU ĐĂNG KÝ QUA SUPABASE AUTH
+            // XỬ LÝ BIỂU MẪU ĐĂNG KÝ
             const registerForm = document.getElementById('register-form');
             if (registerForm) {
                 registerForm.addEventListener('submit', async (e) => {
@@ -80,13 +222,13 @@
                             email,
                             password,
                             options: { 
-                                data: { full_name: fullName } // Đẩy dữ liệu Metadata phục vụ DB Trigger tự sinh Profile
+                                data: { full_name: fullName }
                             }
                         });
                         if (error) throw error;
 
                         if (typeof showNotification === 'function') {
-                            showNotification('Đăng ký thành công! Vui lòng kiểm tra Email xác nhận hoặc tiến hành đăng nhập.', 'success');
+                            showNotification('Đăng ký thành công! Vui lòng kiểm tra Email xác nhận hoặc đăng nhập.', 'success');
                         }
                         registerForm.reset();
                     } catch (error) {
@@ -119,3 +261,5 @@
             }
         }
     </script>
+</body>
+</html>
