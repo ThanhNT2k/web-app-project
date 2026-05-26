@@ -33,7 +33,7 @@
                     <label for="genre-filter">📁 Thể loại:</label>
                     <select id="genre-filter">
                         <option value="">-- Tất cả --</option>
-                        </select>
+                    </select>
                 </div>
             </div>
 
@@ -55,7 +55,6 @@
                     </select>
                 </div>
             </div>
-
             <button onclick="applyFilters()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Tìm kiếm</button>
         </section>
 
@@ -80,14 +79,12 @@
     <script>
         let allComics = [];
 
-        // Load dữ liệu khi trang tải
         document.addEventListener('DOMContentLoaded', async () => {
-            // 1. Tải danh sách Thể loại thực tế từ DB để đổ vào ô Select filter
+            // 1. Load thể loại
             try {
                 const genres = await getGenres() || [];
                 const genreFilterSelect = document.getElementById('genre-filter');
                 if (genreFilterSelect && genres.length > 0) {
-                    // Giữ lại option đầu tiên ("Tất cả") và append thêm dữ liệu động từ API
                     genreFilterSelect.innerHTML = '<option value="">-- Tất cả --</option>' + 
                         genres.map(g => `<option value="${g.slug || g.id}">${g.name}</option>`).join('');
                 }
@@ -95,29 +92,22 @@
                 console.error('Không thể tải danh sách thể loại:', error);
             }
 
-            // 2. Tải danh sách truyện tranh công khai (Tối đa 50 bản ghi mẫu để filter)
+            // 2. Load truyện
             try {
                 const response = await getComics(1, 50) || {};
-                // Chuẩn hóa dữ liệu nhận về từ API (phòng trường hợp trả về object phân trang { items: [] } hoặc array trực tiếp)
                 allComics = response.items || response || []; 
                 displayComics(allComics);
                 updateResultsCount(allComics.length);
             } catch (error) {
-                if (typeof showNotification === 'function') {
-                    showNotification('Lỗi tải dữ liệu truyện tranh', 'error');
-                } else {
-                    alert('Lỗi tải dữ liệu truyện tranh');
-                }
+                if (typeof showNotification === 'function') showNotification('Lỗi tải dữ liệu', 'error');
             }
 
-            // Gắn các trình lắng nghe sự kiện thay đổi bộ lọc để cập nhật kết quả theo thời gian thực (Real-time Filter)
             document.getElementById('search-input').addEventListener('input', applyFilters);
             document.getElementById('genre-filter').addEventListener('change', applyFilters);
             document.getElementById('status-filter').addEventListener('change', applyFilters);
             document.getElementById('sort-filter').addEventListener('change', applyFilters);
         });
 
-        // Hàm xử lý áp dụng bộ lọc dữ liệu truyện tranh
         function applyFilters() {
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
             const genreFilter = document.getElementById('genre-filter').value;
@@ -125,64 +115,41 @@
             const sortFilter = document.getElementById('sort-filter').value;
 
             let filtered = allComics.filter(comic => {
-                // Khớp dữ liệu theo Tên truyện hoặc Tác giả (hỗ trợ camelCase/PascalCase linh hoạt)
                 const title = comic.title || comic.name || '';
                 const author = comic.author || '';
-                const matchSearch = title.toLowerCase().includes(searchTerm) || 
-                                    author.toLowerCase().includes(searchTerm);
-                
-                // Khớp dữ liệu trạng thái
+                const matchSearch = title.toLowerCase().includes(searchTerm) || author.toLowerCase().includes(searchTerm);
                 const matchStatus = !statusFilter || comic.status === statusFilter;
                 
-                // Khớp dữ liệu thể loại (Kiểm tra qua mảng genres hoặc chuỗi genreSlug/genreId của truyện)
+                // Sửa lỗi cú pháp đóng ngoặc tại đây
                 const matchGenre = !genreFilter || 
                                    (comic.genreSlug && comic.genreSlug === genreFilter) ||
                                    (comic.genreId && comic.genreId.toString() === genreFilter) ||
-                                   (comic.genres && comic.genres.some(g => (g.slug === genreFilter || g.id.toString() === genreFilter)));
+                                   (comic.genres && comic.genres.some(g => g.slug === genreFilter || g.id.toString() === genreFilter));
                 
                 return matchSearch && matchStatus && matchGenre;
             });
 
-            // Sắp xếp dữ liệu theo yêu cầu
-            if (sortFilter === 'popular') {
-                filtered.sort((a, b) => (b.totalViews || b.views || 0) - (a.totalViews || a.views || 0));
-            } else if (sortFilter === 'rating') {
-                filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-            } else if (sortFilter === 'newest') {
-                filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-            }
+            if (sortFilter === 'popular') filtered.sort((a, b) => (b.totalViews || b.views || 0) - (a.totalViews || a.views || 0));
+            else if (sortFilter === 'rating') filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            else if (sortFilter === 'newest') filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
             displayComics(filtered);
             updateResultsCount(filtered.length);
         }
 
-        // Gọi hàm kết xuất HTML chuẩn hóa trong main.js
         function displayComics(comics) {
             if (typeof renderComics === 'function') {
                 renderComics(comics, 'stories-results');
-            } else if (typeof renderStories === 'function') {
-                // Hỗ trợ fallback nếu main.js vẫn dùng tên hàm cũ
-                renderStories(comics, 'stories-results');
             } else {
                 const container = document.getElementById('stories-results');
                 if (container) {
-                    if (comics.length === 0) {
-                        container.innerHTML = '<p class="text-center" style="grid-column: 1/-1; padding: 2rem;">Không tìm thấy truyện phù hợp.</p>';
-                        return;
-                    }
-                    container.innerHTML = comics.map(c => `
+                    container.innerHTML = comics.length === 0 ? '<p style="padding:2rem; text-align:center;">Không tìm thấy truyện phù hợp.</p>' : 
+                    comics.map(c => `
                         <article class="story-card">
-                            <div class="story-image">
-                                <img src="${c.coverUrl || '/assets/placeholder.jpg'}" alt="${c.title || c.name}">
-                            </div>
+                            <div class="story-image"><img src="${c.coverUrl || '/assets/placeholder.jpg'}" alt="${c.title}"></div>
                             <div class="story-info">
-                                <h3 class="story-title">
-                                    <a href="/pages/comic.html?slug=${c.slug}">${c.title || c.name}</a>
-                                </h3>
-                                <div class="story-meta">
-                                    <span class="story-status">${c.status || 'Ongoing'}</span>
-                                </div>
-                                <a href="/pages/comic.html?slug=${c.slug}" class="btn btn-primary">Đọc truyện</a>
+                                <h3 class="story-title"><a href="/pages/comic.html?slug=${c.slug}">${c.title}</a></h3>
+                                <a href="/pages/comic.html?slug=${c.slug}" class="btn btn-primary mt-2">Đọc truyện</a>
                             </div>
                         </article>
                     `).join('');
@@ -190,7 +157,6 @@
             }
         }
 
-        // Cập nhật số lượng đếm kết quả hiển thị
         function updateResultsCount(count) {
             const el = document.getElementById('results-count');
             if (el) el.textContent = `${count} truyện`;

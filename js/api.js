@@ -6,7 +6,7 @@
 
 // 🟢 TỰ ĐỘNG CẤU HÌNH ĐỊA CHỈ BASE URL THÔNG MINH
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5221'                               // Khi bạn chạy test ở máy cục bộ (Cập nhật lại port nếu cần, ví dụ: 5000 hoặc 5221)
+    ? 'http://localhost:5208'                               // Khi bạn chạy test ở máy cục bộ (Cập nhật lại port nếu cần, ví dụ: 5000 hoặc 5221)
     : 'https://webappbe-fzz7.onrender.com';                 // Địa chỉ Render của bạn
 
 const API_BASE_URL = `${BACKEND_URL}/api`;
