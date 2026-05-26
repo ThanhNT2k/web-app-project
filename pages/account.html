@@ -3,8 +3,8 @@
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script> <script>
-        // 3. Khởi tạo cấu hình Supabase Client (Điền thông tin dự án Supabase của bạn tại đây)
-        const SUPABASE_URL = "https://webappbe-fzz7.onrender.com"; // Thay đổi nếu có URL định danh riêng
+        // Khởi tạo cấu hình Supabase Client (Thay đổi thông tin nếu bạn dùng URL dự án riêng)
+        const SUPABASE_URL = "https://webappbe-fzz7.onrender.com"; 
         const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
         
         let supabaseClient = null;
@@ -12,83 +12,95 @@
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // Kiểm tra điều hướng an toàn: Nếu đã đăng nhập thì tự động đá về trang chủ
+        // Điều hướng an toàn: Nếu đã đăng nhập thành công thì tự động đá về trang chủ luôn
         if (isLoggedIn()) {
             window.location.href = '/index.html';
         }
 
-        // XỬ LÝ FORM ĐĂNG NHẬP QUA SUPABASE
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+        // 🛠️ SỬA LỖI: Bọc toàn bộ trình lắng nghe sự kiện Form vào DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // XỬ LÝ BIỂU MẪU ĐĂNG NHẬP QUA SUPABASE AUTH
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('login-email').value;
+                    const password = document.getElementById('login-password').value;
 
-            try {
-                if (!supabaseClient) throw new Error("Chưa khởi tạo cấu hình Supabase!");
+                    try {
+                        if (!supabaseClient) throw new Error("Chưa khởi tạo cấu hình Supabase!");
 
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) throw error;
+                        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                        if (error) throw error;
 
-                if (data?.session) {
-                    // Kích hoạt hàm đồng bộ Profile & Vai trò độc quyền từ Backend C# (.NET 10)
-                    await handleLoginSuccess(data.session.access_token);
-                    
-                    if (typeof showNotification === 'function') {
-                        showNotification('Đăng nhập thành công! Đang chuyển hướng...', 'success');
-                    }
-                    setTimeout(() => { window.location.href = '/index.html'; }, 1000);
-                }
-            } catch (error) {
-                if (typeof showNotification === 'function') {
-                    showNotification(`Lỗi: ${error.message || 'Tài khoản hoặc mật khẩu không đúng'}`, 'error');
-                } else {
-                    alert(`Lỗi đăng nhập: ${error.message}`);
-                }
-            }
-        });
-
-        // XỬ LÝ FORM ĐĂNG KÝ QUA SUPABASE
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const fullName = document.getElementById('register-name').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const passwordConfirm = document.getElementById('register-password-confirm').value;
-
-            if (password !== passwordConfirm) {
-                if (typeof showNotification === 'function') {
-                    showNotification('Mật khẩu nhập lại không khớp!', 'error');
-                }
-                return;
-            }
-
-            try {
-                if (!supabaseClient) throw new Error("Chưa khởi tạo cấu hình Supabase!");
-
-                const { data, error } = await supabaseClient.auth.signUp({
-                    email,
-                    password,
-                    options: { 
-                        data: { full_name: fullName } // Đẩy dữ liệu Metadata phục vụ Trigger tạo Profile tự động dưới DB
+                        if (data?.session) {
+                            // Kích hoạt hàm đồng bộ Profile & Vai trò độc quyền từ Backend C# (.NET Core)
+                            await handleLoginSuccess(data.session.access_token);
+                            
+                            if (typeof showNotification === 'function') {
+                                showNotification('Đăng nhập thành công! Đang chuyển hướng...', 'success');
+                            }
+                            setTimeout(() => { window.location.href = '/index.html'; }, 1000);
+                        }
+                    } catch (error) {
+                        if (typeof showNotification === 'function') {
+                            showNotification(`Lỗi: ${error.message || 'Tài khoản hoặc mật khẩu không đúng'}`, 'error');
+                        } else {
+                            alert(`Lỗi đăng nhập: ${error.message}`);
+                        }
                     }
                 });
-                if (error) throw error;
+            } else {
+                console.error("Không tìm thấy phần tử HTML với id='login-form'. Hãy kiểm tra lại thẻ <form> của bạn.");
+            }
 
-                if (typeof showNotification === 'function') {
-                    showNotification('Đăng ký thành công! Vui lòng kiểm tra Email xác nhận hoặc tiến hành đăng nhập.', 'success');
-                }
-                document.getElementById('register-form').reset();
-            } catch (error) {
-                if (typeof showNotification === 'function') {
-                    showNotification(`Lỗi: ${error.message}`, 'error');
-                } else {
-                    alert(`Lỗi đăng ký: ${error.message}`);
-                }
+            // XỬ LÝ BIỂU MẪU ĐĂNG KÝ QUA SUPABASE AUTH
+            const registerForm = document.getElementById('register-form');
+            if (registerForm) {
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const fullName = document.getElementById('register-name').value;
+                    const email = document.getElementById('register-email').value;
+                    const password = document.getElementById('register-password').value;
+                    const passwordConfirm = document.getElementById('register-password-confirm').value;
+
+                    if (password !== passwordConfirm) {
+                        if (typeof showNotification === 'function') {
+                            showNotification('Mật khẩu nhập lại không khớp!', 'error');
+                        }
+                        return;
+                    }
+
+                    try {
+                        if (!supabaseClient) throw new Error("Chưa khởi tạo cấu hình Supabase!");
+
+                        const { data, error } = await supabaseClient.auth.signUp({
+                            email,
+                            password,
+                            options: { 
+                                data: { full_name: fullName } // Đẩy dữ liệu Metadata phục vụ DB Trigger tự sinh Profile
+                            }
+                        });
+                        if (error) throw error;
+
+                        if (typeof showNotification === 'function') {
+                            showNotification('Đăng ký thành công! Vui lòng kiểm tra Email xác nhận hoặc tiến hành đăng nhập.', 'success');
+                        }
+                        registerForm.reset();
+                    } catch (error) {
+                        if (typeof showNotification === 'function') {
+                            showNotification(`Lỗi: ${error.message}`, 'error');
+                        } else {
+                            alert(`Lỗi đăng ký: ${error.message}`);
+                        }
+                    }
+                });
             }
         });
 
-        // HÀM KHÔI PHỤC MẬT KHẨU KHẨN CẤP
+        // HÀM KHÔI PHỤC MẬT KHẨU
         async function resetPassword() {
             const email = prompt('Nhập địa chỉ email tài khoản của bạn:');
             if (email && supabaseClient) {
