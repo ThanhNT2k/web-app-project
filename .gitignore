@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 .env
 .env.local
+=======
+node_modules/
+package-lock.json
+>>>>>>> 3cc25fcbdd54bead92d852019eb3062a17380534
