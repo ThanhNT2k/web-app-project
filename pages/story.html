@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Truyện - CMC Truyện</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/index.html" class="logo">📚 CMC Truyện</a>
+            <nav>
+                <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
+                <a href="/pages/story.html?genre=all" class="nav-link">Thể Loại</a>
+                <div id="auth-links">
+                    <a href="javascript:void(0)" class="nav-link" onclick="toggleAuthModal(true)">Đăng nhập</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <h1 style="margin-bottom: 2rem;">📚 Tìm Truyện</h1>
+
+        <section style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: var(--shadow);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="search-input">🔍 Tìm kiếm:</label>
+                    <input type="text" id="search-input" placeholder="Nhập tên truyện hoặc tác giả...">
+                </div>
+                <div class="form-group">
+                    <label for="genre-filter">📁 Thể loại:</label>
+                    <select id="genre-filter">
+                        <option value="">-- Tất cả --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="status-filter">📊 Trạng thái:</label>
+                    <select id="status-filter">
+                        <option value="">-- Tất cả --</option>
+                        <option value="Full">Hoàn thành</option>
+                        <option value="Ongoing">Đang cập nhật</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sort-filter">⬇️ Sắp xếp:</label>
+                    <select id="sort-filter">
+                        <option value="newest">Mới nhất</option>
+                        <option value="popular">Phổ biến nhất</option>
+                        <option value="rating">Đánh giá cao</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="applyFilters()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Tìm kiếm</button>
+        </section>
+
+        <section>
+            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="results-title">Kết quả tìm kiếm</h2>
+                <span id="results-count" style="color: var(--text-light);">0 truyện</span>
+            </div>
+            <div id="stories-results" class="stories-grid">
+                <div class="loading">Đang tải...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 CMC Truyện. Tất cả quyền được bảo lưu.</p>
+    </footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        let allComics = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Load thể loại
+            try {
+                const genres = await getGenres() || [];
+                const genreFilterSelect = document.getElementById('genre-filter');
+                if (genreFilterSelect && genres.length > 0) {
+                    genreFilterSelect.innerHTML = '<option value="">-- Tất cả --</option>' + 
+                        genres.map(g => `<option value="${g.slug || g.id}">${g.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Không thể tải danh sách thể loại:', error);
+            }
+
+            // 2. Load truyện
+            try {
+                const response = await getComics(1, 50) || {};
+                allComics = response.items || response || []; 
+                displayComics(allComics);
+                updateResultsCount(allComics.length);
+            } catch (error) {
+                if (typeof showNotification === 'function') showNotification('Lỗi tải dữ liệu', 'error');
+            }
+
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('genre-filter').addEventListener('change', applyFilters);
+            document.getElementById('status-filter').addEventListener('change', applyFilters);
+            document.getElementById('sort-filter').addEventListener('change', applyFilters);
+        });
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const genreFilter = document.getElementById('genre-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const sortFilter = document.getElementById('sort-filter').value;
+
+            let filtered = allComics.filter(comic => {
+                const title = comic.title || comic.name || '';
+                const author = comic.author || '';
+                const matchSearch = title.toLowerCase().includes(searchTerm) || author.toLowerCase().includes(searchTerm);
+                const matchStatus = !statusFilter || comic.status === statusFilter;
+                
+                // Sửa lỗi cú pháp đóng ngoặc tại đây
+                const matchGenre = !genreFilter || 
+                                   (comic.genreSlug && comic.genreSlug === genreFilter) ||
+                                   (comic.genreId && comic.genreId.toString() === genreFilter) ||
+                                   (comic.genres && comic.genres.some(g => g.slug === genreFilter || g.id.toString() === genreFilter));
+                
+                return matchSearch && matchStatus && matchGenre;
+            });
+
+            if (sortFilter === 'popular') filtered.sort((a, b) => (b.totalViews || b.views || 0) - (a.totalViews || a.views || 0));
+            else if (sortFilter === 'rating') filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            else if (sortFilter === 'newest') filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+            displayComics(filtered);
+            updateResultsCount(filtered.length);
+        }
+
+        function displayComics(comics) {
+            if (typeof renderComics === 'function') {
+                renderComics(comics, 'stories-results');
+            } else {
+                const container = document.getElementById('stories-results');
+                if (container) {
+                    container.innerHTML = comics.length === 0 ? '<p style="padding:2rem; text-align:center;">Không tìm thấy truyện phù hợp.</p>' : 
+                    comics.map(c => `
+                        <article class="story-card">
+                            <div class="story-image"><img src="${c.coverUrl || '/assets/placeholder.jpg'}" alt="${c.title}"></div>
+                            <div class="story-info">
+                                <h3 class="story-title"><a href="/pages/comic.html?slug=${c.slug}">${c.title}</a></h3>
+                                <a href="/pages/comic.html?slug=${c.slug}" class="btn btn-primary mt-2">Đọc truyện</a>
+                            </div>
+                        </article>
+                    `).join('');
+                }
+            }
+        }
+
+        function updateResultsCount(count) {
+            const el = document.getElementById('results-count');
+            if (el) el.textContent = `${count} truyện`;
+        }
+    </script>
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
+        <h2>Đăng Nhập</h2>
+        <div id="auth-form-container">
+            <form id="login-form">
+                <div class="form-group"><input type="email" placeholder="Email" required></div>
+                <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
+                <button type="submit" class="btn btn-primary">ĐĂNG NHẬP</button>
+            </form>
+            <p style="margin-top: 1rem; text-align: center; color: #6b7280;">
+                Chưa có tài khoản? <a href="#" onclick="switchForm('register')">Đăng ký ngay</a>
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
