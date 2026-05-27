@@ -120,7 +120,7 @@ async function getAIRecommendations(preference) {
  * Lấy thông tin Profile cá nhân của người dùng đang đăng nhập
  */
 async function getProfile() {
-  return apiCall('/users/profile');
+  return apiCall('/users');
 }
 
 /**
