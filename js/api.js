@@ -612,3 +612,90 @@ async function providerDirectFetch(url, opts = {}) {
   if (!response.ok) throw new Error(`Provider fetch failed: ${response.status}`);
   return response.text();
 }
+
+/* ---------------------------
+   PROVIDER: unified wrappers for both read-only and stateful actions
+   - Read-only: attempt direct provider call (providerDirect*), fallback to backend proxy (/api/provider/...)
+   - Stateful (login/follow/bookmark): MUST call backend proxy to perform safely
+   --------------------------- */
+
+/**
+ * Unified search: first try direct client fetch (providerDirectSearch),
+ * if that fails (throws), fallback to backend proxy endpoint:
+ * GET /api/provider/:provider/search?q=...&page=...&limit=...
+ */
+async function providerSearchUnified(provider, query, page = 1, limit = 12) {
+  try {
+    return await providerDirectSearch(provider, query, page, limit);
+  } catch (err) {
+    return apiCall(`/provider/${encodeURIComponent(provider)}/search?q=${encodeURIComponent(query || '')}&page=${page}&limit=${limit}`);
+  }
+}
+
+/**
+ * Unified get novel detail: try direct then backend
+ */
+async function providerGetNovelUnified(provider, idOrSlug) {
+  try {
+    return await providerDirectGetNovel(provider, idOrSlug);
+  } catch (err) {
+    return apiCall(`/provider/${encodeURIComponent(provider)}/novel/${encodeURIComponent(idOrSlug)}`);
+  }
+}
+
+/**
+ * Unified get chapters list
+ */
+async function providerGetChaptersUnified(provider, novelId, page = 1, limit = 200) {
+  try {
+    // try direct by fetching novel detail and extracting chapters
+    const direct = await providerDirectGetNovel(provider, novelId);
+    if (direct && direct.chapters) return { data: direct.chapters };
+  } catch (err) {
+    // ignore and fallback
+  }
+  return apiCall(`/provider/${encodeURIComponent(provider)}/novel/${encodeURIComponent(novelId)}/chapters?page=${page}&limit=${limit}`);
+}
+
+/**
+ * Unified get chapter content
+ */
+async function providerGetChapterContentUnified(provider, chapterUrlOrId) {
+  try {
+    return await providerDirectGetChapterContent(provider, chapterUrlOrId);
+  } catch (err) {
+    return apiCall(`/provider/${encodeURIComponent(provider)}/chapter/${encodeURIComponent(chapterUrlOrId)}/content`);
+  }
+}
+
+/* ---------------------------
+   Stateful actions (LOGIN / FOLLOW / BOOKMARK)
+   NOTE: these MUST be implemented via your backend for security and CORS reasons.
+   Backend endpoints expected (example):
+    - POST /api/provider/:provider/login   { username, password }
+    - POST /api/provider/:provider/logout
+    - POST /api/provider/:provider/follow  { novelId, action: 'follow'|'unfollow' }
+    - POST /api/provider/:provider/bookmark { chapterId, note }
+   The frontend wrappers below call these backend endpoints via apiCall(...)
+   --------------------------- */
+
+async function providerLogin(provider, credentials) {
+  return apiCall(`/provider/${encodeURIComponent(provider)}/login`, 'POST', credentials);
+}
+
+async function providerLogout(provider) {
+  return apiCall(`/provider/${encodeURIComponent(provider)}/logout`, 'POST');
+}
+
+async function providerFollowNovel(provider, novelId, action = 'follow') {
+  return apiCall(`/provider/${encodeURIComponent(provider)}/follow`, 'POST', { novelId, action });
+}
+
+async function providerBookmarkChapter(provider, chapterId, note = '') {
+  return apiCall(`/provider/${encodeURIComponent(provider)}/bookmark`, 'POST', { chapterId, note });
+}
+
+async function providerGetUserProfile(provider) {
+  return apiCall(`/provider/${encodeURIComponent(provider)}/profile`);
+}
+
