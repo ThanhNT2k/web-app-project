@@ -1,4 +1,5 @@
 /**
+<<<<<<< HEAD
  * auth.js - Authentication API Module
  * Handles user registration, login, logout, and session management
  * Includes role-based access control helpers
@@ -228,3 +229,4 @@ export function canManageContent() {
 export function getUserRole() {
   return getRole();
 }
+// End of file - kept HEAD implementation (exports and lowercase roles)
