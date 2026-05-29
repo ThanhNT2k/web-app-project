@@ -381,5 +381,5 @@ async function providerBookmarkChapter(provider, chapterId, note = '') {
 async function providerGetUserProfile(provider) {
   return apiCall(`/provider/${encodeURIComponent(provider)}/profile`);
 }
-// End of file (cleaned merge remnants)
->>>>>>> origin/emDuong
+
+// End of file

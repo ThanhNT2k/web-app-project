@@ -164,7 +164,7 @@
                 <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
                 <a href="/pages/profile.html" class="nav-link">Profile</a>
                 <div id="auth-links">
-                    <a href="javascript:void(0)" class="nav-link" onclick="toggleAuthModal(true)">Đăng nhập</a>
+                    <a href="javascript:void(0)" class="nav-link" onclick="window.toggleAuthModal(true)">Đăng nhập</a>
                 </div>
             </nav>
         </div>
@@ -334,111 +334,67 @@
         <p>&copy; 2026 CMC Truyện. Tất cả quyền được bảo lưu.</p>
     </footer>
 
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
-    <script src="../js/main.js"></script>
-    <script>
-        // 1. Chặn đứng ngay lập tức nếu không phải Admin hệ thống
-        requireAdmin();
+    <script type="module" src="../js/api.js"></script>
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/main.js"></script>
+    <script type="module">
+        import { getComics, createComic, deleteComic } from '../js/novels.js';
 
         document.addEventListener('DOMContentLoaded', () => {
-            // 2. Logic điều hướng chuyển đổi các Tab mượt mà không lỗi ID
             document.querySelectorAll('.admin-nav button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    // Cập nhật trạng thái Active trên thanh menu điều hướng
                     document.querySelectorAll('.admin-nav button').forEach(b => b.classList.remove('active'));
                     const currentTarget = e.currentTarget;
                     currentTarget.classList.add('active');
 
-                    // Lấy ID tab từ thuộc tính data-admin-tab một cách chính xác
                     const targetTabId = currentTarget.getAttribute('data-admin-tab');
                     
-                    // Ẩn toàn bộ các section nội dung và kích hoạt section được lựa chọn
                     document.querySelectorAll('.admin-content').forEach(tab => tab.classList.remove('active'));
                     const activeContent = document.getElementById(targetTabId);
-                    if (activeContent) {
-                        activeContent.classList.add('active');
-                    }
+                    if (activeContent) activeContent.classList.add('active');
                 });
             });
 
-            // 3. Nạp toàn bộ dữ liệu thực tế lên Dashboard thống kê khi load trang
-            loadAdminDashboard();
+            window.loadAdminDashboard();
 
-            // 4. Xử lý sự kiện Submit Form tạo truyện mới & Tự động xử lý chuỗi Sinh Slug sạch
             document.getElementById('add-story-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 try {
                     const titleValue = document.getElementById('story-title').value;
-                    
-                    // Xử lý chuẩn hóa Tiêu đề sang Slug tiếng Việt không dấu sạch đẹp
                     const slugValue = titleValue.toLowerCase()
-                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Loại bỏ các dấu thanh
-                        .replace(/[^\w\s-]/g, '')                         // Loại bỏ toàn bộ ký tự đặc biệt
-                        .trim().replace(/[\s_-]+/g, '-')                 // Thay khoảng trắng thành dấu gạch ngang (-)
-                        .replace(/^-+|-+$/g, '');                         // Cắt bỏ gạch ngang thừa ở đầu/cuối
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                        .replace(/[^\w\s-]/g, '')                         
+                        .trim().replace(/[\s_-]+/g, '-')                 
+                        .replace(/^-+|-+$/g, '');                         
 
                     const comicData = {
-                        title: titleValue,
-                        slug: slugValue,
+                        title: titleValue, slug: slugValue,
                         author: document.getElementById('story-author').value,
                         genre: document.getElementById('story-genre').value,
                         status: document.getElementById('story-status').value,
                         description: document.getElementById('story-description').value,
-                        coverUrl: document.getElementById('story-cover').value
+                        coverImage: document.getElementById('story-cover').value
                     };
 
-                    // Gọi hàm API phân quyền xử lý dữ liệu từ backend
                     await createComic(comicData);
-                    
-                    if (typeof showNotification === 'function') {
-                        showNotification('Bộ truyện mới đã được khởi tạo và đồng bộ lên Database thành công!', 'success');
-                    } else {
-                        alert('Truyện đã được tạo thành công!');
-                    }
+                    alert('Truyện đã được tạo thành công!');
                     
                     document.getElementById('add-story-form').reset();
-                    loadAdminDashboard(); // Refresh lại dữ liệu bảng ngay lập tức
+                    window.loadAdminDashboard(); 
                 } catch (error) {
-                    if (typeof showNotification === 'function') {
-                        showNotification(`Lỗi khởi tạo truyện: ${error.message}`, 'error');
-                    } else {
-                        alert(`Lỗi: ${error.message}`);
-                    }
+                    alert(`Lỗi khởi tạo truyện: ${error.message}`);
                 }
-            });
-
-            // 5. Logic tìm kiếm truyện cục bộ trong bảng (Phát triển mở rộng thêm)
-            document.getElementById('search-stories').addEventListener('input', (e) => {
-                const keyword = e.target.value.toLowerCase().trim();
-                const rows = document.querySelectorAll('#stories-table tr');
-                
-                rows.forEach(row => {
-                    if (row.firstElementChild && row.firstElementChild.colSpan > 1) return; // Bỏ qua hàng trạng thái trống/đang tải
-                    const titleText = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
-                    const authorText = row.children[2] ? row.children[2].textContent.toLowerCase() : '';
-                    
-                    if (titleText.includes(keyword) || authorText.includes(keyword)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
             });
         });
 
-        // 6. Hàm gọi API nạp và đồng bộ cấu trúc dữ liệu thực tế lên Dashboard Quản trị
-        async function loadAdminDashboard() {
+        window.loadAdminDashboard = async function() {
             try {
-                // Gọi API getComics (Lấy trang đầu tiên, nạp tối đa 100 bản ghi phục vụ phân phối dữ liệu điều hướng quản lý)
-                const res = await getComics(1, 100) || {};
-                const comics = res.items || res || [];
+                const res = await getComics({ page: 1, limit: 100 });
+                const comics = res.data || [];
 
-                // Cập nhật số liệu tổng quan lên giao diện
                 const totalStoriesEl = document.getElementById('total-stories');
                 if (totalStoriesEl) totalStoriesEl.textContent = comics.length;
                 
-                // Đồng bộ chính xác thuộc tính camelCase từ Database .NET Core API mới (id, title, author, status, totalViews)
                 const tableHtml = comics.length > 0 ? comics.map(comic => `
                     <tr id="comic-row-${comic.id}">
                         <td>${comic.id}</td>
@@ -447,77 +403,49 @@
                         <td>${comic.genre || 'Mặc định'}</td>
                         <td><span class="story-status">${comic.status || 'Ongoing'}</span></td>
                         <td>
-                            <button class="btn btn-danger action-btn" onclick="executeDeleteComic(${comic.id})">Xóa</button>
+                            <button class="btn btn-danger action-btn" onclick="window.executeDeleteComic('${comic.id}')">Xóa</button>
                         </td>
                     </tr>
                 `).join('') : `<tr><td colspan="6" class="text-center" style="color: var(--text-light);">Hệ thống chưa có bộ truyện nào.</td></tr>`;
 
-                // Đổ dữ liệu đồng bộ vào bảng "Truyện mới cập nhật" (Tab Tổng quan)
                 const recentTable = document.getElementById('recent-stories-table');
                 if (recentTable) recentTable.innerHTML = tableHtml;
 
-                // Đổ dữ liệu đồng bộ vào bảng chính "Quản lý truyện" (Tab Quản lý truyện)
                 const storiesTable = document.getElementById('stories-table');
                 if (storiesTable) storiesTable.innerHTML = tableHtml;
-
             } catch (error) {
                 console.error('Lỗi nạp dữ liệu Hệ thống Admin Dashboard:', error);
             }
-        }
+        };
 
-        // 7. Hàm xử lý xóa vĩnh viễn Thành viên khỏi cơ sở dữ liệu qua Admin Controller
-        async function executeDeleteUser(userId) {
-            if (!userId) return;
-            if (confirm('🚨 CẢNH BÁO TỐI CAO: Bạn có chắc chắn muốn xóa vĩnh viễn Thành viên này khỏi hệ thống không?')) {
+        window.executeDeleteComic = async function(comicId) {
+            if (confirm('Bạn có chắc chắn muốn gỡ bỏ hoàn toàn bộ truyện tranh này?')) {
                 try {
-                    // Gọi hàm adminDeleteUser tới endpoint `/api/users/admin/manage-user/{id}` trong api.js
-                    await adminDeleteUser(userId);
-                    if (typeof showNotification === 'function') {
-                        showNotification('Đã thực thi lệnh loại bỏ Thành viên khỏi hệ thống thành công!', 'success');
-                    }
-                    // Gọi hàm tải danh sách user để refresh lại nếu bạn đã phát triển xong hàm loadUsers()
-                } catch (error) {
-                    if (typeof showNotification === 'function') {
-                        showNotification(`Thất bại: ${error.message}`, 'error');
-                    }
-                }
-            }
-        }
-
-        // 8. Hàm xử lý xóa gỡ bỏ truyện tranh khỏi Database
-        async function executeDeleteComic(comicId) {
-            if (!comicId) return;
-            if (confirm('Bạn có chắc chắn muốn gỡ bỏ hoàn toàn bộ truyện tranh này cùng toàn bộ chương liên quan không?')) {
-                try {
-                    // Sau khi bổ sung hàm deleteComic trong api.js, bạn chỉ cần bỏ comment dòng dưới:
-                    // await deleteComic(comicId);
-                    
-                    if (typeof showNotification === 'function') {
-                        showNotification('Đã thực thi yêu cầu gỡ bỏ truyện tranh khỏi hệ thống!', 'success');
-                    }
+                    await deleteComic(comicId);
+                    alert('Đã thực thi yêu cầu gỡ bỏ truyện tranh!');
                     const row = document.getElementById(`comic-row-${comicId}`);
                     if (row) row.remove();
                 } catch (error) {
                     alert(`Lỗi thực thi: ${error.message}`);
                 }
             }
-        }
+        };
     </script>
     <div id="auth-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
-        <h2>Đăng Nhập</h2>
-        <div id="auth-form-container">
-            <form id="login-form">
-                <div class="form-group"><input type="email" placeholder="Email" required></div>
-                <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
-                <button type="submit" class="btn btn-primary">ĐĂNG NHẬP</button>
-            </form>
-            <p style="margin-top: 1rem; text-align: center; color: #6b7280;">
-                Chưa có tài khoản? <a href="#" onclick="switchForm('register')">Đăng ký ngay</a>
-            </p>
+        <div class="modal-content">
+            <span class="close-modal" onclick="window.toggleAuthModal(false)">&times;</span>
+            <h2>Đăng Nhập</h2>
+            <div id="auth-form-container">
+                <form id="login-form">
+                    <div class="form-group"><input type="email" placeholder="Email" required></div>
+                    <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
+                    <button type="submit" class="btn btn-primary">ĐĂNG NHẬP</button>
+                </form>
+                <p style="margin-top: 1rem; text-align: center; color: #6b7280;">
+                    Chưa có tài khoản? <a href="#" onclick="window.switchForm('register')">Đăng ký ngay</a>
+                </p>
+            </div>
         </div>
     </div>
-</div>
 </body>
 </html>

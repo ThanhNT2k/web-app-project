@@ -1,8 +1,7 @@
 /**
  * 🟢 RENDER DANH SÁCH TRUYỆN TRANH
- * Đảm bảo tên thuộc tính khớp với C# (thường là PascalCase nếu không cấu hình JSON CamelCase)
  */
-function renderComics(comics, containerId) {
+window.renderComics = function(comics, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -32,7 +31,7 @@ function renderComics(comics, containerId) {
 /**
  * 🟢 RENDER DANH SÁCH CHƯƠNG TRUYỆN
  */
-function renderChapters(chapters, containerId) {
+window.renderChapters = function(chapters, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -41,7 +40,6 @@ function renderChapters(chapters, containerId) {
     return;
   }
 
-  // Sắp xếp chương từ cao xuống thấp (Chương mới nhất trước)
   const sortedChapters = [...chapters].sort((a, b) => b.chapterNumber - a.chapterNumber);
 
   container.innerHTML = sortedChapters.map(chapter => `
@@ -52,17 +50,18 @@ function renderChapters(chapters, containerId) {
     </div>
   `).join('');
 }
+
 // Đóng/Mở Modal
-function toggleAuthModal(show) {
+window.toggleAuthModal = function(show) {
     document.getElementById('auth-modal').style.display = show ? 'flex' : 'none';
 }
 
 // Chuyển đổi giữa Login và Register
-function switchForm(type) {
+window.switchForm = function(type) {
     const container = document.getElementById('auth-form-container');
     const title = document.getElementById('modal-title');
     if (type === 'register') {
-        title.innerText = "Đăng Ký";
+        if(title) title.innerText = "Đăng Ký";
         container.innerHTML = `
             <form>
                 <div class="form-group"><input type="text" placeholder="Tên đăng nhập" required></div>
@@ -73,7 +72,6 @@ function switchForm(type) {
             <p style="margin-top: 1rem; text-align: center;">Đã có tài khoản? <a href="#" onclick="switchForm('login')">Đăng nhập</a></p>
         `;
     } else {
-        // Tái tạo lại form login y hệt lúc đầu
         location.reload(); 
     }
 }
