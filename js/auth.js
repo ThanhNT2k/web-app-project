@@ -1,128 +1,232 @@
 /**
- * auth.js - Xử lý Authentication & Phân quyền ứng dụng
+<<<<<<< HEAD
+ * auth.js - Authentication API Module
+ * Handles user registration, login, logout, and session management
+ * Includes role-based access control helpers
+ * Uses API wrapper from api.js for HTTP communication
  */
 
-// 1. Import cấu hình bảo mật
-// Nếu dùng type="module", hãy giữ import này. 
-// Nếu không, hãy đảm bảo config.js được load trước file này trong HTML
-import { supabaseConfig } from './config.js';
-
-// Khởi tạo Supabase client dùng cấu hình từ config.js
-const supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+// Re-export from api.js for convenience
+import { apiCall, setToken, getToken, clearToken } from './api.js';
 
 /**
- * Xử lý sau khi đăng nhập thành công (Đã gộp logic)
+ * Store user role in localStorage
  */
-async function handleLoginSuccess(token) {
-    try {
-        localStorage.setItem('token', token);
-
-        // Gọi API profile để lấy thông tin (đảm bảo hàm getProfile có trong api.js)
-        const profile = await getProfile(); 
-
-        localStorage.setItem('userName', profile.username || 'Thành viên');
-        localStorage.setItem('role', profile.role || 'User');
-        localStorage.setItem('avatarUrl', profile.avatarUrl || '');
-        localStorage.setItem('userId', profile.id || '');
-
-        return profile;
-    } catch (error) {
-        console.error('Lỗi đồng bộ thông tin phân quyền:', error);
-        clearAuthStorage();
-        throw new Error('Không thể thiết lập phiên đăng nhập!');
-    }
+function setRole(role) {
+  if (role) {
+    localStorage.setItem('userRole', role);
+  }
 }
 
-// ĐĂNG NHẬP
-async function login(email, password) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    await handleLoginSuccess(data.session.access_token);
-    return data;
+/**
+ * Get user role from localStorage
+ */
+function getRole() {
+  return localStorage.getItem('userRole');
 }
 
-// ĐĂNG KÝ
-async function register(email, password, username) {
-    const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: { data: { username: username } }
+/**
+ * Clear user role from localStorage
+ */
+function clearRole() {
+  localStorage.removeItem('userRole');
+}
+
+/**
+ * Register a new user
+ * POST /api/auth/register
+ * @param {Object} credentials - {username, email, password}
+ * @returns {Promise<Object>} - {success, data: {user, token}, error}
+ */
+export async function register(credentials) {
+  try {
+    const response = await apiCall('/auth/register', 'POST', {
+      username: credentials.username,
+      email: credentials.email,
+      password: credentials.password
     });
-    if (error) throw error;
-    return data;
-}
 
-// --- CÁC HÀM QUẢN LÝ TRẠNG THÁI ---
+    if (response && response.token) {
+      setToken(response.token);
+      // Store user role from response (typically 'user' for new registrations)
+      if (response.user && response.user.role) {
+        setRole(response.user.role.toLowerCase());
+      } else {
+        // Default to user role if not provided
+        setRole('user');
+      }
+      return {
+        success: true,
+        data: {
+          user: response.user,
+          token: response.token
+        }
+      };
+    }
 
-function logout() {
-    clearAuthStorage();
-    window.location.href = '/index.html';
-}
-
-function clearAuthStorage() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('role');
-    localStorage.removeItem('avatarUrl');
-    localStorage.removeItem('userId');
-}
-
-function isLoggedIn() {
-    return !!localStorage.getItem('token');
-}
-
-function getCurrentUser() {
     return {
-        userName: localStorage.getItem('userName'),
-        role: localStorage.getItem('role'),
-        token: localStorage.getItem('token'),
-        avatarUrl: localStorage.getItem('avatarUrl'),
-        userId: localStorage.getItem('userId')
+      success: false,
+      error: response?.error || 'Registration failed'
     };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
-// --- PHÂN QUYỀN ---
+/**
+ * Login user
+ * POST /api/auth/login
+ * @param {Object} credentials - {username, password} or {email, password}
+ * @returns {Promise<Object>} - {success, data: {user, token}, error}
+ */
+export async function login(credentials) {
+  try {
+    const response = await apiCall('/auth/login', 'POST', {
+      username: credentials.username || credentials.email,
+      password: credentials.password
+    });
 
-function isAdmin() {
-    return localStorage.getItem('role') === 'Admin';
-}
-
-function isUploader() {
-    const role = localStorage.getItem('role');
-    return role === 'Uploader' || role === 'Admin';
-}
-
-function requireLogin() {
-    if (!isLoggedIn()) {
-        alert('Vui lòng đăng nhập để tiếp tục!');
-        window.location.href = '/pages/account.html';
+    if (response && response.token) {
+      setToken(response.token);
+      // Store user role from response (normalized to lowercase)
+      if (response.user && response.user.role) {
+        setRole(response.user.role.toLowerCase());
+      }
+      return {
+        success: true,
+        data: {
+          user: response.user,
+          token: response.token
+        }
+      };
     }
+
+    return {
+      success: false,
+      error: response?.error || 'Login failed'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
-function requireAdmin() {
-    if (!isAdmin()) {
-        alert('Truy cập bị từ chối!');
-        window.location.href = '/index.html';
+/**
+ * Logout user
+ * POST /api/auth/logout
+ * @returns {Promise<Object>} - {success, warning}
+ */
+export async function logout() {
+  try {
+    await apiCall('/auth/logout', 'POST');
+    clearToken();
+    clearRole();  // Clear role on logout
+    return { success: true };
+  } catch (error) {
+    // Even if API call fails, clear local token and role
+    clearToken();
+    clearRole();
+    return {
+      success: true,
+      warning: error.message
+    };
+  }
+}
+
+/**
+ * Get current authenticated user
+ * GET /api/users/me
+ * @returns {Promise<Object>} - {success, data: user, error}
+ */
+export async function getCurrentUser() {
+  try {
+    const token = getToken();
+    if (!token) {
+      return {
+        success: false,
+        error: 'No token found'
+      };
     }
-}
 
-// --- GIAO DIỆN NAVBAR ---
+    const response = await apiCall('/users/me', 'GET');
 
-function syncNavbarUI() {
-    const authLinks = document.getElementById('auth-links');
-    if (!authLinks) return;
-
-    const user = getCurrentUser();
-    if (user && user.token) {
-        authLinks.innerHTML = `
-            <a href="/pages/profile.html" class="nav-link">👤 ${user.userName}</a>
-            <a href="javascript:void(0)" onclick="logout()" class="nav-link">Đăng xuất</a>
-        `;
-    } else {
-        authLinks.innerHTML = `
-            <a href="javascript:void(0)" class="nav-link" onclick="toggleAuthModal(true)">Đăng nhập</a>
-        `;
+    return {
+      success: true,
+      data: response
+    };
+  } catch (error) {
+    // Clear token if it's invalid
+    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      clearToken();
+      clearRole();
     }
+
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
-document.addEventListener('DOMContentLoaded', syncNavbarUI);
+/**
+ * Check if user is authenticated
+ * @returns {boolean}
+ */
+export function isAuthenticated() {
+  return !!getToken();
+}
+
+/**
+ * Get stored auth token
+ * @returns {string|null}
+ */
+export function getAuthToken() {
+  return getToken();
+}
+
+/**
+ * Check if user is an Admin
+ * @returns {boolean}
+ */
+export function isAdmin() {
+  return getRole() === 'admin';
+}
+
+/**
+ * Check if user is an Uploader
+ * @returns {boolean}
+ */
+export function isUploader() {
+  return getRole() === 'uploader';
+}
+
+/**
+ * Check if user is a regular User
+ * @returns {boolean}
+ */
+export function isUser() {
+  return getRole() === 'user';
+}
+
+/**
+ * Check if user can manage content (Admin or Uploader)
+ * @returns {boolean}
+ */
+export function canManageContent() {
+  const role = getRole();
+  return role === 'admin' || role === 'uploader';
+}
+
+/**
+ * Get current user's role
+ * @returns {string|null}
+ */
+export function getUserRole() {
+  return getRole();
+}
+// End of file - kept HEAD implementation (exports and lowercase roles)
