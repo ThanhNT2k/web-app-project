@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMC Truyện - Trang Chủ</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Header / Navbar -->
+    <header>
+        <div class="navbar">
+            <a href="/index.html" class="logo">📚 CMC Truyện</a>
+            <nav>
+                <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
+                <a href="/pages/story.html?genre=all" class="nav-link">Thể Loại</a>
+                <div id="auth-links">
+                    <a href="#" class="nav-link" onclick="toggleAuthModal(true)">Đăng nhập</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" style="text-align: center; padding: 3rem 0; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; border-radius: 8px; margin-bottom: 3rem;">
+            <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Chào mừng đến CMC Truyện</h1>
+            <p style="font-size: 1.1rem; margin-bottom: 2rem; opacity: 0.9;">Thư viện truyện online lớn nhất - Đọc truyện yêu thích anytime, anywhere</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/pages/story.html" class="btn btn-secondary" style="background: white; color: var(--primary-color);">Bắt đầu đọc</a>
+                <a href="/pages/story.html" class="btn" style="background: rgba(255,255,255,0.2); color: white;">Khám phá thêm</a>
+            </div>
+        </section>
+
+        <!-- Featured Section -->
+        <section>
+            <h2 style="margin-bottom: 2rem; color: var(--primary-color);">📖 Truyện Nổi Bật</h2>
+            <div id="featured-stories" class="stories-grid">
+                <div class="loading">Đang tải truyện...</div>
+            </div>
+        </section>
+
+        <!-- Genres Section -->
+        <section style="margin-top: 4rem;">
+            <h2 style="margin-bottom: 2rem; color: var(--primary-color);">🏷️ Thể Loại Phổ Biến</h2>
+            <div id="genres-list" class="genres-grid">
+                <div class="loading">Đang tải thể loại...</div>
+            </div>
+        </section>
+
+        <!-- Recently Updated -->
+        <section style="margin-top: 4rem; margin-bottom: 3rem;">
+            <h2 style="margin-bottom: 2rem; color: var(--primary-color);">⚡ Cập Nhật Gần Đây</h2>
+            <div id="recent-stories" class="stories-grid">
+                <div class="loading">Đang tải truyện...</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 CMC Truyện. Tất cả quyền được bảo lưu.</p>
+        <p>Liên hệ: support@cmctruyện.com | Điều khoản sử dụng | Chính sách bảo mật</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Load dữ liệu trang chủ từ ASP.NET Core Backend
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 1. Gọi hàm getComics công khai mới từ api.js (Lấy trang 1, tối đa 12 bộ)
+                const response = await getComics(1, 12, null, 'created_at');
+                
+                // Bóc tách dữ liệu linh hoạt (nếu backend trả về dạng object phân trang { items: [...] } hoặc mảng thuần)
+                const comics = response.items || response || [];
+
+                if (comics && comics.length > 0) {
+                    // Lấy 6 truyện đầu tiên để hiển thị vào mục "Truyện Nổi Bật"
+                    const featuredComics = comics.slice(0, 6); 
+                    renderComics(featuredComics, 'featured-stories'); // Đã đồng bộ sang renderComics trong main.js
+                    
+                    // Lấy 3 truyện để render vào phần "Cập nhật gần đây"
+                    const recentComics = comics.slice(0, 3);
+                    renderComics(recentComics, 'recent-stories');
+                } else {
+                    document.getElementById('featured-stories').innerHTML = '<p class="no-data">Hiện tại chưa có truyện nào được đăng tải.</p>';
+                    document.getElementById('recent-stories').innerHTML = '<p class="no-data">Không có cập nhật mới.</p>';
+                }
+
+                // 2. Load danh sách các thể loại truyện công khai từ DB
+                const genres = await getGenres().catch(() => []);
+                if (genres && genres.length > 0) {
+                    renderHomeGenres(genres.slice(0, 6), 'genres-list');
+                } else {
+                    document.getElementById('genres-list').innerHTML = '<p class="no-data">Đang cập nhật thể loại...</p>';
+                }
+            } catch (error) {
+                console.error('Lỗi tải dữ liệu trang chủ:', error);
+                // Kiểm tra xem hàm showNotification từ main.js đã sẵn sàng chưa trước khi gọi
+                if (typeof showNotification === 'function') {
+                    showNotification('Không thể kết nối tới máy chủ Backend!', 'error');
+                }
+                
+                document.getElementById('featured-stories').innerHTML = '<p class="no-data" style="color:#ef4444;">Lỗi tải dữ liệu. Vui lòng thử lại sau.</p>';
+                document.getElementById('recent-stories').innerHTML = '<p class="no-data" style="color:#ef4444;">Lỗi tải dữ liệu.</p>';
+            }
+        });
+
+        /**
+         * Hàm bổ trợ kết xuất danh sách Thể loại ngay tại trang chủ
+         */
+        function renderHomeGenres(genres, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.innerHTML = genres.map(genre => `
+                <a href="/pages/story.html?genre=${genre.slug || genre.id}" class="genre-item" style="text-decoration: none; display: inline-block;">
+                    ${genre.name}
+                </a>
+            `).join('');
+        }
+    </script>
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
+        <h2 id="modal-title">Đăng Nhập</h2>
+        <div id="auth-form-container">
+            <form id="login-form">
+                <div class="form-group"><input type="email" placeholder="Email" required></div>
+                <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
+                <button type="submit" class="btn btn-primary">Đăng Nhập</button>
+            </form>
+            <p style="margin-top: 1rem; text-align: center;">
+                Chưa có tài khoản? <a href="#" onclick="switchForm('register')">Đăng ký ngay</a>
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

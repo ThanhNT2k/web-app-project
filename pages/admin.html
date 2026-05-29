@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - CMC Truyện</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, var(--danger-color), var(--warning-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .admin-header h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-nav button {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .admin-nav button.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .admin-nav button:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .admin-content {
+            display: none;
+        }
+
+        .admin-content.active {
+            display: block;
+        }
+
+        .admin-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            max-width: 800px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-full {
+            grid-column: 1 / -1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-card .label {
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        .action-btn {
+            padding: 0.5rem 0.75rem;
+            margin-right: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-nav {
+                flex-direction: column;
+            }
+
+            .admin-nav button {
+                width: 100%;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/index.html" class="logo">📚 CMC Truyện</a>
+            <nav>
+                <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
+                <a href="/pages/profile.html" class="nav-link">Profile</a>
+                <div id="auth-links">
+                    <a href="javascript:void(0)" class="nav-link" onclick="toggleAuthModal(true)">Đăng nhập</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="admin-header">
+            <h1>🔐 Admin Panel</h1>
+            <p>Quản lý truyện, người dùng và nội dung</p>
+        </div>
+
+        <div class="admin-nav">
+            <button class="admin-tab-btn active" data-admin-tab="dashboard">📊 Tổng quan</button>
+            <button class="admin-tab-btn" data-admin-tab="add-story">➕ Thêm Truyện</button>
+            <button class="admin-tab-btn" data-admin-tab="manage-stories">📚 Quản Lý Truyện</button>
+            <button class="admin-tab-btn" data-admin-tab="manage-users">👥 Quản Lý Thành viên</button>
+            <button class="admin-tab-btn" data-admin-tab="reports">📈 Báo Cáo</button>
+        </div>
+
+        <div id="dashboard" class="admin-content active">
+            <h2 style="margin-bottom: 2rem;">📊 Dashboard Thống Kê</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number" id="total-stories">0</div>
+                    <div class="label">Tổng Truyện</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="total-users">0</div>
+                    <div class="label">Tổng Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="total-chapters">0</div>
+                    <div class="label">Tổng Chương</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="total-views">0</div>
+                    <div class="label">Tổng Lượt Xem</div>
+                </div>
+            </div>
+
+            <h3 style="margin: 2rem 0 1rem;">📖 Truyện Mới Cập Nhật</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên Truyện</th>
+                            <th>Tác Giả</th>
+                            <th>Trạng Thái</th>
+                            <th>Lượt Xem</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-stories-table">
+                        <tr><td colspan="6" class="text-center">Đang tải dữ liệu hệ thống...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="add-story" class="admin-content">
+            <h2 style="margin-bottom: 2rem;">➕ Thêm Bộ Truyện Mới</h2>
+            <div class="admin-form">
+                <form id="add-story-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="story-title">Tên Truyện:</label>
+                            <input type="text" id="story-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="story-author">Tác Giả:</label>
+                            <input type="text" id="story-author" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="story-genre">Thể Loại:</label>
+                            <input type="text" id="story-genre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="story-status">Trạng Thái:</label>
+                            <select id="story-status">
+                                <option value="Ongoing">Đang cập nhật (Ongoing)</option>
+                                <option value="Full">Hoàn thành (Full)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label for="story-description">Mô Tả Nội Dung:</label>
+                        <textarea id="story-description" rows="5" required></textarea>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label for="story-cover">Đường Dẫn Ảnh Bìa (Cover Image URL):</label>
+                        <input type="text" id="story-cover" placeholder="https://example.com/image.jpg">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Tạo Truyện & Đồng Bộ</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="manage-stories" class="admin-content">
+            <h2 style="margin-bottom: 2rem;">📚 Danh Sách Quản Lý Truyện</h2>
+            <div class="admin-form" style="margin-bottom: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <input type="text" id="search-stories" placeholder="Tìm kiếm bộ truyện nhanh...">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên Truyện</th>
+                            <th>Tác Giả</th>
+                            <th>Thể Loại</th>
+                            <th>Trạng Thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stories-table">
+                        <tr><td colspan="6" class="text-center">Đang tải danh sách truyện...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="manage-users" class="admin-content">
+            <h2 style="margin-bottom: 2rem;">👥 Quản Lý Người Dùng Hệ Thống</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên Người Dùng</th>
+                            <th>Email</th>
+                            <th>Vai Trò</th>
+                            <th>Trạng Thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table">
+                        <tr><td colspan="6" class="text-center">Chức năng nạp danh sách User đang cấu hình...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="reports" class="admin-content">
+            <h2 style="margin-bottom: 2rem;">📈 Trung Tâm Báo Cáo</h2>
+            <div style="background: white; padding: 2rem; border-radius: 8px; box-shadow: var(--shadow);">
+                <p style="color: var(--text-light); margin-bottom: 1rem;">Báo cáo chi tiết về tương tác truyện, tăng trưởng người dùng và hiệu năng hoạt động hệ thống.</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <button class="btn btn-primary">Báo Cáo Tổng Thể</button>
+                    <button class="btn btn-secondary">Xuất Dữ Liệu PDF</button>
+                    <button class="btn btn-primary">Thống Kê Tuần</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 CMC Truyện. Tất cả quyền được bảo lưu.</p>
+    </footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        // 1. Chặn đứng ngay lập tức nếu không phải Admin hệ thống
+        requireAdmin();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 2. Logic điều hướng chuyển đổi các Tab mượt mà không lỗi ID
+            document.querySelectorAll('.admin-nav button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Cập nhật trạng thái Active trên thanh menu điều hướng
+                    document.querySelectorAll('.admin-nav button').forEach(b => b.classList.remove('active'));
+                    const currentTarget = e.currentTarget;
+                    currentTarget.classList.add('active');
+
+                    // Lấy ID tab từ thuộc tính data-admin-tab một cách chính xác
+                    const targetTabId = currentTarget.getAttribute('data-admin-tab');
+                    
+                    // Ẩn toàn bộ các section nội dung và kích hoạt section được lựa chọn
+                    document.querySelectorAll('.admin-content').forEach(tab => tab.classList.remove('active'));
+                    const activeContent = document.getElementById(targetTabId);
+                    if (activeContent) {
+                        activeContent.classList.add('active');
+                    }
+                });
+            });
+
+            // 3. Nạp toàn bộ dữ liệu thực tế lên Dashboard thống kê khi load trang
+            loadAdminDashboard();
+
+            // 4. Xử lý sự kiện Submit Form tạo truyện mới & Tự động xử lý chuỗi Sinh Slug sạch
+            document.getElementById('add-story-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    const titleValue = document.getElementById('story-title').value;
+                    
+                    // Xử lý chuẩn hóa Tiêu đề sang Slug tiếng Việt không dấu sạch đẹp
+                    const slugValue = titleValue.toLowerCase()
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Loại bỏ các dấu thanh
+                        .replace(/[^\w\s-]/g, '')                         // Loại bỏ toàn bộ ký tự đặc biệt
+                        .trim().replace(/[\s_-]+/g, '-')                 // Thay khoảng trắng thành dấu gạch ngang (-)
+                        .replace(/^-+|-+$/g, '');                         // Cắt bỏ gạch ngang thừa ở đầu/cuối
+
+                    const comicData = {
+                        title: titleValue,
+                        slug: slugValue,
+                        author: document.getElementById('story-author').value,
+                        genre: document.getElementById('story-genre').value,
+                        status: document.getElementById('story-status').value,
+                        description: document.getElementById('story-description').value,
+                        coverUrl: document.getElementById('story-cover').value
+                    };
+
+                    // Gọi hàm API phân quyền xử lý dữ liệu từ backend
+                    await createComic(comicData);
+                    
+                    if (typeof showNotification === 'function') {
+                        showNotification('Bộ truyện mới đã được khởi tạo và đồng bộ lên Database thành công!', 'success');
+                    } else {
+                        alert('Truyện đã được tạo thành công!');
+                    }
+                    
+                    document.getElementById('add-story-form').reset();
+                    loadAdminDashboard(); // Refresh lại dữ liệu bảng ngay lập tức
+                } catch (error) {
+                    if (typeof showNotification === 'function') {
+                        showNotification(`Lỗi khởi tạo truyện: ${error.message}`, 'error');
+                    } else {
+                        alert(`Lỗi: ${error.message}`);
+                    }
+                }
+            });
+
+            // 5. Logic tìm kiếm truyện cục bộ trong bảng (Phát triển mở rộng thêm)
+            document.getElementById('search-stories').addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('#stories-table tr');
+                
+                rows.forEach(row => {
+                    if (row.firstElementChild && row.firstElementChild.colSpan > 1) return; // Bỏ qua hàng trạng thái trống/đang tải
+                    const titleText = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
+                    const authorText = row.children[2] ? row.children[2].textContent.toLowerCase() : '';
+                    
+                    if (titleText.includes(keyword) || authorText.includes(keyword)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // 6. Hàm gọi API nạp và đồng bộ cấu trúc dữ liệu thực tế lên Dashboard Quản trị
+        async function loadAdminDashboard() {
+            try {
+                // Gọi API getComics (Lấy trang đầu tiên, nạp tối đa 100 bản ghi phục vụ phân phối dữ liệu điều hướng quản lý)
+                const res = await getComics(1, 100) || {};
+                const comics = res.items || res || [];
+
+                // Cập nhật số liệu tổng quan lên giao diện
+                const totalStoriesEl = document.getElementById('total-stories');
+                if (totalStoriesEl) totalStoriesEl.textContent = comics.length;
+                
+                // Đồng bộ chính xác thuộc tính camelCase từ Database .NET Core API mới (id, title, author, status, totalViews)
+                const tableHtml = comics.length > 0 ? comics.map(comic => `
+                    <tr id="comic-row-${comic.id}">
+                        <td>${comic.id}</td>
+                        <td><strong>${comic.title || comic.name}</strong></td>
+                        <td>${comic.author || 'Chưa rõ'}</td>
+                        <td>${comic.genre || 'Mặc định'}</td>
+                        <td><span class="story-status">${comic.status || 'Ongoing'}</span></td>
+                        <td>
+                            <button class="btn btn-danger action-btn" onclick="executeDeleteComic(${comic.id})">Xóa</button>
+                        </td>
+                    </tr>
+                `).join('') : `<tr><td colspan="6" class="text-center" style="color: var(--text-light);">Hệ thống chưa có bộ truyện nào.</td></tr>`;
+
+                // Đổ dữ liệu đồng bộ vào bảng "Truyện mới cập nhật" (Tab Tổng quan)
+                const recentTable = document.getElementById('recent-stories-table');
+                if (recentTable) recentTable.innerHTML = tableHtml;
+
+                // Đổ dữ liệu đồng bộ vào bảng chính "Quản lý truyện" (Tab Quản lý truyện)
+                const storiesTable = document.getElementById('stories-table');
+                if (storiesTable) storiesTable.innerHTML = tableHtml;
+
+            } catch (error) {
+                console.error('Lỗi nạp dữ liệu Hệ thống Admin Dashboard:', error);
+            }
+        }
+
+        // 7. Hàm xử lý xóa vĩnh viễn Thành viên khỏi cơ sở dữ liệu qua Admin Controller
+        async function executeDeleteUser(userId) {
+            if (!userId) return;
+            if (confirm('🚨 CẢNH BÁO TỐI CAO: Bạn có chắc chắn muốn xóa vĩnh viễn Thành viên này khỏi hệ thống không?')) {
+                try {
+                    // Gọi hàm adminDeleteUser tới endpoint `/api/users/admin/manage-user/{id}` trong api.js
+                    await adminDeleteUser(userId);
+                    if (typeof showNotification === 'function') {
+                        showNotification('Đã thực thi lệnh loại bỏ Thành viên khỏi hệ thống thành công!', 'success');
+                    }
+                    // Gọi hàm tải danh sách user để refresh lại nếu bạn đã phát triển xong hàm loadUsers()
+                } catch (error) {
+                    if (typeof showNotification === 'function') {
+                        showNotification(`Thất bại: ${error.message}`, 'error');
+                    }
+                }
+            }
+        }
+
+        // 8. Hàm xử lý xóa gỡ bỏ truyện tranh khỏi Database
+        async function executeDeleteComic(comicId) {
+            if (!comicId) return;
+            if (confirm('Bạn có chắc chắn muốn gỡ bỏ hoàn toàn bộ truyện tranh này cùng toàn bộ chương liên quan không?')) {
+                try {
+                    // Sau khi bổ sung hàm deleteComic trong api.js, bạn chỉ cần bỏ comment dòng dưới:
+                    // await deleteComic(comicId);
+                    
+                    if (typeof showNotification === 'function') {
+                        showNotification('Đã thực thi yêu cầu gỡ bỏ truyện tranh khỏi hệ thống!', 'success');
+                    }
+                    const row = document.getElementById(`comic-row-${comicId}`);
+                    if (row) row.remove();
+                } catch (error) {
+                    alert(`Lỗi thực thi: ${error.message}`);
+                }
+            }
+        }
+    </script>
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
+        <h2>Đăng Nhập</h2>
+        <div id="auth-form-container">
+            <form id="login-form">
+                <div class="form-group"><input type="email" placeholder="Email" required></div>
+                <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
+                <button type="submit" class="btn btn-primary">ĐĂNG NHẬP</button>
+            </form>
+            <p style="margin-top: 1rem; text-align: center; color: #6b7280;">
+                Chưa có tài khoản? <a href="#" onclick="switchForm('register')">Đăng ký ngay</a>
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

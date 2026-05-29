@@ -1,0 +1,24 @@
+{
+  "name": "web-app-project",
+  "version": "1.0.0",
+  "description": "Kho lưu trữ này chứa toàn bộ mã nguồn, tài liệu và các bài tập thuộc học phần **Phát triển Ứng dụng Web**. Dự án tập trung vào việc xây dựng một ứng dụng web hoàn chỉnh từ giao diện người dùng (Frontend) đến hệ thống xử lý và cơ sở dữ liệu (Backend).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThanhNT2k/web-app-project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ThanhNT2k/web-app-project/issues"
+  },
+  "homepage": "https://github.com/ThanhNT2k/web-app-project#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
