@@ -41,74 +41,87 @@
         </div>
     </main>
 
-    <script type="module">
-        import { login } from '../js/auth.js';
-
+    <script>
         const BACKEND_URL = "https://webappbe-fzz7.onrender.com";
 
-        // Hiệu ứng chuyển đổi form qua lại
-        document.getElementById('go-to-register').addEventListener('click', () => {
-            document.getElementById('login-box').classList.add('hidden');
-            document.getElementById('register-box').classList.remove('hidden');
-        });
+        // Chờ HTML tải xong để gắn sự kiện nút bấm
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("Hệ thống Script Độc Lập đã khởi động thành công!");
 
-        document.getElementById('go-to-login').addEventListener('click', () => {
-            document.getElementById('register-box').classList.add('hidden');
-            document.getElementById('login-box').classList.remove('hidden');
-        });
+            // Hiệu ứng chuyển đổi form qua lại
+            document.getElementById('go-to-register').addEventListener('click', () => {
+                document.getElementById('login-box').classList.add('hidden');
+                document.getElementById('register-box').classList.remove('hidden');
+            });
 
-        // --- XỬ LÝ SỰ KIỆN ĐĂNG KÝ (GỌI THẲNG API ĐỂ TRÁNH NUỐT LOG) ---
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            console.log("-> Bắt đầu submit Đăng ký lên Backend thực tế");
+            document.getElementById('go-to-login').addEventListener('click', () => {
+                document.getElementById('register-box').classList.add('hidden');
+                document.getElementById('login-box').classList.remove('hidden');
+            });
 
-            const username = document.getElementById('register-username').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
+            // --- XỬ LÝ SỰ KIỆN ĐĂNG KÝ ---
+            document.getElementById('register-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log("-> Kích hoạt sự kiện Đăng ký");
 
-            try {
-                // Tự fetch trực tiếp để kiểm tra kết nối API
-                const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
-                });
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
 
-                console.log("Mã trạng thái phản hồi từ Server:", response.status);
+                try {
+                    const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, email, password })
+                    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("Dữ liệu đăng ký trả về:", data);
-                    alert('Đăng ký tài khoản thử nghiệm THÀNH CÔNG!');
-                    document.getElementById('go-to-login').click(); 
-                } else {
-                    const errorText = await response.text();
-                    console.error("Backend từ chối xử lý:", errorText);
-                    alert(`Đăng ký thất bại (Lỗi ${response.status}): ${errorText || 'Không có phản hồi từ endpoint'}`);
+                    console.log("Status phản hồi từ Server:", response.status);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        alert('Đăng ký thử nghiệm THÀNH CÔNG!');
+                        document.getElementById('go-to-login').click(); 
+                    } else {
+                        const errorText = await response.text();
+                        alert(`Lỗi Đăng ký (${response.status}): ${errorText}`);
+                    }
+                } catch (err) {
+                    console.error("Lỗi mạng:", err);
+                    alert('Lỗi kết nối mạng: ' + err.message);
                 }
-            } catch (err) {
-                console.error("Lỗi kết nối mạng/CORS:", err);
-                alert('Không thể kết nối tới Server Backend: ' + err.message);
-            }
-        });
+            });
 
-        // --- XỬ LÝ SỰ KIỆN ĐĂNG NHẬP ---
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            console.log("-> Bấm nút Đăng nhập");
+            // --- XỬ LÝ SỰ KIỆN ĐĂNG NHẬP ---
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log("-> Kích hoạt sự kiện Đăng nhập");
 
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
 
-            const result = await login({ email, password });
+                try {
+                    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: email, password: password })
+                    });
 
-            if (result.success) {
-                alert('Đăng nhập thành công!');
-                window.location.href = '/pages/profile.html';
-            } else {
-                console.error("Lỗi Đăng nhập từ API:", result.error);
-                alert('Đăng nhập thất bại: ' + result.error);
-            }
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Lưu token thẳng vào localStorage
+                        if (data.token || data.Token) {
+                            localStorage.setItem('token', data.token || data.Token);
+                        }
+                        alert('Đăng nhập thành công!');
+                        window.location.href = '/pages/profile.html';
+                    } else {
+                        alert('Đăng nhập thất bại: Sai tài khoản hoặc mật khẩu');
+                    }
+                } catch (err) {
+                    console.error("Lỗi mạng:", err);
+                    alert('Lỗi kết nối mạng: ' + err.message);
+                }
+            });
         });
     </script>
 </body>
