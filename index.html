@@ -118,7 +118,6 @@
     <script>
         const BACKEND_URL = "https://webappbe-fzz7.onrender.com";
 
-        // Định nghĩa hàm mở/đóng modal ra phạm vi global để thuộc tính onclick nhận được
         window.toggleAuthModal = function(show) {
             const modal = document.getElementById('auth-modal');
             if (modal) {
@@ -126,7 +125,6 @@
             }
         };
 
-        // Định nghĩa hàm chuyển đổi giữa 2 form Đăng nhập / Đăng ký
         window.switchForm = function(formType) {
             const loginBox = document.getElementById('login-box');
             const registerBox = document.getElementById('register-box');
@@ -140,17 +138,15 @@
             }
         };
 
-        // Chờ tài liệu sẵn sàng để lắng nghe sự kiện Submit dữ liệu công khai
         document.addEventListener("DOMContentLoaded", () => {
             console.log("-> Hệ thống Form Pop-up trang chủ hoạt động!");
 
-            // Xử lý đóng modal khi click trượt ra vùng phông tối
             const modal = document.getElementById('auth-modal');
             window.addEventListener('click', (e) => {
                 if (e.target === modal) window.toggleAuthModal(false);
             });
 
-            // --- XỬ LÝ ĐĂNG KÝ BẰNG FETCH TRỰC TIẾP ---
+            // --- XỬ LÝ ĐĂNG KÝ ---
             document.getElementById('register-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 console.log("-> Kích hoạt gửi dữ liệu Đăng ký lên Backend");
@@ -166,11 +162,9 @@
                         body: JSON.stringify({ username, email, password })
                     });
 
-                    console.log("Status phản hồi Đăng ký:", response.status);
-
                     if (response.ok) {
                         alert('Đăng ký tài khoản thành công!');
-                        window.switchForm('login'); // Chuyển ngay sang form đăng nhập
+                        window.switchForm('login');
                     } else {
                         const errorText = await response.text();
                         alert(`Đăng ký thất bại (${response.status}): ${errorText}`);
@@ -181,7 +175,7 @@
                 }
             });
 
-            // --- XỬ LÝ ĐĂNG NHẬP BẰNG FETCH TRỰC TIẾP ---
+            // --- XỬ LÝ ĐĂNG NHẬP (ĐÃ CHUẨN HÓA ĐỌC PHẢN HỒI LỖI) ---
             document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 console.log("-> Kích hoạt gửi dữ liệu Đăng nhập lên Backend");
@@ -196,21 +190,25 @@
                         body: JSON.stringify({ username: email, password: password })
                     });
 
+                    console.log("Mã trạng thái phản hồi Đăng nhập:", response.status);
+
                     if (response.ok) {
                         const data = await response.json();
-                        // Lưu token vào bộ nhớ trình duyệt
-                        if (data.token || data.Token) {
-                            localStorage.setItem('token', data.token || data.Token);
+                        const token = data.token || data.Token || data.data?.token;
+                        if (token) {
+                            localStorage.setItem('token', token);
                         }
                         alert('Đăng nhập thành công!');
-                        window.toggleAuthModal(false); // Ẩn pop-up
-                        window.location.reload(); // Làm mới trang để cập nhật trạng thái session nếu cần
+                        window.toggleAuthModal(false);
+                        window.location.reload();
                     } else {
-                        alert('Đăng nhập thất bại: Sai tài khoản hoặc mật khẩu');
+                        // Đọc lỗi dạng text để tránh crash giao diện khi API trả về chuỗi thông thường
+                        const errorText = await response.text();
+                        alert(`Đăng nhập thất bại (Mã ${response.status}): ${errorText || 'Sai tài khoản hoặc mật khẩu.'}`);
                     }
                 } catch (err) {
-                    console.error(err);
-                    alert('Lỗi kết nối mạng: ' + err.message);
+                    console.error("Lỗi script đăng nhập:", err);
+                    alert('Lỗi hệ thống: ' + err.message);
                 }
             });
         });
