@@ -1,5 +1,4 @@
 /**
-<<<<<<< HEAD
  * auth.js - Authentication API Module
  * Handles user registration, login, logout, and session management
  * Includes role-based access control helpers
