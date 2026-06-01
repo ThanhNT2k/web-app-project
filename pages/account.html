@@ -5,35 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng Nhập / Đăng Ký - CMC Truyện</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Thêm CSS nhanh để ẩn/hiện giữa 2 form */
+        .hidden { display: none; }
+        .switch-auth { margin-top: 15px; text-align: center; font-size: 14px; }
+        .switch-auth a { color: #007bff; cursor: pointer; text-decoration: underline; }
+    </style>
 </head>
 <body>
     <main>
         <div class="auth-container">
-            <div class="auth-box">
+            <div class="auth-box" id="login-box">
                 <h2>Đăng Nhập</h2>
                 <form id="login-form">
-                    <div class="form-group"><input type="email" placeholder="Email" required></div>
-                    <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
+                    <div class="form-group"><input type="email" id="login-email" placeholder="Email" required></div>
+                    <div class="form-group"><input type="password" id="login-password" placeholder="Mật khẩu" required></div>
                     <button type="submit" class="btn btn-primary">ĐĂNG NHẬP</button>
                 </form>
+                <div class="switch-auth">
+                    Chưa có tài khoản? <a id="go-to-register">Đăng ký ngay</a>
+                </div>
+            </div>
+
+            <div class="auth-box hidden" id="register-box">
+                <h2>Đăng Ký Tài Khoản</h2>
+                <form id="register-form">
+                    <div class="form-group"><input type="email" id="register-email" placeholder="Email" required></div>
+                    <div class="form-group"><input type="password" id="register-password" placeholder="Mật khẩu" required></div>
+                    <button type="submit" class="btn btn-primary">ĐĂNG KÝ</button>
+                </form>
+                <div class="switch-auth">
+                    Đã có tài khoản? <a id="go-to-login">Đăng nhập</a>
+                </div>
             </div>
         </div>
     </main>
 
     <script src="../js/auth.js"></script>
     <script>
+        const BACKEND_URL = "https://webappbe-fzz7.onrender.com";
+
+        // Hiệu ứng chuyển đổi qua lại giữa Đăng ký và Đăng nhập
+        document.getElementById('go-to-register').addEventListener('click', () => {
+            document.getElementById('login-box').classList.add('hidden');
+            document.getElementById('register-box').classList.remove('hidden');
+        });
+
+        document.getElementById('go-to-login').addEventListener('click', () => {
+            document.getElementById('register-box').classList.add('hidden');
+            document.getElementById('login-box').classList.remove('hidden');
+        });
+
+        // --- XỬ LÝ ĐĂNG KÝ ---
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log("-> Bắt đầu submit Đăng ký");
+
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+
+            try {
+                // Gọi API Đăng ký tới Backend ASP.NET Core của bạn
+                const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: email, password: password }) // map đúng Model của C#
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || "Đăng ký thất bại từ Server");
+                }
+
+                alert('Đăng ký thành công! Hãy đăng nhập.');
+                document.getElementById('go-to-login').click(); // Chuyển về màn hình đăng nhập
+            } catch (err) {
+                console.error("Lỗi Đăng ký:", err);
+                alert('Lỗi: ' + err.message);
+            }
+        });
+
+        // --- XỬ LÝ ĐĂNG NHẬP ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = e.target[0].value;
-            const password = e.target[1].value;
+            console.log("-> Bắt đầu submit Đăng nhập");
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
             try {
-                // Giả sử bạn sử dụng supabaseClient
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                await handleLoginSuccess(data.session.access_token);
+                // Gọi API Đăng nhập tới Backend ASP.NET Core để lấy Token JWT
+                const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: email, password: password })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Sai tài khoản hoặc mật khẩu");
+                }
+
+                const data = await response.json(); // Nhận về cục { token: "ey..." }
+                
+                // Lưu token vào localStorage để dùng cho các request sau
+                localStorage.setItem('token', data.token);
+                console.log("Đã lưu Token thành công:", data.token);
+
+                alert('Đăng nhập thành công!');
                 window.location.href = '/pages/profile.html';
             } catch (err) {
-                alert('Đăng nhập thất bại: ' + err.message);
+                console.error("Lỗi Đăng nhập:", err);
+                alert('Thất bại: ' + err.message);
             }
         });
     </script>
