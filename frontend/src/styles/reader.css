@@ -1,0 +1,11 @@
+/* Gộp từ css/reader.css — thanh tiến độ khi cuộn chương */
+.reading-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #7c5cfc, var(--primary-color), #06b6d4);
+  z-index: 10000;
+  transition: width 0.12s ease-out;
+  border-radius: 0 2px 2px 0;
+}

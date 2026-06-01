@@ -1,0 +1,51 @@
+/* Dark mode is driven by [data-theme="dark"] on <html> — see main.css variables.
+   This file adds extra overrides for Bootstrap / reader pages. */
+
+[data-theme='dark'] body,
+body.dark-mode {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+[data-theme='dark'] .cmc-site-header {
+  background: var(--navbar-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme='dark'] .cmc-hero {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+}
+
+[data-theme='dark'] .story-reader,
+[data-theme='dark'] .ai-summary-card,
+[data-theme='dark'] .user-profile-card,
+[data-theme='dark'] .glass-panel,
+[data-theme='dark'] .comment-item,
+[data-theme='dark'] .reader-toolbar {
+  background-color: var(--surface) !important;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .list-group-item {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .list-group-item-action:hover {
+  background-color: var(--surface-elevated);
+}
+
+[data-theme='dark'] .btn-outline-secondary {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .progress {
+  background-color: var(--surface-elevated);
+}
+
+[data-theme='dark'] .navbar.cmc-navbar {
+  background: var(--navbar-bg) !important;
+}

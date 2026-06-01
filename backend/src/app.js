@@ -1,0 +1,71 @@
+const path = require('path');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+
+const env = require('./config/environment');
+const { uploadDir } = require('./middleware/upload');
+const authRoutes = require('./routes/authRoutes');
+const storyRoutes = require('./routes/storyRoutes');
+const readingHistoryRoutes = require('./routes/readingHistoryRoutes');
+const chapterRoutes = require('./routes/chapterRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+const followRoutes = require('./routes/followRoutes');
+const preferencesRoutes = require('./routes/preferencesRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const tagRoutes = require('./routes/tagRoutes');
+const apiRoutes = require('./routes');
+const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+
+const app = express();
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      // Allow all localhost ports during development
+      const localhostPattern = /^http:\/\/localhost(:\d+)?$/;
+      if (localhostPattern.test(origin)) return callback(null, true);
+      // Allow the configured frontend URL in production
+      if (origin === env.FRONTEND_URL) return callback(null, true);
+      return callback(new Error(`CORS: Origin ${origin} not allowed`));
+    },
+    credentials: true,
+  })
+);
+app.use(morgan(env.isDevelopment ? 'dev' : 'combined'));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads/covers', express.static(uploadDir));
+
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'CMC Truyen backend is running',
+    environment: env.NODE_ENV,
+  });
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api/stories', storyRoutes);
+app.use('/api/reading-history', readingHistoryRoutes);
+app.use('/api/chapters', chapterRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/follows', followRoutes);
+app.use('/api/preferences', preferencesRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/tags', tagRoutes);
+app.use('/api', apiRoutes);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+module.exports = app;
+module.exports.default = app;
