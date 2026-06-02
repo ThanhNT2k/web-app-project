@@ -170,26 +170,6 @@ function ChapterReaderPage() {
     };
   }, [isAuthenticated, saveProgress]);
 
-  // Keyboard navigation: ArrowLeft = previous chapter, ArrowRight = next chapter
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      // Don't trigger when user is typing in an input/textarea/contenteditable
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
-
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        handlePrevious();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        handleNext();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterIndex, chapters, chapter]);
-
   const chapterIndex = useMemo(
     () => chapters.findIndex((c) => String(c.id) === String(chapter?.id)),
     [chapters, chapter]
@@ -215,6 +195,27 @@ function ChapterReaderPage() {
       goToChapter(chapters[chapterIndex + 1].id);
     }
   };
+
+  // Keyboard navigation: ArrowLeft = previous chapter, ArrowRight = next chapter
+  // Must be declared AFTER chapterIndex, handlePrevious, handleNext
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePrevious();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterIndex, chapters, chapter]);
+
 
   const handleToggleBookmark = () => {
     const key = String(chapterId);
