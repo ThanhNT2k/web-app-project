@@ -50,28 +50,3 @@ window.renderChapters = function(chapters, containerId) {
     </div>
   `).join('');
 }
-
-// Đóng/Mở Modal
-window.toggleAuthModal = function(show) {
-    document.getElementById('auth-modal').style.display = show ? 'flex' : 'none';
-}
-
-// Chuyển đổi giữa Login và Register
-window.switchForm = function(type) {
-    const container = document.getElementById('auth-form-container');
-    const title = document.getElementById('modal-title');
-    if (type === 'register') {
-        if(title) title.innerText = "Đăng Ký";
-        container.innerHTML = `
-            <form>
-                <div class="form-group"><input type="text" placeholder="Tên đăng nhập" required></div>
-                <div class="form-group"><input type="email" placeholder="Email" required></div>
-                <div class="form-group"><input type="password" placeholder="Mật khẩu" required></div>
-                <button class="btn btn-primary">Đăng Ký</button>
-            </form>
-            <p style="margin-top: 1rem; text-align: center;">Đã có tài khoản? <a href="#" onclick="switchForm('login')">Đăng nhập</a></p>
-        `;
-    } else {
-        location.reload(); 
-    }
-}

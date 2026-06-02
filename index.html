@@ -121,7 +121,7 @@
 
         const BACKEND_URL = "https://webappbe-fzz7.onrender.com";
 
-        // Định nghĩa các hàm điều hướng giao diện trực tiếp vào window trong môi trường module
+        // Định nghĩa các hàm điều hướng giao diện trực tiếp vào window
         window.toggleAuthModal = function(show) {
             const modal = document.getElementById('auth-modal');
             if (modal) {
@@ -132,6 +132,8 @@
         window.switchForm = function(formType) {
             const loginBox = document.getElementById('login-box');
             const registerBox = document.getElementById('register-box');
+            if (!loginBox || !registerBox) return;
+
             if (formType === 'register') {
                 loginBox.classList.add('hidden');
                 registerBox.classList.remove('hidden');
@@ -151,25 +153,26 @@
             `).join('');
         };
 
-        // Khởi tạo toàn bộ sự kiện sau khi cây DOM đã sẵn sàng
+        // Hàm xử lý logic Đăng ký & Đăng nhập sau khi DOM hoàn tất nạp dữ liệu
         const initAuthentication = () => {
             console.log("-> Hệ thống Form Pop-up trang chủ hoạt động!");
 
-            // Đóng form khi click ra vùng nền tối
             const modal = document.getElementById('auth-modal');
-            window.addEventListener('click', (e) => {
-                if (e.target === modal) window.toggleAuthModal(false);
-            });
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) window.toggleAuthModal(false);
+                });
+            }
 
-            // --- XỬ LÝ SỰ KIỆN ĐĂNG KÝ ---
+            // --- TỐI ƯU SỰ KIỆN ĐĂNG KÝ ---
             const registerForm = document.getElementById('register-form');
             if (registerForm) {
                 registerForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     console.log("-> Kích hoạt gửi dữ liệu Đăng ký lên Backend");
 
-                    const username = document.getElementById('register-username').value;
-                    const email = document.getElementById('register-email').value;
+                    const username = document.getElementById('register-username').value.trim();
+                    const email = document.getElementById('register-email').value.trim();
                     const password = document.getElementById('register-password').value;
 
                     try {
@@ -183,24 +186,25 @@
                             alert('Đăng ký tài khoản thành công!');
                             window.switchForm('login');
                         } else {
-                            const errorText = await response.text();
-                            alert(`Đăng ký thất bại (${response.status}): ${errorText}`);
+                            // Backend trả về JSON lỗi dạng { error: "..." }
+                            const errorData = await response.json().catch(() => ({}));
+                            alert(`Đăng ký thất bại (${response.status}): ${errorData.error || 'Dữ liệu không hợp lệ.'}`);
                         }
                     } catch (err) {
                         console.error(err);
-                        alert('Lỗi kết nối mạng: ' + err.message);
+                        alert('Lỗi kết nối mạng tới server Backend: ' + err.message);
                     }
                 });
             }
 
-            // --- XỬ LÝ SỰ KIỆN ĐĂNG NHẬP ---
+            // --- TỐI ƯU SỰ KIỆN ĐĂNG NHẬP ---
             const loginForm = document.getElementById('login-form');
             if (loginForm) {
                 loginForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     console.log("-> Kích hoạt gửi dữ liệu Đăng nhập lên Backend");
 
-                    const email = document.getElementById('login-email').value;
+                    const email = document.getElementById('login-email').value.trim();
                     const password = document.getElementById('login-password').value;
 
                     try {
@@ -222,8 +226,8 @@
                             window.toggleAuthModal(false);
                             window.location.reload();
                         } else {
-                            const errorText = await response.text();
-                            alert(`Đăng nhập thất bại (Mã ${response.status}): ${errorText || 'Sai tài khoản hoặc mật khẩu.'}`);
+                            const errorData = await response.json().catch(() => ({}));
+                            alert(`Đăng nhập thất bại (Mã ${response.status}): ${errorData.error || 'Sai tài khoản hoặc mật khẩu.'}`);
                         }
                     } catch (err) {
                         console.error("Lỗi script đăng nhập:", err);
@@ -233,17 +237,19 @@
             }
         };
 
-        // Chạy tải dữ liệu truyện và cấu hình authentication đồng thời
+        // Chạy tải dữ liệu truyện và cấu hình authentication khi trang web sẵn sàng
         document.addEventListener('DOMContentLoaded', async () => {
-            initAuthentication();
+            initAuthentication(); // Đảm bảo gọi hàm gán sự kiện form ngay lập tức
 
             try {
                 const response = await getComics({ page: 1, limit: 12 });
                 const comics = response.data || [];
 
                 if (comics && comics.length > 0) {
-                    window.renderComics(comics.slice(0, 6), 'featured-stories'); 
-                    window.renderComics(comics.slice(0, 3), 'recent-stories');
+                    if (typeof window.renderComics === 'function') {
+                        window.renderComics(comics.slice(0, 6), 'featured-stories'); 
+                        window.renderComics(comics.slice(0, 3), 'recent-stories');
+                    }
                 } else {
                     document.getElementById('featured-stories').innerHTML = '<p class="no-data">Hiện tại chưa có truyện nào được đăng tải.</p>';
                     document.getElementById('recent-stories').innerHTML = '<p class="no-data">Không có cập nhật mới.</p>';

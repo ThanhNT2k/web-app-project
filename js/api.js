@@ -99,7 +99,6 @@ function parseHTML(htmlText) {
  * Chung: tìm nạp URL trang của nhà cung cấp và chạy một parser(doc) => đối tượng bình thường hóa
  * parser nên trả về { data:..., meta:... } hoặc tương tự
  */
- */
 async function fetchAndParseUrl(url, parser, opts = {}) {
   const html = await tryFetchWithCorsFallback(url, opts);
   const doc = parseHTML(html);
