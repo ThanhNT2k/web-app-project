@@ -73,29 +73,40 @@ export async function login(credentials) {
       password: credentials.password
     });
 
+    console.log("Response từ API Login:", response); // 🌟 DEBUG: Xem server trả về cái gì
+
     if (response && (response.token || response.Token)) {
       const token = response.token || response.Token;
       setToken(token);
       
-      let userId = response.user?.id || response.User?.Id;
-      let detectedRole = 'user';
+      // Xử lý userId linh hoạt hơn
+      const userData = response.user || response.User || {};
+      const userId = userData.id || userData.Id;
+      
+      let detectedRole = (userData.role || 'user').toLowerCase().trim();
 
+      // Nếu API trả về role trực tiếp thì dùng luôn, không cần checkRoleById nữa cho nhanh
       if (userId) {
-        localStorage.setItem('userId', userId.trim());
+        localStorage.setItem('userId', userId.toString().trim());
+      }
+
+      // Nếu chưa có role từ login response, mới dùng tới checkRoleById
+      if (detectedRole === 'user' && userId) {
         try {
+          console.log("Đang kiểm tra quyền qua ID...");
           const roleCheck = await checkRoleById(userId);
           if (roleCheck.success && roleCheck.role) {
             detectedRole = roleCheck.role.toLowerCase().trim();
           }
         } catch (e) {
-          // Lỗi gọi API: giữ quyền mặc định
+          console.error("Lỗi khi checkRoleById:", e);
         }
       }
 
       localStorage.setItem('userRole', detectedRole);
-      await new Promise(resolve => setTimeout(resolve, 60));
+      
+      // Update UI và trả về
       updateAuthUI();
-
       return { success: true, data: response };
     }
 
