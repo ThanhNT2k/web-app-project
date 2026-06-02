@@ -172,6 +172,42 @@ export async function getCurrentUser() {
   }
 }
 
+// Hàm cập nhật giao diện dựa trên trạng thái đăng nhập
+export function updateAuthUI() {
+    const authLinksContainer = document.getElementById('auth-links');
+    if (!authLinksContainer) return;
+
+    const token = localStorage.getItem('token');
+
+    if (token) {
+        // Nếu đã đăng nhập: Hiển thị giao diện User và nút Đăng xuất
+        // Thực tế bạn có thể lưu thêm thông tin user vào localStorage để lấy tên hiển thị đẹp hơn
+        authLinksContainer.innerHTML = `
+            <span class="nav-link" style="color: var(--primary-color); font-weight: bold;">👋 Xin chào!</span>
+            <a href="#" id="logout-btn" class="nav-link" style="color: #ef4444;">Đăng xuất</a>
+        `;
+
+        // Bắt sự kiện click nút Đăng xuất
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('token'); // Xóa token
+            alert('Đã đăng xuất thành công!');
+            window.location.reload(); // Tải lại trang
+        });
+    } else {
+        // Nếu chưa đăng nhập: Hiển thị lại nút Đăng nhập gốc
+        authLinksContainer.innerHTML = `
+            <a href="#" class="nav-link" onclick="event.preventDefault(); window.toggleAuthModal(true)">Đăng nhập</a>
+        `;
+    }
+}
+
+// Tự động chạy khi file js/auth.js được nạp
+document.addEventListener('DOMContentLoaded', () => {
+    updateAuthUI();
+});
+
+
 /**
  * Check if user is authenticated
  * @returns {boolean}
