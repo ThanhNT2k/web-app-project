@@ -8,6 +8,44 @@
 // Tái xuất từ api.js để thuận tiện
 import { apiCall, setToken, getToken, clearToken } from './api.js';
 
+import { getCurrentUser } from './auth.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Chỉ kiểm tra nếu người dùng đang có trạng thái đăng nhập
+    if (localStorage.getItem('token')) {
+        try {
+            const res = await getCurrentUser();
+            
+            if (res.success && res.data) {
+                // Giả định API /users/me trả về Object chứa Role (C# hay trả về kiểu viết hoa hoặc viết thường)
+                const currentRoleFromDB = res.data.role || res.data.Role;
+                const currentEmailFromDB = res.data.email || res.data.Email;
+
+                if (currentRoleFromDB) {
+                    const localRole = localStorage.getItem('userRole');
+                    const newRole = currentRoleFromDB.toLowerCase().trim();
+
+                    // 🔄 Nếu phát hiện Vai trò dưới DB khác với Vai trò đang lưu ở máy tính
+                    if (localRole !== newRole) {
+                        console.log(`Phát hiện thay đổi quyền: ${localRole} -> ${newRole}`);
+                        
+                        // Cập nhật lại bộ nhớ máy tính
+                        localStorage.setItem('userRole', newRole);
+                        if (currentEmailFromDB) {
+                            localStorage.setItem('userEmail', currentEmailFromDB.toLowerCase().trim());
+                        }
+
+                        // Thông báo và ép tải lại giao diện mới
+                        alert('Thông tin tài khoản của bạn đã được cập nhật từ hệ thống!');
+                        window.location.reload();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi đồng bộ thông tin tài khoản:', error);
+        }
+    }
+});
 /**
  * Lưu trữ vai trò người dùng trong localStorage
  */
