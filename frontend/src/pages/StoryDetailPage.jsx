@@ -25,6 +25,7 @@ function StoryDetailPage() {
   const [error, setError] = useState('');
   const [chapterPage, setChapterPage] = useState(1);
   const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
+  const [sortOrder, setSortOrder] = useState('asc');
 
   // Load story info once
   useEffect(() => {
@@ -45,12 +46,12 @@ function StoryDetailPage() {
     fetchStory();
   }, [id]);
 
-  // Load chapters with pagination
+  // Load chapters with pagination and sort
   useEffect(() => {
     const fetchChapters = async () => {
       try {
         setChapterLoading(true);
-        const chaptersResponse = await API.chapters.getByStory(id, chapterPage, CHAPTERS_PER_PAGE);
+        const chaptersResponse = await API.chapters.getByStory(id, chapterPage, CHAPTERS_PER_PAGE, sortOrder);
         setChapters(chaptersResponse.chapters || []);
         setChapterPagination(chaptersResponse.pagination || { page: 1, totalPages: 1, totalItems: 0 });
       } catch {
@@ -63,7 +64,7 @@ function StoryDetailPage() {
       }
     };
     fetchChapters();
-  }, [id, chapterPage]);
+  }, [id, chapterPage, sortOrder]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -145,13 +146,25 @@ function StoryDetailPage() {
       <div className="row g-4 mt-2">
         <div className="col-lg-8">
           <section className="panel-card">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4 className="panel-title mb-0">Danh sách chương</h4>
-              {chapterPagination.totalItems > 0 && (
-                <span className="small text-muted">
-                  {chapterPagination.totalItems} chương
-                </span>
-              )}
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h4 className="panel-title mb-0">
+                Danh sách chương ({chapterPagination.totalItems || 0})
+              </h4>
+              <div className="d-flex align-items-center gap-2">
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: '170px' }}
+                  value={sortOrder}
+                  onChange={(e) => {
+                    setSortOrder(e.target.value);
+                    setChapterPage(1);
+                  }}
+                  aria-label="Sắp xếp chương"
+                >
+                  <option value="asc">Sắp xếp: Cũ nhất</option>
+                  <option value="desc">Sắp xếp: Mới nhất</option>
+                </select>
+              </div>
             </div>
 
             {chapterLoading ? (

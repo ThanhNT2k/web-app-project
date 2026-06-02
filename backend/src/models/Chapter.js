@@ -1,9 +1,10 @@
 const db = require('../config/database');
 
-async function getChaptersByStory(storyId, page = 1, limit = 10) {
+async function getChaptersByStory(storyId, page = 1, limit = 10, sort = 'asc') {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
   const safeLimit = Math.max(parseInt(limit, 10) || 10, 1);
   const offset = (safePage - 1) * safeLimit;
+  const orderDirection = sort === 'desc' ? 'DESC' : 'ASC';
 
   try {
     const result = await db.query(
@@ -20,7 +21,7 @@ async function getChaptersByStory(storyId, page = 1, limit = 10) {
           COUNT(*) OVER() AS total_count
         FROM chapters
         WHERE story_id = $1
-        ORDER BY chapter_number ASC
+        ORDER BY chapter_number ${orderDirection}
         LIMIT $2 OFFSET $3
       `,
       [storyId, safeLimit, offset]

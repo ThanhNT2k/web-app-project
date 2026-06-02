@@ -52,7 +52,7 @@ function ChapterReaderPage() {
         setError('');
         const [chapterResponse, chaptersResponse] = await Promise.all([
           API.chapters.getById(storyId, chapterId),
-          API.chapters.getByStory(storyId, 1),
+          API.chapters.getByStory(storyId, 1, 100),
         ]);
         setChapter(chapterResponse.chapter || chapterResponse);
         setChapters(chaptersResponse.chapters || []);
@@ -222,11 +222,17 @@ function ChapterReaderPage() {
   return (
     <main className="cmc-main">
       <ReadingScrollProgress />
-      <div className="reader-top-bar">
-        <Link to={`/story/${storyId}`} className="btn-cmc btn-cmc-outline btn-sm">
-          ← Về truyện
-        </Link>
-        <div className="d-flex align-items-center gap-2">
+      <div className="reader-top-bar d-flex align-items-center justify-content-between p-3 rounded-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <div style={{ flex: 1, textAlign: 'left' }}>
+          <Link to={`/story/${storyId}`} className="btn-cmc btn-cmc-outline btn-sm d-inline-flex align-items-center gap-1">
+            <span>←</span> <span className="d-none d-sm-inline">Về truyện</span>
+          </Link>
+        </div>
+        <div style={{ flex: 2, textAlign: 'center' }}>
+          <h5 className="mb-0 text-truncate" style={{ fontSize: '1rem', fontWeight: 'bold' }}>{chapter.story_title || 'CMC Truyện'}</h5>
+          <span className="small text-muted text-truncate d-block">Chương {chapter.chapter_number}: {chapter.title}</span>
+        </div>
+        <div style={{ flex: 1, textAlign: 'right' }}>
           <button
             type="button"
             className="btn-cmc btn-cmc-outline btn-sm"
@@ -256,6 +262,34 @@ function ChapterReaderPage() {
         fontFamily={fontFamily}
         setFontFamily={setFontFamily}
       />
+
+      {/* Chapter Navigation Grid */}
+      {chapters.length > 0 && (
+        <div className="panel-card mt-4">
+          <h5 className="panel-title" style={{ fontSize: '1.05rem', marginBottom: '1rem' }}>Chọn chương nhanh</h5>
+          <div className="chapter-nav-grid d-flex flex-wrap gap-2">
+            {chapters.slice(0, 30).map((ch) => {
+              const isActive = String(ch.id) === String(chapter.id);
+              return (
+                <button
+                  key={ch.id}
+                  type="button"
+                  className={`btn btn-sm ${isActive ? 'btn-brand' : 'btn-cmc-outline'}`}
+                  style={{ minWidth: '55px', borderRadius: '8px' }}
+                  onClick={() => goToChapter(ch.id)}
+                >
+                  Ch. {ch.chapter_number}
+                </button>
+              );
+            })}
+            {chapters.length > 30 && (
+              <span className="align-self-center small text-muted ms-2">
+                và {chapters.length - 30} chương khác...
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4">
         <AIChapterSummary chapterId={chapterNumericId} />

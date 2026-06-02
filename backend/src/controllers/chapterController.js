@@ -25,7 +25,9 @@ async function getChapters(req, res) {
   try {
     const { storyId } = req.params;
     const page = req.query.page || 1;
-    const result = await Chapter.getChaptersByStory(storyId, page);
+    const limit = req.query.limit || 10;
+    const sort = req.query.sort || 'asc';
+    const result = await Chapter.getChaptersByStory(storyId, page, limit, sort);
 
     return res.status(200).json({
       success: true,

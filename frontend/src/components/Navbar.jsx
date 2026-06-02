@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
@@ -10,27 +10,10 @@ function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [authOpen, setAuthOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
-  const searchInputRef = useRef(null);
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    if (!q) return;
-    navigate(`/tim-truyen?q=${encodeURIComponent(q)}`);
-    setSearchQuery('');
-    searchInputRef.current?.blur();
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    searchInputRef.current?.focus();
   };
 
   return (
@@ -41,36 +24,22 @@ function Navbar() {
             📚 CMC Truyện
           </Link>
 
-          {/* Search bar */}
-          <form className={`cmc-search-form${searchFocused ? ' focused' : ''}`} onSubmit={handleSearch}>
-            <span className="cmc-search-icon">🔍</span>
-            <input
-              ref={searchInputRef}
-              type="search"
-              className="cmc-search-input"
-              placeholder="Tìm truyện..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              autoComplete="off"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="cmc-search-clear"
-                onClick={handleClearSearch}
-                title="Xóa"
-              >
-                ✕
+          <nav className="cmc-nav-links">
+            <Link to="/" className="cmc-nav-link">
+              Trang chủ
+            </Link>
+            <Link to="/tim-truyen" className="cmc-nav-link">
+              Tìm kiếm
+            </Link>
+            {isAuthenticated ? (
+              <Link to="/profile" className="cmc-nav-link">
+                Tủ sách
+              </Link>
+            ) : (
+              <button type="button" className="cmc-nav-link" onClick={() => setAuthOpen(true)}>
+                Tủ sách
               </button>
             )}
-          </form>
-
-          <nav className="cmc-nav-links">
-            <Link to="/tim-truyen" className="cmc-nav-link">
-              Tìm Truyện
-            </Link>
           </nav>
 
           <div className="cmc-nav-actions">
@@ -85,7 +54,6 @@ function Navbar() {
 
             {isAuthenticated ? (
               <>
-                <Link to="/profile" className="cmc-nav-link">Hồ sơ</Link>
                 <Link to="/account" className="cmc-nav-link">Tài khoản</Link>
                 {(user?.role === 'Uploader' || user?.role === 'Admin') && (
                   <Link to="/dashboard" className="cmc-nav-link">Quản lý</Link>

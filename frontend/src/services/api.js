@@ -91,7 +91,7 @@ const API = {
     }),
   },
   chapters: {
-    getByStory: (storyId, page = 1) => request(`/stories/${storyId}/chapters`, { method: 'GET', params: { page } }),
+    getByStory: (storyId, page = 1, limit = 10, sort = 'asc') => request(`/stories/${storyId}/chapters`, { method: 'GET', params: { page, limit, sort } }),
     getById: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'GET' }),
     create: (storyId, data) => request(`/stories/${storyId}/chapters`, { method: 'POST', data }),
     update: (storyId, chapterId, data) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'PUT', data }),

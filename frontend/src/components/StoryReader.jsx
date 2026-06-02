@@ -175,6 +175,15 @@ function StoryReader({
         >
           {chapter.content}
         </div>
+
+        <div className="d-flex justify-content-between mt-5 pt-4 border-top">
+          <button className="btn btn-outline-secondary" onClick={onPrevious} type="button" disabled={!hasPrevious}>
+            ← Trước
+          </button>
+          <button className="btn btn-brand" onClick={onNext} type="button" disabled={!hasNext}>
+            Sau →
+          </button>
+        </div>
       </div>
     </section>
   );

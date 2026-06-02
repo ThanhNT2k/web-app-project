@@ -206,15 +206,22 @@ function HomePage() {
         <section className="mb-5">
           <h2 className="section-title">⚡ Cập Nhật Gần Đây</h2>
           {loadingRecent ? (
-            <div className="stories-grid">
+            <div className="stories-grid-horizontal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <StoryCardSkeleton key={`skeleton-recent-${i}`} compact />
+                <div key={`skeleton-recent-${i}`} className="story-card-skeleton animate-pulse d-flex gap-3 p-3 rounded-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', minHeight: '150px' }}>
+                  <div className="skeleton-box flex-shrink-0" style={{ width: '90px', height: '120px', borderRadius: '8px' }} />
+                  <div className="d-flex flex-column flex-grow-1 gap-2">
+                    <div className="skeleton-box" style={{ height: '20px', width: '80%', borderRadius: '4px' }} />
+                    <div className="skeleton-box" style={{ height: '14px', width: '50%', borderRadius: '4px' }} />
+                    <div className="skeleton-box mt-auto" style={{ height: '14px', width: '90%', borderRadius: '4px' }} />
+                  </div>
+                </div>
               ))}
             </div>
           ) : recentStories.length > 0 ? (
-            <div className="stories-grid">
+            <div className="stories-grid-horizontal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
               {recentStories.map((story) => (
-                <StoryCard key={`recent-${story.id}`} story={story} compact />
+                <StoryCard key={`recent-${story.id}`} story={story} horizontal={true} />
               ))}
             </div>
           ) : (

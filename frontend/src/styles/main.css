@@ -933,3 +933,38 @@ kbd {
     transform: translateX(100%);
   }
 }
+
+/* ===== Mobile Layout Optimizations for Story Reading ===== */
+@media (max-width: 576px) {
+  /* Expand main container padding */
+  .cmc-main {
+    padding: 1rem 0.5rem 2rem !important;
+  }
+  
+  /* Remove double padding and borders from story-reader panel-card on mobile */
+  .story-reader.panel-card {
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  
+  /* Make sure reader body fills up the width nicely */
+  .story-reader .card-body {
+    padding: 1rem 0.5rem !important;
+  }
+  
+  /* Make text spacing readable but not constrained */
+  .reader-content {
+    font-size: 1.125rem !important;
+    line-height: 1.8 !important;
+    padding: 0 0.25rem !important;
+  }
+
+  /* Make nav-bar search and headers clean on mobile */
+  .reader-top-bar {
+    padding: 0.75rem !important;
+    border-radius: 10px !important;
+    margin-bottom: 1.25rem !important;
+  }
+}
