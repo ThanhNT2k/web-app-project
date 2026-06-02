@@ -246,60 +246,57 @@ document.addEventListener('click', (e) => {
     }
 });
 
-
-/**
- * 🔄 LUỒNG TỰ ĐỘNG ĐỒNG BỘ VÀ KIỂM TRA ROLE TỪ DATABASE KHI KHỞI CHẠY WEB
- */
-/**
- * 🔄 LUỒNG TỰ ĐỘNG ĐỒNG BỘ VÀ KIỂM TRA ROLE TỪ DATABASE KHI KHỞI CHẠY WEB
- */
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Vẽ nhanh giao diện từ bộ nhớ máy tính (localStorage) trước
+    // 1. Vẽ nhanh giao diện ban đầu từ localStorage trước
     updateAuthUI();
 
-    // Lấy token trực tiếp từ ổ cứng để kiểm tra tính hợp lệ
     const token = localStorage.getItem('token');
 
-    // 2. Chạy ngầm Request hỏi Database xem có thay đổi gì về quyền hạn hay không
+    // 2. Chạy ngầm kiểm tra và đồng bộ quyền từ Database
     if (token) {
         try {
-            // Đợi 50ms cho cấu hình axios/fetch hoặc biến của api.js được định nghĩa hoàn toàn
             await new Promise(resolve => setTimeout(resolve, 50));
-
             const res = await getCurrentUser();
             
             if (res && res.success && res.data) {
-                const currentRoleFromDB = res.data.role || res.data.Role;
+                // 🔍 DÒNG DEBUG QUAN TRỌNG: Xem cấu trúc thực tế của đối tượng Profile
+                console.log("=== DỮ LIỆU ĐỒNG BỘ TRẢ VỀ TỪ SUPABASE ===", res.data);
+                
+                // Lấy ra giá trị Role (quét cả viết hoa lẫn viết thường)
+                const rawRoleFromDB = res.data.role || res.data.Role || res.data.roleName || res.data.RoleName;
                 const currentEmailFromDB = res.data.email || res.data.Email;
 
-                if (currentRoleFromDB) {
-                    const localRole = localStorage.getItem('userRole');
-                    const newRole = currentRoleFromDB.toLowerCase().trim();
+                console.log("-> Giá trị Quyền đọc được từ DB là:", rawRoleFromDB);
+                console.log("-> Kiểu dữ liệu (Type):", typeof rawRoleFromDB);
 
-                    if (localRole !== newRole) {
-                        console.log(`[ĐỒNG BỘ] Phát hiện thay đổi quyền trên DB: ${localRole} -> ${newRole}`);
+                if (rawRoleFromDB !== undefined && rawRoleFromDB !== null) {
+                    // Chuyển thành chuỗi chữ thường để so sánh chuẩn hóa
+                    const newRole = String(rawRoleFromDB).toLowerCase().trim();
+                    const localRole = localStorage.getItem('userRole');
+
+                    // 🚨 ĐOẠN ÉP ĐÈ: Nếu bạn kiểm tra thấy DB trả về số hoặc chữ khác, hãy bổ sung logic tại đây
+                    // Ví dụ: nếu DB trả về số 1 hoặc chữ "admin" thì đều coi là 'admin'
+                    let finalRoleValue = newRole;
+                    if (newRole === '1' || newRole === 'admin') {
+                        finalRoleValue = 'admin';
+                    }
+
+                    if (localRole !== finalRoleValue) {
+                        console.log(`[ĐỒNG BỘ] Cập nhật quyền bộ nhớ: ${localRole} -> ${finalRoleValue}`);
                         
-                        localStorage.setItem('userRole', newRole);
+                        localStorage.setItem('userRole', finalRoleValue);
                         if (currentEmailFromDB) {
-                            localStorage.setItem('userEmail', currentEmailFromDB.toLowerCase().trim());
+                            localStorage.setItem('userEmail', String(currentEmailFromDB).toLowerCase().trim());
                         }
 
+                        // Vẽ lại giao diện ngay lập tức
                         updateAuthUI();
-                        alert('Thông tin phân quyền tài khoản của bạn đã được hệ thống cập nhật tự động!');
+                        console.log("=== ĐÃ GỌI LẠI UPDATE_AUTH_UI THÀNH CÔNG ===");
                     }
                 }
             }
         } catch (error) {
-            console.error('Lỗi chạy ngầm đồng bộ quyền từ /users/profile:', error);
-            
-            // 🚨 Nếu lỗi 401 do token hết hạn thật, xóa đi để bắt đăng nhập lại sạch sẽ
-            if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-                console.warn("Token hiện tại không hợp lệ hoặc hết hạn. Tiến hành dọn dẹp bộ nhớ.");
-                localStorage.removeItem('token');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userEmail');
-                updateAuthUI();
-            }
+            console.error('Lỗi chạy ngầm đồng bộ quyền:', error);
         }
     }
 });
