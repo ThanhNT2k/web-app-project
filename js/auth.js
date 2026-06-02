@@ -173,26 +173,33 @@ export async function getCurrentUser() {
 }
 
 // Hàm cập nhật giao diện dựa trên trạng thái đăng nhập
+// Tìm đến hàm updateAuthUI() trong file js/auth.js của bạn và thay thế bằng đoạn này:
 export function updateAuthUI() {
     const authLinksContainer = document.getElementById('auth-links');
     if (!authLinksContainer) return;
 
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('userRole'); // Lấy vai trò hệ thống vừa ghi nhận
 
     if (token) {
-        // Nếu đã đăng nhập: Hiển thị giao diện User và nút Đăng xuất
-        // Thực tế bạn có thể lưu thêm thông tin user vào localStorage để lấy tên hiển thị đẹp hơn
-        authLinksContainer.innerHTML = `
-            <span class="nav-link" style="color: var(--primary-color); font-weight: bold;">👋 Xin chào!</span>
-            <a href="#" id="logout-btn" class="nav-link" style="color: #ef4444;">Đăng xuất</a>
-        `;
+        // Tạo chuỗi HTML mặc định hiển thị lời chào và nút Đăng xuất
+        let authHtml = `<span class="nav-link" style="color: var(--primary-color); font-weight: bold;">👋 Xin chào!</span>`;
+        
+        // 🚀 ĐẶC CÁCH: Nếu vai trò là admin, chèn thêm nút nhảy nhanh vào Dashboard Quản trị
+        if (role === 'admin') {
+            authHtml += `<a href="/pages/admin.html" class="nav-link" style="color: var(--warning-color); font-weight: 600;">🛠️ Admin Panel</a>`;
+        }
+
+        authHtml += `<a href="#" id="logout-btn" class="nav-link" style="color: #ef4444;">Đăng xuất</a>`;
+        authLinksContainer.innerHTML = authHtml;
 
         // Bắt sự kiện click nút Đăng xuất
         document.getElementById('logout-btn').addEventListener('click', (e) => {
             e.preventDefault();
-            localStorage.removeItem('token'); // Xóa token
+            localStorage.removeItem('token'); 
+            localStorage.removeItem('userRole'); // Dọn dẹp sạch sẽ vai trò khi logout
             alert('Đã đăng xuất thành công!');
-            window.location.reload(); // Tải lại trang
+            window.location.href = '/index.html'; // Đưa về trang chủ
         });
     } else {
         // Nếu chưa đăng nhập: Hiển thị lại nút Đăng nhập gốc
