@@ -10,29 +10,17 @@
     (function() {
         const token = localStorage.getItem('token');
         const userRole = localStorage.getItem('userRole');
-        const userEmail = localStorage.getItem('userEmail');
 
-        // 📝 DANH SÁCH EMAIL ĐƯỢC PHÉP TRUY CẬP ADMIN PANEL (Thay email của bạn vào đây)
-        const adminWhitelist = [
-            'forhsonly1102@gmail.com', // Thay bằng email admin thực tế dưới DB của bạn
-            'admin@cmctruyen.com'
-        ];
-
-        console.log("--- HỆ THỐNG KIỂM TRA BAO MẬT BA LỚP ---");
+        console.log("--- KIỂM TRA BẢO MẬT ADMIN ---");
         console.log("-> Token:", token ? "Hợp lệ" : "Trống");
-        console.log("-> Quyền hạn:", userRole);
-        console.log("-> Email tài khoản:", userEmail);
+        console.log("-> Quyền hạn (Role):", userRole);
 
-        // Chuẩn hóa dữ liệu trước khi so sánh
+        // Chuẩn hóa role về chữ thường để so sánh
         const currentRole = userRole ? userRole.toLowerCase().trim() : '';
-        const currentEmail = userEmail ? userEmail.toLowerCase().trim() : '';
 
-        // Kiểm tra điều kiện ngặt nghèo: 
-        // 1. Phải có Token
-        // 2. Role bắt buộc là 'admin'
-        // 3. Email đăng nhập phải nằm trong danh sách Whitelist ở trên
-        if (!token || currentRole !== 'admin' || !adminWhitelist.includes(currentEmail)) {
-            alert('Cảnh báo bảo mật nâng cao: Email hoặc Quyền hạn của tài khoản không khớp cấu hình Quản trị viên!');
+        // Chỉ kiểm tra: Phải có Token và Role phải là 'admin'
+        if (!token || currentRole !== 'admin') {
+            alert('Bạn không có quyền truy cập trang Quản trị!');
             window.location.replace('/index.html');
         }
     })();
