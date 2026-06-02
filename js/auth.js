@@ -81,6 +81,9 @@ export async function register(credentials) {
  * @param {Object} credentials - {username, password} hoặc {email, password}
  * @returns {Promise<Object>} - {success, data: {user, token}, error}
  */
+/**
+ * Đăng nhập người dùng (Bản sửa lỗi đồng bộ bộ nhớ)
+ */
 export async function login(credentials) {
   try {
     const response = await apiCall('/auth/login', 'POST', {
@@ -89,11 +92,20 @@ export async function login(credentials) {
     });
 
     if (response && response.token) {
+      // 1. Ghi Token vào hệ thống
       setToken(response.token);
-      // Lưu trữ vai trò người dùng từ phản hồi (bình thường hóa thành chữ thường)
+      
+      // 2. Ép chuẩn hóa và ghi vai trò vào localStorage
       if (response.user && response.user.role) {
-        setRole(response.user.role.toLowerCase());
+        const roleLower = response.user.role.toLowerCase().trim();
+        localStorage.setItem('userRole', roleLower); 
+      } else {
+        localStorage.setItem('userRole', 'user');
       }
+
+      // 3. ĐỢI 50ms ĐỂ TRÌNH DUYỆT HOÀN THÀNH GHI Ổ CỨNG (Tránh lệch pha dữ liệu)
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       return {
         success: true,
         data: {
