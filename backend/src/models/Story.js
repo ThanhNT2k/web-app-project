@@ -22,7 +22,7 @@ async function attachTagsToStories(stories) {
   return stories.map((s) => ({ ...s, tags: map[s.id] || [] }));
 }
 
-async function getAllStories(page = 1, limit = 10, sortBy = 'newest') {
+async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnpublished = false) {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
   const safeLimit = Math.max(parseInt(limit, 10) || 10, 1);
   const offset = (safePage - 1) * safeLimit;
@@ -67,7 +67,7 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest') {
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
       ${joinClause}
-      WHERE s.is_published = true
+      ${includeUnpublished ? '' : 'WHERE s.is_published = true'}
       ORDER BY ${orderBy}
       LIMIT $1 OFFSET $2
     `;

@@ -71,6 +71,7 @@ const API = {
     login: (data) => request('/auth/login', { method: 'POST', data }),
     logout: () => request('/auth/logout', { method: 'POST' }),
     getCurrentUser: () => request('/auth/me', { method: 'GET' }),
+    updateProfile: (data) => request('/auth/profile', { method: 'PUT', data }),
   },
   stories: {
     getAll: (page = 1, limit = 10, sortBy = 'newest') => request('/stories', { method: 'GET', params: { page, limit, sortBy } }),

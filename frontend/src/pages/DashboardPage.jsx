@@ -49,14 +49,19 @@ function DashboardPage() {
   const loadStories = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await API.stories.getMine(1, 50);
+      let response;
+      if (user?.role === 'Admin') {
+        response = await API.admin.getStories(1);
+      } else {
+        response = await API.stories.getMine(1, 50);
+      }
       setStories(response.stories || []);
     } catch {
       setStories([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     loadStories();

@@ -8,10 +8,16 @@ import { useAuth } from '../contexts/AuthContext';
 import API from '../services/api';
 
 function UserProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshCurrentUser } = useAuth();
   const [history, setHistory] = useState([]);
   const [follows, setFollows] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Profile Edit modal
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ full_name: '', avatar_url: '', bio: '' });
+  const [updating, setUpdating] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -33,9 +39,47 @@ function UserProfilePage() {
     load();
   }, []);
 
+  const openEditModal = () => {
+    setProfileForm({
+      full_name: user?.full_name || '',
+      avatar_url: user?.avatar_url || '',
+      bio: user?.bio || '',
+    });
+    setMessage('');
+    setEditModalOpen(true);
+  };
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      setUpdating(true);
+      const res = await API.upload.cover(file);
+      setProfileForm((f) => ({ ...f, avatar_url: res.url }));
+    } catch {
+      setMessage('Tải ảnh lên thất bại.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault();
+    try {
+      setUpdating(true);
+      await API.auth.updateProfile(profileForm);
+      await refreshCurrentUser();
+      setEditModalOpen(false);
+    } catch (err) {
+      setMessage(err?.response?.data?.message || 'Không thể lưu hồ sơ.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <main className="cmc-main">
-      <UserProfile user={user} />
+      <UserProfile user={user} onEditClick={openEditModal} />
 
       <div className="row g-4 mt-2">
         <div className="col-lg-7">
@@ -90,6 +134,79 @@ function UserProfilePage() {
           <ReadingPreferencesPanel />
         </div>
       </div>
+
+      {/* Profile Edit modal */}
+      {editModalOpen ? (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditModalOpen(false)}>
+          <div className="modal-content modal-content-md">
+            <button type="button" className="close-modal" onClick={() => setEditModalOpen(false)}>&times;</button>
+            <h2>Chỉnh sửa hồ sơ</h2>
+            
+            {message ? <div className="alert alert-danger mt-2 py-2 px-3 small">{message}</div> : null}
+
+            <form onSubmit={handleSaveProfile} className="d-grid gap-3 mt-3">
+              <div>
+                <label className="small text-muted d-block mb-1 fw-bold">Tên hiển thị</label>
+                <input
+                  type="text"
+                  className="form-control-cmc"
+                  placeholder="Nhập tên hiển thị..."
+                  value={profileForm.full_name}
+                  onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="small text-muted d-block mb-1 fw-bold">Giới thiệu bản thân</label>
+                <textarea
+                  className="form-control-cmc"
+                  rows={3}
+                  placeholder="Viết vài dòng giới thiệu về bản thân..."
+                  value={profileForm.bio}
+                  onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="small text-muted d-block mb-1 fw-bold">Ảnh đại diện (Avatar)</label>
+                <div className="d-flex align-items-center gap-3">
+                  {profileForm.avatar_url ? (
+                    <img
+                      src={profileForm.avatar_url}
+                      alt="Preview"
+                      className="rounded-circle"
+                      style={{ width: '60px', height: '60px', objectFit: 'cover', border: '2px solid var(--border)' }}
+                    />
+                  ) : (
+                    <div
+                      className="rounded-circle bg-brand text-white d-flex align-items-center justify-content-center fw-bold"
+                      style={{ width: '60px', height: '60px', fontSize: '1.2rem' }}
+                    >
+                      {(profileForm.full_name || user?.username || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-grow-1">
+                    <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={updating} style={{ fontSize: '0.85rem' }} />
+                    <input
+                      type="text"
+                      className="form-control-cmc mt-2"
+                      placeholder="Hoặc dán URL ảnh đại diện vào đây..."
+                      value={profileForm.avatar_url}
+                      onChange={(e) => setProfileForm({ ...profileForm, avatar_url: e.target.value })}
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" className="btn-cmc btn-cmc-primary w-100 mt-2" disabled={updating}>
+                {updating ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

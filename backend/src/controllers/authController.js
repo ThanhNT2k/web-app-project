@@ -151,9 +151,47 @@ async function getCurrentUser(req, res) {
   });
 }
 
+const updateProfileSchema = Joi.object({
+  full_name: Joi.string().trim().max(255).allow('', null).optional(),
+  avatar_url: Joi.string().trim().max(500).allow('', null).optional(),
+  bio: Joi.string().trim().max(1000).allow('', null).optional(),
+});
+
+async function updateProfile(req, res) {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const { error, value } = updateProfileSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: error.details.map((detail) => detail.message),
+    });
+  }
+
+  try {
+    const updatedUser = await User.updateProfile(req.user.id, value);
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: sanitizeUser(updatedUser),
+    });
+  } catch (err) {
+    console.error('[authController.updateProfile]', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
 module.exports = {
   register,
   login,
   logout,
   getCurrentUser,
+  updateProfile,
 };

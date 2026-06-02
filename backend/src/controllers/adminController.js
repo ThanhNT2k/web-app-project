@@ -75,7 +75,7 @@ async function deleteComment(req, res) {
 
 async function getAllStories(req, res) {
   try {
-    const result = await Story.getAllStories(req.query.page || 1, req.query.limit || 50);
+    const result = await Story.getAllStories(req.query.page || 1, req.query.limit || 50, 'newest', true);
     return res.status(200).json({ success: true, ...result });
   } catch (err) {
     console.error('[adminController.getAllStories]', err);

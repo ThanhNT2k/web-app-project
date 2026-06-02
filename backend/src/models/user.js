@@ -62,10 +62,27 @@ async function updateRole(id, role) {
   return result.rows[0] || null;
 }
 
+async function updateProfile(id, { full_name, avatar_url, bio }) {
+  const result = await db.query(
+    `
+      UPDATE users 
+      SET full_name = COALESCE($1, full_name), 
+          avatar_url = COALESCE($2, avatar_url), 
+          bio = COALESCE($3, bio), 
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $4
+      RETURNING id, username, email, full_name, avatar_url, role, bio, is_active
+    `,
+    [full_name || null, avatar_url || null, bio || null, id]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   findByEmail,
   findById,
   createUser,
   findAll,
   updateRole,
+  updateProfile,
 };
