@@ -1,8 +1,8 @@
 /**
- * users.js - User Profile & Account Management API Module
- * Handles user profile and account operations
+ * users.js - Module API Hồ sơ & Quản lý Tài khoản Người dùng
+ * Xử lý hồ sơ người dùng và các hoạt động tài khoản
  * 
- * Backend Endpoints:
+ * Các Điểm Cuối Backend:
  * - GET /api/users/me
  * - PUT /api/users/profile
  * - POST /api/users/avatar
@@ -13,7 +13,7 @@
 import { apiCall } from './api.js';
 
 /**
- * Get current user profile
+ * Nhận hồ sơ người dùng hiện tại
  * GET /api/users/me
  * @returns {Promise<Object>} - {success, data: user, error}
  */
@@ -33,7 +33,7 @@ export async function getProfile() {
 }
 
 /**
- * Update user profile
+ * Cập nhật hồ sơ người dùng
  * PUT /api/users/profile
  * @param {Object} profileData - {username, email, bio, ...}
  * @returns {Promise<Object>} - {success, data, error}
@@ -61,9 +61,9 @@ export async function updateProfile(profileData) {
 }
 
 /**
- * Upload user avatar
+ * Tải lên ảnh đại diện của người dùng
  * POST /api/users/avatar
- * @param {FormData} formData - Form data with 'avatar' file
+ * @param {FormData} formData - Form data với tệp 'avatar'
  * @returns {Promise<Object>} - {success, data, error}
  */
 export async function uploadAvatar(formData) {
@@ -75,7 +75,7 @@ export async function uploadAvatar(formData) {
       };
     }
 
-    // For FormData, we need to handle this differently
+    // Đối với FormData, chúng ta cần xử lý cách khác
     const token = localStorage.getItem('token');
     const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:5208'
@@ -107,7 +107,7 @@ export async function uploadAvatar(formData) {
 }
 
 /**
- * Change user password
+ * Thay đổi mật khẩu người dùng
  * PUT /api/users/change-password
  * @param {Object} passwordData - {currentPassword, newPassword}
  * @returns {Promise<Object>} - {success, error}
@@ -134,7 +134,7 @@ export async function changePassword(passwordData) {
 }
 
 /**
- * Get personalized recommendations
+ * Nhận các gợi ý được cá nhân hóa
  * GET /api/recommendations/personalized
  * @param {Object} options - {limit}
  * @returns {Promise<Object>} - {success, data: [], error}

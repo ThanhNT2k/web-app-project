@@ -1,21 +1,21 @@
 /**
- * chapters.js - Chapter API Module
- * Handles chapter listing, content retrieval, and management
+ * chapters.js - Module API Chương
+ * Xử lý liệt kê chương, truy xuất nội dung và quản lý
  * 
- * Backend Endpoints:
+ * Các Điểm Cuối Backend:
  * - GET /api/comics/{id}/chapters
  * - GET /api/chapters/{id}
- * - POST /api/chapters (Uploader/Admin only)
- * - PUT /api/chapters/{id} (Uploader/Admin only)
- * - DELETE /api/chapters/{id} (Uploader/Admin only)
+ * - POST /api/chapters (Chỉ Uploader/Admin)
+ * - PUT /api/chapters/{id} (Chỉ Uploader/Admin)
+ * - DELETE /api/chapters/{id} (Chỉ Uploader/Admin)
  */
 
 import { apiCall } from './api.js';
 
 /**
- * Get all chapters of a comic
+ * Nhận tất cả các chương của một truyện
  * GET /api/comics/{id}/chapters
- * @param {string} comicId - Comic ID
+ * @param {string} comicId - ID truyện
  * @returns {Promise<Object>} - {success, data: [], error}
  */
 export async function getComicChapters(comicId) {
@@ -43,9 +43,9 @@ export async function getComicChapters(comicId) {
 }
 
 /**
- * Get chapter content by ID
+ * Nhận nội dung chương theo ID
  * GET /api/chapters/{id}
- * @param {string} chapterId - Chapter ID
+ * @param {string} chapterId - ID chương
  * @returns {Promise<Object>} - {success, data: chapter, error}
  */
 export async function getChapterContent(chapterId) {
@@ -71,7 +71,7 @@ export async function getChapterContent(chapterId) {
 }
 
 /**
- * Create new chapter (Uploader/Admin only)
+ * Tạo chương mới (Chỉ Uploader/Admin)
  * POST /api/chapters
  * @param {Object} chapterData - {comicId, title, chapterNumber, content, images, ...}
  * @returns {Promise<Object>} - {success, data, error}
@@ -99,9 +99,9 @@ export async function createChapter(chapterData) {
 }
 
 /**
- * Update existing chapter (Uploader/Admin only)
+ * Cập nhật chương hiện có (Chỉ Uploader/Admin)
  * PUT /api/chapters/{id}
- * @param {string} chapterId - Chapter ID
+ * @param {string} chapterId - ID chương
  * @param {Object} updateData - {title, content, images, ...}
  * @returns {Promise<Object>} - {success, data, error}
  */
@@ -128,9 +128,9 @@ export async function updateChapter(chapterId, updateData) {
 }
 
 /**
- * Delete chapter (Uploader/Admin only)
+ * Xóa chương (Chỉ Uploader/Admin)
  * DELETE /api/chapters/{id}
- * @param {string} chapterId - Chapter ID
+ * @param {string} chapterId - ID chương
  * @returns {Promise<Object>} - {success, error}
  */
 export async function deleteChapter(chapterId) {
