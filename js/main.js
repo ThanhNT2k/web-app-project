@@ -119,9 +119,9 @@ document.addEventListener('click', function(event) {
 window.logout = function() {
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
-    localStorage.removeItem('userAvatar');
-    alert('Đã đăng xuất thành công!');
-    location.reload();
+    localStorage.removeItem('username');
+    localStorage.removeItem('userId');
+    window.location.reload();
 }
 
 /**
