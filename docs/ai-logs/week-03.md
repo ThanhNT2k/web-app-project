@@ -1,9 +1,14 @@
 # Nhật Ký Tương Tác AI — TUẦN 3 (ai-logs/week-03.md)
 
 *   **Dự án:** CMC Truyện
-*   **Mã số nhóm:** Nhóm CMC Truyện — Khóa Phát Triển Phần Mềm Hướng AI
+*   **Nhóm:** Nhóm 3
+*   **Danh sách thành viên:**
+    1.  **Nguyễn Thị Thùy** - BAI252513
+    2.  **Trần Thị Kim Uyên** - BAI250072
+    3.  **Nguyễn Hải Dương** - BAI250020
+    4.  **Nguyễn Tuấn Thành** - BAI252417
+    5.  **Vũ Viết Trí** - BAI250063
 *   **Thời gian:** 25/05/2026 - 01/06/2026
-*   **Thành viên thực hiện:** Nguyễn Hải Dương (Độc giả), Nguyễn Tuấn Thành (Quản trị viên)
 *   **Trợ lý AI sử dụng:** Antigravity (Gemini 3.5 Flash)
 
 ---

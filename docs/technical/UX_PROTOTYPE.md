@@ -1,6 +1,16 @@
 # Tài Liệu Giao Diện Mẫu — UX PROTOTYPE (UX_PROTOTYPE.md)
 
-Tài liệu này trình bày thiết kế trải nghiệm người dùng (UX), cấu trúc các màn hình chính và giải pháp sử dụng **Mock Data** để mô phỏng tương tác trước khi kết nối trực tiếp với Backend trong giai đoạn Tuần 3.
+---
+
+## 👥 THÔNG TIN NHÓM THỰC HIỆN
+
+*   **Nhóm:** Nhóm 3
+*   **Danh sách thành viên:**
+    1.  **Nguyễn Thị Thùy** - BAI252513
+    2.  **Trần Thị Kim Uyên** - BAI250072
+    3.  **Nguyễn Hải Dương** - BAI250020
+    4.  **Nguyễn Tuấn Thành** - BAI252417
+    5.  **Vũ Viết Trí** - BAI250063
 
 ---
 

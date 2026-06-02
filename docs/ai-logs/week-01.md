@@ -1,7 +1,13 @@
 # Nhật Ký Tương Tác AI — TUẦN 1: Khởi Động Dự Án & Định Hướng Sản Phẩm (ai-logs/week-01.md)
 
 *   **Dự án:** CMC Truyện
-*   **Mã số nhóm:** Nhóm CMC Truyện — Khóa Phát Triển Phần Mềm Hướng AI
+*   **Nhóm:** Nhóm 3
+*   **Danh sách thành viên:**
+    1.  **Nguyễn Thị Thùy** - BAI252513
+    2.  **Trần Thị Kim Uyên** - BAI250072
+    3.  **Nguyễn Hải Dương** - BAI250020
+    4.  **Nguyễn Tuấn Thành** - BAI252417
+    5.  **Vũ Viết Trí** - BAI250063
 *   **Thời gian:** Tuần 1 (Bắt đầu từ giữa tháng 5/2026)
 *   **Trợ lý AI sử dụng:** Claude.ai Web, VS Code Copilot Chat
 *   **Kiến trúc thống nhất:** React + Vite (Frontend) + Node.js Express (Backend) + PostgreSQL (Supabase)
@@ -34,7 +40,7 @@ AI đã phân tích và phân loại 3 pain points lớn nhất:
 2.  **Màn hình đọc thiếu tùy biến:** Màu nền quá chói (thiếu chế độ đọc đêm thực sự), cỡ chữ quá nhỏ hoặc không cho chỉnh font chữ khiến độc giả mỏi mắt khi đọc liên tục trên 30 phút.
 3.  **Mất vị trí đọc (Loss of Reading State):** Khi tắt trình duyệt hoặc đổi thiết bị, người dùng phải tự nhớ xem mình đang đọc dở chương nào, dòng nào.
 
-**Hành động của nhóm:** Nhóm đã lấy các điểm ức chế này làm cốt lõi để đưa vào tài liệu `PRODUCT_ANALYSIS.md` nhằm định hướng xây dựng MVP tập trung giải quyết triệt để 3 vấn đề này (Không quảng cáo, tích hợp Dark Mode/cỡ chữ linh hoạt và Auto-Bookmark).
+**Hành động của nhóm:** Nhóm đã lấy các điểm ức chế này làm cốt lõi để đưa vào tài liệu `PRODUCT_ANALYSIS.md` nhằm định hướng xây dựng MVP tập trung giải quyết triệt để 3 vấnnom (Không quảng cáo, tích hợp Dark Mode/cỡ chữ linh hoạt và Auto-Bookmark).
 
 ---
 

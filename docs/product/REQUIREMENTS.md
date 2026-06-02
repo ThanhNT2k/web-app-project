@@ -1,6 +1,16 @@
 # ĐẶC TẢ YÊU CẦU PHẦN MỀM - CMC TRUYỆN (REQUIREMENTS.md)
 
-Tài liệu này ghi nhận toàn bộ yêu cầu nghiệp vụ, chân dung người dùng (Persona), kịch bản sử dụng (Scenario), và danh sách các câu chuyện người dùng (User Stories) trong dự án CMC Truyện.
+---
+
+## 👥 THÔNG TIN NHÓM THỰC HIỆN
+
+*   **Nhóm:** Nhóm 3
+*   **Danh sách thành viên:**
+    1.  **Nguyễn Thị Thùy** - BAI252513
+    2.  **Trần Thị Kim Uyên** - BAI250072
+    3.  **Nguyễn Hải Dương** - BAI250020
+    4.  **Nguyễn Tuấn Thành** - BAI252417
+    5.  **Vũ Viết Trí** - BAI250063
 
 ---
 
@@ -133,24 +143,26 @@ Truy cập website ──> Tìm kiếm truyện ──> Xem thông tin truyện 
 
 ---
 
-## 📋 7. Product Backlog
+## 📋 7. Product Backlog (Trạng thái Tuần 3)
 
-Dưới đây là danh sách ưu tiên thực hiện các tính năng đến thời điểm Tuần 3:
+Dưới đây là bảng trạng thái danh sách công việc ưu tiên thực hiện tại thời điểm Tuần 3:
 
-| ID | Tính năng (Product Backlog Item) | Mức độ ưu tiên | Trạng thái hiện tại |
-|---|---|---|---|
-| **PB01** | Đăng ký tài khoản (User Registration) | High | ✅ Completed |
-| **PB02** | Đăng nhập tài khoản (User Login) | High | ✅ Completed |
-| **PB03** | Tìm kiếm truyện (Search Stories) | High | ✅ Completed |
-| **PB04** | Xem thông tin truyện (View Story Details) | High | ✅ Completed |
-| **PB05** | Đọc chương truyện (Read Chapters) | High | ✅ Completed |
-| **PB06** | Theo dõi truyện yêu thích (Favorite/Follow Stories) | High | ✅ Completed |
-| **PB07** | Lưu lịch sử đọc tự động (Reading History) | Medium | ✅ Completed |
-| **PB08** | Hệ thống bình luận (Comments) | Medium | ✅ Completed |
-| **PB09** | Trang cá nhân người dùng (User Profile) | Medium | ✅ Completed |
-| **PB10** | Trang tổng quan quản trị (Admin Dashboard) | High | ✅ Completed |
-| **PB11** | Đăng truyện mới (Add Story) | High | ✅ Completed |
-| **PB12** | Quản lý danh sách truyện (Manage Stories) | High | ✅ Completed |
-| **PB13** | Xóa truyện khỏi hệ thống (Delete Story) | Medium | 🔄 In Progress |
-| **PB14** | Quản lý tài khoản người dùng (Manage Users) | Medium | 🔄 In Progress |
-| **PB15** | Báo cáo chi tiết & Thống kê sâu (Reports & Analytics) | Low | 🔄 In Progress |
+| ID | User Story | Phase / Group | Priority | Status |
+|---|---|---|---|---|
+| **PB01** | View Story Details | Core (Xương sống) | **HIGH** | ☑ In Progress |
+| **PB02** | Read Chapters | Core (Xương sống) | **HIGH** | ☑ In Progress |
+| **PB03** | Add Story (admin) | Core (Xương sống) | **HIGH** | ☑ In Progress |
+| **PB04** | Manage Stories | Core (Xương sống) | **HIGH** | ☑ In Progress |
+| **PB05** | Admin Dashboard (basic) | Core (Xương sống) | **HIGH** | ☑ In Progress |
+| **PB06** | Search Stories | Expansion (Mở rộng) | **HIGH** | ☑ In Progress |
+| **PB07** | User Registration | Expansion (Mở rộng) | **HIGH** | ☑ In Progress |
+| **PB08** | User Login | Expansion (Mở rộng) | **HIGH** | ☑ In Progress |
+| **PB09** | Favorite Stories | Engagement (Giữ chân) | **MEDIUM** | ☐ Pending |
+| **PB10** | Reading History | Engagement (Giữ chân) | **MEDIUM** | ☐ Pending |
+| **PB11** | User Profile | Engagement (Giữ chân) | **MEDIUM** | ☐ Pending |
+| **PB12** | Summarize story | Advanced (AI) | **MEDIUM** | ☐ Pending |
+| **PB13** | Recommend story | Advanced (AI) | **MEDIUM** | ☐ Pending |
+| **PB14** | Comments | Low / Optional | **LOW** | ☐ Pending |
+| **PB15** | Manage Users | Low / Optional | **LOW** | ☐ Pending |
+| **PB16** | Delete Story | Low / Optional | **LOW** | ☐ Pending |
+| **PB17** | Reports & Analytics | Low / Optional | **LOW** | ☐ Pending |

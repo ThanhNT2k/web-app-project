@@ -1,7 +1,13 @@
 # Nhật Ký Tương Tác AI — TUẦN 2: Phân Tích Sản Phẩm & Thiết Kế AI Personalization (ai-logs/week-02.md)
 
 *   **Dự án:** CMC Truyện
-*   **Mã số nhóm:** Nhóm CMC Truyện — Khóa Phát Triển Phần Mềm Hướng AI
+*   **Nhóm:** Nhóm 3
+*   **Danh sách thành viên:**
+    1.  **Nguyễn Thị Thùy** - BAI252513
+    2.  **Trần Thị Kim Uyên** - BAI250072
+    3.  **Nguyễn Hải Dương** - BAI250020
+    4.  **Nguyễn Tuấn Thành** - BAI252417
+    5.  **Vũ Viết Trí** - BAI250063
 *   **Thời gian:** Tuần 2 (Cuối tháng 5/2026)
 *   **Trợ lý AI sử dụng:** Claude.ai Web, VS Code Copilot Chat
 *   **Kiến trúc thống nhất:** React + Vite (Frontend) + Node.js Express (Backend) + PostgreSQL (Supabase)
@@ -16,10 +22,6 @@
 
 ### 🔵 Prompt đã dùng:
 ```text
-Hãy đóng vai một nhà phân tích sản phẩm (Product Analyst). 
-
-Chúng tôi đang phát triển dự án "CMC Truyện" với stack React + Node.js Express + Supabase. Nhóm gồm 3 thành viên hoạt động bán thời gian (~10 tiếng/tuần mỗi người). Tổng quỹ thời gian cho dự án là khoảng 240 giờ làm việc thực tế.
-
 Hãy giúp tôi áp dụng mô hình chấm điểm RICE (Reach, Impact, Confidence, Effort) để đánh giá việc giải quyết các điểm nghẽn (pain points) sau đây và chọn ra phạm vi MVP tối ưu nhất:
 1. Gỡ bỏ quảng cáo hoàn toàn khỏi giao diện đọc.
 2. Tích hợp thanh tùy biến giao diện đọc (Dark Mode, giãn dòng, thay đổi cỡ chữ).

@@ -1,14 +1,24 @@
 # Tổng Quan Mã Nguồn Dự Án — CMC Truyện (CODEBASE_OVERVIEW.md)
 
-Tài liệu này cung cấp bản đồ liên kết chi tiết giữa các yêu cầu nghiệp vụ (User Stories) và cấu trúc thư mục, các file code thực tế trong dự án CMC Truyện (React frontend & Node.js backend).
+---
+
+## 👥 THÔNG TIN NHÓM THỰC HIỆN
+
+*   **Nhóm:** Nhóm 3
+*   **Danh sách thành viên:**
+    1.  **Nguyễn Thị Thùy** - BAI252513
+    2.  **Trần Thị Kim Uyên** - BAI250072
+    3.  **Nguyễn Hải Dương** - BAI250020
+    4.  **Nguyễn Tuấn Thành** - BAI252417
+    5.  **Vũ Viết Trí** - BAI250063
 
 ---
 
 ## 🗺️ 1. Bản Đồ Liên Kết Nghiệp Vụ & Mã Nguồn (Business-to-Code Mapping)
 
-Dưới đây là cách các User Stories (US) được hiện thực hóa trong mã nguồn:
+Dưới đây là cách các User Stories (US) được hiện thực hóa trong mã nguồn ở thời điểm Tuần 3 (các tính năng Core & Expansion đang ở trạng thái **In Progress** thông qua giao diện mẫu UX Prototype và cấu trúc Node.js backend ban đầu):
 
-### 🔐 Epic 1 & 5: Authentication & User Profile (US03)
+### 🔐 Epic 1 & 5: Authentication & User Profile (US03) - *Status: In Progress*
 *   **Frontend UI:**
     *   Thành phần Modal đăng ký/đăng nhập: [`AuthModal.jsx`](../../frontend/src/components/AuthModal.jsx)
     *   Trang đăng ký: [`RegisterPage.jsx`](../../frontend/src/pages/RegisterPage.jsx)
@@ -21,7 +31,7 @@ Dưới đây là cách các User Stories (US) được hiện thực hóa trong
     *   Xử lý băm mật khẩu & ký token JWT: `backend/src/controllers/authController.js`
     *   Xác thực quyền qua token: [`authMiddleware.js`](../../backend/src/middleware/authMiddleware.js)
 
-### 🔍 Epic 2: Story Discovery & Search (US01)
+### 🔍 Epic 2: Story Discovery & Search (US01) - *Status: In Progress*
 *   **Frontend UI:**
     *   Thanh tìm kiếm trên thanh điều hướng: [`Navbar.jsx`](../../frontend/src/components/Navbar.jsx)
     *   Trang tìm kiếm truyện: [`FindStoriesPage.jsx`](../../frontend/src/pages/FindStoriesPage.jsx)
@@ -29,27 +39,22 @@ Dưới đây là cách các User Stories (US) được hiện thực hóa trong
     *   API tìm kiếm truyện (`GET /api/stories/search`): Được định nghĩa trong `backend/src/routes/storyRoutes.js` và xử lý trong `backend/src/controllers/storyController.js`.
     *   Query tìm kiếm SQL full-text: Được cài đặt trong hàm `search` của model [`Story.js`](../../backend/src/models/Story.js).
 
-### 📖 Epic 3: Reading Experience (US02, US05)
+### 📖 Epic 3: Reading Experience (US02, US05) - *Status: In Progress*
 *   **Frontend UI:**
     *   Trang thông tin truyện: [`StoryDetailPage.jsx`](../../frontend/src/pages/StoryDetailPage.jsx)
     *   Giao diện đọc chương: [`ChapterReaderPage.jsx`](../../frontend/src/pages/ChapterReaderPage.jsx)
     *   Bảng điều chỉnh giao diện đọc (cỡ chữ, giãn dòng, Dark Mode): [`ReadingPreferencesPanel.jsx`](../../frontend/src/components/ReadingPreferencesPanel.jsx)
 *   **Backend Logic:**
-    *   Query lấy dữ liệu câu chuyện và danh sách chương: Cài đặt trong `backend/src/models/Story.js` and `backend/src/models/Chapter.js`.
+    *   Query lấy dữ liệu câu chuyện và danh sách chương: Cài đặt trong `backend/src/models/Story.js` và `backend/src/models/Chapter.js`.
     *   Các endpoint API liên quan: `GET /api/stories/:id` và `GET /api/stories/:storyId/chapters/:chapterId` tại `backend/src/routes/storyRoutes.js`.
 
-### 💬 Epic 4: User Engagement & Engagement Features (US04, US05, US06)
-*   **Theo dõi truyện (Favorite/Follow):**
-    *   Thành phần nút theo dõi: [`FollowButton.jsx`](../../frontend/src/components/FollowButton.jsx)
-    *   Endpoint API lưu trạng thái theo dõi: `POST /api/user-follows` tại `backend/src/routes/userRoutes.js`.
-*   **Bình luận (Comments):**
-    *   Thành phần viết & hiển thị bình luận: [`CommentSection.jsx`](../../frontend/src/components/CommentSection.jsx)
-    *   Endpoint bình luận: `POST /api/comments` và `GET /api/comments` tại `backend/src/routes/commentRoutes.js`.
-*   **Lịch sử đọc (Reading History):**
-    *   Thành phần hiển thị tiến độ đọc: [`ReadingProgress.jsx`](../../frontend/src/components/ReadingProgress.jsx)
-    *   Tự động gửi tiến độ lên database: Hàm `saveReadingProgress` kết nối tới endpoint `POST /api/reading-history`.
+### 💬 Epic 4 & 6: Content & Engagement - *Status: Pending (Được mô phỏng tĩnh)*
+Các tính năng lưu trữ lịch sử đọc, theo dõi và tóm tắt AI đang ở trạng thái Pending trên database thực tế nhưng được mô phỏng tĩnh tại phía client bằng Mock Data và LocalStorage để kiểm thử luồng UX:
+*   Theo dõi truyện (Favorite/Follow): [`FollowButton.jsx`](../../frontend/src/components/FollowButton.jsx)
+*   Bình luận (Comments): [`CommentSection.jsx`](../../frontend/src/components/CommentSection.jsx)
+*   Hiển thị tiến độ đọc: [`ReadingProgress.jsx`](../../frontend/src/components/ReadingProgress.jsx)
 
-### 🛠️ Epic 6 & 7: Content & User Management (US07, US08, US09)
+### 🛠️ Epic 6 & 7: Content & User Management (US07, US08, US09) - *Status: In Progress*
 *   **Frontend UI:**
     *   Trang dành cho Admin và Uploader: [`DashboardPage.jsx`](../../frontend/src/pages/DashboardPage.jsx) và [`AdminPage.jsx`](../../frontend/src/pages/AdminPage.jsx)
 *   **Backend Logic:**
