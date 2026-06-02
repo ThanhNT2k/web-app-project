@@ -2,39 +2,35 @@
 
 // Hàm đăng nhập đã được tối ưu để lưu cả role
 export async function login(credentials) {
-  try {
-    const response = await fetch("https://webappbe-fzz7.onrender.com/api/auth/login", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: credentials.username || credentials.email,
-        password: credentials.password
-      })
+    const url = "https://webappbe-fzz7.onrender.com/api/auth/login";
+    console.log("Đang gửi login tới:", url);
+    
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            username: credentials.username || credentials.email,
+            password: credentials.password
+        })
     });
 
-    const data = await response.json();
-    console.log("Response từ API Login:", data); // Để bạn kiểm tra trong F12
+    console.log("Status trả về:", response.status);
+    
+    // ĐỌC TEXT TRƯỚC KHI ĐỌC JSON
+    const text = await response.text();
+    console.log("Nội dung thô trả về từ server:", text);
 
     if (response.ok) {
-      // 1. Lưu Token
-      const token = data.token || data.Token;
-      if (token) localStorage.setItem('token', token);
-
-      // 2. LƯU ROLE (Quan trọng: lấy từ user object trả về từ server)
-      // Giả sử server trả về cấu trúc: { token: "...", user: { id: 1, role: "admin", ... } }
-      const userData = data.user || data.User || {};
-      const role = userData.role || userData.Role || 'user'; 
-      
-      localStorage.setItem('userRole', role.toLowerCase().trim());
-      localStorage.setItem('userId', (userData.id || userData.Id || '').toString());
-
-      return { success: true, data: data };
+        try {
+            const data = JSON.parse(text);
+            console.log("Dữ liệu parsed:", data);
+            // Tiếp tục logic lưu token/role ở đây...
+            return { success: true, data: data };
+        } catch (e) {
+            return { success: false, error: "Server trả về thành công nhưng không phải JSON" };
+        }
     }
-
-    return { success: false, error: data.error || 'Login failed' };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+    return { success: false, error: "Lỗi HTTP: " + response.status };
 }
 
 // Giữ lại các hàm cũ để tránh lỗi gọi hàm
