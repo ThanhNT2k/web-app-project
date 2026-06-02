@@ -27,6 +27,67 @@
         .hidden { display: none !important; }
         .switch-auth { margin-top: 15px; text-align: center; font-size: 14px; }
         .switch-auth a { color: #007bff; cursor: pointer; text-decoration: underline; }
+
+        /* Profile Dropdown Styles */
+        .profile-dropdown {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .profile-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+        .profile-avatar:hover {
+            transform: scale(1.1);
+        }
+        .profile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            margin-top: 10px;
+            z-index: 1000;
+            display: none;
+        }
+        .profile-menu.show {
+            display: block;
+        }
+        .profile-menu-item {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .profile-menu-item:hover {
+            background-color: #f3f4f6;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 13px;
+        }
+        .profile-menu-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        .profile-menu-item:last-child {
+            border-radius: 0 0 8px 8px;
+            color: var(--danger-color);
+        }
     </style>
 </head>
 <body>
@@ -36,8 +97,21 @@
             <nav>
                 <a href="/pages/story.html" class="nav-link">Tìm Truyện</a>
                 <a href="/pages/story.html?genre=all" class="nav-link">Thể Loại</a>
-                <div id="auth-links">
+                <div id="auth-links" style="display: flex; align-items: center; gap: 1rem;">
                     <a href="#" class="nav-link" onclick="event.preventDefault(); window.toggleAuthModal(true)">Đăng nhập</a>
+                </div>
+                <!-- Profile Dropdown -->
+                <div id="profile-dropdown" class="profile-dropdown" style="display: none;">
+                    <button class="profile-btn" onclick="window.toggleProfileMenu()">
+                        <img id="profile-avatar" src="/assets/default-avatar.svg" alt="Hồ sơ" class="profile-avatar">
+                    </button>
+                    <div id="profile-menu" class="profile-menu">
+                        <a href="/pages/profile.html" class="profile-menu-item">👤 Hồ sơ của tôi</a>
+                        <a href="/pages/favorites.html" class="profile-menu-item">❤️ Danh sách yêu thích</a>
+                        <a href="/pages/history.html" class="profile-menu-item">📖 Lịch sử đọc</a>
+                        <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #e0e0e0;">
+                        <a href="#" class="profile-menu-item" onclick="event.preventDefault(); window.logout()">🚪 Đăng xuất</a>
+                    </div>
                 </div>
             </nav>
         </div>
