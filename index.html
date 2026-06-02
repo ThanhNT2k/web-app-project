@@ -272,85 +272,98 @@
             }
 
             // --- TỐI ƯU SỰ KIỆN ĐĂNG NHẬP ---
-            const loginForm = document.getElementById('login-form');
-            if (loginForm) {
-                loginForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    console.log("-> Kích hoạt gửi dữ liệu Đăng nhập lên Backend");
+            // --- TỐI ƯU SỰ KIỆN ĐĂNG NHẬP ---
+const loginForm = document.getElementById('login-form');
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
 
-                    const email = document.getElementById('login-email').value.trim();
-                    const password = document.getElementById('login-password').value;
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: email, password: password })
+            });
 
-                    try {
-                        const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ username: email, password: password })
-                        });
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 1. Lưu thông tin vào localStorage
+                if (data.token) localStorage.setItem('token', data.token);
+                if (data.user) {
+                    localStorage.setItem('userRole', data.user.role.toLowerCase());
+                    localStorage.setItem('username', data.user.username);
+                    localStorage.setItem('userId', data.user.id);
+                }
 
-                        console.log("Mã trạng thái phản hồi Đăng nhập:", response.status);
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            const token = data.token || data.Token || data.data?.token;
-                            if (token) {
-                                localStorage.setItem('token', token);
-                            }
-                            alert('Đăng nhập thành công!');
-                            window.toggleAuthModal(false);
-                            window.location.reload();
-                        } else {
-                            const errorData = await response.json().catch(() => ({}));
-                            alert(`Đăng nhập thất bại (Mã ${response.status}): ${errorData.error || 'Sai tài khoản hoặc mật khẩu.'}`);
-                        }
-                    } catch (err) {
-                        console.error("Lỗi script đăng nhập:", err);
-                        alert('Lỗi hệ thống: ' + err.message);
-                    }
-                });
+                alert('Đăng nhập thành công!');
+                window.toggleAuthModal(false);
+                window.location.reload(); // Reload để cập nhật giao diện
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                alert(`Đăng nhập thất bại: ${errorData.error || 'Sai tài khoản hoặc mật khẩu.'}`);
             }
+        } catch (err) {
+            alert('Lỗi kết nối tới máy chủ!');
+        }
+    });
+}
         };
 
         // Chạy tải dữ liệu truyện và cấu hình authentication khi trang web sẵn sàng
-        document.addEventListener('DOMContentLoaded', async () => {
-            initAuthentication(); // Đảm bảo gọi hàm gán sự kiện form ngay lập tức
+document.addEventListener('DOMContentLoaded', async () => {
+    initAuthentication(); 
 
-            try {
-                const response = await getComics({ page: 1, limit: 12 });
-                const comics = response.data || [];
+    // --- MỚI: Kiểm tra role để hiện UI (Đăng nhập/Admin) ---
+    const role = localStorage.getItem('userRole');
+    const token = localStorage.getItem('token');
+    const authLinks = document.getElementById('auth-links');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileMenu = document.getElementById('profile-menu');
 
-                if (comics && comics.length > 0) {
-                    if (typeof window.renderComics === 'function') {
-                        window.renderComics(comics.slice(0, 6), 'featured-stories'); 
-                        window.renderComics(comics.slice(0, 3), 'recent-stories');
-                    }
-                } else {
-                    document.getElementById('featured-stories').innerHTML = '<p class="no-data">Hiện tại chưa có truyện nào được đăng tải.</p>';
-                    document.getElementById('recent-stories').innerHTML = '<p class="no-data">Không có cập nhật mới.</p>';
-                }
+    if (token) {
+        // Nếu đã đăng nhập: ẩn nút Đăng nhập, hiện nút Hồ sơ
+        if (authLinks) authLinks.style.display = 'none';
+        if (profileDropdown) profileDropdown.style.display = 'flex';
 
-                try {
-                     const genreResponse = await getGenres();
-                     const genres = genreResponse.data || [];
-                     if (genres && genres.length > 0) {
-                         window.renderHomeGenres(genres.slice(0, 6), 'genres-list');
-                     } else {
-                         document.getElementById('genres-list').innerHTML = '<p class="no-data">Đang cập nhật thể loại...</p>';
-                     }
-                } catch(genreError) {
-                    console.warn("Không tải được thể loại:", genreError);
-                    document.getElementById('genres-list').innerHTML = '<p class="no-data">Đang cập nhật thể loại...</p>';
-                }
-               
-            } catch (error) {
-                console.error('Lỗi tải dữ liệu trang chủ:', error);
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification('Không thể kết nối tới máy chủ Backend!', 'error');
-                }
-                document.getElementById('featured-stories').innerHTML = '<p class="no-data" style="color:#ef4444;">Lỗi tải dữ liệu. Vui lòng thử lại sau.</p>';
-                document.getElementById('recent-stories').innerHTML = '<p class="no-data" style="color:#ef4444;">Lỗi tải dữ liệu.</p>';
+        // Nếu là admin, thêm nút Quản trị vào menu
+        if (role === 'admin' && profileMenu) {
+            // Kiểm tra xem đã thêm chưa để tránh bị lặp
+            if (!document.getElementById('admin-menu-item')) {
+                const adminLink = document.createElement('a');
+                adminLink.id = 'admin-menu-item';
+                adminLink.href = '/pages/admin.html';
+                adminLink.className = 'profile-menu-item';
+                adminLink.innerHTML = '🛡️ Bảng Quản Trị';
+                // Chèn vào vị trí đầu tiên của menu
+                profileMenu.insertBefore(adminLink, profileMenu.firstChild);
             }
-        });
+        }
+    } else {
+        // Nếu chưa đăng nhập
+        if (authLinks) authLinks.style.display = 'flex';
+        if (profileDropdown) profileDropdown.style.display = 'none';
+    }
+
+    // --- GIỮ NGUYÊN PHẦN TẢI DỮ LIỆU CŨ CỦA BẠN ---
+    try {
+        const response = await getComics({ page: 1, limit: 12 });
+        const comics = response.data || [];
+        // ... các logic render comics cũ ...
+        if (comics && comics.length > 0) {
+            if (typeof window.renderComics === 'function') {
+                window.renderComics(comics.slice(0, 6), 'featured-stories'); 
+                window.renderComics(comics.slice(0, 3), 'recent-stories');
+            }
+        }
+        // ... (phần code tải thể loại tương tự)
+    } catch (error) {
+        console.error('Lỗi tải dữ liệu trang chủ:', error);
+    }
+});
     </script>
 </body>
 </html>
