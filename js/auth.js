@@ -67,19 +67,20 @@ export async function register(credentials) {
 }
 
 /**
- * Đăng nhập người dùng - Bản tương thích sâu Backend C#
+ * Đăng nhập người dùng - Phiên bản bắt lỗi tuyệt đối (Chặn nuốt lỗi)
  */
 export async function login(credentials) {
   try {
+    console.log("=== BẮT ĐẦU GỌI API ĐĂNG NHẬP ===");
+    
     const response = await apiCall('/auth/login', 'POST', {
       username: credentials.username || credentials.email,
       password: credentials.password
     });
 
-    alert("BACKEND TRẢ VỀ: " + JSON.stringify(response));
-    console.log("BACKEND TRẢ VỀ GỐC:", response);
-
-    console.log("Dữ liệu gốc nhận từ API Backend:", response);
+    // 🌟 KHỐI HIỂN THỊ KHI THÀNH CÔNG (BẤT CHẤP CẤU TRÚC)
+    console.log("DỮ LIỆU ĐĂNG NHẬP THÀNH CÔNG:", response);
+    alert("KẾT QUẢ ĐĂNG NHẬP THÀNH CÔNG:\n" + JSON.stringify(response));
 
     if (response && (response.token || response.Token)) {
       const token = response.token || response.Token;
@@ -101,11 +102,6 @@ export async function login(credentials) {
       localStorage.setItem('userRole', rawRole.toLowerCase().trim());
       localStorage.setItem('userEmail', rawEmail.toLowerCase().trim());
 
-      console.log("Dữ liệu sau khi đăng nhập thành công:", {
-          role: localStorage.getItem('userRole'),
-          email: localStorage.getItem('userEmail')
-      });
-
       await new Promise(resolve => setTimeout(resolve, 60));
 
       return { success: true, data: response };
@@ -116,7 +112,14 @@ export async function login(credentials) {
       error: response?.error || response?.Error || 'Login failed'
     };
   } catch (error) {
-    return { success: false, error: error.message };
+    // 🌟 KHỐI HIỂN THỊ KHI BỊ CHẠY VÀO LỖI (CATCH)
+    console.error("LỖI PHÁT SINH TRONG HÀM LOGIN:", error);
+    alert("HÀM LOGIN BỊ CHẠY VÀO KHỐI LỖI (CATCH):\nNội dung lỗi: " + error.message);
+    
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
 
