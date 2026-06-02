@@ -1,27 +1,12 @@
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
 
-const uploadDir = path.resolve(__dirname, '../../uploads/covers');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const safeName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, safeName);
-  },
-});
+// Use memory storage — the file buffer is passed directly to Supabase Storage.
+// We no longer save files to the local disk (which is ephemeral on Render).
+const storage = multer.memoryStorage();
 
 const uploadCover = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith('image/')) {
       return cb(new Error('Chỉ chấp nhận file ảnh'));
@@ -32,5 +17,6 @@ const uploadCover = multer({
 
 module.exports = {
   uploadCover,
-  uploadDir,
+  // uploadDir is no longer used but kept for backward compatibility
+  uploadDir: null,
 };

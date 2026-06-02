@@ -170,6 +170,26 @@ function ChapterReaderPage() {
     };
   }, [isAuthenticated, saveProgress]);
 
+  // Keyboard navigation: ArrowLeft = previous chapter, ArrowRight = next chapter
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      // Don't trigger when user is typing in an input/textarea/contenteditable
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePrevious();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterIndex, chapters, chapter]);
+
   const chapterIndex = useMemo(
     () => chapters.findIndex((c) => String(c.id) === String(chapter?.id)),
     [chapters, chapter]
@@ -226,13 +246,18 @@ function ChapterReaderPage() {
         <Link to={`/story/${storyId}`} className="btn-cmc btn-cmc-outline btn-sm">
           ← Về truyện
         </Link>
-        <button
-          type="button"
-          className="btn-cmc btn-cmc-outline btn-sm"
-          onClick={() => navigator.clipboard?.writeText(shareUrl)}
-        >
-          Chia sẻ
-        </button>
+        <div className="d-flex align-items-center gap-2">
+          <span className="keyboard-hint" title="Dùng phím ← → để chuyển chương">
+            ⌨️ <kbd>←</kbd> <kbd>→</kbd>
+          </span>
+          <button
+            type="button"
+            className="btn-cmc btn-cmc-outline btn-sm"
+            onClick={() => navigator.clipboard?.writeText(shareUrl).then(() => alert('Đã copy link!'))}
+          >
+            Chia sẻ
+          </button>
+        </div>
       </div>
 
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}

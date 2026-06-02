@@ -22,6 +22,10 @@ const env = {
   // Gemini AI
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
 
+  // Supabase Storage
+  SUPABASE_URL: process.env.SUPABASE_URL || '',
+  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
+
   // Frontend
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
 
