@@ -11,34 +11,26 @@ import { useAuth } from '../contexts/AuthContext';
 import { mockChapter } from '../data/mockStories';
 
 const AUTOSAVE_INTERVAL_MS = 30000;
-const BOOKMARK_KEY = 'cmc_bookmarks';
-
-function getBookmarks() {
-  try {
-    return JSON.parse(localStorage.getItem(BOOKMARK_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
 
 function ChapterReaderPage() {
   const { storyId, chapterId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  
   const [chapter, setChapter] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [storyProgress, setStoryProgress] = useState(null);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
   const [fontSize, setFontSize] = useState(18);
   const [lineSpacing, setLineSpacing] = useState(1.6);
   const [fontFamily, setFontFamily] = useState('Inter, sans-serif');
-  const [bookmarked, setBookmarked] = useState(false);
   const [autoBookmark, setAutoBookmark] = useState(true);
+  
   const readTimeRef = useRef(0);
   const scrollRef = useRef(0);
-  // Tracks whether we have already performed the initial bookmark save for
-  // the current chapter so we don't double-save when autoBookmark loads async.
   const hasInitialSavedRef = useRef(false);
 
   const chapterNumericId = useMemo(() => chapter?.id || chapterId, [chapter, chapterId]);
@@ -50,8 +42,6 @@ function ChapterReaderPage() {
       if (prefs.lineSpacing) setLineSpacing(prefs.lineSpacing);
       if (prefs.fontFamily) setFontFamily(prefs.fontFamily);
     }
-    setBookmarked(getBookmarks().includes(String(chapterId)));
-    // Reset the initial-save flag whenever the user navigates to a new chapter.
     hasInitialSavedRef.current = false;
   }, [chapterId]);
 
@@ -69,7 +59,7 @@ function ChapterReaderPage() {
       } catch {
         setChapter(mockChapter);
         setChapters([]);
-        setError('Không tải được chương từ API. Hiển thị dữ liệu mẫu.');
+        setError('Không tải được chương từ máy chủ. Đang hiển thị chương mô phỏng.');
       } finally {
         setLoading(false);
       }
@@ -98,37 +88,25 @@ function ChapterReaderPage() {
   }, [isAuthenticated, storyId]);
 
   const saveProgress = useCallback(async () => {
-    if (!isAuthenticated || !chapter) {
-      return;
-    }
+    if (!isAuthenticated || !chapter) return;
 
-    // chapter.id comes from the API response; chapterId is the URL param string.
-    // Prefer chapter.id (authoritative DB id), fall back to URL param.
     const resolvedChapterId = Number(chapter.id || chapterId);
-    if (!resolvedChapterId || !Number.isFinite(resolvedChapterId)) {
-      return; // Cannot save without a valid chapter id
-    }
+    if (!resolvedChapterId || !Number.isFinite(resolvedChapterId)) return;
 
     try {
       const response = await API.readingHistory.save({
         story_id: Number(storyId),
         chapter_id: resolvedChapterId,
-        // Guard against NaN / Infinity from scroll / timer refs
         read_position: Number.isFinite(scrollRef.current) ? Math.round(scrollRef.current) : 0,
         read_time: Number.isFinite(readTimeRef.current) ? Math.round(readTimeRef.current) : 0,
       });
       setStoryProgress(response.progress || null);
       readTimeRef.current = 0;
     } catch {
-      // silent — network errors should not surface to the user here
+      // silent
     }
-  // chapterId added back intentionally as a string-safe fallback; it does NOT
-  // cause double-saves because hasInitialSavedRef prevents that.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, chapter, storyId, chapterId]);
 
-  // Initial bookmark save — fires once per chapter load, after a short delay
-  // so the user has actually opened the chapter (not just navigated through).
   useEffect(() => {
     if (!isAuthenticated || !chapter || !autoBookmark) return;
     if (hasInitialSavedRef.current) return;
@@ -139,15 +117,10 @@ function ChapterReaderPage() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  // Only re-run when chapter identity or autoBookmark flag changes.
-  // saveProgress is intentionally excluded — it is stable within a chapter.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, chapter?.id, autoBookmark]);
+  }, [isAuthenticated, chapter?.id, autoBookmark, saveProgress]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      return undefined;
-    }
+    if (!isAuthenticated) return undefined;
 
     const onScroll = () => {
       scrollRef.current = Math.round(window.scrollY);
@@ -196,8 +169,6 @@ function ChapterReaderPage() {
     }
   };
 
-  // Keyboard navigation: ArrowLeft = previous chapter, ArrowRight = next chapter
-  // Must be declared AFTER chapterIndex, handlePrevious, handleNext
   useEffect(() => {
     const onKeyDown = (e) => {
       const tag = document.activeElement?.tagName;
@@ -216,28 +187,36 @@ function ChapterReaderPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapterIndex, chapters, chapter]);
 
-
-  const handleToggleBookmark = () => {
-    const key = String(chapterId);
-    let list = getBookmarks();
-    if (list.includes(key)) {
-      list = list.filter((id) => id !== key);
-      setBookmarked(false);
-    } else {
-      list = [...list, key];
-      setBookmarked(true);
-    }
-    localStorage.setItem(BOOKMARK_KEY, JSON.stringify(list));
-  };
-
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   if (loading) {
-    return <main className="cmc-main"><p className="loading-text">Đang tải chương...</p></main>;
+    return (
+      <main className="cmc-main animate-pulse">
+        <div className="reader-top-bar mb-4">
+          <div className="skeleton-box" style={{ width: '100px', height: '36px', borderRadius: '8px' }} />
+          <div className="skeleton-box" style={{ width: '80px', height: '36px', borderRadius: '8px' }} />
+        </div>
+        <div className="panel-card p-4 p-lg-5" style={{ background: 'var(--surface)', borderRadius: '16px' }}>
+          <div className="skeleton-box mb-3" style={{ height: '30px', width: '40%', borderRadius: '6px' }} />
+          <div className="skeleton-box mb-4" style={{ height: '20px', width: '25%', borderRadius: '6px' }} />
+          <hr />
+          <div className="skeleton-box mb-3" style={{ height: '16px', width: '100%', borderRadius: '4px' }} />
+          <div className="skeleton-box mb-3" style={{ height: '16px', width: '95%', borderRadius: '4px' }} />
+          <div className="skeleton-box mb-3" style={{ height: '16px', width: '98%', borderRadius: '4px' }} />
+          <div className="skeleton-box mb-3" style={{ height: '16px', width: '90%', borderRadius: '4px' }} />
+          <div className="skeleton-box mb-3" style={{ height: '16px', width: '92%', borderRadius: '4px' }} />
+          <div className="skeleton-box mb-3" style={{ height: '16px', width: '85%', borderRadius: '4px' }} />
+        </div>
+      </main>
+    );
   }
 
   if (!chapter) {
-    return <main className="cmc-main"><p>Không tìm thấy chương.</p></main>;
+    return (
+      <main className="cmc-main">
+        <p>Không tìm thấy chương.</p>
+      </main>
+    );
   }
 
   return (
@@ -248,13 +227,10 @@ function ChapterReaderPage() {
           ← Về truyện
         </Link>
         <div className="d-flex align-items-center gap-2">
-          <span className="keyboard-hint" title="Dùng phím ← → để chuyển chương">
-            ⌨️ <kbd>←</kbd> <kbd>→</kbd>
-          </span>
           <button
             type="button"
             className="btn-cmc btn-cmc-outline btn-sm"
-            onClick={() => navigator.clipboard?.writeText(shareUrl).then(() => alert('Đã copy link!'))}
+            onClick={() => navigator.clipboard?.writeText(shareUrl).then(() => alert('Đã sao chép liên kết vào bộ nhớ tạm!'))}
           >
             Chia sẻ
           </button>
@@ -279,8 +255,6 @@ function ChapterReaderPage() {
         setLineSpacing={setLineSpacing}
         fontFamily={fontFamily}
         setFontFamily={setFontFamily}
-        bookmarked={bookmarked}
-        onToggleBookmark={handleToggleBookmark}
       />
 
       <div className="mt-4">

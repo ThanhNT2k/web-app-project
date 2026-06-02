@@ -73,7 +73,7 @@ const API = {
     getCurrentUser: () => request('/auth/me', { method: 'GET' }),
   },
   stories: {
-    getAll: (page = 1, limit = 10) => request('/stories', { method: 'GET', params: { page, limit } }),
+    getAll: (page = 1, limit = 10, sortBy = 'newest') => request('/stories', { method: 'GET', params: { page, limit, sortBy } }),
     getMine: (page = 1, limit = 20) => request('/stories/mine', { method: 'GET', params: { page, limit } }),
     getById: (id) => request(`/stories/${id}`, { method: 'GET' }),
     create: (data) => request('/stories', { method: 'POST', data }),

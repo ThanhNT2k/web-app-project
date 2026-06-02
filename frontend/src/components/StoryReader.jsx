@@ -1,7 +1,5 @@
 import { useEffect, useMemo } from 'react';
 
-import { useTheme } from '../contexts/ThemeContext';
-
 const FONT_FAMILIES = [
   { value: 'Inter, sans-serif', label: 'Inter' },
   { value: 'Georgia, serif', label: 'Georgia' },
@@ -40,10 +38,7 @@ function StoryReader({
   setLineSpacing,
   fontFamily,
   setFontFamily,
-  bookmarked,
-  onToggleBookmark,
 }) {
-  const { isDarkMode, toggleDarkMode } = useTheme();
 
   const hasPrevious = useMemo(() => {
     if (!chapter || chapters.length === 0) {
@@ -168,20 +163,6 @@ function StoryReader({
               <option key={f.value} value={f.value}>{f.label}</option>
             ))}
           </select>
-
-          <button className="btn btn-outline-secondary btn-sm" type="button" onClick={toggleDarkMode}>
-            {isDarkMode ? 'Sáng' : 'Tối'}
-          </button>
-
-          {onToggleBookmark ? (
-            <button
-              className={`btn btn-sm ${bookmarked ? 'btn-warning' : 'btn-outline-warning'}`}
-              type="button"
-              onClick={onToggleBookmark}
-            >
-              {bookmarked ? 'Đã đánh dấu' : 'Đánh dấu'}
-            </button>
-          ) : null}
         </div>
 
         <div

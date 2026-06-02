@@ -33,7 +33,8 @@ async function getAllStories(req, res) {
   try {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
-    const result = await Story.getAllStories(page, limit);
+    const sortBy = req.query.sortBy || 'newest';
+    const result = await Story.getAllStories(page, limit, sortBy);
 
     return res.status(200).json({
       success: true,

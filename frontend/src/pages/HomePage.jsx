@@ -15,11 +15,49 @@ const GENRES = [
   { slug: 'Lich Su', label: 'Lịch Sử' },
 ];
 
+function StoryCardSkeleton({ compact }) {
+  return (
+    <div
+      className="story-card-skeleton animate-pulse"
+      style={{
+        background: 'var(--surface)',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        padding: '12px',
+        border: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        minHeight: compact ? '200px' : '280px',
+      }}
+    >
+      <div
+        className="skeleton-box"
+        style={{ width: '100%', height: compact ? '120px' : '180px', borderRadius: '12px' }}
+      />
+      <div className="skeleton-box" style={{ height: '20px', borderRadius: '4px', width: '80%' }} />
+      <div className="skeleton-box" style={{ height: '14px', borderRadius: '4px', width: '50%' }} />
+      {!compact && (
+        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+          <div className="skeleton-box" style={{ height: '24px', borderRadius: '12px', width: '60px' }} />
+          <div className="skeleton-box" style={{ height: '24px', borderRadius: '12px', width: '60px' }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [stories, setStories] = useState([]);
+  const [featuredStories, setFeaturedStories] = useState([]);
+  const [recentStories, setRecentStories] = useState([]);
+  
   const [loading, setLoading] = useState(true);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [loadingRecent, setLoadingRecent] = useState(true);
   const [error, setError] = useState('');
+  
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
@@ -27,6 +65,42 @@ function HomePage() {
 
   const isSearching = useMemo(() => Boolean(query.trim() || (category && category !== 'all')), [query, category]);
 
+  // Fetch Featured Stories (Popular - most followed)
+  useEffect(() => {
+    if (isSearching) return;
+    const fetchFeatured = async () => {
+      try {
+        setLoadingFeatured(true);
+        const response = await API.stories.getAll(1, 6, 'popular');
+        setFeaturedStories(response.stories || []);
+      } catch {
+        // Fallback sorted by chapters as a popularity proxy
+        setFeaturedStories([...mockStories].sort((a, b) => b.total_chapters - a.total_chapters).slice(0, 6));
+      } finally {
+        setLoadingFeatured(false);
+      }
+    };
+    fetchFeatured();
+  }, [isSearching]);
+
+  // Fetch Recent Updates (sortBy = updated)
+  useEffect(() => {
+    if (isSearching) return;
+    const fetchRecent = async () => {
+      try {
+        setLoadingRecent(true);
+        const response = await API.stories.getAll(1, 3, 'updated');
+        setRecentStories(response.stories || []);
+      } catch {
+        setRecentStories([...mockStories].slice(0, 3));
+      } finally {
+        setLoadingRecent(false);
+      }
+    };
+    fetchRecent();
+  }, [isSearching]);
+
+  // Fetch Browse / Search Stories
   useEffect(() => {
     const fetchStories = async () => {
       try {
@@ -35,18 +109,13 @@ function HomePage() {
         const cat = category && category !== 'all' ? category : null;
         const response = isSearching
           ? await API.stories.search(query.trim(), cat, page)
-          : await API.stories.getAll(page, 12);
+          : await API.stories.getAll(page, 12, 'newest');
 
         const list = response.stories || [];
         setStories(list);
         setPagination(response.pagination || { page: 1, totalPages: 1 });
-        if (list.length === 0 && !isSearching) {
-          setError('API đã kết nối nhưng chưa có truyện. Chạy: cd backend && npm run db:init && npm run db:seed');
-        }
       } catch {
-        setError(
-          'Không kết nối được API backend. Hãy chạy backend và seed dữ liệu. Đang hiển thị dữ liệu mẫu.'
-        );
+        setError('Không thể kết nối đến máy chủ. Hệ thống đang hoạt động ở chế độ ngoại tuyến.');
         setStories(mockStories);
         setPagination({ page: 1, totalPages: 1 });
       } finally {
@@ -56,9 +125,6 @@ function HomePage() {
 
     fetchStories();
   }, [isSearching, query, category, page]);
-
-  const featuredStories = useMemo(() => stories.slice(0, 6), [stories]);
-  const recentStories = useMemo(() => stories.slice(0, 3), [stories]);
 
   const handleGenreClick = (slug) => {
     setCategory(slug);
@@ -94,23 +160,31 @@ function HomePage() {
 
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
-      <RecommendedStories />
+      {!isSearching && <RecommendedStories />}
 
-      <section className="mb-5">
-        <h2 className="section-title">📖 Truyện Nổi Bật</h2>
-        {loading ? (
-          <p className="loading-text">Đang tải truyện...</p>
-        ) : featuredStories.length > 0 ? (
-          <div className="stories-grid">
-            {featuredStories.map((story) => (
-              <StoryCard key={story.id} story={story} compact />
-            ))}
-          </div>
-        ) : (
-          <p className="no-data">Hiện tại chưa có truyện nào được đăng tải.</p>
-        )}
-      </section>
+      {/* Featured Stories */}
+      {!isSearching && (
+        <section className="mb-5">
+          <h2 className="section-title">📖 Truyện Nổi Bật</h2>
+          {loadingFeatured ? (
+            <div className="stories-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <StoryCardSkeleton key={`skeleton-feat-${i}`} compact />
+              ))}
+            </div>
+          ) : featuredStories.length > 0 ? (
+            <div className="stories-grid">
+              {featuredStories.map((story) => (
+                <StoryCard key={`feat-${story.id}`} story={story} compact />
+              ))}
+            </div>
+          ) : (
+            <p className="no-data">Hiện tại chưa có truyện nổi bật nào.</p>
+          )}
+        </section>
+      )}
 
+      {/* Genres */}
       <section className="mb-5">
         <h2 className="section-title">🏷️ Thể Loại Phổ Biến</h2>
         <div className="genres-grid">
@@ -127,37 +201,51 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="mb-5">
-        <h2 className="section-title">⚡ Cập Nhật Gần Đây</h2>
-        {loading ? (
-          <p className="loading-text">Đang tải truyện...</p>
-        ) : recentStories.length > 0 ? (
-          <div className="stories-grid">
-            {recentStories.map((story) => (
-              <StoryCard key={`recent-${story.id}`} story={story} compact />
-            ))}
-          </div>
-        ) : (
-          <p className="no-data">Không có cập nhật mới.</p>
-        )}
-      </section>
+      {/* Recent Updates */}
+      {!isSearching && (
+        <section className="mb-5">
+          <h2 className="section-title">⚡ Cập Nhật Gần Đây</h2>
+          {loadingRecent ? (
+            <div className="stories-grid">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <StoryCardSkeleton key={`skeleton-recent-${i}`} compact />
+              ))}
+            </div>
+          ) : recentStories.length > 0 ? (
+            <div className="stories-grid">
+              {recentStories.map((story) => (
+                <StoryCard key={`recent-${story.id}`} story={story} compact />
+              ))}
+            </div>
+          ) : (
+            <p className="no-data">Không có cập nhật mới.</p>
+          )}
+        </section>
+      )}
 
+      {/* Main browse list / Search list */}
       <section id="browse" className="mb-4">
         <h2 className="section-title">
           {isSearching ? '🔍 Kết quả tìm kiếm' : '📚 Tất cả truyện'}
         </h2>
-        {!loading && stories.length > 0 ? (
+        
+        {loading ? (
+          <div className="stories-grid">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <StoryCardSkeleton key={`skeleton-all-${i}`} />
+            ))}
+          </div>
+        ) : stories.length > 0 ? (
           <div className="stories-grid">
             {stories.map((story) => (
               <StoryCard key={`all-${story.id}`} story={story} />
             ))}
           </div>
-        ) : null}
-        {!loading && stories.length === 0 ? (
+        ) : (
           <p className="no-data">Không tìm thấy truyện phù hợp.</p>
-        ) : null}
+        )}
 
-        {pagination.totalPages > 1 ? (
+        {!loading && pagination.totalPages > 1 ? (
           <div className="d-flex justify-content-center gap-2 mt-4 flex-wrap">
             <button
               type="button"
@@ -168,13 +256,7 @@ function HomePage() {
               Trước
             </button>
             <span className="align-self-center" style={{ color: 'var(--text-muted)' }}>
-              Trang
-              {' '}
-              {pagination.page}
-              {' '}
-              /
-              {' '}
-              {pagination.totalPages}
+              Trang {pagination.page} / {pagination.totalPages}
             </span>
             <button
               type="button"

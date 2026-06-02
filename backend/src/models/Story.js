@@ -22,35 +22,54 @@ async function attachTagsToStories(stories) {
   return stories.map((s) => ({ ...s, tags: map[s.id] || [] }));
 }
 
-async function getAllStories(page = 1, limit = 10) {
+async function getAllStories(page = 1, limit = 10, sortBy = 'newest') {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
   const safeLimit = Math.max(parseInt(limit, 10) || 10, 1);
   const offset = (safePage - 1) * safeLimit;
 
+  let orderBy = 's.created_at DESC';
+  let joinClause = '';
+  let selectClause = '';
+
+  if (sortBy === 'popular') {
+    selectClause = ', COALESCE(f.follow_count, 0) AS follow_count';
+    joinClause = `
+      LEFT JOIN (
+        SELECT story_id, COUNT(*)::int AS follow_count
+        FROM user_follows
+        GROUP BY story_id
+      ) f ON f.story_id = s.id
+    `;
+    orderBy = 'follow_count DESC, s.created_at DESC';
+  } else if (sortBy === 'updated') {
+    orderBy = 's.updated_at DESC';
+  }
+
   try {
-    const result = await db.query(
-      `
-        SELECT
-          s.id,
-          s.title,
-          s.slug,
-          s.author_id,
-          s.description,
-          s.cover_image_url,
-          s.category,
-          s.status,
-          s.total_chapters,
-          s.created_at,
-          s.updated_at,
-          s.is_published,
-          COUNT(*) OVER() AS total_count
-        FROM stories s
-        WHERE s.is_published = true
-        ORDER BY s.created_at DESC
-        LIMIT $1 OFFSET $2
-      `,
-      [safeLimit, offset]
-    );
+    const query = `
+      SELECT
+        s.id,
+        s.title,
+        s.slug,
+        s.author_id,
+        s.description,
+        s.cover_image_url,
+        s.category,
+        s.status,
+        s.total_chapters,
+        s.created_at,
+        s.updated_at,
+        s.is_published,
+        COUNT(*) OVER() AS total_count
+        ${selectClause}
+      FROM stories s
+      ${joinClause}
+      WHERE s.is_published = true
+      ORDER BY ${orderBy}
+      LIMIT $1 OFFSET $2
+    `;
+
+    const result = await db.query(query, [safeLimit, offset]);
 
     const totalItems = result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
 
