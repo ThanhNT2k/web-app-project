@@ -141,16 +141,29 @@ export async function logout() {
 window.logout = logout; // Phục vụ thuộc tính onclick ngoài HTML công cộng
 
 /**
- * Nhận người dùng được xác thực hiện tại từ DB
+ * Nhận người dùng được xác thực hiện tại từ DB Supabase
+ * GET /api/users/profile
  */
 export async function getCurrentUser() {
   try {
     const token = getToken();
     if (!token) return { success: false, error: 'No token found' };
 
-    const response = await apiCall('/users/me', 'GET');
-    return { success: true, data: response };
-  } catch (error) {
+    // 🎯 SỬA ĐƯỜNG DẪN TẠI ĐÂY: Đổi từ '/users/me' thành '/users/profile'
+    const response = await apiCall('/users/profile', 'GET');
+
+    console.log("Dữ liệu gốc nhận từ API /users/profile:", response);
+
+    // Vì Supabase Service của C# thường trả về trực tiếp Object hoặc mảng Model
+    if (response) {
+        return {
+            success: true,
+            data: response // Trả dữ liệu Profile ra cho luồng xử lý
+        };
+    }
+
+    return { success: false, error: 'Không thể lấy thông tin profile' };
+} catch (error) {
     if (error.message.includes('401') || error.message.includes('Unauthorized')) {
       clearToken();
       clearRole();
@@ -233,11 +246,12 @@ document.addEventListener('click', (e) => {
     }
 });
 
+
 /**
  * 🔄 LUỒNG TỰ ĐỘNG ĐỒNG BỘ VÀ KIỂM TRA ROLE TỪ DATABASE KHI KHỞI CHẠY WEB
  */
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Vẽ giao diện ngay lập tức dựa trên bộ nhớ tạm (localStorage) hiện tại trước
+    // 1. Vẽ nhanh giao diện từ bộ nhớ máy tính (localStorage) trước
     updateAuthUI();
 
     // 2. Chạy ngầm Request hỏi Database xem có thay đổi gì về quyền hạn hay không
@@ -246,6 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const res = await getCurrentUser();
             
             if (res.success && res.data) {
+                // Đọc linh hoạt cả viết hoa lẫn viết thường từ Model Profile của Supabase C#
                 const currentRoleFromDB = res.data.role || res.data.Role;
                 const currentEmailFromDB = res.data.email || res.data.Email;
 
@@ -257,12 +272,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (localRole !== newRole) {
                         console.log(`[ĐỒNG BỘ] Phát hiện thay đổi quyền trên DB: ${localRole} -> ${newRole}`);
                         
+                        // Ghi đè quyền mới vào bộ nhớ trình duyệt
                         localStorage.setItem('userRole', newRole);
                         if (currentEmailFromDB) {
                             localStorage.setItem('userEmail', currentEmailFromDB.toLowerCase().trim());
                         }
 
-                        // Vẽ lại giao diện ngay tại chỗ để nạp mục Admin Panel (hoặc ẩn đi nếu bị hạ quyền)
+                        // Vẽ lại giao diện ngay tại chỗ để hiện/ẩn nút Admin Panel tùy theo quyền mới
                         updateAuthUI();
                         
                         alert('Thông tin phân quyền tài khoản của bạn đã được hệ thống cập nhật tự động!');
@@ -270,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } catch (error) {
-            console.error('Lỗi đồng bộ thông tin tài khoản từ DB:', error);
+            console.error('Lỗi chạy ngầm đồng bộ quyền từ /users/profile:', error);
         }
     }
 });
