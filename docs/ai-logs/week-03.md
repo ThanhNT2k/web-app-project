@@ -15,7 +15,7 @@ Trong tuần này, mục tiêu trọng tâm là **đọc hiểu mã nguồn sẵ
 Cụ thể, nhóm đã tương tác với trợ lý AI để:
 1.  Đọc cấu trúc thư mục của dự án cũ (HTML/JS tĩnh) và ánh xạ các trang cũ sang cấu trúc component của **React + Vite**.
 2.  Viết các component giao diện React chính (Reader, Navbar, Admin Dashboard) sử dụng Mock dữ liệu và lưu cấu hình độc giả vào `localStorage`.
-3.  Tạo tài liệu tổng quan mã nguồn [`CODEBASE_OVERVIEW.md`](../CODEBASE_OVERVIEW.md), tài liệu giao diện mẫu [`UX_PROTOTYPE.md`](../UX_PROTOTYPE.md) và cập nhật [`REQUIREMENTS.md`](../REQUIREMENTS.md).
+3.  Tạo tài liệu tổng quan mã nguồn [`CODEBASE_OVERVIEW.md`](../technical/CODEBASE_OVERVIEW.md), tài liệu giao diện mẫu [`UX_PROTOTYPE.md`](../technical/UX_PROTOTYPE.md) và cập nhật [`REQUIREMENTS.md`](../product/REQUIREMENTS.md).
 
 ---
 
@@ -28,7 +28,7 @@ Cụ thể, nhóm đã tương tác với trợ lý AI để:
 *   **Phản hồi của AI:**
     *   AI đã phân tích các file trong thư mục `js/` cũ (như `novels.js`, `chapters.js`, `auth.js`,...) và chỉ ra rằng chúng nên được gom nhóm lại thành các Service API trong `frontend/src/services/`.
     *   Đề xuất cấu trúc định tuyến bằng **React Router v6**.
-    *   Tạo ra file [`LEGACY_SITE.md`](../LEGACY_SITE.md) để ghi nhận bảng ánh xạ URL cũ sang URL mới.
+    *   Tạo bảng ánh xạ URL cũ sang URL mới.
     *   Đề xuất đặt các file redirect tĩnh như `pages/story.html` vào thư mục `frontend/public/pages/story.html` để phục vụ các liên kết cũ của người dùng.
 
 ### 🗓️ Buổi 2: Tạo UX Prototype và Mock Data đọc truyện
@@ -49,8 +49,8 @@ Cụ thể, nhóm đã tương tác với trợ lý AI để:
     > 3. UX_PROTOTYPE.md: Mô tả trải nghiệm giao diện mẫu và cách sử dụng Mock Data.
     > Tất cả viết bằng tiếng Việt và sử dụng liên kết relative chính xác."
 *   **Phản hồi của AI:**
-    *   AI đã tạo thành công 3 file tài liệu trên thư mục gốc dự án.
-    *   Các liên kết mã nguồn trong [`CODEBASE_OVERVIEW.md`](../CODEBASE_OVERVIEW.md) được ánh xạ chính xác đến các file như [`AuthModal.jsx`](../frontend/src/components/AuthModal.jsx), [`ReadingPreferencesPanel.jsx`](../frontend/src/components/ReadingPreferencesPanel.jsx) giúp người chấm bài dễ dàng click để xem mã nguồn.
+    *   AI đã tạo thành công 3 file tài liệu trong thư mục `docs/`.
+    *   Các liên kết mã nguồn trong [`CODEBASE_OVERVIEW.md`](../technical/CODEBASE_OVERVIEW.md) được ánh xạ chính xác đến các file như [`AuthModal.jsx`](../../frontend/src/components/AuthModal.jsx), [`ReadingPreferencesPanel.jsx`](../../frontend/src/components/ReadingPreferencesPanel.jsx) giúp người chấm bài dễ dàng click để xem mã nguồn.
 
 ---
 

@@ -57,9 +57,12 @@ web-app-project/
 │   │   └── main.jsx         # Điểm khởi chạy của ứng dụng React
 │   └── package.json
 │
-├── steps/                    # Tài liệu hướng dẫn 7 bước build dự án
-├── AGENTS.md                 # Quy chuẩn thiết kế hệ thống AI & Telemetry
-├── LEGACY_SITE.md            # Tài liệu điều hướng URL cũ (HTML tĩnh) sang React router
+├── docs/                     # Tài liệu thiết kế và đặc tả dự án
+│   ├── product/             # Tài liệu phân tích nghiệp vụ & yêu cầu (MVP, Backlog)
+│   └── technical/           # Tài liệu kiến trúc hệ thống, API và AI Personalization
+│
+├── AGENT_GUIDE.md            # Tài liệu phát triển cho AI agent
+├── package.json
 └── README.md                 # File hướng dẫn tổng quan này
 ```
 
@@ -126,7 +129,8 @@ npm run dev          # Khởi chạy giao diện React (mặc định tại http
 
 ## 📚 Tài Liệu Hướng Dẫn Kèm Theo
 
-*   [`ARCHITECTURE.md`](./ARCHITECTURE.md) — Kiến trúc chi tiết, sơ đồ dữ liệu và điều hướng URL cũ sang React.
-*   [`API_REFERENCE.md`](./API_REFERENCE.md) — Danh sách đặc tả 34 API Endpoint và cách dùng.
-*   [`AI_PERSONALIZATION.md`](./AI_PERSONALIZATION.md) — Cơ chế thu thập dữ liệu hành vi (Telemetry) và tích hợp AI Gemini.
-*   [`LEGACY_SITE.md`](./LEGACY_SITE.md) — Ánh xạ URL cũ của trang web HTML sang React.
+*   [`ARCHITECTURE.md`](./docs/technical/ARCHITECTURE.md) — Kiến trúc chi tiết, sơ đồ dữ liệu và điều hướng URL cũ sang React.
+*   [`API_REFERENCE.md`](./docs/technical/API_REFERENCE.md) — Danh sách đặc tả 34 API Endpoint và cách dùng.
+*   [`AI_PERSONALIZATION.md`](./docs/technical/AI_PERSONALIZATION.md) — Cơ chế thu thập dữ liệu hành vi (Telemetry) và tích hợp AI Gemini.
+*   [`REQUIREMENTS.md`](./docs/product/REQUIREMENTS.md) — Đặc tả yêu cầu phần mềm, Persona, User Story và Backlog.
+*   [`UX_PROTOTYPE.md`](./docs/technical/UX_PROTOTYPE.md) — Hướng dẫn giao diện mẫu tĩnh và Mock Data.
