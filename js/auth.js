@@ -73,39 +73,26 @@ export async function login(credentials) {
       password: credentials.password
     });
 
-    console.log("Response từ API Login:", response); // 🌟 DEBUG: Xem server trả về cái gì
+    // 🌟 DEBUG: Kiểm tra toàn bộ phản hồi từ server
+    console.log("Dữ liệu server trả về:", response);
 
     if (response && (response.token || response.Token)) {
       const token = response.token || response.Token;
       setToken(token);
       
-      // Xử lý userId linh hoạt hơn
-      const userData = response.user || response.User || {};
+      // Lấy dữ liệu user từ response
+      const userData = response.user || {};
       const userId = userData.id || userData.Id;
-      
-      let detectedRole = (userData.role || 'user').toLowerCase().trim();
+      const role = userData.role || 'user'; // Lấy role trực tiếp từ response
 
-      // Nếu API trả về role trực tiếp thì dùng luôn, không cần checkRoleById nữa cho nhanh
+      console.log("Role nhận được từ server:", role);
+
+      // Lưu vào localStorage
+      localStorage.setItem('userRole', role.toLowerCase().trim());
       if (userId) {
         localStorage.setItem('userId', userId.toString().trim());
       }
 
-      // Nếu chưa có role từ login response, mới dùng tới checkRoleById
-      if (detectedRole === 'user' && userId) {
-        try {
-          console.log("Đang kiểm tra quyền qua ID...");
-          const roleCheck = await checkRoleById(userId);
-          if (roleCheck.success && roleCheck.role) {
-            detectedRole = roleCheck.role.toLowerCase().trim();
-          }
-        } catch (e) {
-          console.error("Lỗi khi checkRoleById:", e);
-        }
-      }
-
-      localStorage.setItem('userRole', detectedRole);
-      
-      // Update UI và trả về
       updateAuthUI();
       return { success: true, data: response };
     }
