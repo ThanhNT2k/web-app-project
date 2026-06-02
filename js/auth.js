@@ -250,17 +250,25 @@ document.addEventListener('click', (e) => {
 /**
  * 🔄 LUỒNG TỰ ĐỘNG ĐỒNG BỘ VÀ KIỂM TRA ROLE TỪ DATABASE KHI KHỞI CHẠY WEB
  */
+/**
+ * 🔄 LUỒNG TỰ ĐỘNG ĐỒNG BỘ VÀ KIỂM TRA ROLE TỪ DATABASE KHI KHỞI CHẠY WEB
+ */
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Vẽ nhanh giao diện từ bộ nhớ máy tính (localStorage) trước
     updateAuthUI();
 
+    // Lấy token trực tiếp từ ổ cứng để kiểm tra tính hợp lệ
+    const token = localStorage.getItem('token');
+
     // 2. Chạy ngầm Request hỏi Database xem có thay đổi gì về quyền hạn hay không
-    if (localStorage.getItem('token')) {
+    if (token) {
         try {
+            // Đợi 50ms cho cấu hình axios/fetch hoặc biến của api.js được định nghĩa hoàn toàn
+            await new Promise(resolve => setTimeout(resolve, 50));
+
             const res = await getCurrentUser();
             
-            if (res.success && res.data) {
-                // Đọc linh hoạt cả viết hoa lẫn viết thường từ Model Profile của Supabase C#
+            if (res && res.success && res.data) {
                 const currentRoleFromDB = res.data.role || res.data.Role;
                 const currentEmailFromDB = res.data.email || res.data.Email;
 
@@ -268,25 +276,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const localRole = localStorage.getItem('userRole');
                     const newRole = currentRoleFromDB.toLowerCase().trim();
 
-                    // Nếu phát hiện Role dưới DB lệch với Role đang lưu tạm ở máy tính
                     if (localRole !== newRole) {
                         console.log(`[ĐỒNG BỘ] Phát hiện thay đổi quyền trên DB: ${localRole} -> ${newRole}`);
                         
-                        // Ghi đè quyền mới vào bộ nhớ trình duyệt
                         localStorage.setItem('userRole', newRole);
                         if (currentEmailFromDB) {
                             localStorage.setItem('userEmail', currentEmailFromDB.toLowerCase().trim());
                         }
 
-                        // Vẽ lại giao diện ngay tại chỗ để hiện/ẩn nút Admin Panel tùy theo quyền mới
                         updateAuthUI();
-                        
                         alert('Thông tin phân quyền tài khoản của bạn đã được hệ thống cập nhật tự động!');
                     }
                 }
             }
         } catch (error) {
             console.error('Lỗi chạy ngầm đồng bộ quyền từ /users/profile:', error);
+            
+            // 🚨 Nếu lỗi 401 do token hết hạn thật, xóa đi để bắt đăng nhập lại sạch sẽ
+            if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                console.warn("Token hiện tại không hợp lệ hoặc hết hạn. Tiến hành dọn dẹp bộ nhớ.");
+                localStorage.removeItem('token');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                updateAuthUI();
+            }
         }
     }
 });

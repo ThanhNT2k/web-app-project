@@ -16,33 +16,39 @@ const API_BASE_URL = `${BACKEND_URL}/api`;
  * - Tự động gắn header Authorization khi token tồn tại
  * - Ném lỗi cho các response không OK, bao gồm lỗi phân tích cú pháp từ máy chủ nếu có
  */
-export async function apiCall(endpoint, method = 'GET', data = null) {
-  const options = {
-    method,
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+// Bản cấu trúc chuẩn cho hàm apiCall trong file js/api.js của bạn
+export async function apiCall(endpoint, method = 'GET', body = null) {
+    const baseUrl = 'https://webappbe-fzz7.onrender.com/api';
+    
+    // 🎯 LUÔN LUÔN LẤY TOKEN MỚI NHẤT TỪ LOCALSTORAGE TRƯỚC KHI GỬI REQUEST
+    const token = localStorage.getItem('token'); 
+
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+
+    // Nếu tồn tại token, ép nó vào chuỗi Authorization Header
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
     }
-  };
 
-  if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
-    options.body = JSON.stringify(data);
-  }
+    const config = {
+        method: method,
+        headers: headers
+    };
 
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+        config.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${baseUrl}${endpoint}`, config);
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const message = errorData.error || errorData.message || `HTTP ${response.status}`;
-      throw new Error(message);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
     }
-    const text = await response.text();
-    return text ? JSON.parse(text) : {};
-  } catch (err) {
-    console.error('API Error:', err.message || err);
-    throw err;
-  }
+
+    return await response.json();
 }
 
 // Các hàm token đơn giản được sử dụng bởi module auth và những người gọi khác
