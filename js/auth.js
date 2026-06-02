@@ -3,8 +3,11 @@ export async function loginUser(email, password) {
     const response = await fetch("https://webappbe-fzz7.onrender.com/api/auth/login", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // SỬA CHỖ NÀY: Dùng "email" thay vì "username"
-        body: JSON.stringify({ email: email, password: password }) 
+        // PHẢI GỬI ĐÚNG KEY "email" VÀ "password"
+        body: JSON.stringify({ 
+            email: email, 
+            password: password 
+        })
     });
 
     const data = await response.json();
