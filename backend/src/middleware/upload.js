@@ -1,3 +1,4 @@
+const path = require('path');
 const multer = require('multer');
 
 // Use memory storage — the file buffer is passed directly to Supabase Storage.
@@ -17,6 +18,6 @@ const uploadCover = multer({
 
 module.exports = {
   uploadCover,
-  // uploadDir is no longer used but kept for backward compatibility
-  uploadDir: null,
+  // uploadDir is no longer used but kept for backward compatibility (e.g. express.static)
+  uploadDir: path.resolve(__dirname, '../../uploads/covers'),
 };
