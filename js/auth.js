@@ -202,38 +202,98 @@ export async function getCurrentUser() {
 // Tìm đến hàm updateAuthUI() trong file js/auth.js của bạn và thay thế bằng đoạn này:
 export function updateAuthUI() {
     const authLinksContainer = document.getElementById('auth-links');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileMenu = document.getElementById('profile-menu');
+
     if (!authLinksContainer) return;
 
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('userRole'); // Lấy vai trò hệ thống vừa ghi nhận
+    const role = localStorage.getItem('userRole'); // Đã quét từ hàm login lưu xuống
 
     if (token) {
-        // Tạo chuỗi HTML mặc định hiển thị lời chào và nút Đăng xuất
-        let authHtml = `<span class="nav-link" style="color: var(--primary-color); font-weight: bold;">👋 Xin chào!</span>`;
-        
-        // 🚀 ĐẶC CÁCH: Nếu vai trò là admin, chèn thêm nút nhảy nhanh vào Dashboard Quản trị
-        if (role === 'admin') {
-            authHtml += `<a href="/pages/admin.html" class="nav-link" style="color: var(--warning-color); font-weight: 600;">🛠️ Admin Panel</a>`;
+        // 1. Ẩn nút "Đăng nhập" gốc
+        authLinksContainer.style.display = 'none';
+
+        // 2. Hiện khối "Profile Dropdown" của người dùng lên
+        if (profileDropdown) {
+            profileDropdown.style.display = 'block';
         }
 
-        authHtml += `<a href="#" id="logout-btn" class="nav-link" style="color: #ef4444;">Đăng xuất</a>`;
-        authLinksContainer.innerHTML = authHtml;
+        // 3. Tái cấu trúc Menu bên trong Dropdown dựa trên quyền hạn
+        if (profileMenu) {
+            // Các mục mặc định của tất cả người dùng
+            let menuHtml = `
+                <a href="/pages/profile.html" class="profile-menu-item">👤 Hồ sơ của tôi</a>
+                <a href="/pages/favorites.html" class="profile-menu-item">❤️ Danh sách yêu thích</a>
+                <a href="/pages/history.html" class="profile-menu-item">📖 Lịch sử đọc</a>
+            `;
 
-        // Bắt sự kiện click nút Đăng xuất
-        document.getElementById('logout-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('token'); 
-            localStorage.removeItem('userRole'); // Dọn dẹp sạch sẽ vai trò khi logout
-            alert('Đã đăng xuất thành công!');
-            window.location.href = '/index.html'; // Đưa về trang chủ
-        });
+            // ✨ ĐẶC CÁCH: Nếu là admin, chèn thêm lối tắt vào Admin Panel
+            if (role === 'admin') {
+                menuHtml += `
+                    <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #e0e0e0;">
+                    <a href="/pages/admin.html" class="profile-menu-item" style="color: #f59e0b; font-weight: 600;">🛠️ Quản trị hệ thống (Admin)</a>
+                `;
+            }
+
+            // Nút đăng xuất cuối cùng
+            menuHtml += `
+                <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #e0e0e0;">
+                <a href="#" class="profile-menu-item" style="color: #ef4444;" id="dropdown-logout-btn">🚪 Đăng xuất</a>
+            `;
+
+            profileMenu.innerHTML = menuHtml;
+
+            // Bắt sự kiện click nút Đăng xuất trong dropdown một cách an toàn
+            const logoutBtn = document.getElementById('dropdown-logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    
+                    // Thực thi hàm đăng xuất hệ thống (hàm từ auth.js gốc của bạn)
+                    if (typeof window.logout === 'function') {
+                        await window.logout();
+                    } else {
+                        // Phương án dự phòng nếu chưa bọc logout vào cửa sổ window
+                        localStorage.clear();
+                        window.location.href = '/index.html';
+                    }
+                });
+            }
+        }
     } else {
-        // Nếu chưa đăng nhập: Hiển thị lại nút Đăng nhập gốc
+        // 4. Khi chưa đăng nhập: Hiện nút Đăng nhập và ẩn cụm Dropdown Hồ sơ
+        authLinksContainer.style.display = 'flex';
         authLinksContainer.innerHTML = `
             <a href="#" class="nav-link" onclick="event.preventDefault(); window.toggleAuthModal(true)">Đăng nhập</a>
         `;
+        if (profileDropdown) {
+            profileDropdown.style.display = 'none';
+        }
     }
 }
+
+// Bọc thêm hàm để các thẻ HTML gọi onclick="window.toggleProfileMenu()" không bị lỗi
+window.toggleProfileMenu = function() {
+    const profileMenu = document.getElementById('profile-menu');
+    if (profileMenu) {
+        // Toggle ẩn/hiện menu
+        if (profileMenu.style.display === 'block') {
+            profileMenu.style.display = 'none';
+        } else {
+            profileMenu.style.display = 'block';
+        }
+    }
+}
+
+// Lắng nghe click ra ngoài để tự đóng dropdown menu (Tăng trải nghiệm UX)
+document.addEventListener('click', (e) => {
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileMenu = document.getElementById('profile-menu');
+    if (profileDropdown && profileMenu && !profileDropdown.contains(e.target)) {
+        profileMenu.style.display = 'none';
+    }
+});
 
 // Tự động chạy khi file js/auth.js được nạp
 document.addEventListener('DOMContentLoaded', () => {
