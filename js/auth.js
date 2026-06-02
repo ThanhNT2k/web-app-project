@@ -81,9 +81,7 @@ export async function register(credentials) {
  * @param {Object} credentials - {username, password} hoặc {email, password}
  * @returns {Promise<Object>} - {success, data: {user, token}, error}
  */
-/**
- * Đăng nhập người dùng (Bản sửa lỗi đồng bộ bộ nhớ)
- */
+
 export async function login(credentials) {
   try {
     const response = await apiCall('/auth/login', 'POST', {
@@ -91,34 +89,55 @@ export async function login(credentials) {
       password: credentials.password
     });
 
-    if (response && response.token) {
-      setToken(response.token);
+    console.log("Dữ liệu gốc nhận từ API Backend:", response); // In ra để xem trực tiếp cấu trúc
+
+    if (response && (response.token || response.Token)) {
+      // 1. Lưu Token (hỗ trợ cả viết hoa lẫn viết thường)
+      const token = response.token || response.Token;
+      setToken(token);
       
-      // 💾 Lưu vai trò
-      if (response.user && response.user.role) {
-        localStorage.setItem('userRole', response.user.role.toLowerCase().trim());
-      } else {
-        localStorage.setItem('userRole', 'user');
-      }
+      // 2. Trích xuất Role thông minh (Quét mọi ngóc ngách cấu trúc C#)
+      let rawRole = '';
+      if (response.user && response.user.role) rawRole = response.user.role;
+      else if (response.User && response.User.Role) rawRole = response.User.Role;
+      else if (response.role) rawRole = response.role;
+      else if (response.Role) rawRole = response.Role;
+      
+      // 3. Trích xuất Email thông minh
+      let rawEmail = '';
+      if (response.user && response.user.email) rawEmail = response.user.email;
+      else if (response.User && response.User.Email) rawEmail = response.User.Email;
+      else if (response.email) rawEmail = response.email;
+      else if (response.Email) rawEmail = response.Email;
+      else if (credentials.email && credentials.email.includes('@')) rawEmail = credentials.email;
 
-      // 💾 LƯU THÊM EMAIL NGƯỜI DÙNG VÀO LOCALSTORAGE
-      if (response.user && response.user.email) {
-        localStorage.setItem('userEmail', response.user.email.toLowerCase().trim());
-      } else if (credentials.email && credentials.email.includes('@')) {
-        localStorage.setItem('userEmail', credentials.email.toLowerCase().trim());
-      }
+      // 4. Lưu chính thức vào máy sau khi chuẩn hóa
+      localStorage.setItem('userRole', rawRole.toLowerCase().trim());
+      localStorage.setItem('userEmail', rawEmail.toLowerCase().trim());
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      console.log("Dữ liệu sau khi trích xuất thành công:", {
+          role: localStorage.getItem('userRole'),
+          email: localStorage.getItem('userEmail')
+      });
+
+      // 5. Đợi một nhịp ngắn cho trình duyệt nạp dữ liệu ổn định
+      await new Promise(resolve => setTimeout(resolve, 60));
 
       return {
         success: true,
-        data: { user: response.user, token: response.token }
+        data: response
       };
     }
 
-    return { success: false, error: response?.error || 'Login failed' };
+    return {
+      success: false,
+      error: response?.error || response?.Error || 'Login failed'
+    };
   } catch (error) {
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
 
