@@ -20,16 +20,16 @@ const API_BASE_URL = `${BACKEND_URL}/api`;
 export async function apiCall(endpoint, method = 'GET', body = null) {
     const baseUrl = 'https://webappbe-fzz7.onrender.com/api';
     
-    // 🎯 LUÔN LUÔN LẤY TOKEN MỚI NHẤT TỪ LOCALSTORAGE TRƯỚC KHI GỬI REQUEST
+    // 🎯 LUÔN LUÔN LẤY TOKEN TƯƠI MỚI NHẤT TỪ LOCALSTORAGE TRƯỚC KHI BAY LÊN SERVER
     const token = localStorage.getItem('token'); 
 
     const headers = {
         'Content-Type': 'application/json'
     };
 
-    // Nếu tồn tại token, ép nó vào chuỗi Authorization Header
+    // Kiểm tra và đính kèm token vào Header theo chuẩn Bearer
     if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers['Authorization'] = `Bearer ${token.trim()}`;
     }
 
     const config = {
@@ -40,6 +40,8 @@ export async function apiCall(endpoint, method = 'GET', body = null) {
     if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
         config.body = JSON.stringify(body);
     }
+
+    console.log(`[API CALL] Đang gửi request ${method} tới ${endpoint}... Headers mang theo Token:`, !!token);
 
     const response = await fetch(`${baseUrl}${endpoint}`, config);
     
