@@ -22,7 +22,7 @@ body {
   line-height: 1.6;
 }
 
-/* --- Header --- */
+/* --- Tiêu đề --- */
 header { background: var(--primary-color); color: white; padding: 1rem 0; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
 .navbar { max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; justify-content: space-between; align-items: center; }
 .logo { font-size: 1.5rem; font-weight: bold; color: white; text-decoration: none; }
@@ -30,7 +30,7 @@ nav { display: flex; gap: 2rem; }
 .nav-link { color: white; text-decoration: none; font-weight: 500; transition: opacity 0.2s; cursor: pointer; }
 .nav-link:hover { opacity: 0.9; }
 
-/* --- Form & Inputs --- */
+/* --- Biểu mẫu & Đầu vào --- */
 .form-group { margin-bottom: 1.25rem; }
 label { font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem; display: block; text-transform: uppercase; }
 
@@ -55,7 +55,7 @@ input:focus, select:focus {
 .btn-primary { background: var(--primary-color); color: white; width: 100%; font-size: 1rem; text-transform: uppercase; border-radius: 10px; }
 .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(60, 106, 211, 0.3); }
 
-/* --- Grid Layout --- */
+/* --- Bố cục Lưới --- */
 main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 .stories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
 

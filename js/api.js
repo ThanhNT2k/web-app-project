@@ -1,10 +1,10 @@
 /**
- * api.js - Core HTTP wrapper for the frontend
- * Exposes a simple apiCall() helper and token helpers used across modules.
- * Automatically switches base URL for local development vs production.
+ * api.js - Bộ wrapper HTTP cốt lõi cho frontend
+ * Công khai một hàm apiCall() đơn giản và các hàm token được sử dụng trên các module.
+ * Tự động chuyển đổi URL cơ sở cho phát triển cục bộ vs sản xuất.
  */
 
-// AUTO-CONFIG: choose backend host for local vs production
+// CẤU HÌNH TỰ ĐỘNG: chọn backend host cho phát triển cục bộ vs sản xuất
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:5208'
   : 'https://webappbe-fzz7.onrender.com';
@@ -12,9 +12,9 @@ const BACKEND_URL = (window.location.hostname === 'localhost' || window.location
 const API_BASE_URL = `${BACKEND_URL}/api`;
 
 /**
- * Generic API call wrapper
- * - Automatically attaches Authorization header when token exists
- * - Throws on non-OK responses, including parsed server error message when available
+ * Bộ wrapper API call chung
+ * - Tự động gắn header Authorization khi token tồn tại
+ * - Ném lỗi cho các response không OK, bao gồm lỗi phân tích cú pháp từ máy chủ nếu có
  */
 export async function apiCall(endpoint, method = 'GET', data = null) {
   const options = {
@@ -45,7 +45,7 @@ export async function apiCall(endpoint, method = 'GET', data = null) {
   }
 }
 
-// Simple token helpers used by auth module and other callers
+// Các hàm token đơn giản được sử dụng bởi module auth và những người gọi khác
 export function setToken(token) {
   if (token) localStorage.setItem('token', token);
 }
@@ -58,18 +58,18 @@ export function clearToken() {
   localStorage.removeItem('token');
 }
 
-// (Truncated) All other legacy/bridge helpers removed from this file to keep api.js focused
+// (Đã xóa) Tất cả các hàm legacy/bridge khác được xóa từ tệp này để giữ api.js tập trung
 
 // ----------------------------
-// FRONTEND-ONLY: direct provider fetch + CORS-fallback + parsers
-// (for quick prototyping without backend changes)
+// FRONTEND-ONLY: tìm nạp provider trực tiếp + fallback CORS + parsers
+// (để nguyên mẫu nhanh mà không thay đổi backend)
 // ----------------------------
 
 const CORS_PROXY = 'https://api.allorigins.win/raw?url='; // fallback public proxy (for prototyping only)
 
 /**
- * Try to fetch a URL directly; if it fails (CORS/network), try a CORS proxy fallback.
- * Returns response text.
+ * Cố gắng tìm nạp URL trực tiếp; nếu thất bại (CORS/mạng), hãy thử fallback proxy CORS.
+ * Trả về text phản hồi.
  */
 async function tryFetchWithCorsFallback(url, options = {}) {
   try {
@@ -89,15 +89,16 @@ async function tryFetchWithCorsFallback(url, options = {}) {
 }
 
 /**
- * Parse HTML string into Document
+ * Phân tích chuỗi HTML thành Document
  */
 function parseHTML(htmlText) {
   return new DOMParser().parseFromString(htmlText, 'text/html');
 }
 
 /**
- * Generic: fetch a provider page URL and run a parser(doc) => normalized object
- * parser should return { data:..., meta:... } or similar
+ * Chung: tìm nạp URL trang của nhà cung cấp và chạy một parser(doc) => đối tượng bình thường hóa
+ * parser nên trả về { data:..., meta:... } hoặc tương tự
+ */
  */
 async function fetchAndParseUrl(url, parser, opts = {}) {
   const html = await tryFetchWithCorsFallback(url, opts);
@@ -106,8 +107,8 @@ async function fetchAndParseUrl(url, parser, opts = {}) {
 }
 
 /* ============================
-   Example parsers (templates)
-   Adjust selectors per site. These are naive and intended for quick prototyping.
+   Các ví dụ parser (template)
+   Điều chỉnh bộ chọn cho mỗi trang. Đây là ngây thơ và dự định cho nguyên mẫu nhanh.
    ============================ */
 
 function parseRoyalRoadSearch(doc) {
@@ -139,7 +140,7 @@ function parseNovelFullDetail(doc) {
 }
 
 /* ============================
-   Public wrapper functions
+   Các hàm bọc công khai
    ============================ */
 
 async function providerDirectSearch(provider, query, page = 1, limit = 12) {
@@ -216,20 +217,20 @@ async function providerDirectGetChapterContent(provider, chapterUrlOrId) {
 async function mdGetCoversByIds(coverIds = []) {
   if (!coverIds || !coverIds.length) return { data: [] };
   const params = { id: coverIds };
-  // note: MangaDex cover endpoint also hỗ trợ id[]=...; buildQuery sẽ chuyển mảng thành id[]
+  // ghi chú: Điểm cuối cover của MangaDex cũng hỗ trợ id[]=...; buildQuery sẽ chuyển mảng thành id[]
   return mdCall('/cover', params);
 }
 
 /**
  * =========================================================================
- * 🌐 PROVIDER ADAPTERS FOR NOVEL SITES (truyện chữ)
- * These functions call your backend proxy endpoints under /api/provider/:provider/...
- * Backend should implement routes that fetch/normalize data from target novel sites.
- * If you later want direct client-side calls, adapt these functions to call provider URLs.
+ * 🌐 BỘ ĐIỀU HỢP NHÀ CUNG CẤP CHO CÁC TRANG TIỂU THUYẾT (truyện chữ)
+ * Các hàm này gọi các endpoint proxy backend dưới /api/provider/:provider/...
+ * Backend nên triển khai các route tìm nạp/bình thường hóa dữ liệu từ các trang tiểu thuyết mục tiêu.
+ * Nếu sau này bạn muốn gọi phía client trực tiếp, hãy điều chỉnh các hàm này để gọi URL nhà cung cấp.
  * =========================================================================
  */
 
-// List supported providers (informational)
+// Danh sách các nhà cung cấp được hỗ trợ (thông tin)
 function listNovelProviders() {
   return [
     'novelfull',
@@ -241,8 +242,8 @@ function listNovelProviders() {
 }
 
 /**
- * Generic provider search via backend proxy
- * @param {string} provider - provider id (e.g. 'novelfull')
+ * Tìm kiếm nhà cung cấp chung thông qua proxy backend
+ * @param {string} provider - id nhà cung cấp (ví dụ 'novelfull')
  * @param {string} query
  * @param {number} page
  * @param {number} limit
@@ -254,7 +255,7 @@ async function providerSearch(provider, query, page = 1, limit = 12) {
 }
 
 /**
- * Get novel details from provider (via backend proxy)
+ * Nhận chi tiết tiểu thuyết từ nhà cung cấp (thông qua proxy backend)
  * @param {string} provider
  * @param {string} idOrSlug
  */
@@ -264,7 +265,7 @@ async function getNovelFromProvider(provider, idOrSlug) {
 }
 
 /**
- * Get list of chapters for a novel from provider
+ * Lấy danh sách các chương cho một tiểu thuyết từ nhà cung cấp
  * @param {string} provider
  * @param {string|number} novelId
  * @param {number} page
@@ -276,7 +277,7 @@ async function getChaptersFromProvider(provider, novelId, page = 1, limit = 200)
 }
 
 /**
- * Get chapter content (text) from provider
+ * Lấy nội dung chương (văn bản) từ nhà cung cấp
  * @param {string} provider
  * @param {string|number} chapterId
  */
@@ -286,25 +287,25 @@ async function getChapterContentFromProvider(provider, chapterId) {
 }
 
 /**
- * Fallback: attempt direct fetch to provider public API or page (use with caution: CORS)
- * Returns raw HTML/text; only use for prototyping when backend proxy not available.
+ * Fallback: cố gắng tìm nạp trực tiếp API công khai của nhà cung cấp hoặc trang (sử dụng cẩn thận: CORS)
+ * Trả về HTML/text thô; chỉ sử dụng để nguyên mẫu khi proxy backend không có sẵn.
  */
 async function providerDirectFetch(url, opts = {}) {
-  // Minimal wrapper around fetch for direct provider calls (no auth)
+  // Bộ wrapper tối thiểu xung quanh fetch cho các cuộc gọi nhà cung cấp trực tiếp (không có auth)
   const response = await fetch(url, { method: opts.method || 'GET', headers: opts.headers || {} });
   if (!response.ok) throw new Error(`Provider fetch failed: ${response.status}`);
   return response.text();
 }
 
 /* ---------------------------
-   PROVIDER: unified wrappers for both read-only and stateful actions
-   - Read-only: attempt direct provider call (providerDirect*), fallback to backend proxy (/api/provider/...)
-   - Stateful (login/follow/bookmark): MUST call backend proxy to perform safely
+   NHÀ CUNG CẤP: bộ wrapper thống nhất cho các hành động chỉ đọc và có trạng thái
+   - Chỉ đọc: cố gắng gọi nhà cung cấp trực tiếp (providerDirect*), fallback to backend proxy (/api/provider/...)
+   - Có trạng thái (login/follow/bookmark): PHẢI gọi backend proxy để thực hiện an toàn
    --------------------------- */
 
 /**
- * Unified search: first try direct client fetch (providerDirectSearch),
- * if that fails (throws), fallback to backend proxy endpoint:
+ * Tìm kiếm thống nhất: trước tiên hãy thử tìm nạp client trực tiếp (providerDirectSearch),
+ * nếu thất bại (throws), fallback to backend proxy endpoint:
  * GET /api/provider/:provider/search?q=...&page=...&limit=...
  */
 async function providerSearchUnified(provider, query, page = 1, limit = 12) {
@@ -316,7 +317,7 @@ async function providerSearchUnified(provider, query, page = 1, limit = 12) {
 }
 
 /**
- * Unified get novel detail: try direct then backend
+ * Nhận chi tiết tiểu thuyết thống nhất: thử trực tiếp rồi backend
  */
 async function providerGetNovelUnified(provider, idOrSlug) {
   try {
@@ -327,21 +328,21 @@ async function providerGetNovelUnified(provider, idOrSlug) {
 }
 
 /**
- * Unified get chapters list
+ * Danh sách các chương thống nhất
  */
 async function providerGetChaptersUnified(provider, novelId, page = 1, limit = 200) {
   try {
-    // try direct by fetching novel detail and extracting chapters
+    // thử trực tiếp bằng cách tìm nạp chi tiết tiểu thuyết và trích xuất các chương
     const direct = await providerDirectGetNovel(provider, novelId);
     if (direct && direct.chapters) return { data: direct.chapters };
   } catch (err) {
-    // ignore and fallback
+    // bỏ qua và fallback
   }
   return apiCall(`/provider/${encodeURIComponent(provider)}/novel/${encodeURIComponent(novelId)}/chapters?page=${page}&limit=${limit}`);
 }
 
 /**
- * Unified get chapter content
+ * Nội dung chương thống nhất
  */
 async function providerGetChapterContentUnified(provider, chapterUrlOrId) {
   try {
@@ -352,14 +353,14 @@ async function providerGetChapterContentUnified(provider, chapterUrlOrId) {
 }
 
 /* ---------------------------
-   Stateful actions (LOGIN / FOLLOW / BOOKMARK)
-   NOTE: these MUST be implemented via your backend for security and CORS reasons.
-   Backend endpoints expected (example):
+   CÁC HÀNH ĐỘNG CÓ TRẠNG THÁI (LOGIN / FOLLOW / BOOKMARK)
+   LƯU Ý: những điều này PHẢI được triển khai qua backend của bạn để bảo mật và lý do CORS.
+   Các điểm cuối backend được mong đợi (ví dụ):
     - POST /api/provider/:provider/login   { username, password }
     - POST /api/provider/:provider/logout
     - POST /api/provider/:provider/follow  { novelId, action: 'follow'|'unfollow' }
     - POST /api/provider/:provider/bookmark { chapterId, note }
-   The frontend wrappers below call these backend endpoints via apiCall(...)
+   Các bộ wrapper frontend bên dưới gọi các điểm cuối backend này thông qua apiCall(...)
    --------------------------- */
 
 async function providerLogin(provider, credentials) {
@@ -382,4 +383,4 @@ async function providerGetUserProfile(provider) {
   return apiCall(`/provider/${encodeURIComponent(provider)}/profile`);
 }
 
-// End of file
+// Kết thúc tệp

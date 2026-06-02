@@ -1,8 +1,8 @@
 /**
- * history.js - Reading History API Module
- * Handles user reading progress and history tracking
+ * history.js - Module API Lịch sử Đọc
+ * Xử lý tiến trình đọc của người dùng và theo dõi lịch sử
  * 
- * Backend Endpoints:
+ * Các Điểm Cuối Backend:
  * - GET /api/users/history
  * - POST /api/users/history
  * - DELETE /api/users/history/{comicId}
@@ -11,7 +11,7 @@
 import { apiCall } from './api.js';
 
 /**
- * Get user's reading history
+ * Nhận lịch sử đọc của người dùng
  * GET /api/users/history
  * @returns {Promise<Object>} - {success, data: [], error}
  */
@@ -32,7 +32,7 @@ export async function getHistory() {
 }
 
 /**
- * Save reading progress
+ * Lưu tiến trình đọc
  * POST /api/users/history
  * @param {Object} progressData - {comicId, chapterId, ...}
  * @returns {Promise<Object>} - {success, error}
@@ -65,9 +65,9 @@ export async function saveReadingProgress(progressData) {
 }
 
 /**
- * Delete history entry for a comic
+ * Xóa mục lịch sử cho một truyện
  * DELETE /api/users/history/{comicId}
- * @param {string} comicId - Comic ID
+ * @param {string} comicId - ID truyện
  * @returns {Promise<Object>} - {success, error}
  */
 export async function deleteHistory(comicId) {

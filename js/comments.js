@@ -1,8 +1,8 @@
 /**
- * comments.js - Comment API Module
- * Handles comment listing, creation, updating, and deletion
+ * comments.js - Module API Bình luận
+ * Xử lý liệt kê, tạo, cập nhật và xóa bình luận
  * 
- * Backend Endpoints:
+ * Các Điểm Cuối Backend:
  * - GET /api/comments/{comicId}
  * - POST /api/comments
  * - PUT /api/comments/{id}
@@ -12,9 +12,9 @@
 import { apiCall } from './api.js';
 
 /**
- * Get comments for a comic
+ * Nhận bình luận cho truyện
  * GET /api/comments/{comicId}
- * @param {string} comicId - Comic ID
+ * @param {string} comicId - ID truyện
  * @param {Object} options - {page, limit}
  * @returns {Promise<Object>} - {success, data: [], error}
  */
@@ -51,7 +51,7 @@ export async function getComments(comicId, options = {}) {
 }
 
 /**
- * Create new comment (User only)
+ * Tạo bình luận mới (Chỉ người dùng)
  * POST /api/comments
  * @param {Object} commentData - {comicId, content, rating}
  * @returns {Promise<Object>} - {success, data, error}
@@ -79,8 +79,8 @@ export async function createComment(commentData) {
 }
 
 /**
- * Reply to a comment (User only)
- * POST /api/comments (with parentCommentId)
+ * Trả lời bình luận (Chỉ người dùng)
+ * POST /api/comments (với parentCommentId)
  * @param {Object} replyData - {comicId, content, parentCommentId}
  * @returns {Promise<Object>} - {success, data, error}
  */
@@ -107,9 +107,9 @@ export async function replyComment(replyData) {
 }
 
 /**
- * Update comment (User/Admin only)
+ * Cập nhật bình luận (Chỉ người dùng/Admin)
  * PUT /api/comments/{id}
- * @param {string} commentId - Comment ID
+ * @param {string} commentId - ID bình luận
  * @param {Object} updateData - {content, rating}
  * @returns {Promise<Object>} - {success, data, error}
  */
@@ -136,9 +136,9 @@ export async function updateComment(commentId, updateData) {
 }
 
 /**
- * Delete comment (User/Admin only)
+ * Xóa bình luận (Chỉ người dùng/Admin)
  * DELETE /api/comments/{id}
- * @param {string} commentId - Comment ID
+ * @param {string} commentId - ID bình luận
  * @returns {Promise<Object>} - {success, error}
  */
 export async function deleteComment(commentId) {

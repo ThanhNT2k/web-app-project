@@ -1,22 +1,22 @@
 /**
- * comics.js - Comic/Story API Module
- * Handles comic listing, searching, detail retrieval, and management
+ * comics.js - Module API Truyện/Câu chuyện
+ * Xử lý liệt kê truyện, tìm kiếm, truy xuất chi tiết và quản lý
  * 
- * Backend Endpoints:
+ * Các Điểm Cuối Backend:
  * - GET /api/comics
  * - GET /api/comics/{slug}
  * - GET /api/comics/search
  * - GET /api/comics/trending
  * - GET /api/comics/latest
- * - POST /api/comics (Uploader/Admin only)
- * - PUT /api/comics/{id} (Uploader/Admin only)
- * - DELETE /api/comics/{id} (Uploader/Admin only)
+ * - POST /api/comics (Chỉ Uploader/Admin)
+ * - PUT /api/comics/{id} (Chỉ Uploader/Admin)
+ * - DELETE /api/comics/{id} (Chỉ Uploader/Admin)
  */
 
 import { apiCall } from './api.js';
 
 /**
- * Get paginated list of comics
+ * Nhận danh sách truyện được phân trang
  * GET /api/comics?page=1&limit=12
  * @param {Object} options - {page, limit}
  * @returns {Promise<Object>} - {success, data: [], error}
@@ -46,9 +46,9 @@ export async function getComics(options = {}) {
 }
 
 /**
- * Get comic details by slug
+ * Nhận chi tiết truyện theo slug
  * GET /api/comics/{slug}
- * @param {string} slug - URL-friendly slug of the comic
+ * @param {string} slug - Slug thân thiện với URL của truyện
  * @returns {Promise<Object>} - {success, data: comic, error}
  */
 export async function getComicBySlug(slug) {
@@ -74,9 +74,9 @@ export async function getComicBySlug(slug) {
 }
 
 /**
- * Search comics by query
+ * Tìm kiếm truyện theo truy vấn
  * GET /api/comics/search?q=keyword&page=1&limit=12
- * @param {string} query - Search keyword
+ * @param {string} query - Từ khóa tìm kiếm
  * @param {Object} options - {page, limit}
  * @returns {Promise<Object>} - {success, data: [], pagination, error}
  */
@@ -114,7 +114,7 @@ export async function searchComics(query, options = {}) {
 }
 
 /**
- * Get trending comics
+ * Nhận truyện đang xu hướng
  * GET /api/comics/trending
  * @param {Object} options - {page, limit}
  * @returns {Promise<Object>} - {success, data: [], error}
@@ -144,7 +144,7 @@ export async function getTrendingComics(options = {}) {
 }
 
 /**
- * Get latest comics
+ * Nhận truyện mới nhất
  * GET /api/comics/latest
  * @param {Object} options - {page, limit}
  * @returns {Promise<Object>} - {success, data: [], error}
@@ -174,7 +174,7 @@ export async function getLatestComics(options = {}) {
 }
 
 /**
- * Create new comic (Uploader/Admin only)
+ * Tạo truyện mới (Chỉ Uploader/Admin)
  * POST /api/comics
  * @param {Object} comicData - {title, slug, description, coverImage, status, ...}
  * @returns {Promise<Object>} - {success, data, error}
@@ -202,9 +202,9 @@ export async function createComic(comicData) {
 }
 
 /**
- * Update existing comic (Uploader/Admin only)
+ * Cập nhật truyện hiện có (Chỉ Uploader/Admin)
  * PUT /api/comics/{id}
- * @param {string} comicId - Comic ID
+ * @param {string} comicId - ID truyện
  * @param {Object} updateData - {title, description, coverImage, status, ...}
  * @returns {Promise<Object>} - {success, data, error}
  */
@@ -231,9 +231,9 @@ export async function updateComic(comicId, updateData) {
 }
 
 /**
- * Delete comic (Uploader/Admin only)
+ * Xóa truyện (Chỉ Uploader/Admin)
  * DELETE /api/comics/{id}
- * @param {string} comicId - Comic ID
+ * @param {string} comicId - ID truyện
  * @returns {Promise<Object>} - {success, error}
  */
 export async function deleteComic(comicId) {

@@ -1,15 +1,15 @@
 /**
- * auth.js - Authentication API Module
- * Handles user registration, login, logout, and session management
- * Includes role-based access control helpers
- * Uses API wrapper from api.js for HTTP communication
+ * auth.js - Module API Xác thực
+ * Xử lý đăng ký người dùng, đăng nhập, đăng xuất và quản lý phiên
+ * Bao gồm các hàm hỗ trợ kiểm soát truy cập dựa trên vai trò
+ * Sử dụng API wrapper từ api.js để giao tiếp HTTP
  */
 
-// Re-export from api.js for convenience
+// Tái xuất từ api.js để thuận tiện
 import { apiCall, setToken, getToken, clearToken } from './api.js';
 
 /**
- * Store user role in localStorage
+ * Lưu trữ vai trò người dùng trong localStorage
  */
 function setRole(role) {
   if (role) {
@@ -18,21 +18,21 @@ function setRole(role) {
 }
 
 /**
- * Get user role from localStorage
+ * Lấy vai trò người dùng từ localStorage
  */
 function getRole() {
   return localStorage.getItem('userRole');
 }
 
 /**
- * Clear user role from localStorage
+ * Xóa vai trò người dùng từ localStorage
  */
 function clearRole() {
   localStorage.removeItem('userRole');
 }
 
 /**
- * Register a new user
+ * Đăng ký người dùng mới
  * POST /api/auth/register
  * @param {Object} credentials - {username, email, password}
  * @returns {Promise<Object>} - {success, data: {user, token}, error}
@@ -47,11 +47,11 @@ export async function register(credentials) {
 
     if (response && response.token) {
       setToken(response.token);
-      // Store user role from response (typically 'user' for new registrations)
+      // Lưu trữ vai trò người dùng từ phản hồi (thường là 'user' cho đăng ký mới)
       if (response.user && response.user.role) {
         setRole(response.user.role.toLowerCase());
       } else {
-        // Default to user role if not provided
+        // Mặc định là vai trò người dùng nếu không được cung cấp
         setRole('user');
       }
       return {
@@ -76,9 +76,9 @@ export async function register(credentials) {
 }
 
 /**
- * Login user
+ * Đăng nhập người dùng
  * POST /api/auth/login
- * @param {Object} credentials - {username, password} or {email, password}
+ * @param {Object} credentials - {username, password} hoặc {email, password}
  * @returns {Promise<Object>} - {success, data: {user, token}, error}
  */
 export async function login(credentials) {
@@ -90,7 +90,7 @@ export async function login(credentials) {
 
     if (response && response.token) {
       setToken(response.token);
-      // Store user role from response (normalized to lowercase)
+      // Lưu trữ vai trò người dùng từ phản hồi (bình thường hóa thành chữ thường)
       if (response.user && response.user.role) {
         setRole(response.user.role.toLowerCase());
       }
@@ -116,7 +116,7 @@ export async function login(credentials) {
 }
 
 /**
- * Logout user
+ * Đăng xuất người dùng
  * POST /api/auth/logout
  * @returns {Promise<Object>} - {success, warning}
  */
@@ -124,10 +124,10 @@ export async function logout() {
   try {
     await apiCall('/auth/logout', 'POST');
     clearToken();
-    clearRole();  // Clear role on logout
+    clearRole();  // Xóa vai trò khi đăng xuất
     return { success: true };
   } catch (error) {
-    // Even if API call fails, clear local token and role
+    // Ngay cả khi cuộc gọi API thất bại, vẫn xóa token cục bộ và vai trò
     clearToken();
     clearRole();
     return {
@@ -138,7 +138,7 @@ export async function logout() {
 }
 
 /**
- * Get current authenticated user
+ * Nhận người dùng được xác thực hiện tại
  * GET /api/users/me
  * @returns {Promise<Object>} - {success, data: user, error}
  */
@@ -159,7 +159,7 @@ export async function getCurrentUser() {
       data: response
     };
   } catch (error) {
-    // Clear token if it's invalid
+    // Xóa token nếu nó không hợp lệ
     if (error.message.includes('401') || error.message.includes('Unauthorized')) {
       clearToken();
       clearRole();
@@ -173,7 +173,7 @@ export async function getCurrentUser() {
 }
 
 /**
- * Check if user is authenticated
+ * Kiểm tra xem người dùng có được xác thực hay không
  * @returns {boolean}
  */
 export function isAuthenticated() {
@@ -181,7 +181,7 @@ export function isAuthenticated() {
 }
 
 /**
- * Get stored auth token
+ * Lấy token xác thực được lưu trữ
  * @returns {string|null}
  */
 export function getAuthToken() {
@@ -189,7 +189,7 @@ export function getAuthToken() {
 }
 
 /**
- * Check if user is an Admin
+ * Kiểm tra xem người dùng có phải là Admin hay không
  * @returns {boolean}
  */
 export function isAdmin() {
@@ -197,7 +197,7 @@ export function isAdmin() {
 }
 
 /**
- * Check if user is an Uploader
+ * Kiểm tra xem người dùng có phải là Uploader hay không
  * @returns {boolean}
  */
 export function isUploader() {
@@ -205,7 +205,7 @@ export function isUploader() {
 }
 
 /**
- * Check if user is a regular User
+ * Kiểm tra xem người dùng có phải là Người dùng thường xuyên hay không
  * @returns {boolean}
  */
 export function isUser() {
@@ -213,7 +213,7 @@ export function isUser() {
 }
 
 /**
- * Check if user can manage content (Admin or Uploader)
+ * Kiểm tra xem người dùng có thể quản lý nội dung hay không (Admin hoặc Uploader)
  * @returns {boolean}
  */
 export function canManageContent() {
@@ -222,10 +222,10 @@ export function canManageContent() {
 }
 
 /**
- * Get current user's role
+ * Lấy vai trò của người dùng hiện tại
  * @returns {string|null}
  */
 export function getUserRole() {
   return getRole();
 }
-// End of file - kept HEAD implementation (exports and lowercase roles)
+// Kết thúc tệp - triển khai HEAD được giữ (xuất khẩu và vai trò chữ thường)

@@ -1,8 +1,8 @@
 /**
- * genres.js - Genre API Module
- * Handles genre listing and filtering
+ * genres.js - Module API Thể loại
+ * Xử lý liệt kê thể loại và lọc
  * 
- * Backend Endpoints:
+ * Các Điểm Cuối Backend:
  * - GET /api/genres
  * - GET /api/genres/{id}/comics
  */
@@ -10,7 +10,7 @@
 import { apiCall } from './api.js';
 
 /**
- * Get all available genres
+ * Nhận tất cả các thể loại có sẵn
  * GET /api/genres
  * @returns {Promise<Object>} - {success, data: [], error}
  */
@@ -31,9 +31,9 @@ export async function getGenres() {
 }
 
 /**
- * Get comics by genre
+ * Nhận truyện theo thể loại
  * GET /api/genres/{id}/comics
- * @param {string} genreId - Genre ID
+ * @param {string} genreId - ID thể loại
  * @param {Object} options - {page, limit}
  * @returns {Promise<Object>} - {success, data: [], error}
  */

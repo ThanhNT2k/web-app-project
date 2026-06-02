@@ -1,8 +1,8 @@
 /**
- * favorites.js - Follows/Favorites API Module
- * Handles user following, favorites management
+ * favorites.js - Module API Theo dõi/Yêu thích
+ * Xử lý theo dõi người dùng, quản lý yêu thích
  * 
- * Backend Endpoints:
+ * Các Điểm Cuối Backend:
  * - GET /api/users/follows
  * - POST /api/follows
  * - DELETE /api/follows/{comicId}
@@ -11,7 +11,7 @@
 import { apiCall } from './api.js';
 
 /**
- * Get user's favorite comics / followed comics
+ * Nhận các truyện yêu thích / truyện được theo dõi của người dùng
  * GET /api/users/follows
  * @returns {Promise<Object>} - {success, data: [], error}
  */
@@ -32,9 +32,9 @@ export async function getFavorites() {
 }
 
 /**
- * Follow a comic
+ * Theo dõi một truyện
  * POST /api/follows
- * @param {string} comicId - Comic ID to follow
+ * @param {string} comicId - ID truyện để theo dõi
  * @returns {Promise<Object>} - {success, error}
  */
 export async function followComic(comicId) {
@@ -65,9 +65,9 @@ export async function followComic(comicId) {
 }
 
 /**
- * Unfollow a comic
+ * Bỏ theo dõi một truyện
  * DELETE /api/follows/{comicId}
- * @param {string} comicId - Comic ID to unfollow
+ * @param {string} comicId - ID truyện để bỏ theo dõi
  * @returns {Promise<Object>} - {success, error}
  */
 export async function unfollowComic(comicId) {
