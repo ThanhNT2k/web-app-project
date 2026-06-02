@@ -50,3 +50,83 @@ window.renderChapters = function(chapters, containerId) {
     </div>
   `).join('');
 }
+
+// =============================================
+// 🟢 PROFILE MANAGEMENT & AUTHENTICATION UI
+// =============================================
+
+/**
+ * Cập nhật giao diện dựa trên trạng thái xác thực
+ */
+window.updateAuthUI = function() {
+    const token = localStorage.getItem('token');
+    const authLinks = document.getElementById('auth-links');
+    const profileDropdown = document.getElementById('profile-dropdown');
+
+    if (token) {
+        // Người dùng đã đăng nhập
+        if (authLinks) authLinks.style.display = 'none';
+        if (profileDropdown) profileDropdown.style.display = 'flex';
+        
+        // Tải ảnh đại diện
+        window.loadUserAvatar();
+    } else {
+        // Người dùng chưa đăng nhập
+        if (authLinks) authLinks.style.display = 'block';
+        if (profileDropdown) profileDropdown.style.display = 'none';
+    }
+}
+
+/**
+ * Tải ảnh đại diện người dùng
+ */
+window.loadUserAvatar = function() {
+    const avatarImg = document.getElementById('profile-avatar');
+    if (!avatarImg) return;
+
+    // Lấy ảnh từ localStorage hoặc dùng ảnh mặc định
+    const userAvatar = localStorage.getItem('userAvatar') || '/assets/default-avatar.svg';
+    avatarImg.src = userAvatar;
+}
+
+/**
+ * Chuyển đổi hiển thị Profile Menu
+ */
+window.toggleProfileMenu = function() {
+    const profileMenu = document.getElementById('profile-menu');
+    if (profileMenu) {
+        profileMenu.classList.toggle('show');
+    }
+}
+
+/**
+ * Đóng Profile Menu khi click bên ngoài
+ */
+document.addEventListener('click', function(event) {
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileMenu = document.getElementById('profile-menu');
+    
+    if (profileDropdown && !profileDropdown.contains(event.target)) {
+        if (profileMenu && profileMenu.classList.contains('show')) {
+            profileMenu.classList.remove('show');
+        }
+    }
+});
+
+/**
+ * Hàm Đăng xuất
+ */
+window.logout = function() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userAvatar');
+    alert('Đã đăng xuất thành công!');
+    location.reload();
+}
+
+/**
+ * Khởi tạo khi trang load
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    window.updateAuthUI();
+});
