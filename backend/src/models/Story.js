@@ -60,9 +60,12 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest') {
         s.created_at,
         s.updated_at,
         s.is_published,
-        COUNT(*) OVER() AS total_count
+        COUNT(*) OVER() AS total_count,
+        u.username AS author_username,
+        u.full_name AS author_full_name
         ${selectClause}
       FROM stories s
+      LEFT JOIN users u ON u.id = s.author_id
       ${joinClause}
       WHERE s.is_published = true
       ORDER BY ${orderBy}
@@ -265,8 +268,11 @@ async function searchStories(query, category = null, tag = null, page = 1, limit
           s.created_at,
           s.updated_at,
           s.is_published,
-          COUNT(*) OVER() AS total_count
+          COUNT(*) OVER() AS total_count,
+          u.username AS author_username,
+          u.full_name AS author_full_name
         FROM stories s
+        LEFT JOIN users u ON u.id = s.author_id
         WHERE s.is_published = true
           AND (
             $1::text IS NULL
@@ -314,8 +320,11 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
     `
       SELECT
         s.*,
-        COUNT(*) OVER() AS total_count
+        COUNT(*) OVER() AS total_count,
+        u.username AS author_username,
+        u.full_name AS author_full_name
       FROM stories s
+      LEFT JOIN users u ON u.id = s.author_id
       WHERE s.author_id = $1
       ORDER BY s.updated_at DESC
       LIMIT $2 OFFSET $3

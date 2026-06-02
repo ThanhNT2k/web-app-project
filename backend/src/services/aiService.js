@@ -4,8 +4,6 @@ const axios = require('axios');
 
 const env = require('../config/environment');
 
-const GEMINI_MODEL = 'gemini-1.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const REQUEST_TIMEOUT_MS = 30000;
 
 const memoryCache = new Map();
@@ -31,61 +29,99 @@ function setMemoryCache(key, value, ttlMs = 1000 * 60 * 60) {
   memoryCache.set(key, { value, expiresAt: Date.now() + ttlMs });
 }
 
-async function callGemini(prompt) {
-  if (!env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not configured');
-  }
-
-  const response = await axios.post(
-    GEMINI_URL,
-    {
-      contents: [
-        {
-          parts: [{ text: prompt }],
+async function callAI(prompt) {
+  // 1. Try Groq API if GROQ_API_KEY is configured
+  if (env.GROQ_API_KEY && env.GROQ_API_KEY !== 'your_groq_api_key_here') {
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+      },
+      {
+        timeout: REQUEST_TIMEOUT_MS,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.GROQ_API_KEY}`,
         },
-      ],
-    },
-    {
-      params: { key: env.GEMINI_API_KEY },
-      timeout: REQUEST_TIMEOUT_MS,
-      headers: { 'Content-Type': 'application/json' },
+      }
+    );
+    const text = response.data?.choices?.[0]?.message?.content;
+    if (!text) {
+      throw new Error('Groq API returned an empty response');
     }
-  );
-
-  const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error('Gemini API returned an empty response');
+    return text.trim();
   }
-  return text.trim();
+
+  // 2. Fallback to Gemini if GEMINI_API_KEY is configured
+  if (env.GEMINI_API_KEY && env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
+    const GEMINI_MODEL = 'gemini-1.5-flash';
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+    const response = await axios.post(
+      GEMINI_URL,
+      {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+      },
+      {
+        params: { key: env.GEMINI_API_KEY },
+        timeout: REQUEST_TIMEOUT_MS,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      throw new Error('Gemini API returned an empty response');
+    }
+    return text.trim();
+  }
+
+  throw new Error('No AI API key (Groq or Gemini) is configured');
 }
 
 function fallbackChapterSummary(chapterContent) {
   const excerpt = String(chapterContent || '').slice(0, 200).trim();
   return [
-    'Đây là bản tóm tắt mẫu (chưa kết nối Gemini API hoặc API key chưa được cấu hình).',
+    'Đây là bản tóm tắt mẫu (chưa kết nối AI API hoặc API key chưa được cấu hình).',
     excerpt
       ? `Nội dung chương bắt đầu với: "${excerpt}${chapterContent.length > 200 ? '...' : ''}"`
       : 'Chương này chưa có nội dung để tóm tắt chi tiết.',
-    'Hãy thêm GEMINI_API_KEY vào file .env của backend để nhận tóm tắt AI bằng tiếng Việt.',
+    'Hãy cấu hình GROQ_API_KEY hoặc GEMINI_API_KEY vào file .env để kích hoạt AI.',
   ].join('\n\n');
 }
 
 async function generateChapterSummary(chapterContent) {
-  const key = cacheKey('chapter', chapterContent);
+  const contentStr = String(chapterContent || '').trim();
+  
+  // Do not request AI summary if the chapter is too short (under 400 characters)
+  if (contentStr.length < 400) {
+    return 'Chương truyện quá ngắn để có thể tạo tóm tắt tự động.';
+  }
+
+  const key = cacheKey('chapter', contentStr);
   const cached = getFromMemoryCache(key);
   if (cached) {
     return cached;
   }
 
-  const prompt = `Bạn là trợ lý đọc truyện. Hãy viết tóm tắt 2-3 đoạn văn bằng tiếng Việt cho chương truyện sau. Tập trung vào diễn biến chính, nhân vật và kết quả của chương. Không thêm tiêu đề hay gạch đầu dòng.\n\nNội dung chương:\n${chapterContent}`;
+  const prompt = `Bạn là trợ lý đọc truyện. Hãy viết tóm tắt 2-3 đoạn văn bằng tiếng Việt cho chương truyện sau. Tập trung vào diễn biến chính, nhân vật và kết quả của chương. Không thêm tiêu đề hay gạch đầu dòng.\n\nNội dung chương:\n${contentStr}`;
 
   try {
-    const summary = await callGemini(prompt);
+    const summary = await callAI(prompt);
     setMemoryCache(key, summary);
     return summary;
   } catch (error) {
     console.error('[aiService.generateChapterSummary]', error.message);
-    const summary = fallbackChapterSummary(chapterContent);
+    const summary = fallbackChapterSummary(contentStr);
     setMemoryCache(key, summary, 1000 * 60 * 5);
     return summary;
   }
@@ -95,6 +131,12 @@ async function generateStorySummary(storyTitle, allChaptersContent) {
   const combined = Array.isArray(allChaptersContent)
     ? allChaptersContent.join('\n\n---\n\n')
     : String(allChaptersContent || '');
+  
+  // Do not request AI summary if combined content is too short (under 600 characters)
+  if (combined.trim().length < 600) {
+    return 'Nội dung các chương hiện tại quá ngắn để tạo tóm tắt tổng quan.';
+  }
+
   const key = cacheKey('story', `${storyTitle}:${combined.slice(0, 500)}`);
   const cached = getFromMemoryCache(key);
   if (cached) {
@@ -104,12 +146,12 @@ async function generateStorySummary(storyTitle, allChaptersContent) {
   const prompt = `Viết tóm tắt tổng quan bằng tiếng Việt (3-4 đoạn) cho truyện "${storyTitle}" dựa trên các chương sau:\n\n${combined.slice(0, 12000)}`;
 
   try {
-    const summary = await callGemini(prompt);
+    const summary = await callAI(prompt);
     setMemoryCache(key, summary);
     return summary;
   } catch (error) {
     console.error('[aiService.generateStorySummary]', error.message);
-    return `Tóm tắt mẫu cho "${storyTitle}": truyện gồm nhiều chương với các tình tiết hấp dẫn. Cấu hình GEMINI_API_KEY để nhận tóm tắt AI đầy đủ.`;
+    return `Tóm tắt mẫu cho "${storyTitle}": truyện gồm nhiều chương với các tình tiết hấp dẫn. Cấu hình AI API key để nhận tóm tắt AI đầy đủ.`;
   }
 }
 
@@ -133,7 +175,7 @@ async function generatePersonalRecommendations(userReadingHistory) {
   )}`;
 
   try {
-    const text = await callGemini(prompt);
+    const text = await callAI(prompt);
     const match = text.match(/\[[\d,\s]+\]/);
     if (match) {
       const ids = JSON.parse(match[0]).filter((id) => Number.isInteger(id)).slice(0, 5);

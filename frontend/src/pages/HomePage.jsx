@@ -184,23 +184,6 @@ function HomePage() {
         </section>
       )}
 
-      {/* Genres */}
-      <section className="mb-5">
-        <h2 className="section-title">🏷️ Thể Loại Phổ Biến</h2>
-        <div className="genres-grid">
-          {GENRES.map((genre) => (
-            <button
-              key={genre.slug}
-              type="button"
-              className="genre-item"
-              onClick={() => handleGenreClick(genre.slug)}
-            >
-              {genre.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
       {/* Recent Updates */}
       {!isSearching && (
         <section className="mb-5">

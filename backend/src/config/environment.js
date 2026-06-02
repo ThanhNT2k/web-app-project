@@ -22,6 +22,9 @@ const env = {
   // Gemini AI
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
 
+  // Groq AI
+  GROQ_API_KEY: process.env.GROQ_API_KEY || '',
+
   // Supabase Storage
   SUPABASE_URL: process.env.SUPABASE_URL || '',
   SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
