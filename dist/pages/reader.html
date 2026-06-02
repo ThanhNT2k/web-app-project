@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chuyển hướng…</title>
+  <script>
+    var p = new URLSearchParams(location.search);
+    var s = p.get('storyId') || p.get('comicId');
+    var c = p.get('chapterId') || p.get('id');
+    if (s && c) location.replace('/story/' + s + '/chapter/' + c);
+    else location.replace('/');
+  </script>
+</head>
+<body></body>
+</html>
