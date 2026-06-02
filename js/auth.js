@@ -76,6 +76,9 @@ export async function login(credentials) {
       password: credentials.password
     });
 
+    alert("BACKEND TRẢ VỀ: " + JSON.stringify(response));
+    console.log("BACKEND TRẢ VỀ GỐC:", response);
+
     console.log("Dữ liệu gốc nhận từ API Backend:", response);
 
     if (response && (response.token || response.Token)) {
