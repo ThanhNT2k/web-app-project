@@ -7,29 +7,36 @@
     <link rel="stylesheet" href="../css/style.css">
     
     <script>
-        (function() {
-            const token = localStorage.getItem('token');
-            const userStr = localStorage.getItem('user');
-            
-            if (!token || !userStr) {
-                alert('Vui lòng đăng nhập bằng tài khoản Quản trị viên!');
-                window.location.href = '/index.html';
-                return;
-            }
+    (function() {
+        const token = localStorage.getItem('token');
+        const userRole = localStorage.getItem('userRole');
+        const userEmail = localStorage.getItem('userEmail');
 
-            try {
-                const user = JSON.parse(userStr);
-                // Khớp chính xác với role chữ thường 'admin' dưới database
-                if (user.role !== 'admin' && user.role !== 'Admin') {
-                    alert('Cảnh báo bảo mật: Bạn không có quyền truy cập khu vực Admin!');
-                    window.location.href = '/index.html';
-                }
-            } catch (e) {
-                localStorage.clear();
-                window.location.href = '/index.html';
-            }
-        })();
-    </script>
+        // 📝 DANH SÁCH EMAIL ĐƯỢC PHÉP TRUY CẬP ADMIN PANEL (Thay email của bạn vào đây)
+        const adminWhitelist = [
+            'forhsonly1102@gmail.com', // Thay bằng email admin thực tế dưới DB của bạn
+            'admin@cmctruyen.com'
+        ];
+
+        console.log("--- HỆ THỐNG KIỂM TRA BAO MẬT BA LỚP ---");
+        console.log("-> Token:", token ? "Hợp lệ" : "Trống");
+        console.log("-> Quyền hạn:", userRole);
+        console.log("-> Email tài khoản:", userEmail);
+
+        // Chuẩn hóa dữ liệu trước khi so sánh
+        const currentRole = userRole ? userRole.toLowerCase().trim() : '';
+        const currentEmail = userEmail ? userEmail.toLowerCase().trim() : '';
+
+        // Kiểm tra điều kiện ngặt nghèo: 
+        // 1. Phải có Token
+        // 2. Role bắt buộc là 'admin'
+        // 3. Email đăng nhập phải nằm trong danh sách Whitelist ở trên
+        if (!token || currentRole !== 'admin' || !adminWhitelist.includes(currentEmail)) {
+            alert('Cảnh báo bảo mật nâng cao: Email hoặc Quyền hạn của tài khoản không khớp cấu hình Quản trị viên!');
+            window.location.replace('/index.html');
+        }
+    })();
+</script>
 
     <style>
         .admin-header { background: linear-gradient(135deg, var(--danger-color), var(--warning-color)); color: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; }

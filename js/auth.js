@@ -92,38 +92,33 @@ export async function login(credentials) {
     });
 
     if (response && response.token) {
-      // 1. Ghi Token vào hệ thống
       setToken(response.token);
       
-      // 2. Ép chuẩn hóa và ghi vai trò vào localStorage
+      // 💾 Lưu vai trò
       if (response.user && response.user.role) {
-        const roleLower = response.user.role.toLowerCase().trim();
-        localStorage.setItem('userRole', roleLower); 
+        localStorage.setItem('userRole', response.user.role.toLowerCase().trim());
       } else {
         localStorage.setItem('userRole', 'user');
       }
 
-      // 3. ĐỢI 50ms ĐỂ TRÌNH DUYỆT HOÀN THÀNH GHI Ổ CỨNG (Tránh lệch pha dữ liệu)
+      // 💾 LƯU THÊM EMAIL NGƯỜI DÙNG VÀO LOCALSTORAGE
+      if (response.user && response.user.email) {
+        localStorage.setItem('userEmail', response.user.email.toLowerCase().trim());
+      } else if (credentials.email && credentials.email.includes('@')) {
+        localStorage.setItem('userEmail', credentials.email.toLowerCase().trim());
+      }
+
       await new Promise(resolve => setTimeout(resolve, 50));
 
       return {
         success: true,
-        data: {
-          user: response.user,
-          token: response.token
-        }
+        data: { user: response.user, token: response.token }
       };
     }
 
-    return {
-      success: false,
-      error: response?.error || 'Login failed'
-    };
+    return { success: false, error: response?.error || 'Login failed' };
   } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
+    return { success: false, error: error.message };
   }
 }
 
