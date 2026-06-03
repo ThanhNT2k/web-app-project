@@ -1,235 +1,177 @@
-# Frontend - CMC Truyện
+# CMC Truyện Frontend
 
-Giao diện người dùng (Frontend) cho ứng dụng CMC Truyện.
+Giao diện ReactJS + Vite cho ứng dụng đọc truyện CMC Truyện.
 
-## 📁 Cấu Trúc Dự Án
+## 🚀 Giới thiệu
+
+Dự án này là frontend SPA sử dụng ReactJS, Vite, Bootstrap và Tailwind CSS.
+Frontend kết nối với backend qua API REST, quản lý đăng nhập, tìm kiếm truyện, đọc chương và quản lý người dùng.
+
+## 📁 Cấu trúc dự án chính
 
 ```
-frontend-project/
-├── assets/              # Hình ảnh, logo, fonts
-├── css/                 # Stylesheets
-│   └── style.css       # Giao diện chính
-├── js/                  # JavaScript
-│   ├── api.js          # Gọi API từ backend
-│   ├── auth.js         # Xử lý authentication (JWT Token)
-│   └── main.js         # Logic DOM chung
-├── pages/              # Trang HTML
-│   ├── index.html      # Trang chủ
-│   ├── story.html      # Tìm truyện / Chi tiết truyện
-│   ├── account.html    # Đăng nhập / Đăng ký
-│   ├── profile.html    # Profile người dùng
-│   └── admin.html      # Admin panel
-├── .gitignore
-└── README.md           # File này
+web-app-project/
+├── public/                # Tài nguyên tĩnh, favicon, file HTML
+│   └── pages/             # Các trang tĩnh/legacy không dùng trực tiếp trong SPA
+├── src/
+│   ├── components/        # Các component giao diện tái sử dụng
+│   ├── contexts/          # Context cho authentication và theme
+│   ├── pages/             # Trang chính của ứng dụng
+│   ├── services/          # API client và auth service
+│   ├── styles/            # CSS chính, dark mode, reader
+│   └── utils/             # Tiện ích chung
+├── index.html             # Entry HTML cho Vite
+├── package.json          # Cấu hình npm scripts và dependencies
+├── vite.config.js        # Cấu hình Vite, proxy API
+└── README.md             # Tài liệu này
 ```
 
-## 🚀 Khởi Động
+## 🧩 Công nghệ chính
 
-### Yêu Cầu
-- Backend chạy trên `http://localhost:3000`
-- Browser hỗ trợ ES6+
+- React 18
+- Vite
+- React Router DOM
+- Axios
+- Bootstrap 5
+- Tailwind CSS
 
-### Chạy Frontend
+## 🌐 Cấu hình backend
 
-#### Cách 1: Mở trực tiếp trong trình duyệt
+`src/services/api.js` dùng URL mặc định:
+
+```js
+http://localhost:5000/api
+```
+
+Bạn có thể thay đổi bằng biến môi trường:
+
 ```bash
-# Mở file index.html bằng trình duyệt
-open pages/index.html  # macOS
-start pages\index.html # Windows
+VITE_API_URL=http://localhost:5000/api
 ```
 
-#### Cách 2: Sử dụng local server (khuyên dùng)
-```bash
-# Dùng Python
-python -m http.server 8000
+`vite.config.js` cũng proxy các yêu cầu:
 
-# Hoặc dùng Node.js (cài http-server)
-npm install -g http-server
-http-server -p 8000
-```
+- `/api` -> `http://localhost:5000`
+- `/uploads` -> `http://localhost:5000`
 
-Sau đó mở `http://localhost:8000/pages/index.html` trong trình duyệt.
+## 🚦 Routes chính
 
-## 📝 Các Trang Chính
+- `/` → `HomePage`
+- `/browse` hoặc `/tim-truyen` → `FindStoriesPage`
+- `/login` → `LoginPage`
+- `/register` → `RegisterPage`
+- `/account` → `AccountPage`
+- `/story/:id` → `StoryDetailPage`
+- `/story/:storyId/chapter/:chapterId` → `ChapterReaderPage`
+- `/profile` → `UserProfilePage` (yêu cầu đăng nhập)
+- `/dashboard` → `DashboardPage` (yêu cầu role `Uploader` hoặc `Admin`)
+- `/admin` → `AdminPage` (yêu cầu role `Admin`)
+- `*` → `NotFoundPage`
 
-### 1. **index.html** - Trang Chủ
-- Hiển thị truyện nổi bật
-- Danh sách thể loại
-- Truyện cập nhật gần đây
-- Gọi API: `/api/stories`, `/api/genres`
+## 🔧 API chính
 
-### 2. **story.html** - Tìm Truyện
-- Search, filter theo thể loại, trạng thái
-- Sắp xếp (mới nhất, phổ biến, đánh giá cao)
-- Gọi API: `/api/stories`
-
-### 3. **account.html** - Đăng Nhập / Đăng Ký
-- Form đăng nhập (email + password)
-- Form đăng ký (name + email + password)
-- Lưu JWT token vào localStorage
-- Gọi API: `/auth/login`, `/auth/register`
-
-### 4. **profile.html** - Profile
-- Lịch sử đọc truyện
-- Truyện yêu thích
-- Cài đặt tài khoản
-- Gọi API: `/api/profile`, `/api/profile/history`, `/api/profile/favorites`
-
-### 5. **admin.html** - Admin Panel (Yêu cầu role: Admin)
-- Dashboard với thống kê
-- Thêm truyện mới
-- Quản lý truyện (edit/delete)
-- Quản lý người dùng
-- Báo cáo
-
-## 🔗 API Endpoints (Backend)
-
-### Stories
-- `GET /api/stories` - Lấy danh sách truyện
-- `GET /api/stories/:id` - Lấy chi tiết truyện
-- `GET /api/genres` - Lấy danh sách thể loại
-
-### Profile
-- `GET /api/profile` - Lấy thông tin profile
-- `PUT /api/profile` - Cập nhật profile
-- `GET /api/profile/history` - Lấy lịch sử đọc
-- `POST /api/profile/history` - Cập nhật tiến độ đọc
-- `GET /api/profile/favorites` - Lấy truyện yêu thích
-- `POST /api/profile/favorites` - Thêm truyện yêu thích
-- `DELETE /api/profile/favorites/:id` - Xóa truyện yêu thích
+Frontend sử dụng `src/services/api.js` với các nhóm endpoint sau:
 
 ### Auth
-- `POST /auth/login` - Đăng nhập
-- `POST /auth/register` - Đăng ký
-- `POST /auth/refresh` - Refresh token
-- `POST /auth/logout` - Đăng xuất
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/logout`
+- `GET /auth/me`
+- `PUT /auth/profile`
+
+### Stories
+- `GET /stories`
+- `GET /stories/mine`
+- `GET /stories/:id`
+- `POST /stories`
+- `PUT /stories/:id`
+- `DELETE /stories/:id`
+- `GET /stories/search`
+
+### Chapters
+- `GET /stories/:storyId/chapters`
+- `GET /stories/:storyId/chapters/:chapterId`
+- `POST /stories/:storyId/chapters`
+- `PUT /stories/:storyId/chapters/:chapterId`
+- `DELETE /stories/:storyId/chapters/:chapterId`
+
+### Comments
+- `GET /comments/story/:storyId`
+- `GET /comments/chapter/:chapterId`
+- `POST /comments`
+- `DELETE /comments/:id`
+
+### AI và đề xuất
+- `GET /chapters/:chapterId/summary`
+- `GET /ai/recommendations`
+
+### Lịch sử đọc
+- `GET /reading-history`
+- `POST /reading-history`
+- `GET /reading-history/story/:storyId`
+
+### Follow
+- `GET /follows`
+- `GET /follows/check/:storyId`
+- `POST /follows/:storyId`
+- `DELETE /follows/:storyId`
+
+### Preferences
+- `GET /preferences`
+- `PUT /preferences`
+
+### Upload
+- `POST /upload/cover`
+
+### Admin
+- `GET /admin/stats`
+- `GET /admin/users`
+- `PATCH /admin/users/:id/role`
+- `DELETE /admin/comments/:id`
+- `GET /admin/stories`
 
 ## 🔐 Authentication
 
-Token JWT được lưu trong `localStorage`:
-```javascript
-localStorage.setItem('token', 'jwt_token_here');
-localStorage.setItem('userId', 'user_id');
-localStorage.setItem('userName', 'user_name');
-localStorage.setItem('role', 'User/Admin/Uploader');
-```
+Token và user được lưu trong `localStorage` với các khóa:
 
-### Kiểm tra Quyền
-```javascript
-isLoggedIn()      // Kiểm tra đã đăng nhập
-isAdmin()         // Kiểm tra Admin
-isUploader()      // Kiểm tra Uploader
-requireLogin()    // Redirect nếu chưa đăng nhập
-requireAdmin()    // Redirect nếu không phải Admin
-```
+- `cmc_token`
+- `cmc_user`
 
-## 🎨 Giao Diện
+`src/services/authService.js` cung cấp các hàm:
 
-### Màu Sắc Chính
-- **Primary**: #3c6ad3 (Xanh dương)
-- **Secondary**: #10b981 (Xanh lá)
-- **Danger**: #ef4444 (Đỏ)
-- **Warning**: #f59e0b (Cam)
+- `register`
+- `login`
+- `logout`
+- `getToken`
+- `getCurrentUser`
+- `isAuthenticated`
+- `hasRole`
 
-### Responsive Design
-- Desktop: 1200px max-width
-- Tablet: Grid tự động adjust
-- Mobile: Full width
+## 🧠 Kiến trúc ứng dụng
 
-## 📚 Hàm Utility Chính
+- `src/App.jsx`: Thiết lập router và layout chung
+- `src/components/ProtectedRoute.jsx`: Bảo vệ route khi chưa đăng nhập
+- `src/components/RoleProtectedRoute.jsx`: Bảo vệ permission theo role
+- `src/contexts/AuthContext.jsx`: Quản lý trạng thái user
+- `src/contexts/ThemeContext.jsx`: Quản lý chế độ sáng/tối
 
-### API Calls (api.js)
-```javascript
-getStories()                    // Lấy danh sách truyện
-getStory(storyId)              // Lấy chi tiết truyện
-getGenres()                    // Lấy thể loại
-getProfile()                   // Lấy profile
-updateProfile(data)            // Cập nhật profile
-getReadingHistory()            // Lấy lịch sử đọc
-getFavoriteStories()           // Lấy yêu thích
-addFavoriteStory(storyId)      // Thêm yêu thích
-removeFavoriteStory(storyId)   // Xóa yêu thích
-```
+## 📌 Lưu ý
 
-### Auth (auth.js)
-```javascript
-login(email, password)         // Đăng nhập
-register(email, password, name) // Đăng ký
-logout()                       // Đăng xuất
-isLoggedIn()                   // Kiểm tra đã đăng nhập
-getCurrentUser()               // Lấy thông tin user
-isAdmin()                      // Kiểm tra Admin
-```
+- Backend cần chạy trên `http://localhost:5000` hoặc thay `VITE_API_URL`
+- Nếu backend dùng CORS, đảm bảo cho phép origin của frontend
+- Tắt cache, refresh lại khi thay đổi cấu hình môi trường
 
-### DOM Utils (main.js)
-```javascript
-renderStories(stories, containerId)  // Render danh sách truyện
-renderGenres(genres, containerId)    // Render danh sách thể loại
-showNotification(message, type)      // Hiển thị thông báo
-formatDate(dateString)               // Format ngày tháng
-truncateText(text, length)           // Cắt ngắn văn bản
-getQueryParam(param)                 // Lấy query parameter
-```
+## 💡 Chạy nhanh
 
-## 🔧 Cấu Hình
-
-### API Base URL
-Mở `js/api.js` và thay đổi:
-```javascript
-const API_BASE_URL = 'http://localhost:3000/api';
-const AUTH_API_URL = 'http://localhost:3000/auth';
-```
-
-### CORS
-Nếu gặp lỗi CORS, đảm bảo backend đã config:
-```javascript
-// Backend (Express)
-app.use(cors({ origin: 'http://localhost:8000' }));
-```
-
-## 📱 Testing Locally
-
-1. Mở 2 terminal:
 ```bash
-# Terminal 1: Backend
-cd ../server
-node server.js
-
-# Terminal 2: Frontend
-python -m http.server 8000
+npm install
+npm run dev
 ```
 
-2. Mở trình duyệt: `http://localhost:8000/pages/index.html`
-
-3. Tại Trang chủ sẽ load dữ liệu từ backend `/api/stories`
-
-## 🚢 Deployment
-
-### Netlify
-```bash
-# Drag & drop folder frontend-project vào Netlify
-# Hoặc kết nối GitHub
-```
-
-### GitHub Pages
-```bash
-# Push vào branch gh-pages
-git subtree push --prefix frontend-project origin gh-pages
-```
-
-## ⚠️ Lưu Ý
-
-- Không lưu sensitive data (password, API keys) trong localStorage
-- Luôn validate input từ người dùng
-- Sử dụng HTTPS trong production
-- Test trên nhiều browser (Chrome, Firefox, Safari)
-
-## 📞 Hỗ Trợ
-
-Liên hệ: support@cmctruyện.com
+Mở `http://localhost:3000` và kiểm tra các route `/`, `/login`, `/profile`.
 
 ---
 
-**Phiên bản**: 1.0.0  
-**Cập nhật**: 2026-05-25  
+**Phiên bản**: 1.0.0
+
 **License**: MIT
