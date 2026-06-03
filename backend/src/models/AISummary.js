@@ -1,5 +1,10 @@
 const db = require('../config/database');
 
+/**
+ * Lấy bản tóm tắt AI đã được cache trong database cho một chương.
+ * Mục đích: Tránh gọi AI API lại cho cùng một chương (tốn chi phí và thời gian).
+ * Trả về null nếu chưa có tóm tắt trong DB.
+ */
 async function getCachedSummary(chapterId) {
   const result = await db.query(
     `
@@ -14,6 +19,12 @@ async function getCachedSummary(chapterId) {
   return result.rows[0] || null;
 }
 
+/**
+ * Lưu hoặc cập nhật tóm tắt AI cho một chương (UPSERT).
+ * ON CONFLICT (chapter_id) DO UPDATE: Mỗi chương chỉ có 1 tóm tắt duy nhất.
+ * Khi gọi với regenerate=true từ controller, tóm tắt cũ sẽ bị ghi đè ở đây.
+ * generated_at được cập nhật về thời điểm hiện tại khi có tóm tắt mới.
+ */
 async function saveSummary(chapterId, summary) {
   const result = await db.query(
     `

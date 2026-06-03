@@ -2,7 +2,11 @@
 const { Pool } = require('pg');
 const env = require('./environment');
 
-// Build pool config – prefer DATABASE_URL if available, otherwise use individual vars
+// Xây dựng cấu hình kết nối cho Pool:
+// - Nếu có DATABASE_URL (thường do Render/Heroku inject), dùng connection string đó
+// - Ngược lại, dùng các biến riêng lẻ (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
+// Trong production, ssl.rejectUnauthorized = false cho phép kết nối tới các
+// PostgreSQL được host trên cloud mà không cần verify SSL certificate
 const poolConfig = env.DATABASE_URL
   ? {
       connectionString: env.DATABASE_URL,
@@ -22,14 +26,19 @@ poolConfig.max = 20; // Maximum number of connections in the pool
 poolConfig.idleTimeoutMillis = 30000; // Close idle connections after 30s
 poolConfig.connectionTimeoutMillis = 5000; // Fail fast if connection takes > 5s
 
+// Tạo connection pool - Pool tái sử dụng các kết nối DB thay vì tạo mới mỗi lần
+// giúp tiết kiệm tài nguyên và tăng hiệu suất đáng kể với nhiều request đồng thời
 const pool = new Pool(poolConfig);
 
-// Log pool-level errors so they don't crash the process silently
+// Lắng nghe sự kiện lỗi ở cấp pool để log lỗi những client đang idle bị disconnect bất ngờ
+// Tránh để lỗi này âm thầm gây crash process mà không có thông báo
 pool.on('error', (err) => {
   console.error('[Database] Unexpected error on idle client:', err.message);
 });
 
-// Verify connectivity on first import (non-blocking)
+// Kiểm tra kết nối DB khi module được load lần đầu (non-blocking)
+// Chạy query SELECT NOW() đơn giản để xác nhận pool kết nối thành công
+// Lỗi ở đây không làm dừng server nhưng giúp phát hiện sự cố DB sớm
 pool.query('SELECT NOW()')
   .then(() => console.log('[Database] Connected to PostgreSQL'))
   .catch((err) => console.error('[Database] Connection failed:', err.message));
