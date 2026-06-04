@@ -90,12 +90,19 @@ a {
   color: #fff;
   white-space: nowrap;
 }
+.nav-icon {
+  display: none;
+}
 
+.nav-text {
+  display: inline;
+}
 .cmc-nav-links {
   display: flex;
   align-items: center;
   gap: 1.25rem;
   flex-wrap: wrap;
+  font-size: 1.4rem;
 }
 
 .cmc-nav-link {
@@ -112,6 +119,13 @@ a {
 .cmc-nav-link:hover {
   opacity: 1;
   text-decoration: underline;
+}
+.nav-icon {
+  display: none;
+}
+
+.nav-text {
+  display: inline;
 }
 
 .cmc-nav-actions {
@@ -517,9 +531,41 @@ a {
 }
 
 @media (max-width: 768px) {
+
+  .cmc-navbar-inner {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
   .cmc-nav-links {
-    width: 100%;
+    display: flex;
+    flex-direction: row;
     justify-content: center;
+    gap: 12px;
+    width: auto;
+  }
+
+  .cmc-nav-link {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255,255,255,0.12);
+  }
+
+  .nav-icon {
+    display: inline !important;
+    font-size: 1.2rem;
+  }
+
+  .nav-text {
+    display: none !important;
   }
 }
 
@@ -1040,4 +1086,11 @@ kbd {
 .dropdown-item-cmc.btn-logout-cmc:hover {
   background: rgba(220, 53, 69, 0.1) !important;
   color: #dc3545 !important;
+}
+.nav-icon {
+  display: none;
+}
+
+.nav-text {
+  display: inline;
 }
