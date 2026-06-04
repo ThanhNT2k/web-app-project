@@ -42,9 +42,65 @@ function AdminPage() {
 
   return (
     <main className="cmc-main">
-      <h1 className="mb-1">Bảng quản trị</h1>
-      <p className="text-muted mb-4">Quản lý người dùng và thống kê hệ thống</p>
+            <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '2rem',
+        }}
+      >
+        <div>
+          <h1 className="mb-1">Admin Dashboard</h1>
+          <p className="text-muted">
+            Manage your story platform
+          </p>
+        </div>
 
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <button className="btn-cmc btn-cmc-primary">
+            📚 Quản lý truyện
+          </button>
+
+          <button className="btn-cmc btn-cmc-secondary">
+            👥 Quản lý người dùng
+          </button>
+        </div>
+      </div>
+          <div className="panel-card mb-4">
+        <h4 className="panel-title">
+          🔥 Top Performing Stories
+        </h4>
+
+        <p className="text-muted">
+          Những truyện có lượt xem và tương tác cao nhất.
+        </p>
+
+        <div className="stats-row">
+          <div className="stat-box">
+            <strong>#1</strong>
+            <span>Story Leader</span>
+          </div>
+
+          <div className="stat-box">
+            <strong>#2</strong>
+            <span>Top Trending</span>
+          </div>
+
+          <div className="stat-box">
+            <strong>#3</strong>
+            <span>Most Read</span>
+          </div>
+        </div>
+      </div>
       {message ? <div className="alert-cmc mb-3">{message}</div> : null}
 
       {loading ? <p>Đang tải...</p> : null}
