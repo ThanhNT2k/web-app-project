@@ -128,6 +128,15 @@ function Navbar() {
                     >
                       ⚙️ Cài đặt tài khoản
                     </Link>
+                    {user?.role === 'Uploader' && (
+                      <Link
+                        to="/dashboard"
+                        className="dropdown-item-cmc"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        ✍️ Quản lý truyện
+                      </Link>
+                    )}
 
                     {user?.role === 'Admin' && (
                       <Link
