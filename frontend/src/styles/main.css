@@ -78,9 +78,8 @@ a {
   margin: 0 auto;
   padding: 0 1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
@@ -103,6 +102,8 @@ a {
   gap: 1.25rem;
   flex-wrap: wrap;
   font-size: 1.4rem;
+
+  margin-right: auto;
 }
 
 .cmc-nav-link {
@@ -128,12 +129,7 @@ a {
   display: inline;
 }
 
-.cmc-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
+
 
 .btn-theme-toggle {
   background: rgba(255, 255, 255, 0.15);
@@ -533,30 +529,44 @@ a {
 @media (max-width: 768px) {
 
   .cmc-navbar-inner {
-    flex-direction: column;
+    display: flex;
+    flex-wrap: wrap;
+
+    justify-content: space-between;
     align-items: center;
-    gap: 10px;
+  }
+
+  .cmc-logo {
+    order: 1;
+  }
+
+  .cmc-nav-actions {
+    order: 2;
   }
 
   .cmc-nav-links {
+    order: 3;
+
+    width: 100%;
+    margin-top: -20px;
+
     display: flex;
-    flex-direction: row;
     justify-content: center;
     gap: 12px;
-    width: auto;
   }
 
   .cmc-nav-link {
     width: 42px;
     height: 42px;
-    border-radius: 50%;
-    padding: 0;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    border-radius: 50%;
     background: rgba(255,255,255,0.12);
+
+    padding: 0;
   }
 
   .nav-icon {
@@ -1018,9 +1028,31 @@ kbd {
 /* ===== Navbar Profile Dropdown Menu ===== */
 .nav-profile-dropdown-container {
   position: relative;
-  display: inline-block;
+  display: flex;
+  align-items: center;
 }
 
+.cmc-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-profile-trigger {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
+.btn-theme-toggle {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-profile-trigger img {
+  display: block;
+}
 .nav-profile-trigger {
   display: flex;
   align-items: center;
