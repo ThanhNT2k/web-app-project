@@ -4,14 +4,18 @@ const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80';
 
 function StoryCard({ story, compact = false, horizontal = false }) {
-  // Hàm hiển thị danh sách thẻ
   const renderTags = () => {
-    if (!story.genres || (Array.isArray(story.genres) && story.genres.length === 0)) return null;
-    const tags = Array.isArray(story.genres) ? story.genres : [story.genres];
+    const tagData = story.tags;
+
+    if (!tagData || (Array.isArray(tagData) && tagData.length === 0)) return null;
+
+    const tags = Array.isArray(tagData) ? tagData : [tagData];
+
     return (
       <div className="d-flex flex-wrap gap-1 mb-2">
-        {tags.slice(0, 3).map((genre, index) => {
-          const tagName = typeof genre === 'object' && genre !== null ? (genre.name || genre.title || '') : genre;
+        {tags.slice(0, 3).map((tag, index) => {
+          // Xử lý lấy tên thẻ: ưu tiên tag.name, nếu là chuỗi thì lấy trực tiếp
+          const tagName = typeof tag === 'object' && tag !== null ? (tag.name || tag.title || '') : tag;
           
           if (!tagName) return null;
 
