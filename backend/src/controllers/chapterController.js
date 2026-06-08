@@ -274,7 +274,7 @@ async function deleteChapter(req, res) {
   }
 }
 
-exports.getChapterByNumber = async (req, res, next) => {
+async function getChapterByNumber(req, res, next) {
   try {
     const { mangaSlug, chapterNumber } = req.params;
 
