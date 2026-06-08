@@ -76,55 +76,90 @@ function AdminPage() {
         </div>
       </div>
           <div className="panel-card mb-4">
-        <h4 className="panel-title">
-          🔥 Top Performing Stories
-        </h4>
+            <h4 className="panel-title">
+              🔥 Top Performing Stories
+            </h4>
 
-        <p className="text-muted">
-          Những truyện có lượt xem và tương tác cao nhất.
-        </p>
+            <p className="text-muted">
+              Những truyện có lượt xem và tương tác cao nhất.
+            </p>
 
-        <div className="stats-row">
-          <div className="stat-box">
-            <strong>#1</strong>
-            <span>Story Leader</span>
+            <div className="stats-row">
+              <div className="stat-box">
+                <strong>#1 Phàm Nhân Tu Tiên</strong>
+                <span>5.2K lượt xem</span>
+              </div>
+
+              <div className="stat-box">
+                <strong>#2 Đô Thị Siêu Cấp Thần Y</strong>
+                <span>4.8K lượt xem</span>
+              </div>
+
+              <div className="stat-box">
+                <strong>#3 Kiếm Lai</strong>
+                <span>3.9K lượt xem</span>
+              </div>
+            </div>
           </div>
+          <div className="panel-card mb-4">
+          <h4 className="panel-title">
+            🏆 Top Uploaders
+          </h4>
 
-          <div className="stat-box">
-            <strong>#2</strong>
-            <span>Top Trending</span>
-          </div>
+          <div className="stats-row">
+            <div className="stat-box">
+              <strong>Nguyễn Văn Upload</strong>
+              <span>10 truyện</span>
+            </div>
 
-          <div className="stat-box">
-            <strong>#3</strong>
-            <span>Most Read</span>
+            <div className="stat-box">
+              <strong>Uploader 02</strong>
+              <span>8 truyện</span>
+            </div>
+
+            <div className="stat-box">
+              <strong>Uploader 03</strong>
+              <span>6 truyện</span>
+            </div>
           </div>
         </div>
-      </div>
       {message ? <div className="alert-cmc mb-3">{message}</div> : null}
 
       {loading ? <p>Đang tải...</p> : null}
 
       {stats ? (
-        <div className="stats-row mb-4">
-          <div className="stat-box">
-            <strong>{stats.users}</strong>
-            <span>Người dùng</span>
-          </div>
-          <div className="stat-box">
-            <strong>{stats.stories}</strong>
-            <span>Truyện</span>
-          </div>
-          <div className="stat-box">
-            <strong>{stats.chapters}</strong>
-            <span>Chương</span>
-          </div>
-          <div className="stat-box">
-            <strong>{stats.comments}</strong>
-            <span>Bình luận</span>
-          </div>
+      <div className="stats-row mb-4">
+        <div className="stat-box">
+          <strong>{stats.users}</strong>
+          <span>Người dùng</span>
         </div>
-      ) : null}
+
+        <div className="stat-box">
+          <strong>{stats.stories}</strong>
+          <span>Truyện</span>
+        </div>
+
+        <div className="stat-box">
+          <strong>{stats.chapters}</strong>
+          <span>Chương</span>
+        </div>
+
+        <div className="stat-box">
+          <strong>{stats.comments}</strong>
+          <span>Bình luận</span>
+        </div>
+
+        <div className="stat-box">
+          <strong>12.5K</strong>
+          <span>Lượt xem</span>
+        </div>
+
+        <div className="stat-box">
+          <strong>856</strong>
+          <span>Theo dõi</span>
+        </div>
+      </div>
+    ) : null}
 
       <div className="panel-card">
         <h4 className="panel-title">Người dùng</h4>

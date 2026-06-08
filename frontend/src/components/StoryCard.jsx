@@ -28,9 +28,9 @@ function StoryCard({ story, compact = false, horizontal = false }) {
             {story.description}
           </p>
           <div className="mt-auto d-flex justify-content-between align-items-center">
-            <span className="small text-muted">
-              {story.chapter_count || story.total_chapters || 0} chương · {(story.tags && story.tags.length > 0 ? story.tags[0].name : story.category) || 'Truyện'}
-            </span>
+           <span className="small text-muted">
+            📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
+          </span>
             <Link to={`/story/${story.id}`} className="btn-cmc btn-cmc-primary btn-xs">
               Đọc ngay
             </Link>
@@ -55,15 +55,14 @@ function StoryCard({ story, compact = false, horizontal = false }) {
         <Link to={`/story/${story.id}`} className="story-title text-decoration-none">
           {story.title}
         </Link>
-        <p className="story-meta mb-1">
-          {(story.tags && story.tags.length > 0
-            ? story.tags.map((t) => t.name).join(', ')
-            : story.category) || 'Truyện'}
-          {' · '}
-          {story.chapter_count || story.total_chapters || 0}
-          {' chương'}
+       <p className="story-meta mb-1">
+          ✍️ {story.author_full_name || story.author_username || 'CMC'}
         </p>
-        {!compact && story.description ? (
+
+      <p className="story-meta mb-2">
+        📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
+      </p>
+              {!compact && story.description ? (
           <p className="story-meta mb-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {story.description}
           </p>
