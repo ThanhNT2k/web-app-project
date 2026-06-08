@@ -644,6 +644,28 @@ textarea.form-control-cmc {
 
 .modal-content-lg {
   max-width: 560px;
+  width: 95%;
+  max-height: 90vh;
+}
+
+.modal-content-lg form {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 5px;
+}
+
+.modal-content-lg .from-control-cmc{
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-content-lg form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content-lg form::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
 }
 
 .dashboard-grid {
