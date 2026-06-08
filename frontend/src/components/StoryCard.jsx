@@ -6,23 +6,31 @@ const FALLBACK_COVER =
 function StoryCard({ story, compact = false, horizontal = false }) {
   // Hàm hiển thị danh sách thẻ
   const renderTags = () => {
-    if (!story.genres || story.genres.length === 0) return null;
+    if (!story.genres || (Array.isArray(story.genres) && story.genres.length === 0)) return null;
+    const tags = Array.isArray(story.genres) ? story.genres : [story.genres];
     return (
       <div className="d-flex flex-wrap gap-1 mb-2">
-        {story.genres.slice(0, 3).map((genre, index) => (
-          <span 
-            key={index} 
-            className="badge border" 
-            style={{ 
-              fontSize: '0.7rem', 
-              padding: '0.2rem 0.5rem', 
-              backgroundColor: 'var(--surface-secondary)', 
-              color: 'var(--text-muted)' 
-            }}
-          >
-            {typeof genre === 'string' ? genre : genre.name}
-          </span>
-        ))}
+        {tags.slice(0, 3).map((genre, index) => {
+          const tagName = typeof genre === 'object' && genre !== null ? (genre.name || genre.title || '') : genre;
+          
+          if (!tagName) return null;
+
+          return (
+            <span 
+              key={index} 
+              className="badge" 
+              style={{ 
+                fontSize: '0.65rem', 
+                padding: '0.2rem 0.5rem', 
+                backgroundColor: '#e9ecef', 
+                color: '#495057',
+                borderRadius: '4px'
+              }}
+            >
+              {tagName}
+            </span>
+          );
+        })}
       </div>
     );
   };
