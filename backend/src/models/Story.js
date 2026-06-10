@@ -152,6 +152,7 @@ async function getStoryById(id) {
           s.updated_at,
           s.is_published,
           COUNT(c.id)::int AS chapter_count,   -- Đếm thực tế số chương, cast sang int
+          get_follower_count(s.id) AS follower_count,
           u.id AS author_user_id,
           u.username AS author_username,
           u.full_name AS author_full_name,
