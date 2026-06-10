@@ -1,48 +1,30 @@
 import { useEffect, useState } from 'react';
-
 import API from '../services/api';
-
-const ROLES = ['Admin', 'Uploader', 'User', 'Guest'];
 
 function AdminPage() {
   const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  const load = async () => {
-    try {
-      setLoading(true);
-      const [statsRes, usersRes] = await Promise.all([
-        API.admin.getStats(),
-        API.admin.getUsers(),
-      ]);
-      setStats(statsRes.stats);
-      setUsers(usersRes.users || []);
-    } catch {
-      setMessage('Không tải được dữ liệu admin');
-    } finally {
-      setLoading(false);
-    }
-  };
+ const load = async () => {
+  setStats({
+    users: 125,
+    stories: 48,
+    chapters: 512,
+    comments: 2387,
+  });
+
+  setLoading(false);
+};
+  
 
   useEffect(() => {
     load();
   }, []);
 
-  const changeRole = async (userId, role) => {
-    try {
-      await API.admin.updateUserRole(userId, role);
-      setMessage('Đã cập nhật vai trò');
-      load();
-    } catch {
-      setMessage('Cập nhật thất bại');
-    }
-  };
-
   return (
     <main className="cmc-main">
-            <div
+      <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -58,144 +40,109 @@ function AdminPage() {
             Manage your story platform
           </p>
         </div>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-          }}
-        >
-          <button className="btn-cmc btn-cmc-primary">
-            📚 Quản lý truyện
-          </button>
-
-          <button className="btn-cmc btn-cmc-secondary">
-            👥 Quản lý người dùng
-          </button>
-        </div>
       </div>
+
+      {message && (
+        <div className="alert-cmc mb-3">
+          {message}
+        </div>
+      )}
+
+      {loading && <p>Đang tải...</p>}
+
+      {!loading && stats && (
+        <>
           <div className="panel-card mb-4">
             <h4 className="panel-title">
-              🔥 Top Performing Stories
+              Tổng quan hệ thống
             </h4>
-
-            <p className="text-muted">
-              Những truyện có lượt xem và tương tác cao nhất.
-            </p>
 
             <div className="stats-row">
               <div className="stat-box">
-                <strong>#1 Phàm Nhân Tu Tiên</strong>
-                <span>5.2K lượt xem</span>
+                <strong>{stats?.users || 0}</strong>
+                <span>Người dùng</span>
               </div>
 
               <div className="stat-box">
-                <strong>#2 Đô Thị Siêu Cấp Thần Y</strong>
-                <span>4.8K lượt xem</span>
+                <strong>{stats?.stories || 0}</strong>
+                <span>Truyện</span>
               </div>
 
               <div className="stat-box">
-                <strong>#3 Kiếm Lai</strong>
-                <span>3.9K lượt xem</span>
+                <strong>{stats?.chapters || 0}</strong>
+                <span>Chương</span>
+              </div>
+
+              <div className="stat-box">
+                <strong>{stats?.comments || 0}</strong>
+                <span>Bình luận</span>
               </div>
             </div>
           </div>
+
           <div className="panel-card mb-4">
-          <h4 className="panel-title">
-            🏆 Top Uploaders
-          </h4>
+            <h4 className="panel-title">
+              Hoạt động gần đây
+            </h4>
 
-          <div className="stats-row">
-            <div className="stat-box">
-              <strong>Nguyễn Văn Upload</strong>
-              <span>10 truyện</span>
-            </div>
-
-            <div className="stat-box">
-              <strong>Uploader 02</strong>
-              <span>8 truyện</span>
-            </div>
-
-            <div className="stat-box">
-              <strong>Uploader 03</strong>
-              <span>6 truyện</span>
-            </div>
-          </div>
-        </div>
-      {message ? <div className="alert-cmc mb-3">{message}</div> : null}
-
-      {loading ? <p>Đang tải...</p> : null}
-
-      {stats ? (
-      <div className="stats-row mb-4">
-        <div className="stat-box">
-          <strong>{stats.users}</strong>
-          <span>Người dùng</span>
-        </div>
-
-        <div className="stat-box">
-          <strong>{stats.stories}</strong>
-          <span>Truyện</span>
-        </div>
-
-        <div className="stat-box">
-          <strong>{stats.chapters}</strong>
-          <span>Chương</span>
-        </div>
-
-        <div className="stat-box">
-          <strong>{stats.comments}</strong>
-          <span>Bình luận</span>
-        </div>
-
-        <div className="stat-box">
-          <strong>12.5K</strong>
-          <span>Lượt xem</span>
-        </div>
-
-        <div className="stat-box">
-          <strong>856</strong>
-          <span>Theo dõi</span>
-        </div>
-      </div>
-    ) : null}
-
-      <div className="panel-card">
-        <h4 className="panel-title">Người dùng</h4>
-        <div className="table-responsive">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Tên</th>
-                <th>Email</th>
-                <th>Vai trò</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.id}</td>
-                  <td>{u.full_name || u.username}</td>
-                  <td>{u.email}</td>
-                  <td>
-                    <select
-                      className="form-control-cmc form-control-cmc-sm"
-                      value={u.role}
-                      onChange={(e) => changeRole(u.id, e.target.value)}
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  </td>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Hoạt động</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>10 phút trước</td>
+                  <td>User mới đăng ký</td>
+                </tr>
+
+                <tr>
+                  <td>20 phút trước</td>
+                  <td>Uploader tạo truyện mới</td>
+                </tr>
+
+                <tr>
+                  <td>1 giờ trước</td>
+                  <td>Admin cập nhật quyền người dùng</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="panel-card">
+            <h4 className="panel-title">
+              Truyện mới nhất
+            </h4>
+
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên truyện</th>
+                  <th>Tác giả</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Demo Story</td>
+                  <td>Admin</td>
+                </tr>
+
+                <tr>
+                  <td>2</td>
+                  <td>Another Story</td>
+                  <td>Uploader</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </main>
   );
 }
