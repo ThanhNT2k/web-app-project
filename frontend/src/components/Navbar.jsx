@@ -32,26 +32,37 @@ function Navbar() {
     <>
       <header className="cmc-site-header">
         <div className="cmc-navbar-inner">
+
           <Link to="/" className="cmc-logo">
             📚 CMC Truyện
           </Link>
 
           <nav className="cmc-nav-links">
             <Link to="/" className="cmc-nav-link">
-              Trang chủ
+              <span className="nav-icon">🏠</span>
+              <span className="nav-text">Trang chủ</span>
             </Link>
+
             <Link to="/tim-truyen" className="cmc-nav-link">
-              Tìm kiếm
+              <span className="nav-icon">🔍</span>
+              <span className="nav-text">Tìm truyện</span>
             </Link>
+
             {isAuthenticated ? (
               <Link to="/profile" className="cmc-nav-link">
-                Tủ sách
-              </Link>
+                <span className="nav-icon">📚</span>
+                <span className="nav-text">Tủ sách</span>
+              </Link> 
             ) : (
-              <button type="button" className="cmc-nav-link" onClick={() => setAuthOpen(true)}>
-                Tủ sách
+              <button
+                type="button"
+                className="cmc-nav-link"
+                onClick={() => setAuthOpen(true)}
+              >
+                <span className="nav-icon">👤</span>
+                <span className="nav-text">Đăng nhập</span>
               </button>
-            )}
+                          )}  
           </nav>
 
           <div className="cmc-nav-actions" style={{ position: 'relative' }}>
@@ -117,8 +128,7 @@ function Navbar() {
                     >
                       ⚙️ Cài đặt tài khoản
                     </Link>
-
-                    {(user?.role === 'Uploader' || user?.role === 'Admin') && (
+                    {user?.role === 'Uploader' && (
                       <Link
                         to="/dashboard"
                         className="dropdown-item-cmc"

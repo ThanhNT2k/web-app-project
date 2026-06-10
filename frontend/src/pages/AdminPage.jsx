@@ -1,110 +1,148 @@
 import { useEffect, useState } from 'react';
-
 import API from '../services/api';
-
-const ROLES = ['Admin', 'Uploader', 'User', 'Guest'];
 
 function AdminPage() {
   const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  const load = async () => {
-    try {
-      setLoading(true);
-      const [statsRes, usersRes] = await Promise.all([
-        API.admin.getStats(),
-        API.admin.getUsers(),
-      ]);
-      setStats(statsRes.stats);
-      setUsers(usersRes.users || []);
-    } catch {
-      setMessage('Không tải được dữ liệu admin');
-    } finally {
-      setLoading(false);
-    }
-  };
+ const load = async () => {
+  setStats({
+    users: 125,
+    stories: 48,
+    chapters: 512,
+    comments: 2387,
+  });
+
+  setLoading(false);
+};
+  
 
   useEffect(() => {
     load();
   }, []);
 
-  const changeRole = async (userId, role) => {
-    try {
-      await API.admin.updateUserRole(userId, role);
-      setMessage('Đã cập nhật vai trò');
-      load();
-    } catch {
-      setMessage('Cập nhật thất bại');
-    }
-  };
-
   return (
     <main className="cmc-main">
-      <h1 className="mb-1">Bảng quản trị</h1>
-      <p className="text-muted mb-4">Quản lý người dùng và thống kê hệ thống</p>
-
-      {message ? <div className="alert-cmc mb-3">{message}</div> : null}
-
-      {loading ? <p>Đang tải...</p> : null}
-
-      {stats ? (
-        <div className="stats-row mb-4">
-          <div className="stat-box">
-            <strong>{stats.users}</strong>
-            <span>Người dùng</span>
-          </div>
-          <div className="stat-box">
-            <strong>{stats.stories}</strong>
-            <span>Truyện</span>
-          </div>
-          <div className="stat-box">
-            <strong>{stats.chapters}</strong>
-            <span>Chương</span>
-          </div>
-          <div className="stat-box">
-            <strong>{stats.comments}</strong>
-            <span>Bình luận</span>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="panel-card">
-        <h4 className="panel-title">Người dùng</h4>
-        <div className="table-responsive">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Tên</th>
-                <th>Email</th>
-                <th>Vai trò</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.id}</td>
-                  <td>{u.full_name || u.username}</td>
-                  <td>{u.email}</td>
-                  <td>
-                    <select
-                      className="form-control-cmc form-control-cmc-sm"
-                      value={u.role}
-                      onChange={(e) => changeRole(u.id, e.target.value)}
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '2rem',
+        }}
+      >
+        <div>
+          <h1 className="mb-1">Admin Dashboard</h1>
+          <p className="text-muted">
+            Manage your story platform
+          </p>
         </div>
       </div>
+
+      {message && (
+        <div className="alert-cmc mb-3">
+          {message}
+        </div>
+      )}
+
+      {loading && <p>Đang tải...</p>}
+
+      {!loading && stats && (
+        <>
+          <div className="panel-card mb-4">
+            <h4 className="panel-title">
+              Tổng quan hệ thống
+            </h4>
+
+            <div className="stats-row">
+              <div className="stat-box">
+                <strong>{stats?.users || 0}</strong>
+                <span>Người dùng</span>
+              </div>
+
+              <div className="stat-box">
+                <strong>{stats?.stories || 0}</strong>
+                <span>Truyện</span>
+              </div>
+
+              <div className="stat-box">
+                <strong>{stats?.chapters || 0}</strong>
+                <span>Chương</span>
+              </div>
+
+              <div className="stat-box">
+                <strong>{stats?.comments || 0}</strong>
+                <span>Bình luận</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel-card mb-4">
+            <h4 className="panel-title">
+              Hoạt động gần đây
+            </h4>
+
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Hoạt động</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>10 phút trước</td>
+                  <td>User mới đăng ký</td>
+                </tr>
+
+                <tr>
+                  <td>20 phút trước</td>
+                  <td>Uploader tạo truyện mới</td>
+                </tr>
+
+                <tr>
+                  <td>1 giờ trước</td>
+                  <td>Admin cập nhật quyền người dùng</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="panel-card">
+            <h4 className="panel-title">
+              Truyện mới nhất
+            </h4>
+
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên truyện</th>
+                  <th>Tác giả</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Demo Story</td>
+                  <td>Admin</td>
+                </tr>
+
+                <tr>
+                  <td>2</td>
+                  <td>Another Story</td>
+                  <td>Uploader</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </main>
   );
 }

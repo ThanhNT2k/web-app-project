@@ -85,7 +85,7 @@ function StoryReader({
 
   return (
     <section className="story-reader panel-card">
-      <div className="card-body p-4 p-lg-5">
+      <div className="card-body p-4 p-lg-5">  
         <div className="d-flex justify-content-between flex-wrap gap-3 align-items-start mb-4">
           <div>
             <p className="text-uppercase text-muted small mb-1">
@@ -101,10 +101,47 @@ function StoryReader({
               Trước
             </button>
             <button className="btn btn-brand" onClick={onNext} type="button" disabled={!hasNext}>
-              Sau
+              Sau 
             </button>
+            </div>
+            <div className="floating-reader-nav">
+
+            <button
+              className="btn btn-outline-secondary"
+              onClick={onPrevious}
+              type="button"
+              disabled={!hasPrevious}
+            >
+              ← Chap trước
+            </button>
+
+            <select
+              className="form-select"
+              value={chapter.id}
+              onChange={(e) => onChapterSelect(e.target.value)}
+              style={{
+                width: '180px',
+                minWidth: '180px'
+              }}
+            >
+              {chapters.map((item) => (
+                <option key={item.id} value={item.id}>
+                  Chương {item.chapter_number}
+                </option>
+              ))}
+            </select>
+
+            <button
+              className="btn btn-brand"
+              onClick={onNext}
+              type="button"
+              disabled={!hasNext}
+            >
+              Chap sau →
+            </button>
+
           </div>
-        </div>
+          </div>
 
         <div className="reader-toolbar rounded-4 p-3 mb-4 d-flex flex-wrap gap-3 align-items-center">
           {chapters.length > 0 && onChapterSelect ? (
