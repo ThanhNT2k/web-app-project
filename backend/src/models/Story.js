@@ -59,21 +59,8 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
   const offset = (safePage - 1) * safeLimit;
 
   let orderBy = 's.created_at DESC'; // Mặc định: mới nhất trước
-  let joinClause = '';               // JOIN bổ sung khi cần
-  let selectClause = '';             // Các cột bổ sung khi cần
 
   if (sortBy === 'popular') {
-    // Thêm cột follow_count từ subquery, dùng COALESCE để trả về 0 thay vì NULL cho truyện chưa có follow
-    selectClause = ', COALESCE(f.follow_count, 0) AS follow_count';
-
-    // Subquery tính số lượng follow cho mỗi truyện, dùng LEFT JOIN để story không có follow vẫn xuất hiện
-    joinClause = `
-      LEFT JOIN (
-        SELECT story_id, COUNT(*)::int AS follow_count
-        FROM user_follows
-        GROUP BY story_id
-      ) f ON f.story_id = s.id
-    `;
     orderBy = 'follow_count DESC, s.created_at DESC'; // Nhiều follow nhất trước, cùng follow thì mới nhất trước
   } else if (sortBy === 'updated') {
     orderBy = 's.updated_at DESC';  // Truyện có chapter mới nhất trước
@@ -96,11 +83,10 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
         s.is_published,
         COUNT(*) OVER() AS total_count,      -- Window function: tổng số record không bị ảnh hưởng bởi LIMIT/OFFSET
         u.username AS author_username,
-        u.full_name AS author_full_name
-        ${selectClause}
+        u.full_name AS author_full_name,
+        get_follower_count(s.id) AS follow_count
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
-      ${joinClause}
       ${includeUnpublished ? '' : 'WHERE s.is_published = true'}  -- Admin xem được truyện chưa publish
       ORDER BY ${orderBy}
       LIMIT $1 OFFSET $2
@@ -349,7 +335,8 @@ async function searchStories(query, category = null, tag = null, page = 1, limit
           s.is_published,
           COUNT(*) OVER() AS total_count,
           u.username AS author_username,
-          u.full_name AS author_full_name
+          u.full_name AS author_full_name,
+          get_follower_count(s.id) AS follow_count
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
         WHERE s.is_published = true
@@ -406,7 +393,8 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
         s.*,
         COUNT(*) OVER() AS total_count,
         u.username AS author_username,
-        u.full_name AS author_full_name
+        u.full_name AS author_full_name,
+        get_follower_count(s.id) AS follow_count
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
       WHERE s.author_id = $1   -- Chỉ lấy truyện của tác giả này
