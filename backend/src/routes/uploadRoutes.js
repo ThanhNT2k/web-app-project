@@ -10,7 +10,6 @@ const router = express.Router();
 router.post(
   '/cover',
   authenticateToken,
-  authorizeRole('Uploader', 'Admin'),
   uploadCover.single('cover'),
   uploadController.uploadCover
 );
