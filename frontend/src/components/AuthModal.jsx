@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 import { useAuth } from '../contexts/AuthContext';
-import { userNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function AuthModal({ open, onClose }) {
-  const navigate = userNavigate();
+  const navigate = useNavigate();
   const { login, register } = useAuth();
   const [mode, setMode] = useState('login');
   const [error, setError] = useState('');
