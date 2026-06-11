@@ -1266,6 +1266,9 @@ kbd {
 }
 
 .admin-sidebar {
+  position: -webkit-sticky; /* Hỗ trợ cho Safari */
+  position: sticky;
+  top: 0;
   width: 260px;
   background: #1e293b;
   color: white;
