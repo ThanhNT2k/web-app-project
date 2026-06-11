@@ -3,6 +3,26 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../contexts/AuthContext';
 
+const handleSubmit = async(event) => {
+  event.preventDefault();
+  try{
+    setLoading(true);
+    setError('');
+
+    const loggedInUser = await logon(email, password);
+
+    if (loggedInUser?.role === 'Admin') {
+      navigate('/admin');
+    } else {
+      navigate(location.state?.from?.pathname || '/');
+    }
+  } catch (loginError) {
+    setError(loginError?.response?.data?.message || 'Login failed. Please check your credentials');
+  } finally {
+    setLoading(false);
+  }
+};
+
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();

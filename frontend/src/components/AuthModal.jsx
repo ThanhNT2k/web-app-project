@@ -1,8 +1,10 @@
 import { useState } from 'react';
 
 import { useAuth } from '../contexts/AuthContext';
+import { userNavigate } from 'react-router-dom';
 
 function AuthModal({ open, onClose }) {
+  const navigate = userNavigate();
   const { login, register } = useAuth();
   const [mode, setMode] = useState('login');
   const [error, setError] = useState('');
@@ -30,8 +32,14 @@ function AuthModal({ open, onClose }) {
     try {
       setLoading(true);
       setError('');
-      await login(loginEmail, loginPassword);
+      
+      const loggedInUser = await login(loginEmail, loginPassword);
       onClose();
+
+      if (loggedInUser?.role === 'Admin') {
+        navigate('/admin');
+      }
+
     } catch (err) {
       setError(err?.response?.data?.message || 'Đăng nhập thất bại. Kiểm tra email và mật khẩu.');
     } finally {
