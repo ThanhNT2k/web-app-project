@@ -81,11 +81,11 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response, // Nếu thành công, trả về nguyên response
   (error) => {
-    if (error?.response?.status === 401 && typeof window !== 'undefined') {
+    if ((error?.response?.status === 401 || error?.response?.status === 403) && typeof window !== 'undefined') {
       const path = window.location.pathname;
 
       // Chỉ redirect nếu KHÔNG đang ở các trang public (login, register, home)
-      // Tránh redirect loop: login page nhận 401 → redirect về login → lại nhận 401 → ...
+      // Tránh redirect loop: login page nhận 401/403 → redirect về login
       if (!path.startsWith('/login') && !path.startsWith('/register') && path !== '/') {
         clearAuthStorage();
         window.location.href = '/login';
