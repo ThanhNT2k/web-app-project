@@ -81,6 +81,7 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
         s.created_at,
         s.updated_at,
         s.is_published,
+        s.hidden_by_admin,
         COUNT(*) OVER() AS total_count,      -- Window function: tổng số record không bị ảnh hưởng bởi LIMIT/OFFSET
         u.username AS author_username,
         u.full_name AS author_full_name,
@@ -137,6 +138,7 @@ async function getStoryById(id) {
           s.created_at,
           s.updated_at,
           s.is_published,
+          s.hidden_by_admin,
           COUNT(c.id)::int AS chapter_count,   -- Đếm thực tế số chương, cast sang int
           get_follower_count(s.id) AS follow_count,
           u.id AS author_user_id,
@@ -201,7 +203,8 @@ async function createStory(storyData) {
           total_chapters,
           created_at,
           updated_at,
-          is_published
+          is_published,
+          hidden_by_admin
       `,
       [title, slug, author_id, description || null, cover_image_url || null, category || null]
     );
@@ -244,7 +247,8 @@ async function updateStory(id, storyData) {
           total_chapters,
           created_at,
           updated_at,
-          is_published
+          is_published,
+          hidden_by_admin
       `,
       [title || null, description || null, cover_image_url || null, category || null, status || null, id]
     );
@@ -282,7 +286,8 @@ async function deleteStory(id) {
           total_chapters,
           created_at,
           updated_at,
-          is_published
+          is_published,
+          hidden_by_admin
       `,
       [id]
     );
@@ -333,6 +338,7 @@ async function searchStories(query, category = null, tag = null, page = 1, limit
           s.created_at,
           s.updated_at,
           s.is_published,
+          s.hidden_by_admin,
           COUNT(*) OVER() AS total_count,
           u.username AS author_username,
           u.full_name AS author_full_name,
@@ -417,6 +423,69 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
   };
 }
 
+/**
+ * Toggle ẩn/hiện truyện.
+ * - Admin có quyền ẩn tuyệt đối (set hidden_by_admin = true, is_published = false).
+ * - Uploader chỉ ẩn/hiện thông thường và không được thay đổi nếu Admin đã ẩn.
+ */
+async function toggleVisibility(id, userRole) {
+  try {
+    const storyResult = await db.query(
+      'SELECT is_published, hidden_by_admin, author_id FROM stories WHERE id = $1',
+      [id]
+    );
+    const story = storyResult.rows[0];
+    if (!story) return null;
+
+    let nextPublished = !story.is_published;
+    let nextHiddenByAdmin = story.hidden_by_admin;
+
+    if (userRole === 'Admin') {
+      if (story.is_published) {
+        nextPublished = false;
+        nextHiddenByAdmin = true;
+      } else {
+        nextPublished = true;
+        nextHiddenByAdmin = false;
+      }
+    } else {
+      if (story.hidden_by_admin) {
+        throw new Error('Truyện này đã bị Admin ẩn. Bạn không có quyền hiện lại.');
+      }
+      nextHiddenByAdmin = false;
+    }
+
+    const result = await db.query(
+      `
+        UPDATE stories
+        SET is_published = $1,
+            hidden_by_admin = $2,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+        RETURNING
+          id,
+          title,
+          slug,
+          author_id,
+          description,
+          cover_image_url,
+          category,
+          status,
+          total_chapters,
+          created_at,
+          updated_at,
+          is_published,
+          hidden_by_admin
+      `,
+      [nextPublished, nextHiddenByAdmin, id]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   getAllStories,
   getStoryById,
@@ -425,4 +494,5 @@ module.exports = {
   deleteStory,
   searchStories,
   getStoriesByAuthor,
+  toggleVisibility,
 };

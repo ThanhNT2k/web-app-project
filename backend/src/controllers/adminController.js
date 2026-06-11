@@ -40,8 +40,8 @@ async function getStats(req, res) {
  */
 async function getUsers(req, res) {
   try {
-    // Giới hạn 200 user để tránh response quá lớn; trong thực tế nên có pagination
-    const users = await User.findAll(200);
+    const search = req.query.search || '';
+    const users = await User.findAll(200, search);
     return res.status(200).json({ success: true, users });
   } catch (err) {
     console.error('[adminController.getUsers]', err);
@@ -76,6 +76,32 @@ async function updateUserRole(req, res) {
     return res.status(200).json({ success: true, user: updated });
   } catch (err) {
     console.error('[adminController.updateUserRole]', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+/**
+ * Khóa hoặc mở khóa tài khoản người dùng.
+ */
+async function updateUserStatus(req, res) {
+  try {
+    const { is_active } = req.body;
+    if (typeof is_active !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'is_active must be a boolean' });
+    }
+
+    if (Number(req.user.id) === Number(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Bạn không thể tự khóa tài khoản của chính mình.' });
+    }
+
+    const updated = await User.updateActiveStatus(req.params.id, is_active);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    return res.status(200).json({ success: true, user: updated });
+  } catch (err) {
+    console.error('[adminController.updateUserStatus]', err);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
@@ -117,6 +143,7 @@ module.exports = {
   getStats,
   getUsers,
   updateUserRole,
+  updateUserStatus,
   deleteComment,
   getAllStories,
 };

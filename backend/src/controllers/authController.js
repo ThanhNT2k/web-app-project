@@ -142,12 +142,18 @@ async function login(req, res) {
   // Bước 1: Tìm user theo email trong database
   const user = await User.findByEmail(email);
 
-  // Trả về thông báo chung "Invalid credentials" thay vì "Email not found"
-  // để tránh lộ thông tin: kẻ tấn công không biết email có tồn tại hay không
   if (!user) {
     return res.status(401).json({
       success: false,
       message: 'Invalid credentials',
+    });
+  }
+
+  // Kiểm tra tài khoản có bị khóa không
+  if (user.is_active === false) {
+    return res.status(403).json({
+      success: false,
+      message: 'Tài khoản của bạn đã bị khóa bởi Admin.',
     });
   }
 
@@ -207,6 +213,14 @@ async function getCurrentUser(req, res) {
     return res.status(404).json({
       success: false,
       message: 'User not found',
+    });
+  }
+
+  // Kiểm tra tài khoản có bị khóa không
+  if (currentUser.is_active === false) {
+    return res.status(403).json({
+      success: false,
+      message: 'Tài khoản của bạn đã bị khóa bởi Admin.',
     });
   }
 

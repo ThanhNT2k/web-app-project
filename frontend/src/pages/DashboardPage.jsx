@@ -139,14 +139,13 @@ function DashboardPage() {
     }
   };
 
-  const deleteStory = async (id) => {
-    if (!window.confirm('Xóa (ẩn) truyện này?')) return;
+  const handleToggleVisibility = async (id) => {
     try {
-      await API.stories.delete(id);
+      const res = await API.stories.toggleVisibility(id);
       loadStories();
-      showMessage('Đã xóa truyện');
-    } catch {
-      showMessage('Không xóa được');
+      showMessage(res.message || 'Thao tác thành công');
+    } catch (err) {
+      showMessage(err?.response?.data?.message || 'Không thể thực hiện thao tác');
     }
   };
 
@@ -261,9 +260,27 @@ function DashboardPage() {
                   <Link to={`/story/${story.id}`} className="btn-cmc btn-cmc-outline btn-sm">
                     Xem
                   </Link>
-                  <button type="button" className="btn-cmc btn-cmc-outline btn-sm" onClick={() => openEdit(story)}>
-                    Sửa truyện
-                  </button>
+
+                  {user?.role === 'Admin' ? (
+                    // Admin: đổi nút sửa thành ẩn truyện và có quyền tuyệt đối
+                    <button
+                      type="button"
+                      className={`btn-cmc btn-sm ${story.is_published ? 'btn-cmc-outline' : 'btn-cmc-primary'}`}
+                      onClick={() => handleToggleVisibility(story.id)}
+                    >
+                      {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
+                    </button>
+                  ) : (
+                    // Uploader: vẫn giữ nguyên nút sửa
+                    <button
+                      type="button"
+                      className="btn-cmc btn-cmc-outline btn-sm"
+                      onClick={() => openEdit(story)}
+                    >
+                      Sửa truyện
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     className="btn-cmc btn-cmc-primary btn-sm"
@@ -271,6 +288,7 @@ function DashboardPage() {
                   >
                     + Chương
                   </button>
+
                   <button
                     type="button"
                     className="btn-cmc btn-cmc-outline btn-sm"
@@ -278,13 +296,39 @@ function DashboardPage() {
                   >
                     {expandedStory === story.id ? '▲ Ẩn chương' : '▼ Xem chương'}
                   </button>
-                  <button
-                    type="button"
-                    className="btn-link-danger btn-sm"
-                    onClick={() => deleteStory(story.id)}
-                  >
-                    Xóa truyện
-                  </button>
+
+                  {user?.role !== 'Admin' && (
+                    story.hidden_by_admin ? (
+                      <span 
+                        className="badge-role" 
+                        style={{ 
+                          background: 'rgba(239, 68, 68, 0.15)', 
+                          color: '#ef4444', 
+                          padding: '0.4rem 0.8rem',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          cursor: 'not-allowed'
+                        }}
+                        title="Truyện này đã bị Admin ẩn. Bạn không thể hiện lại."
+                      >
+                        🚫 Admin ẩn
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`btn-cmc btn-sm ${
+                          story.is_published ? 'btn-link-danger' : 'btn-cmc-primary'
+                        }`}
+                        onClick={() => handleToggleVisibility(story.id)}
+                      >
+                        {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
+                      </button>
+                    )
+                  )}
                 </div>
 
                 {/* Inline chapter list */}

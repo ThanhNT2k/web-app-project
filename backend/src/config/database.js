@@ -40,7 +40,15 @@ pool.on('error', (err) => {
 // Chạy query SELECT NOW() đơn giản để xác nhận pool kết nối thành công
 // Lỗi ở đây không làm dừng server nhưng giúp phát hiện sự cố DB sớm
 pool.query('SELECT NOW()')
-  .then(() => console.log('[Database] Connected to PostgreSQL'))
+  .then(async () => {
+    console.log('[Database] Connected to PostgreSQL');
+    try {
+      await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS hidden_by_admin BOOLEAN NOT NULL DEFAULT false');
+      console.log('[Database] Verified stories table has hidden_by_admin column');
+    } catch (err) {
+      console.error('[Database] Failed to verify/add hidden_by_admin column:', err.message);
+    }
+  })
   .catch((err) => console.error('[Database] Connection failed:', err.message));
 
 module.exports = pool;

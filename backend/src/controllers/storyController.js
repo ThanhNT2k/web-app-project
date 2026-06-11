@@ -356,6 +356,45 @@ async function searchStories(req, res) {
   }
 }
 
+/**
+ * Toggle ẩn/hiện truyện (visibility).
+ * Hỗ trợ quyền Admin ẩn tuyệt đối và Uploader ẩn thông thường.
+ */
+async function toggleStoryVisibility(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+
+    // Lấy truyện hiện tại để kiểm tra quyền
+    const existingStory = await Story.getStoryById(id);
+    if (!existingStory) {
+      return res.status(404).json({ success: false, message: 'Story not found' });
+    }
+
+    // Chỉ tác giả (Uploader của truyện này) hoặc Admin mới được phép thay đổi
+    if (!isStoryOwnerOrAdmin(req.user, existingStory)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const updatedStory = await Story.toggleVisibility(id, req.user.role);
+
+    return res.status(200).json({
+      success: true,
+      message: updatedStory.is_published ? 'Đã hiển thị truyện' : 'Đã ẩn truyện',
+      story: updatedStory,
+    });
+  } catch (error) {
+    console.error('[storyController.toggleStoryVisibility]', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+}
+
 module.exports = {
   getAllStories,
   getStoryById,
@@ -364,4 +403,5 @@ module.exports = {
   updateStory,
   deleteStory,
   searchStories,
+  toggleStoryVisibility,
 };

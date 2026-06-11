@@ -59,16 +59,25 @@ async function createUser({ username, email, password, fullName, role = 'User' }
  *
  * @param {number} limit - Số user tối đa trả về (mặc định 100)
  */
-async function findAll(limit = 100) {
-  const result = await db.query(
-    `
-      SELECT id, username, email, full_name, avatar_url, role, bio, created_at, is_active
-      FROM users
-      ORDER BY created_at DESC
-      LIMIT $1
-    `,
-    [limit]
-  );
+async function findAll(limit = 100, search = '') {
+  let query = `
+    SELECT id, username, email, full_name, avatar_url, role, bio, created_at, is_active
+    FROM users
+  `;
+  const params = [];
+
+  if (search && search.trim() !== '') {
+    const s = `%${search.trim()}%`;
+    query += ` WHERE username ILIKE $1 OR email ILIKE $1 OR full_name ILIKE $1`;
+    params.push(s);
+    params.push(limit);
+    query += ` ORDER BY created_at DESC LIMIT $2`;
+  } else {
+    params.push(limit);
+    query += ` ORDER BY created_at DESC LIMIT $1`;
+  }
+
+  const result = await db.query(query, params);
   return result.rows;
 }
 
@@ -111,6 +120,21 @@ async function updateProfile(id, { full_name, avatar_url, bio }) {
   return result.rows[0] || null;
 }
 
+/**
+ * Cập nhật trạng thái kích hoạt (khóa/mở khóa) của một user (chỉ Admin).
+ */
+async function updateActiveStatus(id, isActive) {
+  const result = await db.query(
+    `
+      UPDATE users SET is_active = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, username, email, full_name, role, is_active
+    `,
+    [isActive, id]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   findByEmail,
   findById,
@@ -118,4 +142,5 @@ module.exports = {
   findAll,
   updateRole,
   updateProfile,
+  updateActiveStatus,
 };

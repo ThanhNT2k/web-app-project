@@ -6,16 +6,22 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
- const load = async () => {
-  setStats({
-    users: 125,
-    stories: 48,
-    chapters: 512,
-    comments: 2387,
-  });
-
-  setLoading(false);
-};
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await API.admin.getStats();
+      setStats(res.stats);
+    } catch {
+      setStats({
+        users: 0,
+        stories: 0,
+        chapters: 0,
+        comments: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   
 
   useEffect(() => {

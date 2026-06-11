@@ -11,6 +11,7 @@ router.use(authenticateToken, authorizeRole('Admin'));
 router.get('/stats', adminController.getStats);
 router.get('/users', adminController.getUsers);
 router.patch('/users/:id/role', adminController.updateUserRole);
+router.patch('/users/:id/status', adminController.updateUserStatus);
 router.delete('/comments/:id', adminController.deleteComment);
 router.get('/stories', adminController.getAllStories);
 

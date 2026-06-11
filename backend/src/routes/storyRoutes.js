@@ -14,6 +14,7 @@ router.get('/:id', storyController.getStoryById);
 router.post('/', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.createStory);
 router.put('/:id', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.updateStory);
 router.delete('/:id', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.deleteStory);
+router.patch('/:id/visibility', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.toggleStoryVisibility);
 
 router.get('/:storyId/chapters', chapterController.getChapters);
 router.get('/:storyId/chapters/:chapterId', chapterController.getChapterById);

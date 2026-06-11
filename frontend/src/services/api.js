@@ -127,6 +127,7 @@ const API = {
     create: (data) => request('/stories', { method: 'POST', data }),
     update: (id, data) => request(`/stories/${id}`, { method: 'PUT', data }),
     delete: (id) => request(`/stories/${id}`, { method: 'DELETE' }),
+    toggleVisibility: (id) => request(`/stories/${id}/visibility`, { method: 'PATCH' }),
     // Tìm kiếm với nhiều bộ lọc: từ khóa, thể loại, tag, pagination
     search: (query, category = null, tag = null, page = 1, limit = 12) => request('/stories/search', {
       method: 'GET',
@@ -214,8 +215,9 @@ const API = {
   // ── Quản trị (Admin only) ─────────────────────────────────────────────────
   admin: {
     getStats: () => request('/admin/stats', { method: 'GET' }),
-    getUsers: () => request('/admin/users', { method: 'GET' }),
+    getUsers: (search = '') => request('/admin/users', { method: 'GET', params: { search: search || undefined } }),
     updateUserRole: (id, role) => request(`/admin/users/${id}/role`, { method: 'PATCH', data: { role } }),
+    updateUserStatus: (id, isActive) => request(`/admin/users/${id}/status`, { method: 'PATCH', data: { is_active: isActive } }),
     deleteComment: (id) => request(`/admin/comments/${id}`, { method: 'DELETE' }),
     getStories: (page = 1) => request('/admin/stories', { method: 'GET', params: { page, limit: 50 } }),
   },
