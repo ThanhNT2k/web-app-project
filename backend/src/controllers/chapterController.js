@@ -39,8 +39,21 @@ async function getChapters(req, res) {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
     const sort = req.query.sort || 'asc';  // Mặc định sắp xếp từ chương đầu tiên
-    const result = await Chapter.getChaptersByStory(storyId, page, limit, sort);
+    const story = await Story.getStoryById(storyId);
+    if (!story) {
+      return res.status(404).json({ success: false, message: 'Story not found' });
+    }
+    if (!story.is_published || story.hidden_by_admin) {
+      const isOwnerOrAdmin = req.user && (
+        req.user.role === 'Admin' ||
+        Number(req.user.id) === Number(story.author_id)
+      );
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({ success: false, message: 'Story not found' });
+      }
+    }
 
+    const result = await Chapter.getChaptersByStory(storyId, page, limit, sort);
     return res.status(200).json({
       success: true,
       chapters: result.chapters,
@@ -69,6 +82,17 @@ async function getChapterById(req, res) {
         success: false,
         message: 'Chapter not found',
       });
+    }
+    
+    // Kiểm tra trạng thái ẩn/hiện của truyện chứa chương này
+    if (!chapter.story_is_published || chapter.story_hidden_by_admin) {
+      const isOwnerOrAdmin = req.user && (
+        req.user.role === 'Admin' ||
+        Number(req.user.id) === Number(chapter.story_author_id)
+      );
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({ success: false, message: 'Chapter not found' });
+      }
     }
 
     return res.status(200).json({

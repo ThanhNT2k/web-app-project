@@ -35,10 +35,15 @@ function StoryDetailPage() {
         const storyResponse = await API.stories.getById(id);
         setStory(storyResponse.story || storyResponse);
         setError('');
-      } catch {
-        const fallbackStory = mockStories.find((item) => String(item.id) === String(id)) || mockStories[0];
-        setStory(fallbackStory);
-        setError('Không kết nối API. Hiển thị dữ liệu mẫu.');
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          setStory(null);
+          setError('Truyện không tồn tại hoặc đã bị ẩn.');
+        } else {
+          const fallbackStory = mockStories.find((item) => String(item.id) === String(id)) || mockStories[0];
+          setStory(fallbackStory);
+          setError('Không kết nối API. Hiển thị dữ liệu mẫu.');
+        }
       } finally {
         setLoading(false);
       }
@@ -78,7 +83,15 @@ function StoryDetailPage() {
   }
 
   if (!story) {
-    return <main className="cmc-main"><p>Không tìm thấy truyện.</p></main>;
+    return (
+      <main className="cmc-main">
+        {error ? (
+          <div className="alert-cmc alert-cmc-warning">{error}</div>
+        ) : (
+          <p>Không tìm thấy truyện.</p>
+        )}
+      </main>
+    );
   }
 
   const continueChapter = storyProgress?.last_chapter_read || chapters[0]?.id;

@@ -89,7 +89,21 @@ async function getStoryById(req, res) {
         message: 'Story not found',
       });
     }
-
+    // Kiểm tra xem người đang xem có phải là tác giả hoặc Admin hay không
+    const isOwnerOrAdmin = req.user &&  (
+      req.user.role === 'Admin' ||
+      Number(req.user.id) === Number(story.author_id)
+    );
+    // Nếu truyện chưa xuất bản (is_published = false) HOẶC bị Admin ẩn (hidden_by_admin = true)
+    if (!story.is_published || story.hidden_by_admin) {
+      // Kiểm tra xem người đang xem có phải là tác giả hoặc Admin hay không
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Story not found',
+        });
+      }
+    }
     return res.status(200).json({
       success: true,
       story,

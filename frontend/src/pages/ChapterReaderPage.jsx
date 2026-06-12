@@ -56,10 +56,16 @@ function ChapterReaderPage() {
         ]);
         setChapter(chapterResponse.chapter || chapterResponse);
         setChapters(chaptersResponse.chapters || []);
-      } catch {
-        setChapter(mockChapter);
-        setChapters([]);
-        setError('Không tải được chương từ máy chủ. Đang hiển thị chương mô phỏng.');
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          setChapter(null);
+          setChapters([]);
+          setError('Chương truyện không tồn tại hoặc đã bị ẩn.');
+        } else {
+          setChapter(mockChapter);
+          setChapters([]);
+          setError('Không tải được chương từ máy chủ. Đang hiển thị chương mô phỏng.');
+        }
       } finally {
         setLoading(false);
       }
@@ -214,7 +220,11 @@ function ChapterReaderPage() {
   if (!chapter) {
     return (
       <main className="cmc-main">
-        <p>Không tìm thấy chương.</p>
+        {error ? (
+          <div className="alert-cmc alert-cmc-warning">{error}</div>
+        ) : (
+          <p>Không tìm thấy chương.</p>
+        )}
       </main>
     );
   }

@@ -76,7 +76,10 @@ async function getChapterById(chapterId) {
           s.cover_image_url AS story_cover_image_url,
           s.category AS story_category,
           s.status AS story_status,
-          s.total_chapters AS story_total_chapters
+          s.total_chapters AS story_total_chapters,
+          s.is_published AS story_is_published,
+          s.hidden_by_admin AS story_hidden_by_admin,
+          s.author_id AS story_author_id
         FROM chapters c
         INNER JOIN stories s ON s.id = c.story_id
         WHERE c.id = $1
