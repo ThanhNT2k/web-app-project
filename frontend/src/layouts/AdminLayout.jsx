@@ -14,7 +14,7 @@ function AdminLayout() {
   return (
     <div className="admin-layout">
       {/* Thêm display flex và flex-direction column để đẩy nút đăng xuất xuống đáy */}
-      <aside className="admin-sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
+      <aside className="admin-sidebar" style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100vh' }}>
         <div className="admin-logo">
           <h2>CMC Admin</h2>
         </div>
@@ -57,7 +57,7 @@ function AdminLayout() {
         </nav>
 
         {/* Nút Đăng xuất được đẩy xuống dưới cùng nhờ margin-top: auto */}
-        <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+        <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px' }}>
           <button
             onClick={handleLogout}
             style={{
