@@ -44,9 +44,11 @@ function AuthProvider({ children }) {
         // Nếu token đã hết hạn, server trả về 401 → apiClient interceptor tự xử lý logout
         const response = await API.auth.getCurrentUser();
         setUser(response.user || null);
-      } catch {
-        // Keep the local fallback user if the backend is unavailable.
-        // Giữ user từ localStorage nếu server không phản hồi (offline mode)
+      } catch (err) {
+        // Nếu tài khoản bị khóa (403), thực hiện đăng xuất ngay lập tức
+        if (err?.response?.status === 403) {
+          logout();
+        }
       } finally {
         setLoading(false);
       }
