@@ -23,21 +23,18 @@ loadModerationData().then(() => {
             switch (result.tier) {
                 case 1:
                     await Comment.update(commentId, {
-                        content: "Bình luận đã bị xóa vì vi phạm tiêu chuẩn cộng đồng",
                         status: 'rejected',
                         is_spam: false
                     });
                     break;
                 case 2:
                     await Comment.update(commentId, { 
-                        content: result.maskedContent,
                         status: 'masked' 
                     });
                     break;
 
                 case 3:
                     await Comment.update(commentId, { 
-                        content: "Bình luận này đã bị gắn cờ là spam",
                         is_spam: true,
                         status: 'flagged' 
                     });

@@ -1240,3 +1240,27 @@ kbd {
 }
 .spam-badge { color: #856404; }
 .rejected-badge { color: #721c24; }
+
+/* Style chung cho container đặc biệt */
+.special-comment-container {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px dashed #ccc;
+    margin-bottom: 10px;
+}
+
+/* Style cho text bị che */
+.special-content-text {
+    font-style: italic;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* Style cho nút hiện nội dung */
+.btn-link {
+    font-size: 0.8rem;
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+}

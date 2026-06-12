@@ -123,7 +123,7 @@ const API = {
     register: (data) => request('/auth/register', { method: 'POST', data }),
     login: (data) => request('/auth/login', { method: 'POST', data }),
     logout: () => request('/auth/logout', { method: 'POST' }),
-    getCurrentUser: () => request('/auth/me', { method: 'GET' }),  // Lấy thông tin user hiện tại từ JWT
+    getCurrentUser: () => request('/auth/me', { method: 'GET' }),
     updateProfile: (data) => request('/auth/profile', { method: 'PUT', data }),
   },
 
@@ -137,11 +137,10 @@ const API = {
     update: (id, data) => request(`/stories/${id}`, { method: 'PUT', data }),
     delete: (id) => request(`/stories/${id}`, { method: 'DELETE' }),
     toggleVisibility: (id) => request(`/stories/${id}/visibility`, { method: 'PATCH' }),
-    // Tìm kiếm với nhiều bộ lọc: từ khóa, thể loại, tag, pagination
     search: (query, category = null, tag = null, page = 1, limit = 12) => request('/stories/search', {
       method: 'GET',
       params: {
-        q: query || undefined,           // Bỏ qua param nếu rỗng (không gửi ?q= lên server)
+        q: query || undefined,
         category: category || undefined,
         tag: tag || undefined,
         page,
@@ -163,41 +162,36 @@ const API = {
   // ── Bình luận ────────────────────────────────────────────────────────────
   comments: {
     getByStory: (storyId) => request(`/comments/story/${storyId}`, { method: 'GET' }),
-    // storyId tùy chọn khi lấy comment theo chapter (để lọc thêm nếu cần)
     getByChapter: (chapterId, storyId) => request(`/comments/chapter/${chapterId}`, {
       method: 'GET',
       params: storyId ? { story_id: storyId } : undefined,
     }),
     create: (data) => request('/comments', { method: 'POST', data }),
     delete: (id) => request(`/comments/${id}`, { method: 'DELETE' }),
+    
+    // ĐÃ SỬA: Dùng hàm request để tự động gắn baseURL (/api) và Token
+    getOriginal: (id) => request(`/comments/${id}/original`, { method: 'GET' }),
   },
 
-  // ── AI features ──────────────────────────────────────────────────────────
+  // ... (giữ nguyên các phần dưới của file)
   ai: {
-    // generateSummary: Tóm tắt chapter bằng AI; regenerate=true bỏ qua cache và tạo lại
     generateSummary: (chapterId, regenerate = false) => request(`/chapters/${chapterId}/summary`, {
       method: 'GET',
       params: regenerate ? { regenerate: 'true' } : undefined,
     }),
     getRecommendations: () => request('/ai/recommendations', { method: 'GET' }),
   },
-
-  // ── Lịch sử đọc ──────────────────────────────────────────────────────────
   readingHistory: {
-    save: (data) => request('/reading-history', { method: 'POST', data }), // Lưu tiến trình đọc
+    save: (data) => request('/reading-history', { method: 'POST', data }),
     getAll: () => request('/reading-history', { method: 'GET' }),
     getStoryProgress: (storyId) => request(`/reading-history/story/${storyId}`, { method: 'GET' }),
   },
-
-  // ── Theo dõi truyện ──────────────────────────────────────────────────────
   follows: {
     getAll: () => request('/follows', { method: 'GET' }),
-    check: (storyId) => request(`/follows/check/${storyId}`, { method: 'GET' }), // Kiểm tra đã follow chưa
+    check: (storyId) => request(`/follows/check/${storyId}`, { method: 'GET' }),
     follow: (storyId) => request(`/follows/${storyId}`, { method: 'POST' }),
     unfollow: (storyId) => request(`/follows/${storyId}`, { method: 'DELETE' }),
   },
-
-  // ── Cài đặt đọc truyện ───────────────────────────────────────────────────
   preferences: {
     get: () => request('/preferences', { method: 'GET' }),
     update: (data) => request('/preferences', { method: 'PUT', data }),
@@ -207,27 +201,20 @@ const API = {
     getAll: (params = {}) => request('/reports', { method: 'GET', params }),
     updateStatus: (id, status) => request(`/reports/${id}`, { method: 'PATCH', data: { status } }),
   },
-
-  // ── Upload file ───────────────────────────────────────────────────────────
   upload: {
-    // Upload ảnh bìa: dùng FormData và Content-Type multipart/form-data (khác với JSON)
     cover: async (file) => {
       const formData = new FormData();
-      formData.append('cover', file); // 'cover' phải khớp với tên field multer đang listen
+      formData.append('cover', file);
       const response = await apiClient.post('/upload/cover', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }, // Override default JSON header
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     },
   },
-
-  // ── Tags ─────────────────────────────────────────────────────────────────
   tags: {
     getAll: () => request('/tags', { method: 'GET' }),
     create: (name) => request('/tags', { method: 'POST', data: { name } }),
   },
-
-  // ── Quản trị (Admin only) ─────────────────────────────────────────────────
   admin: {
     getStats: () => request('/admin/stats', { method: 'GET' }),
     getUsers: (search = '') => request('/admin/users', { method: 'GET', params: { search: search || undefined } }),
@@ -237,9 +224,7 @@ const API = {
     getStories: (page = 1) => request('/admin/stories', { method: 'GET', params: { page, limit: 50 } }),
     getReports: (status = 'ALL', page = 1) => 
       request('/reports', { method: 'GET', params: { status, page, limit: 50 } }),
-    
   },
-  // ── Quản trị từ khóa (Admin only) ──────────────────────────────────────────
   badWords: {
     getAll: () => request('/admin/bad-words', { method: 'GET' }),
     create: (data) => request('/admin/bad-words', { method: 'POST', data }),
@@ -247,6 +232,5 @@ const API = {
   },
 };
 
-// Export apiClient để một số component có thể dùng trực tiếp (ví dụ: upload với progress tracking)
 export { apiClient };
 export default API;
