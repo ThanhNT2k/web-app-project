@@ -56,8 +56,8 @@ function LoginPage() {
               <p className="text-muted mb-4">Đăng nhập để tiếp tục đọc truyện.</p>
               {error ? <div className="alert alert-danger">{error}</div> : null}
               <form className="d-grid gap-3" onSubmit={handleSubmit}>
-                <input className="form-control form-control-lg" type="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-                <input className="form-control form-control-lg" type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+                <input className="form-control form-control-lg" type="email" name="email" autoComplete="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+                <input className="form-control form-control-lg" type="password" name="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} required />
                 <button className="btn-cmc btn-cmc-primary w-100" type="submit" disabled={loading}>
                   {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                 </button>
