@@ -1208,3 +1208,35 @@ kbd {
   align-items: center;
   z-index: 1050; /* Đảm bảo đè lên header và các thành phần khác */
 }
+
+/* Style cho nội dung bị thay đổi thành thông báo spam/từ chối */
+.special-content-text {
+    font-style: italic;
+    color: #666;
+    font-weight: 500;
+}
+
+.is-spam, .is-rejected {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.is-spam {
+    background-color: #fffaf0;
+    border: 1px dashed #ffa500;
+}
+
+.is-rejected {
+    background-color: #fdf2f2;
+    border: 1px solid #f5c6cb;
+}
+
+.spam-badge, .rejected-badge {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.spam-badge { color: #856404; }
+.rejected-badge { color: #721c24; }

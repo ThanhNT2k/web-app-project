@@ -1,38 +1,54 @@
-const AhoCorasick = require('aho-corasick');
-// Import BadWord từ file model của bạn
-const BadWord = require('../models/BadWord'); 
+const BadWord = require('../models/BadWord');
 
-let acAutomaton;
+let badWordsData = []; // Lưu danh sách {keyword, tier}
+let isLoaded = false;
 
 async function loadModerationData() {
     try {
-        // Vì bạn dùng SQL/Sequelize, không có hàm .find() với điều kiện object kiểu này.
-        // Nếu bạn dùng Sequelize:
-        const badWords = await BadWord.findAll({
-            where: { isWhitelist: false } 
-        });
+        console.log("[Moderation] Đang tải dữ liệu từ database...");
+        const badWords = await BadWord.findAll({ where: { isWhitelist: false } });
 
-        // Nếu bạn dùng SQL thuần (pool.query):
-        // const { rows: badWords } = await pool.query('SELECT * FROM bad_words WHERE "isWhitelist" = false');
-
-        const keywords = badWords.map(bw => bw.keyword);
-        acAutomaton = new AhoCorasick(keywords);
+        badWordsData = badWords.map(bw => ({
+            keyword: bw.keyword.trim().toLowerCase(),
+            tier: bw.tier || 1
+        }));
         
-        console.log("[Moderation] Loaded", keywords.length, "bad words.");
+        isLoaded = true;
+        console.log(`[Moderation] Đã nạp ${badWordsData.length} từ khóa.`);
     } catch (error) {
-        console.error("Lỗi khi tải dữ liệu kiểm duyệt:", error);
-        // Tránh làm crash server nếu không tải được, acAutomaton sẽ bị undefined
-        // hoặc bạn có thể khởi tạo rỗng:
-        acAutomaton = new AhoCorasick([]); 
+        console.error("Lỗi:", error);
+        isLoaded = true;
     }
 }
 
-
-// Logic kiểm duyệt nội dung
 const moderateContent = (text) => {
-    // 1. Dùng utils/textUtils để normalize
-    // 2. acAutomaton.search(text)
-    // 3. Trả về kết quả { isSafe: boolean, tier: number, maskedText: string }
+    if (!isLoaded) return { isSafe: true, tier: 0, maskedContent: text };
+
+    const lowerText = text.toLowerCase();
+    let maxTier = 0;
+    let maskedContent = text;
+
+    // Duyệt qua danh sách để tìm từ khóa
+    badWordsData.forEach(bw => {
+        if (lowerText.includes(bw.keyword)) {
+            console.log(`[DEBUG] Tìm thấy từ: "${bw.keyword}", Tier: ${bw.tier}`);
+            if (bw.tier > maxTier) maxTier = bw.tier;
+
+            // Nếu tier >= 2, tiến hành che mờ
+            if (bw.tier >= 2) {
+                const reg = new RegExp(bw.keyword, 'gi');
+                maskedContent = maskedContent.replace(reg, '*'.repeat(bw.keyword.length));
+            }
+        }
+    });
+
+    return { 
+        isSafe: maxTier === 0, 
+        tier: maxTier, 
+        maskedContent: maskedContent 
+    };
 };
+
+loadModerationData();
 
 module.exports = { loadModerationData, moderateContent };

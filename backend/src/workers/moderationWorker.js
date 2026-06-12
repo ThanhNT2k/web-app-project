@@ -1,33 +1,63 @@
 const { Worker } = require('bullmq');
 const redisConfig = require('../config/redisConfig');
-const { moderateContent } = require('../services/moderationService');
-const Comment = require('../models/Comment'); // Chú ý: không cần ngoặc nhọn nếu export default/module.exports
+const { loadModerationData, moderateContent } = require('../services/moderationService');
+const Comment = require('../models/Comment');
 
-const worker = new Worker('moderationQueue', async job => {
-    // 1. Lấy dữ liệu từ job (đảm bảo đồng bộ với tên key trong Controller)
-    const { content, commentId } = job.data;
-    
-    // 2. Gọi service kiểm duyệt
-    // Giả sử result trả về: { isSafe: boolean, tier: number, maskedContent: string }
-    const result = moderateContent(content);
-    
-    if (!result.isSafe) {
-        // Tier 1: Cấm tuyệt đối -> Xóa bình luận
-        if (result.tier === 1) {
-            await Comment.remove(commentId);
-            console.log(`[Moderation] Comment ${commentId} removed (Tier 1).`);
-        } 
+const connection = {
+    host: redisConfig.host,
+    port: redisConfig.port
+};
+
+console.log("Worker đang khởi tạo với cấu hình:", connection);
+
+// Đợi dữ liệu từ DB nạp xong xuôi rồi mới khởi động Worker
+loadModerationData().then(() => {
+
+    const worker = new Worker('moderationQueue', async job => {
         
-        // Tier 2: Nhạy cảm -> Che mờ (masking)
-        else if (result.tier === 2) {
-            await Comment.update(commentId, { content: result.maskedContent });
-            console.log(`[Moderation] Comment ${commentId} masked (Tier 2).`);
+        const { content, commentId } = job.data;
+        
+        const result = moderateContent(content);
+        
+        try {
+            switch (result.tier) {
+                case 1:
+                    await Comment.update(commentId, {
+                        content: "Bình luận đã bị xóa vì vi phạm tiêu chuẩn cộng đồng",
+                        status: 'rejected',
+                        is_spam: false
+                    });
+                    break;
+                case 2:
+                    await Comment.update(commentId, { 
+                        content: result.maskedContent,
+                        status: 'masked' 
+                    });
+                    break;
+
+                case 3:
+                    await Comment.update(commentId, { 
+                        content: "Bình luận này đã bị gắn cờ là spam",
+                        is_spam: true,
+                        status: 'flagged' 
+                    });
+                    break;
+
+                default:
+                    await Comment.update(commentId, { 
+                        status: 'approved' 
+                    });
+                    break;
+            }
+        } catch (err) {
+            console.error(`[Moderation] LỖI khi update DB:`, err);
         }
         
-        // Tier 3: Spam -> Gắn thẻ (cần thêm cột 'isSpam' hoặc 'status' trong DB)
-        else if (result.tier === 3) {
-            await Comment.update(commentId, { isSpam: true });
-            console.log(`[Moderation] Comment ${commentId} flagged as spam (Tier 3).`);
-        }
-    }
-}, { connection: redisConfig });
+    }, { connection });
+
+    worker.on('ready', () => console.log("Worker đã kết nối Redis thành công và đang lắng nghe job!"));
+    worker.on('error', (err) => console.error("Worker lỗi:", err));
+    
+}).catch(err => {
+    console.error("Không thể khởi động Worker do lỗi tải dữ liệu:", err);
+});

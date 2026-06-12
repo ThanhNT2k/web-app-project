@@ -25,8 +25,7 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
     try {
       setLoading(true);
       setError('');
-      setComments([]);
-
+      
       const response = isChapterMode
         ? await API.comments.getByChapter(numericChapterId, numericStoryId)
         : await API.comments.getByStory(numericStoryId);
@@ -87,11 +86,7 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
   return (
     <section className="panel-card">
       <h4 className="panel-title">
-        {title}
-        {' '}
-        (
-        {comments.length}
-        )
+        {title} ({comments.length})
       </h4>
 
       {loading ? <p className="text-muted small">Đang tải...</p> : null}
@@ -101,22 +96,38 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
       ) : null}
 
       <div className="comment-list">
-        {comments.map((comment) => (
-          <div key={comment.id} className="comment-item">
-            <div className="d-flex justify-content-between gap-2 mb-1">
-              <strong>{comment.full_name || comment.username || 'Độc giả'}</strong>
-              <span className="text-muted small">
-                {new Date(comment.created_at).toLocaleString('vi-VN')}
-              </span>
+        {comments.map((comment) => {
+          const isFlagged = comment.status === 'flagged';
+          const isRejected = comment.status === 'rejected';
+          const isSpecial = isFlagged || isRejected;
+
+          return (
+            <div 
+              key={comment.id} 
+              className={`comment-item ${isFlagged ? 'is-spam' : ''} ${isRejected ? 'is-rejected' : ''}`}
+            >
+              {isRejected && <span className="rejected-badge">🚫 Bình luận đã bị từ chối</span>}
+              
+              <div className="d-flex justify-content-between gap-2 mb-1">
+                <strong>{comment.full_name || comment.username || 'Độc giả'}</strong>
+                <span className="text-muted small">
+                  {new Date(comment.created_at).toLocaleString('vi-VN')}
+                </span>
+              </div>
+              
+              {/* Áp dụng class đặc biệt cho nội dung đã bị thay đổi */}
+              <p className={`mb-1 ${isSpecial ? 'special-content-text' : ''}`}>
+                {comment.content}
+              </p>
+              
+              {(user?.id === comment.user_id || user?.role === 'Admin') && (
+                <button type="button" className="btn-link-danger btn-sm" onClick={() => handleDelete(comment.id)}>
+                  Xóa
+                </button>
+              )}
             </div>
-            <p className="mb-1">{comment.content}</p>
-            {(user?.id === comment.user_id || user?.role === 'Admin') && (
-              <button type="button" className="btn-link-danger btn-sm" onClick={() => handleDelete(comment.id)}>
-                Xóa
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {error ? <p className="text-danger small mt-2">{error}</p> : null}
