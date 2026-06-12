@@ -1,0 +1,15 @@
+CREATE TYPE report_status AS ENUM ('NEW', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED');
+
+CREATE TABLE Reports (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    chapter_id INTEGER REFERENCES chapters(id) ON DELETE CASCADE,
+    reason VARCHAR(50) NOT NULL, -- Dùng để lưu giá trị từ Enum
+    description TEXT,
+    status report_status DEFAULT 'NEW',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index để tăng tốc độ truy vấn cho Admin Dashboard
+CREATE INDEX idx_reports_status ON Reports(status);
+CREATE INDEX idx_reports_chapter ON Reports(chapter_id);

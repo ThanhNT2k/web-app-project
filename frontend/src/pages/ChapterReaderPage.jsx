@@ -6,6 +6,7 @@ import ReadingScrollProgress from '../components/ReadingScrollProgress';
 import CommentSection from '../components/CommentSection';
 import ReadingProgress from '../components/ReadingProgress';
 import StoryReader, { loadReaderPrefs } from '../components/StoryReader';
+import ReportModal from '../components/ReportModal'; // Đảm bảo đã import
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { mockChapter } from '../data/mockStories';
@@ -13,6 +14,7 @@ import { mockChapter } from '../data/mockStories';
 const AUTOSAVE_INTERVAL_MS = 30000;
 
 function ChapterReaderPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { storyId, chapterId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -231,6 +233,20 @@ function ChapterReaderPage() {
 
   return (
     <main className="cmc-main">
+      {/* Nút báo cáo */}
+      <div className="text-end mb-2">
+        <button className="btn btn-sm btn-outline-danger" onClick={() => setIsModalOpen(true)}>
+          Báo cáo vi phạm
+        </button>
+      </div>
+
+      {isModalOpen && (
+        <ReportModal 
+          chapterId={Number(chapter.id)} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      )}
+
       <ReadingScrollProgress />
       <div className="reader-top-bar d-flex align-items-center justify-content-between p-3 rounded-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
         <div style={{ flex: 1, textAlign: 'left' }}>
@@ -273,7 +289,6 @@ function ChapterReaderPage() {
         setFontFamily={setFontFamily}
       />
 
-      {/* Chapter Navigation Grid */}
       {chapters.length > 0 && (
         <div className="panel-card mt-4">
           <h5 className="panel-title" style={{ fontSize: '1.05rem', marginBottom: '1rem' }}>Chọn chương nhanh</h5>
