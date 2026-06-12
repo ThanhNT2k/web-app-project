@@ -135,6 +135,14 @@ async function updateActiveStatus(id, isActive) {
   return result.rows[0] || null;
 }
 
+/**
+ * Tìm user theo username (dùng để kiểm tra trùng lặp khi đăng ký).
+ */
+async function findByUsername(username) {
+  const result = await db.query(`SELECT ${baseSelect} FROM users WHERE username = $1 LIMIT 1`, [username]);
+  return result.rows[0] || null;
+}
+
 module.exports = {
   findByEmail,
   findById,
@@ -143,4 +151,5 @@ module.exports = {
   updateRole,
   updateProfile,
   updateActiveStatus,
+  findByUsername,
 };

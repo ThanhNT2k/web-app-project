@@ -8,15 +8,27 @@ const env = require('../config/environment');
 const { User } = require('../models');
 
 // Schema validate dữ liệu đăng ký tài khoản
-// - username: 3-100 ký tự, bắt buộc
+// - username: bắt đầu bằng chữ cái, 3-100 ký tự, bắt buộc, không chứa ký tự đặc biệt ngoài _ và -
 // - email: định dạng email hợp lệ, bắt buộc
 // - password: tối thiểu 8 ký tự, bắt buộc (để đảm bảo bảo mật tối thiểu)
-// - full_name: tùy chọn, cho phép chuỗi rỗng
+// - full_name: bắt buộc
 const registerSchema = Joi.object({
-  username: Joi.string().trim().min(3).max(100).required(),
+  username: Joi.string()
+    .trim()
+    .lowercase()
+    .min(3)
+    .max(100)
+    .pattern(/^[a-zA-Z][a-zA-Z0-9_-]*$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Tên đăng nhập phải bắt đầu bằng chữ cái và chỉ chứa chữ cái không dấu, chữ số, dấu gạch dưới (_) và gạch ngang (-).',
+      'string.min': 'Tên đăng nhập phải có ít nhất 3 ký tự.',
+      'string.max': 'Tên đăng nhập không được vượt quá 100 ký tự.',
+      'any.required': 'Tên đăng nhập là bắt buộc.',
+    }),
   email: Joi.string().trim().email().required(),
   password: Joi.string().min(8).required(),
-  full_name: Joi.string().trim().max(255).allow('', null),
+  full_name: Joi.string().trim().min(1).max(255).required(),
 });
 
 // Schema validate dữ liệu đăng nhập (đơn giản hơn register)
@@ -70,112 +82,132 @@ function sanitizeUser(user) {
  * Controller xử lý đăng ký tài khoản mới.
  * Luồng: Validate → Kiểm tra email trùng → Hash password → Tạo user → Cấp token
  */
-async function register(req, res) {
-  // Bước 1: Validate dữ liệu đầu vào theo schema
-  // abortEarly: false => thu thập TẤT CẢ lỗi validation thay vì dừng ở lỗi đầu tiên
-  // stripUnknown: true => loại bỏ các field không được khai báo trong schema (bảo mật)
-  const { error, value } = registerSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+async function register(req, res, next) {
+  try {
+    // Bước 1: Validate dữ liệu đầu vào theo schema
+    // abortEarly: false => thu thập TẤT CẢ lỗi validation thay vì dừng ở lỗi đầu tiên
+    // stripUnknown: true => loại bỏ các field không được khai báo trong schema (bảo mật)
+    const { error, value } = registerSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
 
-  if (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: error.details.map((detail) => detail.message),
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: error.details.map((detail) => detail.message),
+      });
+    }
+
+    const { username, email, password, full_name } = value;
+    const lowerUsername = username.toLowerCase();
+
+    // Kiểm tra username đã tồn tại trong hệ thống chưa (Case-insensitive check)
+    const existingUsername = await User.findByUsername(lowerUsername);
+    if (existingUsername) {
+      return res.status(409).json({
+        success: false,
+        message: 'Username đã tồn tại. Vui lòng chọn tên khác.',
+      });
+    }
+
+    // Bước 2: Kiểm tra email đã tồn tại trong hệ thống chưa
+    // Tránh tạo tài khoản trùng email, trả về 409 Conflict
+    const existingUser = await User.findByEmail(email);
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'Email already exists',
+      });
+    }
+
+    // Bước 3: Hash password với bcrypt sử dụng salt rounds = 10
+    // Salt rounds = 10 là cân bằng tốt giữa bảo mật và hiệu suất
+    // (mỗi tăng 1 salt round, thời gian hash tăng gấp đôi)
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Bước 4: Tạo user mới trong database với password đã hash
+    // Role mặc định là 'User'; chỉ Admin mới có thể nâng role
+    const createdUser = await User.createUser({
+      username: lowerUsername,
+      email,
+      password: hashedPassword,
+      fullName: full_name,
+      role: 'User',
     });
-  }
 
-  const { username, email, password, full_name } = value;
+    // Bước 5: Tạo JWT token và trả về cùng thông tin user đã sanitize
+    const token = createToken(createdUser);
 
-  // Bước 2: Kiểm tra email đã tồn tại trong hệ thống chưa
-  // Tránh tạo tài khoản trùng email, trả về 409 Conflict
-  const existingUser = await User.findByEmail(email);
-  if (existingUser) {
-    return res.status(409).json({
-      success: false,
-      message: 'Email already exists',
+    return res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: sanitizeUser(createdUser),
     });
+  } catch (err) {
+    console.error('[authController.register]', err);
+    next(err);
   }
-
-  // Bước 3: Hash password với bcrypt sử dụng salt rounds = 10
-  // Salt rounds = 10 là cân bằng tốt giữa bảo mật và hiệu suất
-  // (mỗi tăng 1 salt round, thời gian hash tăng gấp đôi)
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Bước 4: Tạo user mới trong database với password đã hash
-  // Role mặc định là 'User'; chỉ Admin mới có thể nâng role
-  const createdUser = await User.createUser({
-    username,
-    email,
-    password: hashedPassword,
-    fullName: full_name,
-    role: 'User',
-  });
-
-  // Bước 5: Tạo JWT token và trả về cùng thông tin user đã sanitize
-  const token = createToken(createdUser);
-
-  return res.status(201).json({
-    success: true,
-    message: 'User registered successfully',
-    token,
-    user: sanitizeUser(createdUser),
-  });
 }
 
 /**
  * Controller xử lý đăng nhập.
  * Luồng: Validate → Tìm user theo email → So sánh password → Cấp token
  */
-async function login(req, res) {
-  const { error, value } = loginSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+async function login(req, res, next) {
+  try {
+    const { error, value } = loginSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
 
-  if (error) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: error.details.map((detail) => detail.message),
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: error.details.map((detail) => detail.message),
+      });
+    }
+
+    const { email, password } = value;
+
+    // Bước 1: Tìm user theo email trong database
+    const user = await User.findByEmail(email);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
+    }
+
+    // Kiểm tra tài khoản có bị khóa không
+    if (user.is_active === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'Tài khoản của bạn đã bị khóa bởi Admin.',
+      });
+    }
+
+    // Bước 2: So sánh password nhập vào với hash trong database dùng bcrypt.compare
+    // bcrypt.compare tự xử lý salt, không cần tách thủ công
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
+    }
+
+    // Bước 3: Tạo JWT token và trả về
+    const token = createToken(user);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: sanitizeUser(user),
     });
+  } catch (err) {
+    console.error('[authController.login]', err);
+    next(err);
   }
-
-  const { email, password } = value;
-
-  // Bước 1: Tìm user theo email trong database
-  const user = await User.findByEmail(email);
-
-  if (!user) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid credentials',
-    });
-  }
-
-  // Kiểm tra tài khoản có bị khóa không
-  if (user.is_active === false) {
-    return res.status(403).json({
-      success: false,
-      message: 'Tài khoản của bạn đã bị khóa bởi Admin.',
-    });
-  }
-
-  // Bước 2: So sánh password nhập vào với hash trong database dùng bcrypt.compare
-  // bcrypt.compare tự xử lý salt, không cần tách thủ công
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid credentials',
-    });
-  }
-
-  // Bước 3: Tạo JWT token và trả về
-  const token = createToken(user);
-
-  return res.status(200).json({
-    success: true,
-    message: 'Login successful',
-    token,
-    user: sanitizeUser(user),
-  });
 }
 
 /**

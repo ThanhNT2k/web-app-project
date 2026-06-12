@@ -14,6 +14,7 @@ function AuthModal({ open, onClose }) {
   const [loginPassword, setLoginPassword] = useState('');
 
   const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
 
@@ -52,7 +53,7 @@ function AuthModal({ open, onClose }) {
     try {
       setLoading(true);
       setError('');
-      await register(username, registerEmail, registerPassword, username);
+      await register(username, registerEmail, registerPassword, fullName);
       setMode('login');
       setError('');
       alert('Đăng ký thành công! Vui lòng đăng nhập.');
@@ -79,6 +80,8 @@ function AuthModal({ open, onClose }) {
               <div className="form-group-cmc">
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   placeholder="Email"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
@@ -88,6 +91,8 @@ function AuthModal({ open, onClose }) {
               <div className="form-group-cmc">
                 <input
                   type="password"
+                  name="password"
+                  autoComplete="current-password"
                   placeholder="Mật khẩu"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
@@ -113,15 +118,34 @@ function AuthModal({ open, onClose }) {
               <div className="form-group-cmc">
                 <input
                   type="text"
-                  placeholder="Tên hiển thị"
+                  name="username"
+                  autoComplete="username"
+                  placeholder="Tên đăng nhập"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  required
+                  pattern="^[a-zA-Z][a-zA-Z0-9_-]*$"
+                  minLength={3}
+                  maxLength={100}
+                  title="Tên đăng nhập phải bắt đầu bằng chữ cái và chỉ chứa chữ cái không dấu, chữ số, dấu gạch dưới (_) và gạch ngang (-)"
+                />
+              </div>
+              <div className="form-group-cmc">
+                <input
+                  type="text"
+                  name="fullName"
+                  autoComplete="name"
+                  placeholder="Họ và tên"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   required
                 />
               </div>
               <div className="form-group-cmc">
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   placeholder="Email"
                   value={registerEmail}
                   onChange={(e) => setRegisterEmail(e.target.value)}
@@ -131,6 +155,8 @@ function AuthModal({ open, onClose }) {
               <div className="form-group-cmc">
                 <input
                   type="password"
+                  name="password"
+                  autoComplete="new-password"
                   placeholder="Mật khẩu (tối thiểu 8 ký tự)"
                   value={registerPassword}
                   onChange={(e) => setRegisterPassword(e.target.value)}

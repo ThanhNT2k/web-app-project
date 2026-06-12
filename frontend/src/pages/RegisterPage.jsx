@@ -40,10 +40,22 @@ function RegisterPage() {
               <p className="text-muted mb-4">Tham gia CMC Truyện để lưu tiến độ đọc.</p>
               {error ? <div className="alert alert-danger">{error}</div> : null}
               <form className="d-grid gap-3" onSubmit={handleSubmit}>
-                <input className="form-control form-control-lg" placeholder="Username" value={username} onChange={(event) => setUsername(event.target.value)} required />
-                <input className="form-control form-control-lg" type="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-                <input className="form-control form-control-lg" placeholder="Full name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
-                <input className="form-control form-control-lg" type="password" placeholder="Password (min 8 chars)" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
+                <input
+                  className="form-control form-control-lg"
+                  name="username"
+                  autoComplete="username"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  required
+                  pattern="^[a-zA-Z][a-zA-Z0-9_-]*$"
+                  minLength={3}
+                  maxLength={100}
+                  title="Tên đăng nhập phải bắt đầu bằng chữ cái và chỉ chứa chữ cái không dấu, chữ số, dấu gạch dưới (_) và gạch ngang (-)"
+                />
+                <input className="form-control form-control-lg" type="email" name="email" autoComplete="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+                <input className="form-control form-control-lg" name="fullName" autoComplete="name" placeholder="Full name" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
+                <input className="form-control form-control-lg" type="password" name="password" autoComplete="new-password" placeholder="Password (min 8 chars)" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
                 <button className="btn-cmc btn-cmc-primary w-100" type="submit" disabled={loading}>
                   {loading ? 'Đang tạo...' : 'Đăng ký'}
                 </button>
