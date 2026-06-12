@@ -6,7 +6,7 @@ const { reportRateLimiter } = require('../middleware/rateLimiter.js');
 
 const router = express.Router();
 
-router.post('/', authenticateToken, reportRateLimiter, createReport);
+router.post('', authenticateToken, reportRateLimiter, createReport);
 router.get('/', authenticateToken, authorizeAdmin, getReports);
 router.patch('/:id', authenticateToken, authorizeAdmin, updateReportStatus);
 

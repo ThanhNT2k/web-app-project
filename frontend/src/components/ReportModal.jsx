@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { REPORT_REASONS } from '../constants/reportConstants';
-import api from '../services/api';
+import API from '../services/api';
 
 const ReportModal = ({ chapterId, onClose }) => {
   const [formData, setFormData] = useState({ reason: 'BROKEN_IMAGE', description: '' });
@@ -11,15 +11,18 @@ const ReportModal = ({ chapterId, onClose }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const numericChapterId = chapterId ? parseInt(chapterId, 10) : null;
     try {
-      await api.post('/reports', { 
+      await API.reports.create({ 
         ...formData, 
-        chapter_id: chapterId 
+        chapter_id: numericChapterId 
       });
-      alert("Cảm ơn bạn đã báo cáo! Chúng tôi sẽ xem xét sớm.");
+    
+      alert("Cảm ơn bạn đã báo cáo!");
       onClose();
     } catch (err) {
-      setError("Có lỗi xảy ra, vui lòng thử lại sau.");
+      console.error("Lỗi chi tiết:", err.response?.data);
+      setError("Có lỗi xảy ra: " + (err.response?.data?.error ? JSON.stringify(err.response.data.error) : "Vui lòng thử lại sau"));
     } finally {
       setLoading(false);
     }

@@ -194,6 +194,9 @@ const API = {
     get: () => request('/preferences', { method: 'GET' }),
     update: (data) => request('/preferences', { method: 'PUT', data }),
   },
+  reports: {
+    create: (data) => request('/reports', { method: 'POST', data }),
+  },
 
   // ── Upload file ───────────────────────────────────────────────────────────
   upload: {

@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
 import ReadingProgress from '../components/ReadingProgress';
+import ReportModal from '../components/ReportModal';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { mockStories } from '../data/mockStories';
@@ -26,6 +27,7 @@ function StoryDetailPage() {
   const [chapterPage, setChapterPage] = useState(1);
   const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [sortOrder, setSortOrder] = useState('asc');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Load story info once
   useEffect(() => {
@@ -96,7 +98,6 @@ function StoryDetailPage() {
   }
 
   const continueChapterNumber = storyProgress?.chapter_number || chapters[0]?.chapter_number;
-
   return (
     <main className="cmc-main">
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
@@ -152,6 +153,14 @@ function StoryDetailPage() {
                 </Link>
               ) : null}
               <FollowButton storyId={story.id} />
+
+              <button 
+                type="button" 
+                className="btn-cmc btn-cmc-outline" 
+                onClick={() => setIsReportModalOpen(true)}
+              >
+                Báo cáo
+              </button>
             </div>
           </div>
         </div>
@@ -240,6 +249,12 @@ function StoryDetailPage() {
           <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
         </div>
       </div>
+      {isReportModalOpen && (
+        <ReportModal 
+          storyId={story.id} 
+          onClose={() => setIsReportModalOpen(false)} 
+        />
+      )}
     </main>
   );
 }

@@ -92,7 +92,6 @@ app.get('/health', (req, res) => {
 });
 
 const reportRoutes = require('./routes/reportRoutes');
-app.use('/api/reports', reportRoutes);
 // Đăng ký các route theo từng module chức năng
 // Tất cả route đều có tiền tố /api/... để phân biệt với static assets
 app.use('/api/auth', authRoutes);             // Đăng ký, đăng nhập, profile
@@ -106,7 +105,7 @@ app.use('/api/preferences', preferencesRoutes); // Cài đặt đọc truyện c
 app.use('/api/upload', uploadRoutes);         // Upload ảnh bìa lên Supabase
 app.use('/api/admin', adminRoutes);           // Quản trị: user, thống kê
 app.use('/api/tags', tagRoutes);              // Tags/thể loại truyện
-app.use('/api', apiRoutes);                   // Route tổng hợp (index router)
+app.use('/api/reports', reportRoutes);        // Báo cáo vi phạm
 
 // Middleware xử lý 404 khi không có route nào khớp với request
 app.use(notFoundHandler);
