@@ -269,6 +269,48 @@ async function getChapterCount(storyId) {
   }
 }
 
+/**
+ * Lấy chi tiết một chương dựa vào slug của truyện và số thứ tự chương (chapter_number).
+ * Dùng cho URL định dạng SEO: /:storySlug/:chapterNumber
+ */
+async function getChapterBySlugAndNumber(storySlug, chapterNumber) {
+  try {
+    const result = await db.query(
+      `
+        SELECT
+          c.id,
+          c.story_id,
+          c.chapter_number,
+          c.title,
+          c.content,
+          c.created_at,
+          c.updated_at,
+          c.is_published,
+          s.id AS story_id_ref,
+          s.title AS story_title,
+          s.slug AS story_slug,
+          s.description AS story_description,
+          s.cover_image_url AS story_cover_image_url,
+          s.category AS story_category,
+          s.status AS story_status,
+          s.total_chapters AS story_total_chapters,
+          s.is_published AS story_is_published,
+          s.hidden_by_admin AS story_hidden_by_admin,
+          s.author_id AS story_author_id
+        FROM chapters c
+        INNER JOIN stories s ON s.id = c.story_id
+        WHERE s.slug = $1 AND c.chapter_number = $2
+        LIMIT 1
+      `,
+      [storySlug, parseInt(chapterNumber, 10)]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   getChaptersByStory,
   getChapterById,
@@ -276,4 +318,5 @@ module.exports = {
   updateChapter,
   deleteChapter,
   getChapterCount,
+  getChapterBySlugAndNumber,
 };

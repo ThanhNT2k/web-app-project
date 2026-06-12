@@ -298,10 +298,54 @@ async function deleteChapter(req, res) {
   }
 }
 
+/**
+ * Lấy chi tiết một chương bằng storySlug và chapterNumber.
+ * Kiểm tra trạng thái ẩn/hiện của truyện chứa chương này (phân quyền).
+ */
+async function getChapterBySlugAndNumber(req, res) {
+  try {
+    const { storySlug, chapterNumber } = req.params;
+    const chapter = await Chapter.getChapterBySlugAndNumber(storySlug, chapterNumber);
+
+    if (!chapter) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chapter not found',
+      });
+    }
+
+    // Kiểm tra trạng thái ẩn/hiện của truyện chứa chương này
+    if (!chapter.story_is_published || chapter.story_hidden_by_admin) {
+      const isOwnerOrAdmin = req.user && (
+        req.user.role === 'Admin' ||
+        Number(req.user.id) === Number(chapter.story_author_id)
+      );
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Chapter not found',
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      chapter,
+    });
+  } catch (error) {
+    console.error('[chapterController.getChapterBySlugAndNumber]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
 module.exports = {
   getChapters,
   getChapterById,
   createChapter,
   updateChapter,
   deleteChapter,
+  getChapterBySlugAndNumber,
 };

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-function ReadingProgress({ progress, storyId }) {
+function ReadingProgress({ progress, storySlug }) {
   if (!progress) {
     return null;
   }
@@ -26,7 +26,7 @@ function ReadingProgress({ progress, storyId }) {
         {chapterId ? (
           <Link
             className="btn btn-brand btn-sm"
-            to={`/story/${storyId}/chapter/${chapterId}`}
+            to={`/${storySlug}/${chapterNumber}`}
           >
             Tiếp tục đọc
             {chapterNumber ? ` (Chương ${chapterNumber})` : ''}

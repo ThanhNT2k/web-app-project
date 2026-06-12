@@ -10,6 +10,7 @@ const router = express.Router();
 router.get('/', storyController.getAllStories);
 router.get('/mine', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.getMyStories);
 router.get('/search', storyController.searchStories);
+router.get('/by-slug/:slug', optionalAuth, storyController.getStoryBySlug);
 router.get('/:id', optionalAuth, storyController.getStoryById);
 router.post('/', authenticateToken, authorizeRole('Uploader'), storyController.createStory);
 router.put('/:id', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.updateStory);
@@ -18,6 +19,7 @@ router.patch('/:id/visibility', authenticateToken, authorizeRole('Uploader', 'Ad
 
 router.get('/:storyId/chapters', optionalAuth, chapterController.getChapters);
 router.get('/:storyId/chapters/:chapterId', optionalAuth, chapterController.getChapterById);
+router.get('/by-slug/:storySlug/chapters/:chapterNumber', optionalAuth, chapterController.getChapterBySlugAndNumber);
 router.post('/:storyId/chapters', authenticateToken, authorizeRole('Uploader'), chapterController.createChapter);
 router.put('/:storyId/chapters/:chapterId', authenticateToken, authorizeRole('Uploader', 'Admin'), chapterController.updateChapter);
 router.delete('/:storyId/chapters/:chapterId', authenticateToken, authorizeRole('Uploader', 'Admin'), chapterController.deleteChapter);
