@@ -89,7 +89,21 @@ async function getStoryById(req, res) {
         message: 'Story not found',
       });
     }
-
+    // Kiểm tra xem người đang xem có phải là tác giả hoặc Admin hay không
+    const isOwnerOrAdmin = req.user &&  (
+      req.user.role === 'Admin' ||
+      Number(req.user.id) === Number(story.author_id)
+    );
+    // Nếu truyện chưa xuất bản (is_published = false) HOẶC bị Admin ẩn (hidden_by_admin = true)
+    if (!story.is_published || story.hidden_by_admin) {
+      // Kiểm tra xem người đang xem có phải là tác giả hoặc Admin hay không
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Story not found',
+        });
+      }
+    }
     return res.status(200).json({
       success: true,
       story,
@@ -395,6 +409,50 @@ async function toggleStoryVisibility(req, res) {
   }
 }
 
+/**
+ * Lấy chi tiết một truyện theo Slug.
+ * Thực hiện kiểm tra quyền (được xem truyện ẩn/nháp nếu là tác giả hoặc Admin).
+ */
+async function getStoryBySlug(req, res) {
+  try {
+    const { slug } = req.params;
+    const story = await Story.getStoryBySlug(slug);
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    // Nếu truyện chưa xuất bản HOẶC bị Admin ẩn
+    if (!story.is_published || story.hidden_by_admin) {
+      const isOwnerOrAdmin = req.user && (
+        req.user.role === 'Admin' ||
+        Number(req.user.id) === Number(story.author_id)
+      );
+
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Story not found',
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      story,
+    });
+  } catch (error) {
+    console.error('[storyController.getStoryBySlug]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
 module.exports = {
   getAllStories,
   getStoryById,
@@ -404,4 +462,5 @@ module.exports = {
   deleteStory,
   searchStories,
   toggleStoryVisibility,
+  getStoryBySlug,
 };

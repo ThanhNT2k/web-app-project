@@ -15,7 +15,7 @@ const FALLBACK_COVER =
 const CHAPTERS_PER_PAGE = 50;
 
 function StoryDetailPage() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const { isAuthenticated } = useAuth();
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -32,26 +32,32 @@ function StoryDetailPage() {
     const fetchStory = async () => {
       try {
         setLoading(true);
-        const storyResponse = await API.stories.getById(id);
+        const storyResponse = await API.stories.getBySlug(slug);
         setStory(storyResponse.story || storyResponse);
         setError('');
-      } catch {
-        const fallbackStory = mockStories.find((item) => String(item.id) === String(id)) || mockStories[0];
-        setStory(fallbackStory);
-        setError('Không kết nối API. Hiển thị dữ liệu mẫu.');
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          setStory(null);
+          setError('Truyện không tồn tại hoặc đã bị ẩn.');
+        } else {
+          const fallbackStory = mockStories.find((item) => item.slug === slug) || mockStories[0];
+          setStory(fallbackStory);
+          setError('Không kết nối API. Hiển thị dữ liệu mẫu.');
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchStory();
-  }, [id]);
+  }, [slug]);
 
   // Load chapters with pagination and sort
   useEffect(() => {
+    if (!story?.id) return;
     const fetchChapters = async () => {
       try {
         setChapterLoading(true);
-        const chaptersResponse = await API.chapters.getByStory(id, chapterPage, CHAPTERS_PER_PAGE, sortOrder);
+        const chaptersResponse = await API.chapters.getByStory(story.id, chapterPage, CHAPTERS_PER_PAGE, sortOrder);
         setChapters(chaptersResponse.chapters || []);
         setChapterPagination(chaptersResponse.pagination || { page: 1, totalPages: 1, totalItems: 0 });
       } catch {
@@ -64,31 +70,39 @@ function StoryDetailPage() {
       }
     };
     fetchChapters();
-  }, [id, chapterPage, sortOrder]);
+  }, [story?.id, chapterPage, sortOrder]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    API.readingHistory.getStoryProgress(id)
+    if (!isAuthenticated || !story?.id) return;
+    API.readingHistory.getStoryProgress(story.id)
       .then((res) => setStoryProgress(res.progress || null))
       .catch(() => setStoryProgress(null));
-  }, [isAuthenticated, id]);
+  }, [isAuthenticated, story?.id]);
 
   if (loading) {
     return <main className="cmc-main"><p className="loading-text">Đang tải...</p></main>;
   }
 
   if (!story) {
-    return <main className="cmc-main"><p>Không tìm thấy truyện.</p></main>;
+    return (
+      <main className="cmc-main">
+        {error ? (
+          <div className="alert-cmc alert-cmc-warning">{error}</div>
+        ) : (
+          <p>Không tìm thấy truyện.</p>
+        )}
+      </main>
+    );
   }
 
-  const continueChapter = storyProgress?.last_chapter_read || chapters[0]?.id;
+  const continueChapterNumber = storyProgress?.chapter_number || chapters[0]?.chapter_number;
 
   return (
     <main className="cmc-main">
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
       {isAuthenticated && storyProgress ? (
-        <ReadingProgress progress={storyProgress} storyId={id} />
+        <ReadingProgress progress={storyProgress} storySlug={story.slug} />
       ) : null}
 
       <div className="story-detail-header panel-card">
@@ -129,9 +143,9 @@ function StoryDetailPage() {
               </div>
             ) : null}
             <div className="d-flex flex-wrap gap-2">
-              {continueChapter ? (
+              {continueChapterNumber ? (
                 <Link
-                  to={`/story/${story.id}/chapter/${continueChapter}`}
+                  to={`/${story.slug}/${continueChapterNumber}`}
                   className="btn-cmc btn-cmc-primary"
                 >
                   {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
@@ -174,7 +188,7 @@ function StoryDetailPage() {
                 <ul className="chapter-list">
                   {chapters.map((chapter) => (
                     <li key={chapter.id}>
-                      <Link to={`/story/${story.id}/chapter/${chapter.id}`}>
+                      <Link to={`/${story.slug}/${chapter.chapter_number}`}>
                         <span>
                           Ch.{chapter.chapter_number}: {chapter.title}
                         </span>
@@ -223,7 +237,7 @@ function StoryDetailPage() {
           </section>
         </div>
         <div className="col-lg-4">
-          <CommentSection key={`story-comments-${id}`} storyId={id} mode="story" />
+          <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
         </div>
       </div>
     </main>

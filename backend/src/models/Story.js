@@ -486,6 +486,59 @@ async function toggleVisibility(id, userRole) {
   }
 }
 
+/**
+ * Lấy chi tiết một truyện theo Slug.
+ * Bao gồm JOIN với users và COUNT chapters.
+ */
+async function getStoryBySlug(slug) {
+  try {
+    const result = await db.query(
+      `
+        SELECT
+          s.id,
+          s.title,
+          s.slug,
+          s.author_id,
+          s.description,
+          s.cover_image_url,
+          s.category,
+          s.status,
+          s.total_chapters,
+          s.created_at,
+          s.updated_at,
+          s.is_published,
+          s.hidden_by_admin,
+          COUNT(c.id)::int AS chapter_count,
+          get_follower_count(s.id) AS follow_count,
+          u.id AS author_user_id,
+          u.username AS author_username,
+          u.full_name AS author_full_name,
+          u.avatar_url AS author_avatar_url
+        FROM stories s
+        LEFT JOIN users u ON u.id = s.author_id
+        LEFT JOIN chapters c ON c.story_id = s.id
+        WHERE s.slug = $1
+        GROUP BY
+          s.id,
+          u.id,
+          u.username,
+          u.full_name,
+          u.avatar_url
+        LIMIT 1
+      `,
+      [slug]
+    );
+
+    const story = result.rows[0] || null;
+    if (!story) return null;
+
+    const tags = await Tag.getTagsForStory(story.id);
+    return { ...story, tags };
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   getAllStories,
   getStoryById,
@@ -495,4 +548,5 @@ module.exports = {
   searchStories,
   getStoriesByAuthor,
   toggleVisibility,
+  getStoryBySlug,
 };

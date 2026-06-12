@@ -124,6 +124,7 @@ const API = {
     getAll: (page = 1, limit = 10, sortBy = 'newest') => request('/stories', { method: 'GET', params: { page, limit, sortBy } }),
     getMine: (page = 1, limit = 20) => request('/stories/mine', { method: 'GET', params: { page, limit } }),
     getById: (id) => request(`/stories/${id}`, { method: 'GET' }),
+    getBySlug: (slug) => request(`/stories/by-slug/${slug}`, { method: 'GET' }),
     create: (data) => request('/stories', { method: 'POST', data }),
     update: (id, data) => request(`/stories/${id}`, { method: 'PUT', data }),
     delete: (id) => request(`/stories/${id}`, { method: 'DELETE' }),
@@ -145,6 +146,7 @@ const API = {
   chapters: {
     getByStory: (storyId, page = 1, limit = 10, sort = 'asc') => request(`/stories/${storyId}/chapters`, { method: 'GET', params: { page, limit, sort } }),
     getById: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'GET' }),
+    getBySlugAndNumber: (storySlug, chapterNumber) => request(`/stories/by-slug/${storySlug}/chapters/${chapterNumber}`, { method: 'GET' }),
     create: (storyId, data) => request(`/stories/${storyId}/chapters`, { method: 'POST', data }),
     update: (storyId, chapterId, data) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'PUT', data }),
     delete: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'DELETE' }),

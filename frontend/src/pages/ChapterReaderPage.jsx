@@ -15,7 +15,7 @@ const AUTOSAVE_INTERVAL_MS = 30000;
 
 function ChapterReaderPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { storyId, chapterId } = useParams();
+  const { storySlug, chapterNumber } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   
@@ -35,7 +35,7 @@ function ChapterReaderPage() {
   const scrollRef = useRef(0);
   const hasInitialSavedRef = useRef(false);
 
-  const chapterNumericId = useMemo(() => chapter?.id || chapterId, [chapter, chapterId]);
+  const chapterNumericId = useMemo(() => chapter?.id || null, [chapter]);
 
   useEffect(() => {
     const prefs = loadReaderPrefs();
@@ -45,33 +45,39 @@ function ChapterReaderPage() {
       if (prefs.fontFamily) setFontFamily(prefs.fontFamily);
     }
     hasInitialSavedRef.current = false;
-  }, [chapterId]);
+  }, [chapterNumber]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError('');
-        const [chapterResponse, chaptersResponse] = await Promise.all([
-          API.chapters.getById(storyId, chapterId),
-          API.chapters.getByStory(storyId, 1, 100),
-        ]);
-        setChapter(chapterResponse.chapter || chapterResponse);
+        // 1. Fetch chapter details by slug and number
+        const chapterResponse = await API.chapters.getBySlugAndNumber(storySlug, chapterNumber);
+        const resolvedChapter = chapterResponse.chapter || chapterResponse;
+        setChapter(resolvedChapter);
+
+        // 2. Fetch the list of chapters using the story ID ref from the resolved chapter
+        const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, 100);
         setChapters(chaptersResponse.chapters || []);
-      } catch {
+      } catch (err) {
         setChapter(mockChapter);
         setChapters([]);
-        setError('Không tải được chương từ máy chủ. Đang hiển thị chương mô phỏng.');
+        if (err?.response?.status === 404) {
+          setError('Chương truyện không tồn tại hoặc đã bị ẩn.');
+        } else {
+          setError('Không tải được chương từ máy chủ. Đang hiển thị chương mô phỏng.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [storyId, chapterId]);
+  }, [storySlug, chapterNumber]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !chapter?.story_id) return;
 
     API.preferences.get()
       .then((res) => {
@@ -84,20 +90,20 @@ function ChapterReaderPage() {
       })
       .catch(() => {});
 
-    API.readingHistory.getStoryProgress(storyId)
+    API.readingHistory.getStoryProgress(chapter.story_id)
       .then((res) => setStoryProgress(res.progress || null))
       .catch(() => setStoryProgress(null));
-  }, [isAuthenticated, storyId]);
+  }, [isAuthenticated, chapter?.story_id]);
 
   const saveProgress = useCallback(async () => {
     if (!isAuthenticated || !chapter) return;
 
-    const resolvedChapterId = Number(chapter.id || chapterId);
+    const resolvedChapterId = Number(chapter.id);
     if (!resolvedChapterId || !Number.isFinite(resolvedChapterId)) return;
 
     try {
       const response = await API.readingHistory.save({
-        story_id: Number(storyId),
+        story_id: Number(chapter.story_id),
         chapter_id: resolvedChapterId,
         read_position: Number.isFinite(scrollRef.current) ? Math.round(scrollRef.current) : 0,
         read_time: Number.isFinite(readTimeRef.current) ? Math.round(readTimeRef.current) : 0,
@@ -107,7 +113,7 @@ function ChapterReaderPage() {
     } catch {
       // silent
     }
-  }, [isAuthenticated, chapter, storyId, chapterId]);
+  }, [isAuthenticated, chapter]);
 
   useEffect(() => {
     if (!isAuthenticated || !chapter || !autoBookmark) return;
@@ -150,24 +156,24 @@ function ChapterReaderPage() {
     [chapters, chapter]
   );
 
-  const goToChapter = (targetId) => {
-    navigate(`/story/${storyId}/chapter/${targetId}`);
+  const goToChapter = (targetChapterNumber) => {
+    navigate(`/${storySlug}/${targetChapterNumber}`);
   };
 
   const handlePrevious = () => {
     if (chapterIndex > 0) {
-      goToChapter(chapters[chapterIndex - 1].id);
+      goToChapter(chapters[chapterIndex - 1].chapter_number);
       return;
     }
     const num = Number(chapter?.chapter_number || 1);
     if (num > 1) {
-      navigate(`/story/${storyId}/chapter/${num - 1}`);
+      goToChapter(num - 1);
     }
   };
 
   const handleNext = () => {
     if (chapterIndex >= 0 && chapterIndex < chapters.length - 1) {
-      goToChapter(chapters[chapterIndex + 1].id);
+      goToChapter(chapters[chapterIndex + 1].chapter_number);
     }
   };
 
@@ -216,7 +222,11 @@ function ChapterReaderPage() {
   if (!chapter) {
     return (
       <main className="cmc-main">
-        <p>Không tìm thấy chương.</p>
+        {error ? (
+          <div className="alert-cmc alert-cmc-warning">{error}</div>
+        ) : (
+          <p>Không tìm thấy chương.</p>
+        )}
       </main>
     );
   }
@@ -240,7 +250,7 @@ function ChapterReaderPage() {
       <ReadingScrollProgress />
       <div className="reader-top-bar d-flex align-items-center justify-content-between p-3 rounded-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
         <div style={{ flex: 1, textAlign: 'left' }}>
-          <Link to={`/story/${storyId}`} className="btn-cmc btn-cmc-outline btn-sm d-inline-flex align-items-center gap-1">
+          <Link to={`/story/${chapter.story_slug}`} className="btn-cmc btn-cmc-outline btn-sm d-inline-flex align-items-center gap-1">
             <span>←</span> <span className="d-none d-sm-inline">Về truyện</span>
           </Link>
         </div>
@@ -287,7 +297,7 @@ function ChapterReaderPage() {
                   type="button"
                   className={`btn btn-sm ${isActive ? 'btn-brand' : 'btn-cmc-outline'}`}
                   style={{ minWidth: '55px', borderRadius: '8px' }}
-                  onClick={() => goToChapter(ch.id)}
+                  onClick={() => goToChapter(ch.chapter_number)}
                 >
                   Ch. {ch.chapter_number}
                 </button>
@@ -308,8 +318,8 @@ function ChapterReaderPage() {
 
       <div className="mt-4">
         <CommentSection
-          key={`chapter-comments-${storyId}-${chapterNumericId}`}
-          storyId={storyId}
+          key={`chapter-comments-${chapter.story_id}-${chapterNumericId}`}
+          storyId={chapter.story_id}
           chapterId={chapterNumericId}
           mode="chapter"
         />

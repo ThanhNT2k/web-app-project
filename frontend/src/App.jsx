@@ -60,9 +60,9 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/account" element={<AccountPage />} />
 
-              <Route path="/story/:id" element={<StoryDetailPage />} />
+              <Route path="/story/:slug" element={<StoryDetailPage />} />
               <Route
-                path="/story/:storyId/chapter/:chapterId"
+                path="/:storySlug/:chapterNumber"
                 element={<ChapterReaderPage />}
               />
 

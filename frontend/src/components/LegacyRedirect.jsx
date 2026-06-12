@@ -14,9 +14,8 @@ function LegacyRedirect() {
 
     if (path.endsWith('/reader.html') || path === '/reader') {
       const storyId = params.get('storyId') || params.get('comicId');
-      const chapterId = params.get('chapterId') || params.get('id');
-      if (storyId && chapterId) {
-        navigate(`/story/${storyId}/chapter/${chapterId}`, { replace: true });
+      if (storyId) {
+        navigate(`/story/${storyId}`, { replace: true });
       }
       return;
     }
