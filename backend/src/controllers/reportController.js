@@ -1,6 +1,16 @@
+const {z} = require('zod');
+
 const db = require('../config/database');
 
+const reportSchema = z.object({
+  reason: z.string(),
+  description: z.string(),
+  chapter_id: z.number().int().nullable() // Phải là chapter_id giống frontend gửi
+});
+
 const createReport = async (req, res) => {
+  console.log("--- BẮT ĐẦU CREATE REPORT ---");
+  console.log("Body nhận được:", req.body);
   try {
     const data = reportSchema.parse(req.body);
     const userId = req.user.id;
@@ -17,18 +27,18 @@ const createReport = async (req, res) => {
 
     await db.query(
       "INSERT INTO reports (user_id, chapter_id, reason, description) VALUES ($1, $2, $3, $4)",
-      [userId, data.chapterId, data.reason, data.description]
+      [userId, data.chapter_id, data.reason, data.description]
     );
 
     // Kiểm tra và ẩn chương
     const { rows: countCheck } = await db.query(
       "SELECT COUNT(*) FROM reports WHERE chapter_id = $1 AND status = 'NEW'",
-      [data.chapterId]
+      [data.chapter_id]
     );
 
     if (parseInt(countCheck[0].count) >= 10) {
       // Lưu ý: Đảm bảo bảng 'chapters' có cột 'status'
-      await db.query("UPDATE chapters SET is_published = false WHERE id = $1", [data.chapterId]);
+      await db.query("UPDATE chapters SET is_published = false WHERE id = $1", [data.chapter_id]);
     }
 
     res.status(201).json({ message: "Báo cáo đã được ghi nhận!" });
