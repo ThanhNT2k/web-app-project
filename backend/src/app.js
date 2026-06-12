@@ -35,6 +35,7 @@ const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+
 // Cấu hình helmet với crossOriginResourcePolicy: 'cross-origin' để cho phép
 // ảnh từ Supabase Storage (khác domain) được load thành công trên frontend
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -90,6 +91,8 @@ app.get('/health', (req, res) => {
   });
 });
 
+const reportRoutes = require('./routes/reportRoutes');
+app.use('/api/reports', reportRoutes);
 // Đăng ký các route theo từng module chức năng
 // Tất cả route đều có tiền tố /api/... để phân biệt với static assets
 app.use('/api/auth', authRoutes);             // Đăng ký, đăng nhập, profile

@@ -78,7 +78,16 @@ function optionalAuth(req, res, next) {
   return next();
 }
 
+function authorizeAdmin(req, res, next) {
+    if (req.user && req.user.role === 'Admin') {
+        next();
+    } else {
+        res.status(403).json({ success: false, message: "Access denied. Admins only." });
+    }
+}
+
 module.exports = {
   authenticateToken,
-  optionalAuth,
+  authorizeAdmin,
+  optionalAuth
 };

@@ -47,6 +47,13 @@ function AdminLayout() {
           >
             📚 Quản lý truyện
           </NavLink>
+          <NavLink
+            to="/admin/reports"
+            className={({ isActive }) => isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
+            🚩 Quản lý báo cáo
+          </NavLink>
         </nav>
 
         {/* Nút Đăng xuất được đẩy xuống dưới cùng nhờ margin-top: auto */}
