@@ -26,11 +26,8 @@ function getBaseURL() {
  * hoặc khi browser settings ngăn third-party storage.
  */
 function getToken() {
-  try {
-    return localStorage.getItem(storageKeys.token);
-  } catch {
-    return null;
-  }
+  const token = localStorage.getItem('cmc_token');
+  return token;
 }
 
 /**
@@ -61,11 +58,17 @@ const apiClient = axios.create({
  * Nếu có token trong localStorage, gắn vào header dạng "Bearer <token>".
  */
 apiClient.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const token = localStorage.getItem('cmc_token'); 
+  
+  if (token && token !== 'null') {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    console.warn("API Call: Không tìm thấy Token trong localStorage!");
   }
+  
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 /**
@@ -100,7 +103,12 @@ apiClient.interceptors.response.use(
  * Giúp controller/component đơn giản hơn khi dùng: không cần .data mỗi lần.
  */
 async function request(path, options = {}) {
-  const response = await apiClient.request({ url: path, ...options });
+  const response = await apiClient({
+    url: path,
+    method: options.method || 'GET',
+    params: options.params,
+    data: options.data,
+  });
   return response.data;
 }
 
@@ -196,6 +204,8 @@ const API = {
   },
   reports: {
     create: (data) => request('/reports', { method: 'POST', data }),
+    getAll: (params = {}) => request('/reports', { method: 'GET', params }),
+    updateStatus: (id, status) => request(`/reports/${id}`, { method: 'PATCH', data: { status } }),
   },
 
   // ── Upload file ───────────────────────────────────────────────────────────
@@ -225,6 +235,8 @@ const API = {
     updateUserStatus: (id, isActive) => request(`/admin/users/${id}/status`, { method: 'PATCH', data: { is_active: isActive } }),
     deleteComment: (id) => request(`/admin/comments/${id}`, { method: 'DELETE' }),
     getStories: (page = 1) => request('/admin/stories', { method: 'GET', params: { page, limit: 50 } }),
+    getReports: (status = 'ALL', page = 1) => 
+      request('/reports', { method: 'GET', params: { status, page, limit: 50 } }),
   },
 };
 

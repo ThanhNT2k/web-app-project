@@ -49,47 +49,46 @@ const createReport = async (req, res) => {
   }
 };
 
+// Trong Controller lấy danh sách báo cáo
 const getReports = async (req, res) => {
   try {
-    const { chapterId, status, page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
+    const { status } = req.query; // Nhận status từ URL params
+    let query = "SELECT * FROM reports";
+    let values = [];
 
-    // Tối ưu: Dùng mảng điều kiện linh hoạt
-    let query = "SELECT * FROM reports WHERE 1=1";
-    const params = [];
+    if (status && status !== 'ALL') {
+      query += " WHERE status = $1";
+      values.push(status);
+    }
     
-    if (chapterId) {
-      params.push(chapterId);
-      query += ` AND chapter_id = $${params.length}`;
-    }
-    if (status) {
-      params.push(status);
-      query += ` AND status = $${params.length}`;
-    }
+    // Thêm ORDER BY để báo cáo mới nhất hiện lên đầu
+    query += " ORDER BY created_at DESC";
 
-    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const { rows } = await db.query(query, params);
-    res.status(200).json({ reports: rows });
+    const result = await db.query(query, values);
+    res.status(200).json({ reports: result.rows });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Lỗi máy chủ nội bộ." });
+    res.status(500).json({ error: "Lỗi server" });
   }
 };
 
 const updateReportStatus = async (req, res) => {
   try {
-    const { reportId } = req.params;
+    const { id } = req.params;
     const { status } = req.body;
 
-    await db.query(
+    const result = await db.query(
       "UPDATE reports SET status = $1 WHERE id = $2",
-      [status, reportId]
+      [status, id]
     );
+
+    // Kiểm tra xem có dòng nào được cập nhật không
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Không tìm thấy báo cáo." });
+    }
 
     res.status(200).json({ message: "Trạng thái báo cáo đã được cập nhật!" });
   } catch (error) {
+    console.error(error); // Log lỗi ra console để debug
     res.status(500).json({ error: "Lỗi máy chủ nội bộ." });
   }
 };

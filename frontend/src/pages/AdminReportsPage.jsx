@@ -1,39 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API from '../services/api';
 
 function AdminReportsPage() {
+  const [statusFilter, setStatusFilter] = useState('NEW');
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, [statusFilter]);
 
   const fetchReports = async () => {
-    try {
-      setLoading(true);
-      // Thay URL này bằng base URL của backend bạn
-      const response = await axios.get('/api/reports', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setReports(response.data.reports || []);
-    } catch (err) {
-      setError("Không thể tải danh sách báo cáo.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const data = await API.admin.getReports(statusFilter);
+    console.log("Dữ liệu mới nhận được từ server:", data.reports);
+    setReports(data.reports || []);
+  } catch (err) {
+    setError("Không thể tải danh sách báo cáo.");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleUpdateStatus = async (id, status) => {
     try {
-      await axios.patch(`/api/reports/${id}`, { status }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      fetchReports(); // Load lại danh sách sau khi update
+      await API.reports.updateStatus(id, status);
+      fetchReports();
     } catch (err) {
-      alert("Cập nhật trạng thái thất bại!");
+      console.error("Lỗi cập nhật:", err.response || err);
+      alert("Cập nhật trạng thái thất bại: " + (err.response?.data?.message || "Lỗi server"));
     }
   };
 
@@ -42,8 +41,24 @@ function AdminReportsPage() {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Danh sách báo cáo</h2>
-  
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-800">Danh sách báo cáo</h2>
+        <div className="flex bg-gray-100 p-1 rounded-lg">
+          {['NEW', 'RESOLVED', 'ALL'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                statusFilter === status 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {status === 'NEW' ? 'Báo cáo mới' : status === 'RESOLVED' ? 'Đã xử lý' : 'Tất cả'}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-gray-500 uppercase bg-gray-50">

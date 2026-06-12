@@ -15,7 +15,9 @@ const env = require('../config/environment');
  */
 const authenticateToken = (req, res, next) => {
   // Lấy header Authorization từ request (dạng "Bearer <jwt_token>")
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+
+  console.log("Header nhận được:", authHeader);
 
   // Nếu header không tồn tại hoặc không bắt đầu bằng "Bearer ", từ chối truy cập
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
