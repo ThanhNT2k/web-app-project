@@ -271,10 +271,6 @@ function ChapterReaderPage() {
 
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
-      {isAuthenticated && storyProgress ? (
-        <ReadingProgress progress={storyProgress} storySlug={chapter.story_slug} />
-      ) : null}
-
       <StoryReader
         chapter={chapter}
         chapters={chapters}

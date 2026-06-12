@@ -41,38 +41,41 @@ function AdminReportsPage() {
   if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Quản lý Báo cáo</h2>
-      
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-100">
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Danh sách báo cáo</h2>
+  
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs text-gray-500 uppercase bg-gray-50">
             <tr>
-              <th className="p-4 border-b">Người gửi</th>
-              <th className="p-4 border-b">Nội dung</th>
-              <th className="p-4 border-b">Trạng thái</th>
-              <th className="p-4 border-b">Hành động</th>
+              <th className="px-6 py-3">Người dùng</th>
+              <th className="px-6 py-3">Nội dung báo cáo</th>
+              <th className="px-6 py-3">Trạng thái</th>
+              <th className="px-6 py-3 text-right">Hành động</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-gray-200">
             {reports.map((report) => (
-              <tr key={report.id} className="border-b hover:bg-gray-50">
-                <td className="p-4">{report.user_email || 'Ẩn danh'}</td>
-                <td className="p-4">{report.reason}</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                    report.status === 'NEW' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+              <tr key={report.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 font-medium text-gray-900">ID: {report.user_id}</td>
+                <td className="px-6 py-4">
+                  <div className="font-semibold text-gray-800">{report.reason}</div>
+                  <div className="text-gray-500 truncate max-w-xs">{report.description}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                    report.status === 'NEW' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
                   }`}>
                     {report.status}
                   </span>
                 </td>
-                <td className="p-4 flex gap-2">
+                <td className="px-6 py-4 text-right">
                   {report.status === 'NEW' && (
                     <button 
                       onClick={() => handleUpdateStatus(report.id, 'RESOLVED')}
-                      className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                      className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-xs font-medium transition-all"
                     >
-                      Đánh dấu đã xử lý
+                      Xử lý
                     </button>
                   )}
                 </td>
@@ -80,9 +83,6 @@ function AdminReportsPage() {
             ))}
           </tbody>
         </table>
-        {reports.length === 0 && (
-          <p className="p-6 text-center text-gray-500">Không có báo cáo nào mới.</p>
-        )}
       </div>
     </div>
   );
