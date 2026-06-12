@@ -2,6 +2,10 @@ const Joi = require('joi');
 
 const Comment = require('../models/Comment');
 
+const { Queue } = require('bullmq');
+const redisConfig = require('../config/redisConfig');
+const moderationQueue = new Queue('moderationQueue', { connection: redisConfig });
+
 // Schema validate dữ liệu bình luận mới
 // - story_id: bắt buộc, mỗi comment phải gắn với một truyện
 // - chapter_id: tùy chọn (null = comment cho toàn bộ truyện, có id = comment cho chương cụ thể)
@@ -60,7 +64,6 @@ async function getByChapter(req, res) {
  */
 async function create(req, res) {
   try {
-    // Chỉ user đã đăng nhập mới được bình luận
     if (!req.user?.id) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
@@ -81,6 +84,12 @@ async function create(req, res) {
       chapterId: value.chapter_id,
       content: value.content,
       rating: value.rating,
+      status: 'pending'
+    });
+
+    await moderationQueue.add('moderate-comment', { 
+      content: value.content, 
+      commentId: comment.id 
     });
 
     // Re-fetch danh sách bình luận của truyện (chỉ lấy 1 bình luận mới nhất)

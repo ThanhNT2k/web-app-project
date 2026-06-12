@@ -1,14 +1,32 @@
 const AhoCorasick = require('aho-corasick');
-const BadWord = require('../models/BadWord');
+// Import BadWord từ file model của bạn
+const BadWord = require('../models/BadWord'); 
 
 let acAutomaton;
 
-// Load từ khóa từ DB khi server bắt đầu chạy (gọi ở server.js)
 async function loadModerationData() {
-    const badWords = await BadWord.find({ isWhitelist: false });
-    const keywords = badWords.map(bw => bw.keyword);
-    acAutomaton = new AhoCorasick(keywords);
+    try {
+        // Vì bạn dùng SQL/Sequelize, không có hàm .find() với điều kiện object kiểu này.
+        // Nếu bạn dùng Sequelize:
+        const badWords = await BadWord.findAll({
+            where: { isWhitelist: false } 
+        });
+
+        // Nếu bạn dùng SQL thuần (pool.query):
+        // const { rows: badWords } = await pool.query('SELECT * FROM bad_words WHERE "isWhitelist" = false');
+
+        const keywords = badWords.map(bw => bw.keyword);
+        acAutomaton = new AhoCorasick(keywords);
+        
+        console.log("[Moderation] Loaded", keywords.length, "bad words.");
+    } catch (error) {
+        console.error("Lỗi khi tải dữ liệu kiểm duyệt:", error);
+        // Tránh làm crash server nếu không tải được, acAutomaton sẽ bị undefined
+        // hoặc bạn có thể khởi tạo rỗng:
+        acAutomaton = new AhoCorasick([]); 
+    }
 }
+
 
 // Logic kiểm duyệt nội dung
 const moderateContent = (text) => {

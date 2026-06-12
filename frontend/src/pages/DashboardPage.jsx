@@ -175,23 +175,19 @@ function DashboardPage() {
     const { story, chapter } = chapterModal;
     try {
       if (chapter) {
-        // Edit existing
         await API.chapters.update(story.id, chapter.id, {
           title: chapterForm.title,
           content: chapterForm.content,
         });
         showMessage('Đã cập nhật chương');
       } else {
-        // Create new
         await API.chapters.create(story.id, chapterForm);
         showMessage('Đã thêm chương');
         loadStories();
       }
       setChapterModal(null);
-      // Refresh the chapter list if it's currently expanded
-      if (expandedStory === story.id) {
-        loadChaptersForStory(story.id);
-      }
+      // LUÔN LUÔN load lại danh sách chương dù là sửa hay thêm
+      loadChaptersForStory(story.id); 
     } catch (err) {
       showMessage(err?.response?.data?.message || 'Thao tác chương thất bại');
     }

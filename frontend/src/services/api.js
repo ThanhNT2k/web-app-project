@@ -237,6 +237,13 @@ const API = {
     getStories: (page = 1) => request('/admin/stories', { method: 'GET', params: { page, limit: 50 } }),
     getReports: (status = 'ALL', page = 1) => 
       request('/reports', { method: 'GET', params: { status, page, limit: 50 } }),
+    
+  },
+  // ── Quản trị từ khóa (Admin only) ──────────────────────────────────────────
+  badWords: {
+    getAll: () => request('/admin/bad-words', { method: 'GET' }),
+    create: (data) => request('/admin/bad-words', { method: 'POST', data }),
+    delete: (id) => request(`/admin/bad-words/${id}`, { method: 'DELETE' }),
   },
 };
 

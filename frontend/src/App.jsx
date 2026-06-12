@@ -11,6 +11,7 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminStoriesPage from './pages/AdminStoriesPage';
 import AdminReportsPage from './pages/AdminReportsPage';
+import ManageBadWords from './pages/admin/ManageBadWords';
 
 import HomePage from './pages/HomePage';
 import FindStoriesPage from './pages/FindStoriesPage';
@@ -100,6 +101,7 @@ function App() {
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin/stories" element={<AdminStoriesPage />} />
               <Route path="/admin/reports" element={<AdminReportsPage />} />
+              <Route path="/admin/bad-words" element={<ManageBadWords />} />
             </Route>
             <Route
               element={

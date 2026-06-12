@@ -13,7 +13,7 @@ function AdminLayout() {
 
   return (
     <div className="admin-layout">
-      {/* Thêm display flex và flex-direction column để đẩy nút đăng xuất xuống đáy */}
+      {/* Sidebar */}
       <aside className="admin-sidebar" style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100vh' }}>
         <div className="admin-logo">
           <h2>CMC Admin</h2>
@@ -47,24 +47,36 @@ function AdminLayout() {
           >
             📚 Quản lý truyện
           </NavLink>
+
           <NavLink
             to="/admin/reports"
-            className={({ isActive }) => isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            className={({ isActive }) => 
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
             🚩 Quản lý báo cáo
           </NavLink>
+
+          {/* Mục Quản lý từ khóa */}
+          <NavLink
+            to="/admin/bad-words"
+            className={({ isActive }) => 
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
+            🚫 Quản lý từ khóa
+          </NavLink>
         </nav>
 
-        {/* Nút Đăng xuất được đẩy xuống dưới cùng nhờ margin-top: auto */}
+        {/* Nút Đăng xuất được đẩy xuống dưới cùng */}
         <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px' }}>
           <button
             onClick={handleLogout}
             style={{
               width: '100%',
               padding: '12px 16px',
-              background: 'rgba(239, 68, 68, 0.1)', // Màu nền đỏ nhạt
-              color: '#ef4444', // Chữ màu đỏ
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
@@ -83,6 +95,7 @@ function AdminLayout() {
         </div>
       </aside>
 
+      {/* Main Content */}
       <main className="admin-content">
         <Outlet />
       </main>

@@ -7,6 +7,7 @@ const AISummary = require('./AISummary');
 const Comment = require('./Comment');
 const UserFollow = require('./UserFollow');
 const UserPreference = require('./UserPreference');
+const BadWord = require('./BadWord');
 
 module.exports = {
   db,
@@ -18,4 +19,5 @@ module.exports = {
   Comment,
   UserFollow,
   UserPreference,
+  BadWord
 };
