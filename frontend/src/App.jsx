@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
-
+import ModeratorLayout from './layouts/ModeratorLayout';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LegacyRedirect from './components/LegacyRedirect';
@@ -89,7 +89,6 @@ function App() {
             </Route>
 
             {/* ADMIN LAYOUT RIÊNG */}
-
             <Route
               element={
                 <RoleProtectedRoute allowedRoles={['Admin']}>
@@ -103,14 +102,19 @@ function App() {
               <Route path="/admin/reports" element={<AdminReportsPage />} />
               <Route path="/admin/bad-words" element={<ManageBadWords />} />
             </Route>
+
+            {/* MODERATOR LAYOUT RIÊNG */}
             <Route
               element={
-                <RoleProtectedRoute allowedRoles={['Admin']}>
-                  <AdminLayout />
+                <RoleProtectedRoute allowedRoles={['Moderator', 'Admin']}>
+                  <ModeratorLayout />
                 </RoleProtectedRoute>
               }
             >
-              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/moderator/dashboard" element={<div className="p-4">Trang Tổng quan Mod (Sẽ làm sau)</div>} />
+              <Route path="/moderator/pending-stories" element={<div className="p-4">Trang Duyệt truyện (Sẽ làm sau)</div>} />
+              <Route path="/moderator/reports" element={<div className="p-4">Trang Xử lý Report (Sẽ làm sau)</div>} />
+              <Route path="/moderator/comments" element={<div className="p-4">Trang Quản lý Bình luận (Sẽ làm sau)</div>} />
             </Route>
 
             <Route path="/home" element={<Navigate to="/" replace />} />
