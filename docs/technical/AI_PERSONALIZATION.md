@@ -1,97 +1,73 @@
-# Hệ Thống Cá Nhân Hóa AI & Telemetry - CMC Truyện (AI_PERSONALIZATION.md)
-
-Tài liệu này đặc tả chi tiết kiến trúc, cơ chế thu thập dữ liệu hành vi người dùng (Telemetry) và giải pháp tích hợp AI Gemini trong CMC Truyện.
+# Hệ Thống Cá Nhân Hóa AI & Telemetry — CMC Truyện (AI_PERSONALIZATION.md)
 
 ---
 
 ## 🧠 1. Kiến Trúc AI Engine
 
-Hệ thống tận dụng **Vercel AI SDK** kết hợp trực tiếp với **Google Gemini API** tại phía Backend để xử lý dữ liệu và ép dữ liệu đầu ra theo cấu trúc chuẩn (Structured Outputs).
+Hệ thống CMC Truyện tích hợp AI để giải quyết hai nhu cầu chính: **Tóm tắt chương** và **Gợi ý truyện cá nhân hóa**.
 
-*   **Core Model:** `gemini-1.5-flash` (tối ưu hóa về tốc độ phản hồi, chi phí API thấp và hỗ trợ ngữ cảnh rộng).
-*   **SDK tích hợp:** `@ai-sdk/google` dùng hàm `generateObject` để ép dữ liệu trả về kiểu JSON type-safe mà không cần parse thủ công.
-
----
-
-## 📊 2. Luồng Khai Thác Dữ Liệu Hành Vi (Telemetry Flow)
-
-Hệ thống ngầm ghi nhận hoạt động đọc truyện của người dùng (chỉ áp dụng đối với nhóm tài khoản có quyền `User` và `Uploader`) thông qua các Client-side Triggers để cập nhật cơ sở dữ liệu `reading_history`:
-
-### A. Tương tác chủ động (Explicit Signals)
-*   **Hành động:** Người dùng bấm "Theo dõi" (Follow) bộ truyện.
-*   **Xử lý:** Hệ thống tự động phân tách danh sách các thể loại (`categories`) từ các bộ truyện đã theo dõi để tạo hồ sơ sở thích thô của người dùng.
-
-### B. Hành vi ngầm (Implicit Signals)
-Hệ thống sử dụng các phép đo sâu để đánh giá mức độ yêu thích thực sự của người dùng:
-1.  **Dwell Time (Thời gian ở lại trang đọc):**
-    *   Client-side trên giao diện đọc (`Chapter Page`) gửi tín hiệu Heartbeat (định kỳ mỗi 30 giây) về API để tính thời gian thực tế user đọc chương truyện.
-    *   *Loại trừ treo máy:* Nếu không có hành vi cuộn trang hoặc tương tác chuột quá 2 phút, Client-side tự động dừng gửi Heartbeat để tránh sai số Dwell Time.
-2.  **Tần suất mở truyện (Access Frequency):**
-    *   Đếm số lần người dùng truy cập vào một bộ truyện trong tuần hoặc tháng.
-3.  **Tỷ lệ hoàn thành (Completion Rate):**
-    *   Được tính theo công thức:
-        $$\text{Completion Rate} = \frac{\text{Số chương đã đọc}}{\text{Tổng số chương hiện có}}$$
-    *   Nếu tỷ lệ hoàn thành thấp và thời gian cập nhật lần cuối đã quá lâu, hệ thống sẽ đánh dấu bộ truyện này có nguy cơ cao bị người dùng bỏ dở ("Drop").
+*   **Groq API (Ưu tiên chính):** Sử dụng mô hình `llama-3.1-8b-instant` nhờ tốc độ phản hồi cực nhanh (<2 giây) và độ chính xác cao đối với việc xử lý cấu trúc dữ liệu JSON.
+*   **Google Gemini API (Dự phòng):** Sử dụng mô hình `gemini-1.5-flash` làm phương án dự phòng khi Groq gặp lỗi hoặc hết hạn mức (rate limit).
+*   **Tích hợp:** Cả hai dịch vụ đều được gọi trực tiếp bằng các yêu cầu HTTP qua **Axios** từ phía Backend thay vì sử dụng SDK nặng nề.
 
 ---
 
-## 🤖 3. Gọi Gemini API & Cấu Trúc Đề Xuất
+## 📊 2. Cơ Chế Thu Thập Dữ Liệu Hành Vi (Telemetry)
 
-Khi người dùng truy cập trang chủ hoặc mục gợi ý, API `/api/recommendations/personalized` được kích hoạt:
+Dữ liệu hành vi đọc của tài khoản `User` được ngầm ghi nhận thông qua các tín hiệu từ Client để phục vụ cho thuật toán gợi ý:
 
-```
-[Telemetry DB] ──> [Gộp dữ liệu người dùng & danh sách truyện] ──> [Gọi Gemini (Structured Output)] ──> [Hiển thị React UI]
-```
+1.  **Dwell Time (Thời gian đọc thực tế):**
+    *   Trang đọc chương truyện (`ChapterReaderPage.jsx`) gửi tín hiệu Heartbeat định kỳ mỗi **30 giây** về endpoint `/api/reading-history` để tích lũy tổng thời gian đọc (`total_read_time`).
+    *   *Chặn treo máy:* Nếu người dùng không cuộn trang hoặc không di chuyển chuột quá 2 phút, client sẽ tạm dừng gửi Heartbeat.
+2.  **Tỷ lệ hoàn thành (Completion Rate):**
+    *   Công thức: $\text{Completion Rate} = \text{Số chương đã đọc} / \text{Tổng số chương của bộ truyện}$.
+3.  **Tín hiệu chủ động (Explicit Signals):**
+    *   Hành động nhấn theo dõi truyện (`user_follows`) thể hiện rõ nhất gu đọc của người dùng.
 
-### A. Định nghĩa Prompt nội bộ
-Hệ thống gộp lịch sử đọc và danh sách truyện khả dụng thành ngữ cảnh gửi cho Gemini:
+---
 
-```text
-Bạn là một chuyên gia gợi ý truyện online. Dựa trên lịch sử đọc của người dùng dưới đây:
-${JSON.stringify(userHistory)}
+## 🤖 3. Quy Trình Gọi AI & Phân Tích Đề Xuất
 
-Và danh sách các truyện hot/mới hiện có trong hệ thống:
-${JSON.stringify(availableStories)}
+Khi người dùng kích hoạt API gợi ý `/api/ai/recommendations`:
+1.  Backend truy vấn thông tin lịch sử đọc và các thể loại quan tâm của người dùng.
+2.  Gộp dữ liệu thành prompt gửi đến AI yêu cầu phân tích gu đọc và đề xuất danh sách ID truyện dạng JSON Array.
+3.  Sử dụng biểu thức chính quy (Regex) để trích xuất mảng JSON ID truyện và trả về kết quả cho Client.
 
-Hãy phân tích gu đọc truyện của người dùng (xu hướng thể loại, độ dài ưa thích, tác giả). Sau đó, hãy chọn ra tối đa 5 bộ truyện phù hợp nhất từ danh sách truyện hiện có. Trả về kết quả theo cấu trúc JSON được yêu cầu, bao gồm lý do gợi ý ngắn gọn cho từng bộ truyện.
-```
+### Minh Họa Code Xử Lý Gọi AI & Trích Xuất (Rút gọn từ `aiService.js`)
+```javascript
+// backend/src/services/aiService.js (tóm tắt)
+async function callAI(prompt) {
+  if (env.GROQ_API_KEY) {
+    const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3
+    }, { headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` } });
+    return response.data?.choices?.[0]?.message?.content;
+  }
+  // Fallback sang Gemini
+  if (env.GEMINI_API_KEY) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+    const response = await axios.post(url, {
+      contents: [{ parts: [{ text: prompt }] }]
+    }, { params: { key: env.GEMINI_API_KEY } });
+    return response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  }
+}
 
-### B. Bắt buộc định dạng dữ liệu (Structured Outputs via Zod Schema)
-Chúng ta định nghĩa cấu trúc dữ liệu mong muốn bằng thư viện `zod` để ép Gemini API chỉ trả về dữ liệu tương thích hoàn hảo với TypeScript/JavaScript:
-
-```typescript
-import { google } from '@ai-sdk/google';
-import { generateObject } from 'ai';
-import { z } from 'zod';
-
-export async function getAIPersonalization(userId: string) {
-  // 1. Thu thập Telemetry của User
-  const contextData = await fetchUserTelemetry(userId);
-  const availableStories = await getActiveStoriesList();
-  
-  // 2. Gọi Gemini API qua Vercel AI SDK
-  const { object } = await generateObject({
-    model: google('models/gemini-1.5-flash'),
-    schema: z.object({
-      recommendedStories: z.array(z.object({
-        storyId: z.string().describe('ID của truyện được gợi ý'),
-        reason: z.string().describe('Lý do gợi ý ngắn gọn bằng tiếng Việt hiển thị cho user'),
-        matchScore: z.number().min(0).max(100).describe('Độ tương thích tính theo %')
-      })),
-      userPersonaAnalysis: z.string().describe('Phân tích ngắn gọn về gu đọc của người dùng bằng tiếng Việt')
-    }),
-    prompt: `Dữ liệu lịch sử: ${JSON.stringify(contextData)}. Truyện khả dụng: ${JSON.stringify(availableStories)}`,
-  });
-
-  return object;
+async function generatePersonalRecommendations(userReadingHistory) {
+  const prompt = `Dựa trên lịch sử đọc này, hãy trả về CHÍNH XÁC 5 số nguyên là ID truyện được đề xuất (chỉ trả về JSON array, ví dụ [1,2,3,4,5]): \n${JSON.stringify(userReadingHistory)}`;
+  const text = await callAI(prompt);
+  const match = text.match(/\[[\d,\s]+\]/); // Trích xuất mảng JSON ID truyện bằng Regex
+  return match ? JSON.parse(match[0]) : [];
 }
 ```
 
 ---
 
-## 💾 4. Tối Ưu Chi Phí & Caching (Cost Optimization)
+## 💾 4. Tối Ưu Hóa Bộ Nhớ & Caching
 
-Để kiểm soát hóa đơn sử dụng API và tránh quá tải rate-limit của Google Gemini API:
-1.  **AI Summary Caching:** Bản tóm tắt chương sau khi được tạo ra lần đầu sẽ được lưu trữ vào bảng `ai_summaries` trong cơ sở dữ liệu. Mọi lượt truy cập sau đó của tất cả người đọc vào chương đó sẽ lấy trực tiếp bản tóm tắt từ database mà không cần gọi lại Gemini API.
-2.  **Giới hạn quyền truy cập:** Khách vãng lai (`Guest`) sẽ không kích hoạt luồng Telemetry cũng như gợi ý cá nhân hóa nhằm tiết kiệm tài nguyên API.
-3.  **Tần suất chạy ngầm:** Bản phân tích xu hướng đọc chỉ chạy khi người dùng có lịch sử đọc mới hoặc sau mỗi 24 giờ kể từ phiên cập nhật cuối cùng, kết quả phân tích được lưu trữ tạm thời trong session.
+Nhằm tiết kiệm số lượt gọi API (giảm chi phí và tránh lỗi Rate Limit):
+1.  **RAM Cache (In-memory Cache):** Sử dụng `Map` lưu trữ tạm thời các bản tóm tắt chương hoặc kết quả gợi ý trong RAM với thời gian sống (TTL) mặc định là **1 giờ**.
+2.  **Database Cache (Bảng `ai_summaries`):** Các bản tóm tắt chương (`ai_summaries`) sau khi sinh ra lần đầu tiên sẽ được ghi trực tiếp vào PostgreSQL. Các người đọc sau khi mở chương này sẽ lấy trực tiếp từ database mà không cần kích hoạt gọi AI.
+3.  **Hạn chế đối tượng:** Tính năng gợi ý cá nhân hóa không áp dụng cho khách vãng lai (`Guest`).

@@ -10,6 +10,22 @@ Tất cả thay đổi đáng kể của dự án **CMC Truyện** được ghi 
 
 ---
 
+## [1.2.0] — 2026-06-15
+
+### 📝 Documentation — Đồng bộ hóa tài liệu với mã nguồn dự án hiện tại
+
+**Người thực hiện:** AI Technical Mentor (Antigravity)
+**Phạm vi:** Toàn bộ tài liệu dự án (`README.md`, `REQUIREMENTS.md`, `ARCHITECTURE.md`, `CODEBASE_OVERVIEW.md`, `API_REFERENCE.md`, `AI_PERSONALIZATION.md`, `UX_PROTOTYPE.md`, `AI_FEATURE_PROPOSAL.md`, `PRODUCT_ANALYSIS.md`)
+
+*   **Tối ưu hóa nội dung:** Tinh chỉnh, cô đọng nội dung, chỉ tập trung vào các chi tiết kỹ thuật và nghiệp vụ quan trọng, tránh dài dòng.
+*   **Cập nhật vai trò:** Cập nhật quyền hạn và phạm vi của vai trò `Moderator` mới (duyệt báo cáo vi phạm, quản lý bình luận).
+*   **Cập nhật database schema:** Sửa tài liệu kiến trúc từ 8 bảng lên 11 bảng thực tế (thêm `reports`, `tags`, `story_tags`, `bad_words`).
+*   **Cập nhật đặc tả API:** Bổ sung hơn 22 endpoint API mới liên quan đến thống kê hệ thống, quản lý từ khóa cấm, xử lý báo cáo, theo dõi, tags, và SEO slug cho truyện/chương.
+*   **Sửa lỗi Tech Stack:** Loại bỏ các thông tin lỗi thời (Razor Pages, ASP.NET Core, Vercel AI SDK) và thay thế bằng stack thực tế (Vite + React 18, Node.js + Express, direct Axios to Groq/Gemini, BullMQ + Redis).
+*   **Cập nhật trạng thái dự án:** Đưa các mục backlog và MVP ban đầu về trạng thái Completed và In Progress thực tế của dự án.
+
+---
+
 ## [1.1.0] — 2026-06-03
 
 ### 📝 Documentation — Thêm comment kỹ thuật toàn bộ codebase

@@ -26,38 +26,38 @@ Tầm nhìn của sản phẩm là trở thành nền tảng đọc truyện tr�
 
 ### 👤 Persona 1 – Độc giả (Reader)
 *   **Họ tên:** Nguyễn Hải Dương
-*   **Tuổi:** 45
-*   **Nghề nghiệp:** Sinh viên Đại học (Học viên hệ vừa học vừa làm)
-*   **Trình độ công nghệ:** Trung bình – Khá
+*   **Tuổi:** 21
+*   **Nghề nghiệp:** Sinh viên Đại học Công nghệ
+*   **Trình độ công nghệ:** Tốt (Thường xuyên sử dụng smartphone và laptop)
 *   **Mục tiêu:**
     *   Tìm kiếm truyện nhanh chóng.
-    *   Đọc truyện trực tuyến trên nhiều thiết bị (điện thoại, máy tính bảng, PC).
-    *   Theo dõi các bộ truyện yêu thích.
-    *   Lưu lại tiến độ đọc tự động.
+    *   Đọc truyện trực tuyến mượt mà trên di động vào ban đêm.
+    *   Theo dõi và nhận thông báo khi có chương mới của các bộ truyện yêu thích.
+    *   Lưu lại vị trí đọc tự động để đọc tiếp trên nhiều thiết bị.
 *   **Nhu cầu:**
-    *   Giao diện đơn giản, trực quan, hỗ trợ Dark Mode giảm mỏi mắt.
-    *   Tốc độ tải trang nhanh và mượt mà.
-    *   Có chức năng tìm kiếm và bộ lọc truyện thông minh.
+    *   Giao diện đọc tối giản, hỗ trợ Dark Mode chống mỏi mắt và chỉnh được cỡ chữ lớn.
+    *   Tốc độ tải chương cực nhanh.
+    *   Không có quảng cáo rác chặn màn hình gây ức chế.
 *   **Khó khăn hiện tại:**
-    *   Khó nhớ đang đọc đến chương nào khi truy cập lại.
-    *   Khó theo dõi nhiều bộ truyện cùng lúc trên các trang web khác nhau.
-    *   Các website đọc truyện hiện tại quá nhiều quảng cáo rác, pop-up tự bật làm gián đoạn đọc.
+    *   Các trang đọc truyện hiện tại quá nhiều quảng cáo pop-up rác dễ click nhầm.
+    *   Xóa cache trình duyệt hoặc đổi thiết bị là mất dấu chương đang đọc dở.
 
-### 👤 Persona 2 – Quản trị viên (Administrator)
+### 👤 Persona 2 – Quản trị viên & Kiểm duyệt (Admin/Moderator/Uploader)
 *   **Họ tên:** Nguyễn Tuấn Thành
-*   **Tuổi:** 50
-*   **Vai trò:** Quản trị nội dung & Người đăng truyện (Uploader)
+*   **Tuổi:** 26
+*   **Vai trò:** Quản trị viên cộng đồng & Dịch giả tự do (Uploader)
+*   **Trình độ công nghệ:** Rất tốt (Thành thạo công cụ quản trị web)
 *   **Mục tiêu:**
-    *   Quản lý thông tin và dữ liệu các bộ truyện trên hệ thống.
-    *   Theo dõi hoạt động bình luận, tương tác của người dùng.
-    *   Cập nhật nhanh chóng nội dung chương mới.
+    *   Đăng tải và cập nhật chương mới nhanh chóng hàng ngày.
+    *   Quản lý danh sách truyện và phân loại tags chính xác.
+    *   Theo dõi báo cáo vi phạm nội dung và lọc bỏ bình luận thô tục của độc giả.
 *   **Nhu cầu:**
-    *   Giao diện dashboard quản trị đơn giản, dễ thao tác.
-    *   Dễ dàng Thêm, Sửa, Xóa thông tin truyện và chương truyện.
-    *   Theo dõi thống kê tổng quan (số lượt đọc, truyện hot, người dùng hoạt động).
+    *   Dashboard quản trị hiển thị số liệu trực quan (truyện nổi bật, lượt đọc).
+    *   Hệ thống kiểm duyệt tự động để giảm bớt công sức rà soát thủ công bình luận rác.
+    *   Khả năng khóa nhanh tài khoản spam và ẩn truyện vi phạm chính sách tuyệt đối.
 *   **Khó khăn hiện tại:**
-    *   Quản lý dữ liệu thủ công mất nhiều thời gian.
-    *   Khó kiểm soát lượng nội dung chương truyện khổng lồ.
+    *   Số lượng bình luận và chương truyện quá lớn, không thể rà soát thủ công từng từ.
+    *   Giao diện uploader ở các trang cũ quá phức tạp và chậm chạm.
 
 ---
 
@@ -138,31 +138,38 @@ Truy cập website ──> Tìm kiếm truyện ──> Xem thông tin truyện 
 | **US06** | Là một thành viên đã đăng ký, tôi muốn lưu lại lịch sử đọc truyện, để có thể đọc tiếp từ vị trí tạm dừng trước đó. | Epic 4 |
 | **US07** | Là một uploader/admin, tôi muốn đăng tải truyện mới, để độc giả có thể tiếp cận nội dung mới. | Epic 6 |
 | **US08** | Là một admin, tôi muốn xóa truyện, để loại bỏ các nội dung không phù hợp hoặc vi phạm chính sách. | Epic 6 |
-| **US09** | Là một admin, tôi muốn quản lý người dùng, để đảm bảo hệ thống an toàn và có tổ chức tốt. | Epic 7 |
-| **US10** | Là một admin, tôi muốn xem thống kê hệ thống, để theo dõi hiệu suất và tăng trưởng của nền tảng. | Epic 8 |
+| **US09** | Là một admin, tôi muốn quản lý người dùng (khoá/phân quyền), để đảm bảo hệ thống an toàn. | Epic 7 |
+| **US10** | Là một admin, tôi muốn xem thống kê hệ thống, để theo dõi hiệu suất. | Epic 8 |
+| **US11** | Là một độc giả, tôi muốn báo cáo vi phạm chương truyện, để hệ thống luôn sạch và lành mạnh. | Epic 4 |
+| **US12** | Là một admin/moderator, tôi muốn tự động lọc bình luận nhạy cảm, để giảm công sức kiểm duyệt. | Epic 7 |
+| **US13** | Là một moderator, tôi muốn xem và xử lý báo cáo vi phạm, để quản lý nội dung nhanh chóng. | Epic 7 |
+| **US14** | Là một độc giả, tôi muốn tóm tắt chương truyện bằng AI, để nhanh chóng nắm bắt diễn biến chính. | Epic 3 |
+| **US15** | Là một độc giả, tôi muốn nhận gợi ý truyện cá nhân hóa từ AI, để khám phá thêm các truyện phù hợp. | Epic 2 |
 
 ---
 
-## 📋 7. Product Backlog (Trạng thái Tuần 3)
+## 📋 7. Product Backlog (Trạng thái Hiện tại)
 
-Dưới đây là bảng trạng thái danh sách công việc ưu tiên thực hiện tại thời điểm Tuần 3:
+Dưới đây là bảng trạng thái danh sách công việc ưu tiên thực hiện tại thời điểm hiện tại:
 
-| ID | User Story | Phase / Group | Priority | Status |
+| ID | User Story / Feature | Phase / Group | Priority | Status |
 |---|---|---|---|---|
-| **PB01** | View Story Details | Core (Xương sống) | **HIGH** | ☑ In Progress |
-| **PB02** | Read Chapters | Core (Xương sống) | **HIGH** | ☑ In Progress |
-| **PB03** | Add Story (admin) | Core (Xương sống) | **HIGH** | ☑ In Progress |
-| **PB04** | Manage Stories | Core (Xương sống) | **HIGH** | ☑ In Progress |
-| **PB05** | Admin Dashboard (basic) | Core (Xương sống) | **HIGH** | ☑ In Progress |
-| **PB06** | Search Stories | Expansion (Mở rộng) | **HIGH** | ☑ In Progress |
-| **PB07** | User Registration | Expansion (Mở rộng) | **HIGH** | ☑ In Progress |
-| **PB08** | User Login | Expansion (Mở rộng) | **HIGH** | ☑ In Progress |
-| **PB09** | Favorite Stories | Engagement (Giữ chân) | **MEDIUM** | ☐ Pending |
-| **PB10** | Reading History | Engagement (Giữ chân) | **MEDIUM** | ☐ Pending |
-| **PB11** | User Profile | Engagement (Giữ chân) | **MEDIUM** | ☐ Pending |
-| **PB12** | Summarize story | Advanced (AI) | **MEDIUM** | ☐ Pending |
-| **PB13** | Recommend story | Advanced (AI) | **MEDIUM** | ☐ Pending |
-| **PB14** | Comments | Low / Optional | **LOW** | ☐ Pending |
-| **PB15** | Manage Users | Low / Optional | **LOW** | ☐ Pending |
-| **PB16** | Delete Story | Low / Optional | **LOW** | ☐ Pending |
-| **PB17** | Reports & Analytics | Low / Optional | **LOW** | ☐ Pending |
+| **PB01** | View Story Details | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB02** | Read Chapters | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB03** | Add Story (uploader/admin) | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB04** | Manage Stories | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB05** | Admin Dashboard (basic) | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB06** | Search Stories | Expansion (Mở rộng) | **HIGH** | ☑ Completed |
+| **PB07** | User Registration | Expansion (Mở rộng) | **HIGH** | ☑ Completed |
+| **PB08** | User Login | Expansion (Mở rộng) | **HIGH** | ☑ Completed |
+| **PB09** | Favorite Stories | Engagement (Giữ chân) | **MEDIUM** | ☑ Completed |
+| **PB10** | Reading History | Engagement (Giữ chân) | **MEDIUM** | ☑ Completed |
+| **PB11** | User Profile | Engagement (Giữ chân) | **MEDIUM** | ☑ Completed |
+| **PB12** | Summarize story (AI) | Advanced (AI) | **MEDIUM** | ☑ Completed |
+| **PB13** | Recommend story (AI) | Advanced (AI) | **MEDIUM** | ☑ Completed |
+| **PB14** | Comments | Low / Optional | **LOW** | ☑ Completed |
+| **PB15** | Manage Users (Lock/Role) | Low / Optional | **LOW** | ☑ Completed |
+| **PB16** | Delete Story (Soft delete) | Low / Optional | **LOW** | ☑ Completed |
+| **PB17** | Reports & Analytics | Low / Optional | **LOW** | ⚠️ In Progress |
+| **PB18** | Auto Content Moderation (BullMQ/Redis) | Advanced / Safety | **HIGH** | ⚠️ In Progress |
+| **PB19** | Violation Reporting (Giao diện Admin & Mod) | Low / Optional | **MEDIUM** | ⚠️ In Progress |

@@ -104,14 +104,14 @@ A: MVP của chúng tôi tập trung vào 3 tính năng cốt lõi vì chúng tr
 
 A: **Hoàn toàn có giá trị.** Core value của CMC Truyện là *trải nghiệm đọc sạch và không làm phiền*. Một người dùng vào đọc truyện không bị quảng cáo cắt ngang, có thể chỉnh font/màu nền, và quay lại tìm thấy đúng chương đang dở — đó đã là sản phẩm hoàn chỉnh giải quyết được nhu cầu thực tế. AI chỉ là lớp enhancement thêm vào sau.
 
-### 4.2 Những thứ bị cắt khỏi MVP và lý do
+### 4.2 Những thứ bị cắt khỏi MVP ban đầu và trạng thái hiện tại
 
-| Tính năng bị cắt | Lý do |
-|-----------------|-------|
-| AI gợi ý truyện | Cần dữ liệu lịch sử đủ lớn → chưa có trong giai đoạn đầu |
-| Tải offline | Kỹ thuật phức tạp (Service Worker, IndexedDB) → không phải pain point cấp bách |
-| Hệ thống bình luận | Cần moderation team → ngoài khả năng nhóm 3-4 người |
-| Tìm kiếm nâng cao | Nice-to-have, search cơ bản đủ dùng cho MVP |
+| Tính năng bị cắt khỏi MVP ban đầu | Lý do ban đầu | Trạng thái dự án hiện tại |
+|-----------------|-------|---|
+| **AI gợi ý truyện** | Cần dữ liệu lịch sử đủ lớn → chưa có trong giai đoạn đầu | **Đã hoàn thành** (sử dụng telemetry thu thập dwell time và lịch sử để gợi ý qua API AI) |
+| **Hệ thống bình luận** | Cần moderation team → ngoài khả năng nhóm | **Đã hoàn thành** (kèm kiểm duyệt từ khóa tự động qua BullMQ/Redis + vai trò Moderator) |
+| **Tìm kiếm nâng cao** | Nice-to-have, search cơ bản đủ dùng | **Đã hoàn thành** (lọc nâng cao theo thể loại, tag và từ khóa cùng lúc) |
+| **Tải offline** | Kỹ thuật phức tạp (Service Worker, IndexedDB) | **Đã hủy** (không cấp bách cho trải nghiệm đọc trực tuyến sạch) |
 
 ---
 
