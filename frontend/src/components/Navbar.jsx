@@ -48,21 +48,12 @@ function Navbar() {
               <span className="nav-text">Tìm truyện</span>
             </Link>
 
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <Link to="/profile" className="cmc-nav-link">
                 <span className="nav-icon">📚</span>
                 <span className="nav-text">Tủ sách</span>
-              </Link> 
-            ) : (
-              <button
-                type="button"
-                className="cmc-nav-link"
-                onClick={() => setAuthOpen(true)}
-              >
-                <span className="nav-icon">👤</span>
-                <span className="nav-text">Đăng nhập</span>
-              </button>
-                          )}  
+              </Link>
+            )}
           </nav>
 
           <div className="cmc-nav-actions" style={{ position: 'relative' }}>
