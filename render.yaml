@@ -31,7 +31,7 @@ services:
       - key: REDIS_PORT
         value: "6379"
       - key: DATABASE_URL
-        fromDatabase: cmc-truyen-db
+        fromDatabase: ${cmc-truyen-db.connectionString}
       - key: JWT_SECRET
         value: ""
 
