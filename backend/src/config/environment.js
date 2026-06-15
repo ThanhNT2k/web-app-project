@@ -44,6 +44,11 @@ const env = {
   // Frontend - URL của ứng dụng React (dùng để cấu hình whitelist CORS)
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
 
+  // Redis / BullMQ
+  REDIS_HOST: process.env.REDIS_HOST || '127.0.0.1',
+  REDIS_PORT: parseInt(process.env.REDIS_PORT, 10) || 6379,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
+
   // Các helper boolean để kiểm tra môi trường nhanh trong code
   // isDevelopment: true khi chạy local (npm run dev)
   // isProduction: true khi deploy lên server thật

@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: cmc-truyen-backend
+    env: node
+    plan: free
+    branch: main
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && npm start"
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: DATABASE_URL
+        fromDatabase: cmc-truyen-db
+      - key: REDIS_HOST
+        value: "cmc-truyen-redis"
+      - key: REDIS_PORT
+        value: "6379"
+      - key: JWT_SECRET
+        value: "" 
+
+  - type: worker
+    name: cmc-truyen-moderation-worker
+    env: node
+    plan: free
+    branch: main
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && node src/startWorker.js"
+    envVars:
+      - key: REDIS_HOST
+        value: "cmc-truyen-redis"
+      - key: REDIS_PORT
+        value: "6379"
+      - key: DATABASE_URL
+        fromDatabase: cmc-truyen-db
+      - key: JWT_SECRET
+        value: ""
+
+  - type: redis
+    name: cmc-truyen-redis
+    plan: free
+    env: redis
+    version: "7"
+
+databases:
+  - name: cmc-truyen-db
+    engine: postgresql
+    plan: free
+    region: oregon
