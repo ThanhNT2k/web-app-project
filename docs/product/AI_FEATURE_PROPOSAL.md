@@ -96,19 +96,19 @@ Sau trận chiến kéo dài, anh phát hiện bí mật về nguồn gốc củ
 ## 6. Tech Stack
 
 ```
-Frontend:   Razor Pages / HTML + JavaScript
-           → Button "Tóm tắt" trên Chapter Reader
+Frontend:   Vite + React 18
+            → Nút "Tóm tắt" trên Chapter Reader
 
-Backend:   ASP.NET Core MVC
-           → POST /api/chapters/{chapterId}/summary
-           → Cache check → Gemini API call → return text
+Backend:    Node.js + Express
+            → GET /api/chapters/:id/summary
+            → Kiểm tra cache (RAM & DB) -> gọi AI API nếu trống -> trả về kết quả
 
-AI Model:  Gemini 1.5 Flash
-           - Rẻ (~$0.075 per 1M input tokens)
-           - Nhanh (<2 giây)
+AI Model:   Llama 3.1 8B qua Groq API (Ưu tiên) / Gemini 1.5 Flash (Dự phòng)
+            - Tốc độ phản hồi nhanh (<2 giây)
+            - Tối ưu hóa chi phí API
 
-Cache:     Redis hoặc In-Memory (TTL 7 ngày)
-Database:  PostgreSQL (Chapters table)
+Cache:      In-memory RAM (1 giờ) + Database Cache (Lâu dài)
+Database:   PostgreSQL (Bảng ai_summaries)
 ```
 
 ---

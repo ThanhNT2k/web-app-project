@@ -3,119 +3,79 @@
 ---
 
 ## 👥 THÔNG TIN NHÓM THỰC HIỆN
-
-*   **Nhóm:** Nhóm 3
-*   **Danh sách thành viên:**
-    1.  **Nguyễn Thị Thùy** - BAI252513
-    2.  **Trần Thị Kim Uyên** - BAI250072
-    3.  **Nguyễn Hải Dương** - BAI250020
-    4.  **Nguyễn Tuấn Thành** - BAI252417
-    5.  **Vũ Viết Trí** - BAI250063
+*   **Nhóm:** Nhóm 3 (Nguyễn Thị Thùy, Trần Thị Kim Uyên, Nguyễn Hải Dương, Nguyễn Tuấn Thành, Vũ Viết Trí)
 
 ---
 
 ## 🗺️ 1. Bản Đồ Liên Kết Nghiệp Vụ & Mã Nguồn (Business-to-Code Mapping)
 
-Dưới đây là cách các User Stories (US) được hiện thực hóa trong mã nguồn ở thời điểm Tuần 3 (các tính năng Core & Expansion đang ở trạng thái **In Progress** thông qua giao diện mẫu UX Prototype và cấu trúc Node.js backend ban đầu):
+Dưới đây là sơ đồ liên kết giữa các tính năng nghiệp vụ và các file mã nguồn tương ứng trong hệ thống hiện tại:
 
-### 🔐 Epic 1 & 5: Authentication & User Profile (US03) - *Status: In Progress*
-*   **Frontend UI:**
-    *   Thành phần Modal đăng ký/đăng nhập: [`AuthModal.jsx`](../../frontend/src/components/AuthModal.jsx)
-    *   Trang đăng ký: [`RegisterPage.jsx`](../../frontend/src/pages/RegisterPage.jsx)
-    *   Trang đăng nhập: [`LoginPage.jsx`](../../frontend/src/pages/LoginPage.jsx)
-    *   Quản lý trạng thái đăng nhập toàn cục: [`AuthContext.jsx`](../../frontend/src/contexts/AuthContext.jsx)
-*   **Frontend Services:**
-    *   Dịch vụ xử lý token & gọi API đăng nhập/đăng ký: [`authService.js`](../../frontend/src/services/authService.js)
-*   **Backend Logic:**
-    *   Tuyến đường Auth API: `backend/src/routes/authRoutes.js`
-    *   Xử lý băm mật khẩu & ký token JWT: `backend/src/controllers/authController.js`
-    *   Xác thực quyền qua token: [`authMiddleware.js`](../../backend/src/middleware/authMiddleware.js)
+### 🔐 Epic 1: Authentication & User Profile
+*   **Frontend UI & Context:** [`RegisterPage.jsx`](../../frontend/src/pages/RegisterPage.jsx), [`LoginPage.jsx`](../../frontend/src/pages/LoginPage.jsx), [`AccountPage.jsx`](../../frontend/src/pages/AccountPage.jsx), [`AuthContext.jsx`](../../frontend/src/contexts/AuthContext.jsx).
+*   **Backend Services & Controllers:** `authRoutes.js`, `authController.js`, [`authMiddleware.js`](../../backend/src/middleware/authMiddleware.js), `user.js` model.
+*   **Tính năng bổ sung:** Ràng buộc username duy nhất khi đăng ký, tự động khóa tài khoản (`is_active = false`), tự động đăng xuất tài khoản bị khóa qua response interceptor.
 
-### 🔍 Epic 2: Story Discovery & Search (US01) - *Status: In Progress*
-*   **Frontend UI:**
-    *   Thanh tìm kiếm trên thanh điều hướng: [`Navbar.jsx`](../../frontend/src/components/Navbar.jsx)
-    *   Trang tìm kiếm truyện: [`FindStoriesPage.jsx`](../../frontend/src/pages/FindStoriesPage.jsx)
-*   **Backend Logic:**
-    *   API tìm kiếm truyện (`GET /api/stories/search`): Được định nghĩa trong `backend/src/routes/storyRoutes.js` và xử lý trong `backend/src/controllers/storyController.js`.
-    *   Query tìm kiếm SQL full-text: Được cài đặt trong hàm `search` của model [`Story.js`](../../backend/src/models/Story.js).
+### 🔍 Epic 2: Story Discovery & Search
+*   **Frontend UI:** [`Navbar.jsx`](../../frontend/src/components/Navbar.jsx), [`FindStoriesPage.jsx`](../../frontend/src/pages/FindStoriesPage.jsx).
+*   **Backend Logic:** `storyRoutes.js`, `storyController.js`, `Story.js` (hàm `searchStories`).
+*   **Tính năng bổ sung:** Slug SEO-friendly cho truyện và chương, tìm kiếm full-text kết hợp lọc theo thể loại (`category`) và thẻ (`tags` / `story_tags`).
 
-### 📖 Epic 3: Reading Experience (US02, US05) - *Status: In Progress*
-*   **Frontend UI:**
-    *   Trang thông tin truyện: [`StoryDetailPage.jsx`](../../frontend/src/pages/StoryDetailPage.jsx)
-    *   Giao diện đọc chương: [`ChapterReaderPage.jsx`](../../frontend/src/pages/ChapterReaderPage.jsx)
-    *   Bảng điều chỉnh giao diện đọc (cỡ chữ, giãn dòng, Dark Mode): [`ReadingPreferencesPanel.jsx`](../../frontend/src/components/ReadingPreferencesPanel.jsx)
-*   **Backend Logic:**
-    *   Query lấy dữ liệu câu chuyện và danh sách chương: Cài đặt trong `backend/src/models/Story.js` và `backend/src/models/Chapter.js`.
-    *   Các endpoint API liên quan: `GET /api/stories/:id` và `GET /api/stories/:storyId/chapters/:chapterId` tại `backend/src/routes/storyRoutes.js`.
+### 📖 Epic 3: Reading Experience
+*   **Frontend UI:** [`StoryDetailPage.jsx`](../../frontend/src/pages/StoryDetailPage.jsx), [`ChapterReaderPage.jsx`](../../frontend/src/pages/ChapterReaderPage.jsx).
+*   **Backend Logic:** `chapterRoutes.js` (dành cho summary), `storyRoutes.js` (đọc thông tin chương theo slug/số thứ tự).
 
-### 💬 Epic 4 & 6: Content & Engagement - *Status: Pending (Được mô phỏng tĩnh)*
-Các tính năng lưu trữ lịch sử đọc, theo dõi và tóm tắt AI đang ở trạng thái Pending trên database thực tế nhưng được mô phỏng tĩnh tại phía client bằng Mock Data và LocalStorage để kiểm thử luồng UX:
-*   Theo dõi truyện (Favorite/Follow): [`FollowButton.jsx`](../../frontend/src/components/FollowButton.jsx)
-*   Bình luận (Comments): [`CommentSection.jsx`](../../frontend/src/components/CommentSection.jsx)
-*   Hiển thị tiến độ đọc: [`ReadingProgress.jsx`](../../frontend/src/components/ReadingProgress.jsx)
+### 💬 Epic 4: Content & Engagement
+*   **Frontend UI:** `FollowButton.jsx`, `CommentSection.jsx`, `ReadingProgress.jsx`.
+*   **Backend Logic:** `followRoutes.js`, `followController.js`, `commentRoutes.js`, `commentController.js`, `readingHistoryRoutes.js`, `readingHistoryController.js`.
+*   **Dữ liệu:** `UserFollow.js`, `Comment.js`, `ReadingHistory.js`.
 
-### 🛠️ Epic 6 & 7: Content & User Management (US07, US08, US09) - *Status: In Progress*
-*   **Frontend UI:**
-    *   Trang dành cho Admin và Uploader: [`DashboardPage.jsx`](../../frontend/src/pages/DashboardPage.jsx) và [`AdminPage.jsx`](../../frontend/src/pages/AdminPage.jsx)
-*   **Backend Logic:**
-    *   Kiểm tra phân quyền Admin/Uploader: Sử dụng [`roleMiddleware.js`](../../backend/src/middleware/roleMiddleware.js)
-    *   Endpoint thêm/sửa/xóa truyện: `POST`, `PUT`, `DELETE` trên `/api/stories` tại `backend/src/routes/storyRoutes.js`.
+### 🛠️ Epic 5: Content & User Management (Admin & Moderator Layouts)
+*   **Giao diện quản lý:** [`AdminPage.jsx`](../../frontend/src/pages/AdminPage.jsx), [`AdminUsersPage.jsx`](../../frontend/src/pages/AdminUsersPage.jsx), [`AdminStoriesPage.jsx`](../../frontend/src/pages/AdminStoriesPage.jsx), [`DashboardPage.jsx`](../../frontend/src/pages/DashboardPage.jsx).
+*   **Moderator Layout:** [`ModeratorLayout.jsx`](../../frontend/src/layouts/ModeratorLayout.jsx) phân quyền dành riêng cho Moderator và Admin.
+*   **Backend Logic:** `adminRoutes.js`, `adminController.js`.
+*   **Tính năng bổ sung:** Khóa/mở khóa tài khoản user, thay đổi vai trò (role), ẩn/hiện truyện nâng cao (`hidden_by_admin` chặn Uploader tự ý hiển thị lại).
+
+### 🤖 Epic 6: Cá Nhân Hóa & Tóm Tắt AI
+*   **Tóm tắt & Gợi ý:** `aiRoutes.js`, `aiService.js` (gọi trực tiếp Groq API hoặc Gemini API qua Axios, cache 2 tầng RAM + Database trong `AISummary.js`).
+
+### 🛡️ Epic 7: Kiểm Duyệt Bình Luận & Quản Lý Báo Cáo (Mới)
+*   **Hàng đợi kiểm duyệt:** `moderationService.js`, `moderationWorker.js` sử dụng **BullMQ + Redis** để phân loại bình luận theo các cấp độ tier (rejected, masked, flagged) từ danh sách từ khóa nhạy cảm.
+*   **Quản lý từ khóa:** `badWordRoutes.js`, `badWordController.js`, `BadWord.js` model, [`ManageBadWords.jsx`](../../frontend/src/pages/admin/ManageBadWords.jsx).
+*   **Báo cáo vi phạm:** `reportRoutes.js`, `reportController.js`, `Report.js` model, [`AdminReportsPage.jsx`](../../frontend/src/pages/AdminReportsPage.jsx).
 
 ---
 
 ## 🧬 2. Chi Tiết Các File Code Quan Trọng (Core Code Highlights)
 
-### A. Middleware Phân Quyền Vai Trò (`backend/src/middleware/roleMiddleware.js`)
-Middleware này kiểm tra xem user sau khi đã decode token JWT có vai trò phù hợp với yêu cầu của endpoint hay không:
+### A. Kết Nối Database (Không Dùng ORM)
+Hệ thống sử dụng trực tiếp Connection Pool của `pg` thư viện để thực hiện truy vấn SQL trực tiếp, giúp tối ưu hóa hiệu năng và kiểm soát query tốt nhất:
 ```javascript
-module.exports = function authorizeRoles(...allowedRoles) {
+// backend/src/config/database.js
+const { Pool } = require('pg');
+const pool = new Pool(poolConfig);
+module.exports = pool;
+```
+
+### B. Middleware Phân Quyền Vai Trò
+Hệ thống thực hiện phân quyền tập trung dựa trên vai trò qua middleware:
+```javascript
+// backend/src/middleware/roleMiddleware.js
+function authorizeRole(...roles) {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        error: 'Bạn không có quyền thực hiện hành động này.'
-      });
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
     }
     next();
   };
-};
+}
 ```
 
-### B. Hàm Lưu Dwell Time & Cập Nhật Telemetry (`frontend/src/pages/ChapterReaderPage.jsx`)
-Giao diện gửi tín hiệu Heartbeat định kỳ mỗi 30 giây để cập nhật thời gian đọc thực tế của người dùng:
+### C. Dispatch Job Kiểm Duyệt Chạy Ngầm
+Bình luận sau khi được tạo sẽ ngay lập tức được gửi vào hàng đợi xử lý nền thay vì kiểm duyệt đồng bộ gây trễ request:
 ```javascript
-useEffect(() => {
-  if (!isAuthenticated || !chapterId) return;
-
-  const interval = setInterval(() => {
-    // Tránh lưu dwell time nếu người dùng đang không hoạt động (treo máy)
-    if (document.visibilityState === 'visible' && !isUserIdle) {
-      API.readingHistory.saveProgress({
-        storyId,
-        chapterId,
-        chapterNumber,
-        dwellTimeSeconds: 30
-      });
-    }
-  }, 30000);
-
-  return () => clearInterval(interval);
-}, [chapterId, isUserIdle]);
-```
-
-### C. Định Nghĩa Thực Thể Cơ Sở Dữ Liệu (`backend/scripts/schema.sql`)
-Mã SQL khởi tạo bảng `stories` với các ràng buộc khóa ngoại chặt chẽ liên kết với `users` (uploader):
-```sql
-CREATE TABLE stories (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT,
-    cover_image_url VARCHAR(500),
-    category VARCHAR(100),
-    status VARCHAR(50) DEFAULT 'Ongoing',
-    uploader_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+// backend/src/controllers/commentController.js (tóm tắt logic)
+const moderationQueue = new Queue('moderationQueue', { connection: redisConfig });
+// Khi tạo comment mới:
+await moderationQueue.add('moderate-comment', { content: comment.content, commentId: comment.id });
 ```

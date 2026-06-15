@@ -19,7 +19,7 @@ graph TD
 
 ## 🗄️ 2. Thiết Kế Cơ Sở Dữ Liệu (Database Schema)
 
-Cơ sở dữ liệu của hệ thống gồm **8 bảng** quan hệ chặt chẽ với nhau, được host trên nền tảng Supabase (PostgreSQL):
+Cơ sở dữ liệu của hệ thống gồm **11 bảng** quan hệ chặt chẽ với nhau, được host trên Supabase (PostgreSQL):
 
 ```mermaid
 erDiagram
@@ -28,23 +28,31 @@ erDiagram
     users ||--o{ user_follows : "follows"
     users ||--o{ comments : "writes"
     users ||--o{ user_preferences : "customizes"
+    users ||--o{ reports : "creates"
     stories ||--o{ chapters : "contains"
     stories ||--o{ reading_history : "referenced_in"
     stories ||--o{ user_follows : "referenced_in"
     stories ||--o{ comments : "commented_on"
+    stories ||--o{ story_tags : "has_tags"
+    tags ||--o{ story_tags : "classified_by"
     chapters ||--o{ comments : "commented_on"
     chapters ||--o| ai_summaries : "summarized_by"
+    chapters ||--o{ reports : "reported_chapter"
 ```
 
 ### Các bảng chi tiết:
-1.  **`users`**: Lưu trữ thông tin tài khoản người dùng và vai trò phân quyền (`role`: Admin, Uploader, User, Guest).
-2.  **`stories`**: Lưu trữ thông tin các bộ truyện (tên, tác giả, uploader, mô tả, thể loại, trạng thái).
-3.  **`chapters`**: Lưu trữ các chương truyện thuộc bộ truyện tương ứng.
-4.  **`reading_history`**: Ghi nhận lịch sử đọc của người dùng, gồm chương đọc cuối cùng và tỷ lệ hoàn thành (`completion_rate`).
-5.  **`user_follows`**: Danh sách các bộ truyện mà người dùng nhấn "Theo dõi".
-6.  **`comments`**: Bình luận của người dùng trên truyện hoặc từng chương cụ thể.
-7.  **`user_preferences`**: Tùy chỉnh cá nhân của người đọc (cỡ chữ, giãn dòng, giao diện dark mode).
-8.  **`ai_summaries`**: Lưu trữ bộ nhớ cache tóm tắt của chương truyện do Gemini sinh ra nhằm tránh gọi API lặp lại.
+1.  **`users`**: Thông tin tài khoản người dùng và vai trò phân quyền (`role`: Admin, Moderator, Uploader, User, Guest), trạng thái kích hoạt (`is_active`).
+2.  **`stories`**: Thông tin các bộ truyện (tên, tác giả, uploader, mô tả, thể loại, trạng thái, ẩn bởi admin `hidden_by_admin`).
+3.  **`chapters`**: Các chương truyện thuộc bộ truyện tương ứng.
+4.  **`reading_history`**: Lịch sử đọc của người dùng, gồm chương đọc cuối cùng, thời gian đọc và tỷ lệ hoàn thành.
+5.  **`user_follows`**: Danh sách các bộ truyện đang theo dõi.
+6.  **`comments`**: Bình luận của người dùng trên truyện/chương (chứa trạng thái kiểm duyệt `status`).
+7.  **`user_preferences`**: Tùy chỉnh cá nhân (cỡ chữ, giãn dòng, giao diện dark mode).
+8.  **`ai_summaries`**: Cache tóm tắt của chương truyện do AI sinh ra.
+9.  **`reports`**: Báo cáo vi phạm nội dung chương truyện gửi lên Admin/Moderator.
+10. **`tags`**: Thẻ từ khóa phân loại truyện.
+11. **`story_tags`**: Liên kết N-N giữa truyện và thẻ từ khóa.
+12. **`bad_words`**: Danh sách từ khóa nhạy cảm bị cấm/lọc tự động (mức độ tier 1, 2, 3).
 
 ---
 
@@ -77,3 +85,14 @@ Thành phần này đón nhận các yêu cầu truy cập từ URL cũ và th�
 *   **Tầng Middleware ở Backend:**
     *   `authMiddleware.js`: Giải mã JWT token để xác nhận danh tính người dùng. Nếu token không hợp lệ hoặc hết hạn, trả về mã lỗi `401 Unauthorized`.
     *   `roleMiddleware.js`: Kiểm tra vai trò của người dùng (`role`) đối với các endpoint bảo mật. Ví dụ: Endpoint thêm truyện mới (`POST /api/stories`) chỉ cho phép role là `Uploader` hoặc `Admin` truy cập.
+
+---
+
+## 📬 5. Xử Lý Hàng Đợi Nền & Kiểm Duyệt Bình Luận (BullMQ + Redis)
+
+Hệ thống triển khai hàng đợi kiểm duyệt tự động để đảm bảo môi trường thảo luận sạch:
+*   **Hàng đợi (`moderationQueue`):** Khi người dùng gửi bình luận mới, nội dung được chuyển tiếp vào hàng đợi BullMQ chạy ngầm trên nền Redis.
+*   **Worker (`moderationWorker`):** Nhận job từ hàng đợi và tự động kiểm duyệt theo mức độ nghiêm trọng (tier) của từ khóa nhạy cảm trong bảng `bad_words`:
+    *   **Tier 1:** Từ chối hiển thị bình luận (`status: rejected`).
+    *   **Tier 2:** Ẩn bớt bằng ký tự sao (`status: masked`).
+    *   **Tier 3:** Đánh dấu là spam và gắn cờ cảnh báo vi phạm (`status: flagged`).

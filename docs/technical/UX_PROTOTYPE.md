@@ -14,12 +14,14 @@
 
 ---
 
-## 🎯 1. Mục Tiêu Của Bản UX Prototype
+## 🎯 1. Mục Tiêu Bản UX Prototype & Trạng Thái Tích Hợp
 
-Mục tiêu chính của bản Prototype này là kiểm thử trực quan các hành trình của **Nguyễn Hải Dương (Độc giả)** và **Nguyễn Tuấn Thành (Quản trị viên)**:
-1.  Độc giả có thể tìm kiếm truyện, đổi Dark Mode, tăng giảm cỡ chữ và đọc thử một chương truyện bằng Mock Data nhanh chóng.
-2.  Quản trị viên có thể xem giao diện dashboard mô phỏng thống kê lượt đọc và danh sách truyện cần quản lý.
-3.  *Tránh làm Backend quá sớm:* Cho phép kiểm thử hành vi người dùng (UI Interactions) mà không bị phụ thuộc vào lỗi kết nối database hay cấu hình server.
+Mục tiêu ban đầu của bản UX Prototype là kiểm thử nhanh giao diện người dùng và hành trình đọc giả/admin mà không bị phụ thuộc vào sự sẵn sàng của Backend.
+
+**Trạng thái tích hợp hiện tại:**
+*   Toàn bộ giao diện mẫu đã được kết nối hoàn chỉnh với **Node.js Express Backend** và **Supabase PostgreSQL Database**.
+*   Các tương tác của người dùng (như theo dõi truyện, bình luận, thay đổi tuỳ chọn đọc, tiến độ đọc và tóm tắt AI) hiện không còn chạy trên mock data tĩnh mà được lưu trữ và đồng bộ thời gian thực qua API.
+*   Dữ liệu mẫu (`frontend/src/data/`) vẫn được giữ lại để phục vụ cho các trường hợp kiểm thử cục bộ hoặc fallback.
 
 ---
 

@@ -23,10 +23,10 @@ Hệ thống được thiết kế theo mô hình **Decoupled Architecture (Ki�
 
 ### ⚙️ Backend
 *   **Runtime:** Node.js 18+.
-*   **Framework:** Express.js (MVC Pattern).
-*   **Database:** PostgreSQL (Hosting trên Supabase).
+*   **Framework:** Express.js (MVC Pattern) kết hợp BullMQ + Redis cho hàng đợi xử lý nền.
+*   **Database:** PostgreSQL (Hosting trên Supabase), truy vấn trực tiếp qua connection pool (không dùng ORM).
 *   **Authentication:** JSON Web Token (JWT) kết hợp băm mật khẩu bằng `bcryptjs`.
-*   **AI Integration:** Google Gemini API kết hợp cùng Vercel AI SDK (`@ai-sdk/google`).
+*   **AI Integration:** Gọi API trực tiếp qua Axios tới Groq API (mô hình `llama-3.1-8b-instant` ưu tiên) và Google Gemini API (`gemini-1.5-flash` dự phòng).
 
 ---
 
@@ -70,15 +70,15 @@ web-app-project/
 
 ## 🔐 Phân Quyền Người Dùng (Role-Based Access Control)
 
-Hệ thống chia làm 4 nhóm quyền chính:
+Hệ thống chia làm 5 nhóm quyền chính:
 
 | Vai Trò | Quyền Hạn |
 |---------|-----------|
-| **Admin** | Toàn quyền kiểm soát hệ thống — quản lý người dùng, truyện, chương và bình luận. |
-| **Moderator** | Duyệt truyện khi có truyện mới được upload |
+| **Admin** | Toàn quyền kiểm soát hệ thống — quản lý người dùng (khoá/mở khoá), truyện, chương, bình luận, từ khóa nhạy cảm và xem báo cáo vi phạm. |
+| **Moderator** | Duyệt báo cáo vi phạm (Reports), xử lý ẩn/flag các bình luận và nội dung không phù hợp. |
 | **Uploader** | Đăng truyện mới, quản lý & cập nhật nội dung truyện/chương do mình đăng, cộng với tất cả quyền của User. |
-| **User** | Đọc truyện, theo dõi truyện, lưu lịch sử, viết bình luận, nhận gợi ý truyện cá nhân hóa từ AI. |
-| **Guest** | Xem danh sách truyện công khai, tìm kiếm và đọc chương (không lưu lịch sử, không bình luận). |
+| **User** | Đọc truyện, theo dõi truyện, lưu lịch sử, báo cáo vi phạm, viết bình luận, nhận gợi ý truyện cá nhân hóa từ AI. |
+| **Guest** | Xem danh sách truyện công khai, tìm kiếm và đọc chương. |
 
 ---
 
