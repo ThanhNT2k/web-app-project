@@ -1,5 +1,4 @@
-version: "1" # Bắt buộc phải có dòng này ở đầu file
-
+version: "1"
 services:
   - type: web
     name: cmc-truyen-backend
@@ -7,36 +6,10 @@ services:
     plan: free
     buildCommand: "cd backend && npm install"
     startCommand: "cd backend && npm start"
-    envVars:
-      - key: PORT
-        value: "10000"
-      # Xóa fromDatabase ở đây, thêm thủ công trong Dashboard để tránh lỗi YAML
-
+  
   - type: worker
     name: cmc-truyen-moderation-worker
     env: node
     plan: free
     buildCommand: "cd backend && npm install"
     startCommand: "cd backend && node src/startWorker.js"
-    envVars:
-      - key: REDIS_HOST
-        value: "cmc-truyen-redis"
-      - key: REDIS_PORT
-        value: "6379"
-      - key: DATABASE_URL
-        fromDatabase: cmc-truyen-db
-      - key: JWT_SECRET
-        value: ""
-
-  - type: redis
-    name: cmc-truyen-redis
-    plan: free
-    ipAllowList: [] # Để trống nếu muốn chấp nhận kết nối nội bộ
-
-databases:
-  - name: cmc-truyen-db
-    databaseName: cmc_truyen # Tên database thực tế
-    user: cmc_user # Tên user
-    engine: postgres
-    plan: free
-    region: oregon
