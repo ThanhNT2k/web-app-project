@@ -8,53 +8,36 @@ const connection = {
     port: redisConfig.port
 };
 
-console.log("Worker đang khởi tạo với cấu hình:", connection);
-
-// Đợi dữ liệu từ DB nạp xong xuôi rồi mới khởi động Worker
 loadModerationData().then(() => {
-
     const worker = new Worker('moderationQueue', async job => {
-        
         const { content, commentId } = job.data;
         
+        // 1. Kiểm duyệt: Với "dmm", moderateContent trả về tier: 2
         const result = moderateContent(content);
         
-        try {
-            switch (result.tier) {
-                case 1:
-                    await Comment.update(commentId, {
-                        status: 'rejected',
-                        is_spam: false
-                    });
-                    break;
-                case 2:
-                    await Comment.update(commentId, { 
-                        status: 'masked' 
-                    });
-                    break;
-
-                case 3:
-                    await Comment.update(commentId, { 
-                        is_spam: true,
-                        status: 'flagged' 
-                    });
-                    break;
-
-                default:
-                    await Comment.update(commentId, { 
-                        status: 'approved' 
-                    });
-                    break;
-            }
-        } catch (err) {
-            console.error(`[Moderation] LỖI khi update DB:`, err);
-        }
+        // 2. Định nghĩa status dựa trên tier
+        // T1 -> rejected, T2 -> masked, T3 -> flagged
+        const statusMap = {
+            1: 'rejected',
+            2: 'masked',
+            3: 'flagged'
+        };
         
+        // Nếu tier là 0 (sạch), giữ là 'approved', nếu khác thì lấy từ map
+        const newStatus = statusMap[result.tier] || 'approved';
+
+        try {
+            // 3. Cập nhật vào DB
+            await Comment.update(commentId, {
+                status: newStatus,
+                is_spam: result.tier === 3
+            });
+            console.log(`[Worker] Comment ${commentId} đã cập nhật status: ${newStatus} (Tier: ${result.tier})`);
+        } catch (err) {
+            console.error(`[Worker] Lỗi update DB comment ${commentId}:`, err);
+            throw err;
+        }
     }, { connection });
 
-    worker.on('ready', () => console.log("Worker đã kết nối Redis thành công và đang lắng nghe job!"));
-    worker.on('error', (err) => console.error("Worker lỗi:", err));
-    
-}).catch(err => {
-    console.error("Không thể khởi động Worker do lỗi tải dữ liệu:", err);
-});
+    worker.on('ready', () => console.log("Worker đã kết nối Redis!"));
+}).catch(err => console.error("Lỗi khởi động Worker:", err));

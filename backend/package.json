@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "db:migrate": "node src/scripts/migrate.js",
+    "db:migrate": "docker-compose up -d && node src/scripts/migrate.js",
     "db:init": "node scripts/init-db.js",
     "db:seed": "node scripts/seed-data.js",
     "db:sync-tags": "node scripts/sync-story-tags.js",

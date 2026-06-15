@@ -73,7 +73,7 @@ function AdminUsersPage() {
     }
   };
 
-  const roles = ['Admin', 'Uploader', 'User'];
+  const roles = ['Admin', 'Moderator','Uploader', 'User'];
 
   return (
     <div className="panel-card">

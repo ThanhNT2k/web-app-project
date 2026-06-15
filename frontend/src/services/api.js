@@ -58,12 +58,14 @@ const apiClient = axios.create({
  * Nếu có token trong localStorage, gắn vào header dạng "Bearer <token>".
  */
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('cmc_token'); 
-  
-  if (token && token !== 'null') {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  } else {
-    console.warn("API Call: Không tìm thấy Token trong localStorage!");
+  try {
+    const token = localStorage.getItem('cmc_token');
+    if (token && token !== 'null') {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (err) {
+    // localStorage may be unavailable in some environments (private mode, strict policies).
+    // Silently ignore so the app doesn't spam the console or throw runtime errors.
   }
   
   return config;
@@ -200,6 +202,12 @@ const API = {
     create: (data) => request('/reports', { method: 'POST', data }),
     getAll: (params = {}) => request('/reports', { method: 'GET', params }),
     updateStatus: (id, status) => request(`/reports/${id}`, { method: 'PATCH', data: { status } }),
+  },
+  moderator: {
+    getDashboard: () => request('/moderator/dashboard', { method: 'GET' }),
+    getPendingStories: (page = 1, limit = 20) => request('/moderator/pending-stories', { method: 'GET', params: { page, limit } }),
+    getComments: (page = 1, limit = 50, storyId = null, chapterId = null) =>
+      request('/moderator/comments', { method: 'GET', params: { page, limit, story_id: storyId || undefined, chapter_id: chapterId || undefined } }),
   },
   upload: {
     cover: async (file) => {

@@ -13,6 +13,11 @@ import AdminStoriesPage from './pages/AdminStoriesPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import ManageBadWords from './pages/admin/ManageBadWords';
 
+import ModeratorDashboardPage from './pages/moderator/ModeratorDashboardPage';
+import ModeratorPendingStoriesPage from './pages/moderator/ModeratorPendingStoriesPage';
+import ModeratorReportsPage from './pages/moderator/ModeratorReportsPage';
+import ModeratorCommentsPage from './pages/moderator/ModeratorCommentsPage';
+
 import HomePage from './pages/HomePage';
 import FindStoriesPage from './pages/FindStoriesPage';
 import LoginPage from './pages/LoginPage';
@@ -111,10 +116,10 @@ function App() {
                 </RoleProtectedRoute>
               }
             >
-              <Route path="/moderator/dashboard" element={<div className="p-4">Trang Tổng quan Mod (Sẽ làm sau)</div>} />
-              <Route path="/moderator/pending-stories" element={<div className="p-4">Trang Duyệt truyện (Sẽ làm sau)</div>} />
-              <Route path="/moderator/reports" element={<div className="p-4">Trang Xử lý Report (Sẽ làm sau)</div>} />
-              <Route path="/moderator/comments" element={<div className="p-4">Trang Quản lý Bình luận (Sẽ làm sau)</div>} />
+              <Route path="/moderator/dashboard" element={<ModeratorDashboardPage />} />
+              <Route path="/moderator/pending-stories" element={<ModeratorPendingStoriesPage />} />
+              <Route path="/moderator/reports" element={<AdminReportsPage />} />
+              <Route path="/moderator/comments" element={<ModeratorCommentsPage />} />
             </Route>
 
             <Route path="/home" element={<Navigate to="/" replace />} />

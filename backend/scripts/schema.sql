@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(255),
     avatar_url VARCHAR(500),
     role VARCHAR(50) NOT NULL DEFAULT 'User'
-        CHECK (role IN ('Admin', 'Uploader', 'User', 'Guest')),
+        CHECK (role IN ('Admin', 'Uploader', 'User', 'Moderator')),
     bio TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

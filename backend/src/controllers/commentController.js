@@ -113,8 +113,9 @@ async function remove(req, res) {
 
     const isOwner = Number(comment.user_id) === Number(req.user.id);
     const isAdmin = req.user.role === 'Admin';
+    const isModerator = req.user.role === 'Moderator';
 
-    if (!isOwner && !isAdmin) return res.status(403).json({ success: false, message: 'Access denied' });
+    if (!isOwner && !isAdmin && !isModerator) return res.status(403).json({ success: false, message: 'Access denied' });
 
     await Comment.remove(req.params.id);
     return res.status(200).json({ success: true, message: 'Comment deleted' });

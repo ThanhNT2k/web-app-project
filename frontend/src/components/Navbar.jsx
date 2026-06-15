@@ -147,6 +147,15 @@ function Navbar() {
                         🛡️ Hệ thống Admin
                       </Link>
                     )}
+                    {user?.role === 'Moderator' && (
+                      <Link
+                        to="/moderator/dashboard"
+                        className="dropdown-item-cmc"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        🛡️ Hệ thống Moderator
+                      </Link>
+                    )}
 
                     <div className="dropdown-divider border-top my-2"></div>
 

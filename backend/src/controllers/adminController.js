@@ -50,9 +50,9 @@ async function getUsers(req, res) {
 }
 
 // Schema validate khi cập nhật role user
-// Chỉ cho phép 4 role được định nghĩa trong hệ thống: Admin, Uploader, User
+// Chỉ cho phép 4 role được định nghĩa trong hệ thống: Admin, Uploader, User, Moderator
 const roleSchema = Joi.object({
-  role: Joi.string().valid('Admin', 'Uploader', 'User').required(),
+  role: Joi.string().valid('Admin', 'Uploader', 'User', 'Moderator').required(),
 });
 
 /**

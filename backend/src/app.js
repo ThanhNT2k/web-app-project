@@ -22,6 +22,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const badWordRoutes = require('./routes/badWordRoutes');
+const moderatorRoutes = require('./routes/moderatorRoutes');
 const apiRoutes = require('./routes');
 
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -72,6 +73,7 @@ app.use('/api/follows', followRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/moderator', moderatorRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/reports', reportRoutes);
 
