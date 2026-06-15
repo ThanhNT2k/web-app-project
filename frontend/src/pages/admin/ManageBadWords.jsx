@@ -117,34 +117,36 @@ const ManageBadWords = () => {
         </div>
       </form>
 
-      <table className="table table-hover align-middle">
-        <thead className="table-light">
-          <tr>
-            <th>Từ khóa</th>
-            <th>Cấp độ</th>
-            <th className="text-center">Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredWords.map((item) => (
-            <tr key={item.id}>
-              <td className="fw-bold">{item.keyword}</td>
-              <td>
-                <button 
-                  className={`badge border-0 ${item.tier === 1 ? 'bg-danger' : item.tier === 2 ? 'bg-warning text-dark' : 'bg-info'}`}
-                  onClick={() => handleUpdateTier(item.id, item.tier)}
-                  title="Bấm để chuyển Tier"
-                >
-                  Tier {item.tier}
-                </button>
-              </td>
-              <td className="text-center">
-                <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-outline-danger">Xóa</button>
-              </td>
+      <div className="table-responsive">
+        <table className="table table-hover align-middle">
+          <thead className="table-light">
+            <tr>
+              <th>Từ khóa</th>
+              <th>Cấp độ</th>
+              <th className="text-center">Hành động</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredWords.map((item) => (
+              <tr key={item.id}>
+                <td className="fw-bold">{item.keyword}</td>
+                <td>
+                  <button 
+                    className={`badge border-0 ${item.tier === 1 ? 'bg-danger' : item.tier === 2 ? 'bg-warning text-dark' : 'bg-info'}`}
+                    onClick={() => handleUpdateTier(item.id, item.tier)}
+                    title="Bấm để chuyển Tier"
+                  >
+                    Tier {item.tier}
+                  </button>
+                </td>
+                <td className="text-center">
+                  <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-outline-danger">Xóa</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -343,7 +343,7 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "is_active" boolean DEFAULT true NOT NULL,
-    CONSTRAINT "users_role_check" CHECK ((("role")::"text" = ANY (ARRAY[('Admin'::character varying)::"text", ('Uploader'::character varying)::"text", ('User'::character varying)::"text"])))
+    CONSTRAINT "users_role_check" CHECK ((("role")::"text" = ANY (ARRAY[('Admin'::character varying)::"text", ('Uploader'::character varying)::"text", ('User'::character varying)::"text", ('Guest'::character varying)::"text"])))
 );
 
 
