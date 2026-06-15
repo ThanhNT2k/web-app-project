@@ -1,135 +1,137 @@
-# CMC Truyện - Frontend Application
+# CMC Truyện — Nền Tảng Đọc Truyện Chữ Trực Tuyến
 
-Giao diện người dùng (Frontend) được phát triển bằng **React.js** và **Vite** dành cho ứng dụng **CMC Truyện** (nền tảng đọc truyện trực tuyến).
-
-## 🚀 Công Nghệ Sử Dụng
-
-- **React 18**: Thư viện UI cốt lõi.
-- **Vite**: Công cụ build và hot reload cực nhanh.
-- **React Router DOM 6**: Quản lý điều hướng và định tuyến SPA.
-- **Tailwind CSS 3** & **Bootstrap 5**: Giao diện linh hoạt, hiện đại kết hợp tiện ích từ Tailwind và components từ Bootstrap.
-- **Axios**: Quản lý các cuộc gọi API hiệu quả với interceptors tự động đính kèm Token Auth.
-- **Context API**:
-  - `AuthContext`: Quản lý trạng thái đăng ký/đăng nhập, phân quyền người dùng và JWT Token.
-  - `ThemeContext`: Quản lý Light/Dark mode (giao diện sáng/tối).
+CMC Truyện là một nền tảng đọc truyện chữ trực tuyến hiện đại dành cho độc giả Việt Nam. Dự án tập trung vào **trải nghiệm đọc sạch, nhanh, không quảng cáo**, kết hợp với **trí tuệ nhân tạo (AI)** để tóm tắt chương và gợi ý truyện cá nhân hóa cho từng người dùng.
 
 ---
 
-## ✨ Tính Năng Chính
+## 🏗️ Kiến Trúc Hệ Thống
 
-1. **Trang Chủ (Home)**: Hiển thị các truyện mới cập nhật, truyện hot, danh sách thể loại và truyện gợi ý từ AI.
-2. **Tìm Truyện (Browse)**: Tìm kiếm theo tên truyện, bộ lọc nâng cao theo thể loại, tag và sắp xếp linh hoạt (mới nhất, thịnh hành...).
-3. **Đọc Truyện Tiện Lợi**:
-   - Giao diện đọc chương truyện trực quan, hỗ trợ điều chỉnh font chữ, cỡ chữ, màu nền qua bảng tùy chỉnh preferences.
-   - Thanh tiến trình cuộn trang trực quan.
-   - **Tóm Tắt Chương Bằng AI (AI Summary)**: Hỗ trợ tóm tắt nhanh nội dung chương truyện bằng Trí Tuệ Nhân Tạo.
-4. **Hệ Thống Tương Tác**: Bình luận (Comment), theo dõi truyện (Follow), lưu lịch sử đọc tự động.
-5. **Hệ Thống Phân Quyền & Route Bảo Vệ**:
-   - `ProtectedRoute`: Yêu cầu đăng nhập mới được truy cập (Profile).
-   - `RoleProtectedRoute`: Giới hạn truy cập cho từng vai trò đặc thù (`Uploader`, `Admin`).
-6. **Bảng Điều Khiển (Dashboard & Admin)**:
-   - **Uploader Dashboard**: Đăng truyện mới, quản lý chương, tải lên ảnh bìa truyện.
-   - **Admin Control Panel**: Xem thống kê hệ thống, quản lý tài khoản người dùng và phân quyền (`User`, `Uploader`, `Admin`), kiểm duyệt bình luận và truyện.
-7. **Tương Thích Ngược (Legacy Redirects)**: Tự động chuyển hướng (redirect) các đường dẫn cũ dạng tĩnh (`.html`) của phiên bản trước sang các tuyến React Router tương ứng, tránh bị đứt gãy link khi SEO.
+Hệ thống được thiết kế theo mô hình **Decoupled Architecture (Kiến trúc tách rời)** gồm hai thư mục chính:
+
+*   **`frontend/` (Vite + React 18):** Giao diện hiển thị, điều chỉnh cỡ chữ, dark mode, auto-bookmark, và tương tác của người dùng.
+*   **`backend/` (Node.js + Express.js):** Xử lý nghiệp vụ, quản lý cơ sở dữ liệu PostgreSQL (Supabase), quản lý phiên làm việc bằng JWT, và tích hợp AI.
 
 ---
 
-## 📁 Cấu Trúc Thư Mục `src`
+## 🛠️ Công Nghệ Sử Dụng (Tech Stack)
+
+### 💻 Frontend
+*   **Framework:** React 18 với React Router v6.
+*   **Styling:** Tailwind CSS và Bootstrap (Responsive mượt mà trên Mobile, Tablet, Desktop).
+*   **API Client:** Axios để kết nối và gọi API từ Backend.
+*   **Đọc truyện cá nhân hóa:** Lưu trữ bookmark tự động, thay đổi font chữ, độ giãn dòng và Dark Mode.
+
+### ⚙️ Backend
+*   **Runtime:** Node.js 18+.
+*   **Framework:** Express.js (MVC Pattern).
+*   **Database:** PostgreSQL (Hosting trên Supabase).
+*   **Authentication:** JSON Web Token (JWT) kết hợp băm mật khẩu bằng `bcryptjs`.
+*   **AI Integration:** Google Gemini API kết hợp cùng Vercel AI SDK (`@ai-sdk/google`).
+
+---
+
+## 📁 Cấu Trúc Dự Án Hiện Tại
 
 ```
-src/
-├── components/          # Các Component dùng chung (Navbar, Footer, StoryCard, ReadingPreferencesPanel...)
-├── contexts/            # React Contexts quản lý Global State (Auth, Theme)
-├── data/                # Mock data hỗ trợ phát triển (mockStories.js)
-├── pages/               # Các trang giao diện chính
-│   ├── HomePage.jsx          # Trang chủ
-│   ├── FindStoriesPage.jsx   # Tìm kiếm và lọc truyện
-│   ├── StoryDetailPage.jsx   # Chi tiết truyện & chương
-│   ├── ChapterReaderPage.jsx # Giao diện đọc truyện & Tóm tắt AI
-│   ├── LoginPage.jsx         # Đăng nhập
-│   ├── RegisterPage.jsx      # Đăng ký
-│   ├── AccountPage.jsx       # Quản lý tài khoản
-│   ├── UserProfilePage.jsx   # Thông tin cá nhân, lịch sử đọc & truyện theo dõi
-│   ├── DashboardPage.jsx     # Bảng điều khiển dành cho Uploader / Admin
-│   ├── AdminPage.jsx         # Quản trị hệ thống (Stats, Users, Roles)
-│   └── NotFoundPage.jsx      # Trang lỗi 404
-├── services/            # Axios API clients & Auth services
-│   ├── api.js                # Toàn bộ API endpoints
-│   └── authService.js        # Logic xử lý Auth & Token
-├── styles/              # Stylesheets chính của ứng dụng
-│   ├── main.css              # Custom style cơ bản
-│   ├── darkMode.css          # Giao diện tối
-│   └── reader.css            # Styles tối ưu cho khung đọc truyện
-├── utils/               # Tiện ích bổ trợ (slugify, format...)
-├── App.jsx              # Cấu hình các Routes chính của React Router
-└── main.jsx             # Entry point khởi tạo React App
+web-app-project/
+├── backend/                  # Mã nguồn server Node.js/Express
+│   ├── src/
+│   │   ├── config/          # Cấu hình database, biến môi trường
+│   │   ├── controllers/     # Controller điều hướng xử lý nghiệp vụ (Auth, Story, Chapter...)
+│   │   ├── models/          # Các query database tương tác PostgreSQL
+│   │   ├── routes/          # Các tuyến đường API của hệ thống
+│   │   ├── middleware/      # Middleware xác thực JWT & phân quyền người dùng
+│   │   ├── services/        # Service tích hợp AI (Google Gemini API)
+│   │   ├── app.js           # Khởi tạo Express & Middleware chung
+│   │   └── server.js        # Entry point khởi chạy server
+│   ├── scripts/             # File schema SQL và seeding database
+│   └── package.json
+│
+├── frontend/                 # Mã nguồn giao diện React
+│   ├── src/
+│   │   ├── components/      # Các thành phần tái sử dụng (Navbar, StoryCard, AIChapterSummary...)
+│   │   ├── pages/           # Các trang giao diện (HomePage, StoryDetailPage, ChapterReaderPage...)
+│   │   ├── services/        # Lớp giao tiếp API (`api.js`, `authService.js`)
+│   │   ├── styles/          # Styling & cấu hình Dark Mode
+│   │   ├── App.jsx          # Cấu hình Router chính của ứng dụng
+│   │   └── main.jsx         # Điểm khởi chạy của ứng dụng React
+│   └── package.json
+│
+├── docs/                     # Tài liệu thiết kế và đặc tả dự án
+│   ├── product/             # Tài liệu phân tích nghiệp vụ & yêu cầu (MVP, Backlog)
+│   └── technical/           # Tài liệu kiến trúc hệ thống, API và AI Personalization
+│
+├── AGENT_GUIDE.md            # Tài liệu phát triển cho AI agent
+├── package.json
+└── README.md                 # File hướng dẫn tổng quan này
 ```
 
 ---
 
-## 🛠️ Hướng Dẫn Cài Đặt và Khởi Chạy
+## 🔐 Phân Quyền Người Dùng (Role-Based Access Control)
 
-### 1. Yêu cầu hệ thống
-- Đã cài đặt **Node.js** (Khuyên dùng phiên bản LTS mới nhất).
-- Backend server đang hoạt động (mặc định tại `http://localhost:5000/api`).
+Hệ thống chia làm 4 nhóm quyền chính:
 
-### 2. Cài đặt các gói phụ thuộc (Dependencies)
-Từ thư mục dự án frontend, chạy lệnh:
-```bash
-npm install
-```
+| Vai Trò | Quyền Hạn |
+|---------|-----------|
+| **Admin** | Toàn quyền kiểm soát hệ thống — quản lý người dùng, truyện, chương và bình luận. |
+| **Manager** | Duyệt truyện khi có truyện mới được upload |
+| **Uploader** | Đăng truyện mới, quản lý & cập nhật nội dung truyện/chương do mình đăng, cộng với tất cả quyền của User. |
+| **User** | Đọc truyện, theo dõi truyện, lưu lịch sử, viết bình luận, nhận gợi ý truyện cá nhân hóa từ AI. |
+| **Guest** | Xem danh sách truyện công khai, tìm kiếm và đọc chương (không lưu lịch sử, không bình luận). |
 
-### 3. Cấu hình biến môi trường
-Tạo file `.env` từ file mẫu `.env.example`:
-```bash
-cp .env.example .env
-```
-Cấu hình đường dẫn kết nối API backend của bạn trong `.env`:
+---
+
+## 🤖 Tính Năng Trí Tuệ Nhân Tạo (AI Features)
+
+1.  **Tóm Tắt Chương (AI Chapter Summary):** Người dùng khi đọc chương có thể nhấn nút "Tóm tắt" để gửi nội dung chương sang Gemini API nhằm nhận về nội dung tóm tắt ngắn gọn khoảng 3-4 câu.
+2.  **Gợi Ý Cá Nhân Hóa (AI Personalization):** Backend tự động thu thập hành vi người dùng (dwell time, tỷ lệ hoàn thành truyện, truyện theo dõi) và sử dụng Gemini API để phân tích gu đọc truyện, gợi ý ra danh sách 5 truyện tương thích nhất.
+
+---
+
+## 🚀 Hướng Dẫn Khởi Chạy Dự Án
+
+### 1. Chuẩn bị biến môi trường
+Tạo các file `.env` tại thư mục `/backend` và `/frontend` tương tự cấu hình sau:
+
+**Backend (`backend/.env`):**
 ```env
-VITE_API_URL=http://localhost:5000/api
+NODE_ENV=development
+PORT=5000
+DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<db_name>
+JWT_SECRET=your_jwt_secret_key
+GEMINI_API_KEY=your_google_gemini_api_key
+FRONTEND_URL=http://localhost:3000
 ```
 
-### 4. Khởi chạy dự án ở môi trường Local
-```bash
-npm run dev
+**Frontend (`frontend/.env`):**
+```env
+REACT_APP_API_URL=http://localhost:5000/api
 ```
-Ứng dụng sẽ chạy tại địa chỉ mặc định: `http://localhost:5173/` (hoặc cổng khác tùy thuộc vào thiết lập Vite của bạn).
+
+### 2. Cài đặt & Khởi chạy Backend
+```bash
+cd backend
+npm install
+npm run db:init      # Khởi tạo bảng dữ liệu
+npm run db:seed      # Thêm dữ liệu mẫu (seeding)
+npm run dev          # Chạy server ở chế độ watch mode
+```
+
+### 3. Cài đặt & Khởi chạy Frontend
+Mở một terminal mới:
+```bash
+cd frontend
+npm install
+npm run dev          # Khởi chạy giao diện React (mặc định tại http://localhost:3000)
+```
 
 ---
 
-## 📦 Biên Dịch và Triển Khai (Build & Deployment)
+## 📚 Tài Liệu Hướng Dẫn Kèm Theo
 
-### Biên dịch ứng dụng cho Production
-Chạy lệnh sau để build mã nguồn đã tối ưu hóa vào thư mục `dist`:
-```bash
-npm run build
-```
-
-### Kiểm tra bản build tại local (Preview)
-Để chạy thử bản build chính thức ở môi trường local trước khi deploy:
-```bash
-npm run preview
-```
-
-### Hướng dẫn Deploy
-- **Vercel**: Dự án đã đi kèm cấu hình `vercel.json` phục vụ SPA rewrites. Chỉ cần kết nối repository với Vercel hoặc dùng Vercel CLI để triển khai trực tiếp.
-- **Netlify / GitHub Pages / Hostings khác**: Cần đảm bảo cấu hình URL Rewriting trỏ về `index.html` đối với tất cả các tuyến không tìm thấy file vật lý (fallback routing) để tránh lỗi 404 khi tải lại trang và nhấn F5.
-
----
-
-## 🔐 Xác thực & Phân Quyền (Authentication)
-
-Token JWT được lưu trữ và quản lý tự động thông qua localStorage:
-- Key lưu trữ token: `cmc_token`
-- Key lưu trữ thông tin user: `cmc_user`
-
-### Cơ chế hoạt động của API Client Interceptor (`src/services/api.js`):
-1. **Request Interceptor**: Tự động lấy JWT token từ localStorage và đính kèm vào header dưới dạng `Authorization: Bearer <token>` đối với mỗi request gửi đi.
-2. **Response Interceptor**: Lắng nghe phản hồi từ máy chủ. Nếu nhận mã trạng thái `401 Unauthorized` từ các route yêu cầu bảo mật, hệ thống sẽ tự động dọn dẹp localStorage và chuyển hướng người dùng về trang đăng nhập `/login`.
-
----
-
-## ⚠️ Lưu Ý Khi Phát Triển
-
-- **CORS**: Đảm bảo Backend Server của bạn đã cấu hình CORS cho phép nhận yêu cầu từ domain phát triển frontend này (ví dụ: `http://localhost:5173`).
-- **Bảo mật**: Tuyệt đối không lưu trữ thông tin nhạy cảm của người dùng (mật khẩu thô, API key riêng tư) vào localStorage hay ghi cứng trong mã nguồn frontend.
+*   [`ARCHITECTURE.md`](./docs/technical/ARCHITECTURE.md) — Kiến trúc chi tiết, sơ đồ dữ liệu và điều hướng URL cũ sang React.
+*   [`API_REFERENCE.md`](./docs/technical/API_REFERENCE.md) — Danh sách đặc tả 34 API Endpoint và cách dùng.
+*   [`AI_PERSONALIZATION.md`](./docs/technical/AI_PERSONALIZATION.md) — Cơ chế thu thập dữ liệu hành vi (Telemetry) và tích hợp AI Gemini.
+*   [`REQUIREMENTS.md`](./docs/product/REQUIREMENTS.md) — Đặc tả yêu cầu phần mềm, Persona, User Story và Backlog.
+*   [`UX_PROTOTYPE.md`](./docs/technical/UX_PROTOTYPE.md) — Hướng dẫn giao diện mẫu tĩnh và Mock Data.
