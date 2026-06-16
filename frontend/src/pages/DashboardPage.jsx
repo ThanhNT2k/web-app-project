@@ -39,6 +39,13 @@ function DashboardPage() {
 
   const [message, setMessage] = useState('');
 
+  // Collaborators modal
+  const [collabModalStory, setCollabModalStory] = useState(null);
+  const [collabList, setCollabList] = useState([]);
+  const [collabLoading, setCollabLoading] = useState(false);
+  const [newCollabEmail, setNewCollabEmail] = useState('');
+  const [collabError, setCollabError] = useState('');
+
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const showMessage = (msg) => {
@@ -204,6 +211,54 @@ function DashboardPage() {
     }
   };
 
+  const openCollaborators = async (story) => {
+    setCollabModalStory(story);
+    setNewCollabEmail('');
+    setCollabError('');
+    setCollabList([]);
+    try {
+      setCollabLoading(true);
+      const res = await API.stories.getCollaborators(story.id);
+      setCollabList(res.collaborators || []);
+    } catch {
+      setCollabError('Không tải được danh sách cộng tác viên');
+    } finally {
+      setCollabLoading(false);
+    }
+  };
+
+  const addCollaborator = async (e) => {
+    e.preventDefault();
+    if (!newCollabEmail.trim()) return;
+    setCollabError('');
+    try {
+      setCollabLoading(true);
+      const res = await API.stories.addCollaborator(collabModalStory.id, { email: newCollabEmail.trim() });
+      setCollabList((prev) => [...prev, res.collaborator]);
+      setNewCollabEmail('');
+      showMessage('Đã thêm cộng tác viên');
+    } catch (err) {
+      setCollabError(err?.response?.data?.message || 'Không thể thêm cộng tác viên');
+    } finally {
+      setCollabLoading(false);
+    }
+  };
+
+  const removeCollaborator = async (userId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa cộng tác viên này khỏi truyện?')) return;
+    setCollabError('');
+    try {
+      setCollabLoading(true);
+      await API.stories.removeCollaborator(collabModalStory.id, userId);
+      setCollabList((prev) => prev.filter((c) => c.id !== userId));
+      showMessage('Đã gỡ cộng tác viên');
+    } catch (err) {
+      setCollabError(err?.response?.data?.message || 'Không thể xóa cộng tác viên');
+    } finally {
+      setCollabLoading(false);
+    }
+  };
+
   // ── Toggle chapter list ───────────────────────────────────────────────────
 
   const toggleChapterList = (storyId) => {
@@ -237,22 +292,40 @@ function DashboardPage() {
       {loading ? <p className="text-muted">Đang tải...</p> : null}
 
       <div className="dashboard-grid">
-        {stories.map((story) => (
-          <div key={story.id} className="panel-card">
-            <div className="d-flex gap-3">
-              {story.cover_image_url ? (
-                <img src={story.cover_image_url} alt="" className="dashboard-thumb" />
-              ) : (
-                <div className="dashboard-thumb dashboard-thumb-empty">📖</div>
-              )}
-              <div className="flex-grow-1">
-                <h5 className="mb-1">{story.title}</h5>
-                <p className="small text-muted mb-2">
-                  {story.category} · {story.total_chapters} chương · {story.status}
-                </p>
-                <p className="small mb-3 story-clamp">{story.description}</p>
+        {stories.map((story) => {
+          const isOwner = user?.role === 'Admin' || Number(story.author_id) === Number(user?.id);
+          return (
+            <div key={story.id} className="panel-card">
+              <div className="d-flex gap-3">
+                {story.cover_image_url ? (
+                  <img src={story.cover_image_url} alt="" className="dashboard-thumb" />
+                ) : (
+                  <div className="dashboard-thumb dashboard-thumb-empty">📖</div>
+                )}
+                <div className="flex-grow-1">
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <h5 className="mb-0">{story.title}</h5>
+                    {user?.role !== 'Admin' && (
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          padding: '0.15rem 0.4rem',
+                          borderRadius: '4px',
+                          background: isOwner ? 'rgba(59, 130, 246, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                          color: isOwner ? '#3b82f6' : '#f59e0b',
+                        }}
+                      >
+                        {isOwner ? 'Chủ sở hữu' : 'Cộng tác viên'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="small text-muted mb-2">
+                    {story.category} · {story.total_chapters} chương · {story.status}
+                  </p>
+                  <p className="small mb-3 story-clamp">{story.description}</p>
                 <div className="d-flex flex-wrap gap-2">
-                  <Link to={`/story/${story.slug}`} className="btn-cmc btn-cmc-outline btn-sm">
+                  <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-outline btn-sm">
                     Xem
                   </Link>
 
@@ -281,6 +354,16 @@ function DashboardPage() {
                   >
                     + Chương
                   </button>
+
+                  {isOwner && (
+                    <button
+                      type="button"
+                      className="btn-cmc btn-cmc-outline btn-sm"
+                      onClick={() => openCollaborators(story)}
+                    >
+                      Cộng tác viên
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -311,15 +394,17 @@ function DashboardPage() {
                         🚫 Admin ẩn
                       </span>
                     ) : (
-                      <button
-                        type="button"
-                        className={`btn-cmc btn-sm ${
-                          story.is_published ? 'btn-link-danger' : 'btn-cmc-primary'
-                        }`}
-                        onClick={() => handleToggleVisibility(story.id)}
-                      >
-                        {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
-                      </button>
+                      isOwner && (
+                        <button
+                          type="button"
+                          className={`btn-cmc btn-sm ${
+                            story.is_published ? 'btn-link-danger' : 'btn-cmc-primary'
+                          }`}
+                          onClick={() => handleToggleVisibility(story.id)}
+                        >
+                          {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
+                        </button>
+                      )
                     )
                   )}
                 </div>
@@ -346,13 +431,15 @@ function DashboardPage() {
                               >
                                 Sửa
                               </button>
-                              <button
-                                type="button"
-                                className="btn-link-danger btn-xs"
-                                onClick={() => deleteChapter(story, ch)}
-                              >
-                                Xóa
-                              </button>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  className="btn-link-danger btn-xs"
+                                  onClick={() => deleteChapter(story, ch)}
+                                >
+                                  Xóa
+                                </button>
+                              )}
                             </div>
                           </li>
                         ))}
@@ -363,7 +450,8 @@ function DashboardPage() {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {!loading && stories.length === 0 ? (
@@ -483,6 +571,70 @@ function DashboardPage() {
               ></textarea>
             </div>
           </form>
+        </div>
+      ) : null}
+      {/* ── Collaborators modal ────────────────────────────────────────────── */}
+      {collabModalStory ? (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setCollabModalStory(null)}>
+          <div className="modal-content">
+            <button type="button" className="close-modal" onClick={() => setCollabModalStory(null)}>&times;</button>
+            <h2 className="mb-3">Cộng tác viên — {collabModalStory.title}</h2>
+            
+            {collabError && <div className="alert-cmc alert-cmc-danger mb-3" style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', padding: '0.8rem', borderRadius: '6px' }}>{collabError}</div>}
+            
+            <form onSubmit={addCollaborator} className="d-flex gap-2 my-3">
+              <input
+                type="email"
+                className="form-control-cmc flex-grow-1"
+                placeholder="Nhập email của uploader..."
+                value={newCollabEmail}
+                onChange={(e) => setNewCollabEmail(e.target.value)}
+                disabled={collabLoading}
+                required
+              />
+              <button type="submit" className="btn-cmc btn-cmc-primary" disabled={collabLoading}>
+                Thêm
+              </button>
+            </form>
+
+            <div className="mt-3">
+              <h5 className="mb-2">Danh sách thành viên</h5>
+              {collabLoading && collabList.length === 0 ? (
+                <p className="small text-muted">Đang tải...</p>
+              ) : collabList.length === 0 ? (
+                <p className="small text-muted">Chưa có cộng tác viên nào. Nhập email phía trên để thêm.</p>
+              ) : (
+                <ul className="list-unstyled d-grid gap-2" style={{ padding: 0 }}>
+                  {collabList.map((collab) => (
+                    <li key={collab.id} className="d-flex align-items-center justify-content-between p-2 rounded" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <div className="d-flex align-items-center gap-2">
+                        {collab.avatar_url ? (
+                          <img src={collab.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 600 }}>
+                            {collab.username.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <p className="small fw-semibold mb-0" style={{ fontSize: '0.9rem' }}>{collab.full_name || collab.username}</p>
+                          <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>{collab.email}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-link-danger btn-xs"
+                        onClick={() => removeCollaborator(collab.id)}
+                        disabled={collabLoading}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                      >
+                        Gỡ
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       ) : null}
     </main>

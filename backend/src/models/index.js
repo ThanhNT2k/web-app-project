@@ -8,6 +8,7 @@ const Comment = require('./Comment');
 const UserFollow = require('./UserFollow');
 const UserPreference = require('./UserPreference');
 const BadWord = require('./BadWord');
+const StoryCollaborator = require('./StoryCollaborator');
 
 module.exports = {
   db,
@@ -19,5 +20,6 @@ module.exports = {
   Comment,
   UserFollow,
   UserPreference,
-  BadWord
+  BadWord,
+  StoryCollaborator
 };

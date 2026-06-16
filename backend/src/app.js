@@ -21,9 +21,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const reportRoutes = require('./routes/reportRoutes');
-const badWordRoutes = require('./routes/badWordRoutes');
 const moderatorRoutes = require('./routes/moderatorRoutes');
-const apiRoutes = require('./routes');
 
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
@@ -62,52 +60,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Redis Connection Test
-app.get('/redis-test', async (req, res) => {
-  if (!env.REDIS_URL) {
-    return res.status(400).json({
-      success: false,
-      message: 'REDIS_URL is not configured in the environment variables',
-    });
-  }
-
-  const Redis = require('ioredis');
-  const testClient = new Redis(env.REDIS_URL, {
-    maxRetriesPerRequest: 1,
-    connectTimeout: 5000,
-  });
-
-  try {
-    const pingResult = await testClient.ping();
-    
-    // Thử ghi và đọc một key test
-    const testKey = `test:health:${Date.now()}`;
-    await testClient.set(testKey, 'OK', 'EX', 10); // Hết hạn sau 10 giây
-    const getResult = await testClient.get(testKey);
-
-    await testClient.quit();
-
-    res.status(200).json({
-      success: true,
-      message: 'Successfully connected and operated on Redis!',
-      details: {
-        ping: pingResult,
-        write_read_test: getResult === 'OK' ? 'PASSED' : 'FAILED',
-        redis_url_configured: true,
-      }
-    });
-  } catch (error) {
-    try {
-      await testClient.quit();
-    } catch (_) {}
-    
-    res.status(500).json({
-      success: false,
-      message: 'Failed to connect to Redis',
-      error: error.message,
-    });
-  }
-});
 
 // Route đăng ký
 app.use('/api/auth', authRoutes);

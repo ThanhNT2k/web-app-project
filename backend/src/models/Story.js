@@ -165,7 +165,21 @@ async function getStoryById(id) {
 
     // Fetch tags riêng vì không thể aggregate mảng tags trong cùng GROUP BY query
     const tags = await Tag.getTagsForStory(story.id);
-    return { ...story, tags };
+
+    // Lấy danh sách cộng tác viên
+    const collaboratorsResult = await db.query(
+      `
+        SELECT u.id, u.username, u.email, u.full_name, u.avatar_url, sc.created_at
+        FROM story_collaborators sc
+        INNER JOIN users u ON u.id = sc.user_id
+        WHERE sc.story_id = $1
+        ORDER BY sc.created_at ASC
+      `,
+      [story.id]
+    );
+    const collaborators = collaboratorsResult.rows;
+
+    return { ...story, tags, collaborators };
   } catch (error) {
     throw error;
   }
@@ -403,7 +417,12 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
         get_follower_count(s.id) AS follow_count
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
-      WHERE s.author_id = $1   -- Chỉ lấy truyện của tác giả này
+      WHERE s.author_id = $1
+         OR EXISTS (
+           SELECT 1 
+           FROM story_collaborators sc 
+           WHERE sc.story_id = s.id AND sc.user_id = $1
+         )
       ORDER BY s.updated_at DESC
       LIMIT $2 OFFSET $3
     `,
@@ -413,7 +432,7 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
   const totalItems = result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
 
   return {
-    stories: result.rows.map(({ total_count, ...story }) => story),
+    stories: await attachTagsToStories(result.rows.map(({ total_count, ...story }) => story)),
     pagination: {
       page: safePage,
       limit: safeLimit,
@@ -492,8 +511,47 @@ async function toggleVisibility(id, userRole) {
  */
 async function getStoryBySlug(slug) {
   try {
-    const result = await db.query(
-      `
+    const match = slug.match(/^(\d+)(?:-(.*))?$/);
+    let query, params;
+
+    if (match) {
+      const storyId = parseInt(match[1], 10);
+      query = `
+        SELECT
+          s.id,
+          s.title,
+          s.slug,
+          s.author_id,
+          s.description,
+          s.cover_image_url,
+          s.category,
+          s.status,
+          s.total_chapters,
+          s.created_at,
+          s.updated_at,
+          s.is_published,
+          s.hidden_by_admin,
+          COUNT(c.id)::int AS chapter_count,
+          get_follower_count(s.id) AS follow_count,
+          u.id AS author_user_id,
+          u.username AS author_username,
+          u.full_name AS author_full_name,
+          u.avatar_url AS author_avatar_url
+        FROM stories s
+        LEFT JOIN users u ON u.id = s.author_id
+        LEFT JOIN chapters c ON c.story_id = s.id
+        WHERE s.id = $1
+        GROUP BY
+          s.id,
+          u.id,
+          u.username,
+          u.full_name,
+          u.avatar_url
+        LIMIT 1
+      `;
+      params = [storyId];
+    } else {
+      query = `
         SELECT
           s.id,
           s.title,
@@ -525,15 +583,31 @@ async function getStoryBySlug(slug) {
           u.full_name,
           u.avatar_url
         LIMIT 1
-      `,
-      [slug]
-    );
+      `;
+      params = [slug];
+    }
+
+    const result = await db.query(query, params);
 
     const story = result.rows[0] || null;
     if (!story) return null;
 
     const tags = await Tag.getTagsForStory(story.id);
-    return { ...story, tags };
+
+    // Lấy danh sách cộng tác viên
+    const collaboratorsResult = await db.query(
+      `
+        SELECT u.id, u.username, u.email, u.full_name, u.avatar_url, sc.created_at
+        FROM story_collaborators sc
+        INNER JOIN users u ON u.id = sc.user_id
+        WHERE sc.story_id = $1
+        ORDER BY sc.created_at ASC
+      `,
+      [story.id]
+    );
+    const collaborators = collaboratorsResult.rows;
+
+    return { ...story, tags, collaborators };
   } catch (error) {
     throw error;
   }

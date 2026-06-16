@@ -120,7 +120,7 @@ function AdminStoriesPage() {
                         )}
                       </td>
                       <td>
-                        <Link to={`/story/${story.slug}`} style={{ fontWeight: 600, color: 'var(--text)' }}>
+                        <Link to={`/story/${story.id}-${story.slug}`} style={{ fontWeight: 600, color: 'var(--text)' }}>
                           {story.title}
                         </Link>
                       </td>

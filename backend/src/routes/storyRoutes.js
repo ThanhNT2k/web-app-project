@@ -17,6 +17,11 @@ router.put('/:id', authenticateToken, authorizeRole('Uploader', 'Admin'), storyC
 router.delete('/:id', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.deleteStory);
 router.patch('/:id/visibility', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.toggleStoryVisibility);
 
+// Collaborator Management
+router.get('/:id/collaborators', authenticateToken, storyController.getCollaborators);
+router.post('/:id/collaborators', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.addCollaborator);
+router.delete('/:id/collaborators/:userId', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.removeCollaborator);
+
 router.get('/:storyId/chapters', optionalAuth, chapterController.getChapters);
 router.get('/:storyId/chapters/:chapterId', optionalAuth, chapterController.getChapterById);
 router.get('/by-slug/:storySlug/chapters/:chapterNumber', optionalAuth, chapterController.getChapterBySlugAndNumber);

@@ -57,6 +57,15 @@ function AdminLayout() {
             🚩 Quản lý báo cáo
           </NavLink>
 
+          <NavLink
+            to="/admin/comments"
+            className={({ isActive }) =>
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
+            💬 Quản lý bình luận
+          </NavLink>
+
           {/* Mục Quản lý từ khóa */}
           <NavLink
             to="/admin/bad-words"
@@ -66,6 +75,7 @@ function AdminLayout() {
           >
             🚫 Quản lý từ khóa
           </NavLink>
+
         </nav>
 
         {/* Nút Đăng xuất được đẩy xuống dưới cùng */}

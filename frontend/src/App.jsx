@@ -106,6 +106,7 @@ function App() {
               <Route path="/admin/stories" element={<AdminStoriesPage />} />
               <Route path="/admin/reports" element={<AdminReportsPage />} />
               <Route path="/admin/bad-words" element={<ManageBadWords />} />
+              <Route path="/admin/comments" element={<ModeratorCommentsPage />} />
             </Route>
 
             {/* MODERATOR LAYOUT RIÊNG */}

@@ -8,6 +8,7 @@ alter table "public"."users" drop constraint "users_role_check";
   create table "public"."reports" (
     "id" integer not null default nextval('public.reports_id_seq'::regclass),
     "user_id" integer,
+    "story_id" integer,
     "chapter_id" integer,
     "reason" character varying(50) not null,
     "description" text,

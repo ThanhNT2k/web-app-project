@@ -275,8 +275,40 @@ async function getChapterCount(storyId) {
  */
 async function getChapterBySlugAndNumber(storySlug, chapterNumber) {
   try {
-    const result = await db.query(
-      `
+    const match = storySlug.match(/^(\d+)(?:-(.*))?$/);
+    let query, params;
+
+    if (match) {
+      const storyId = parseInt(match[1], 10);
+      query = `
+        SELECT
+          c.id,
+          c.story_id,
+          c.chapter_number,
+          c.title,
+          c.content,
+          c.created_at,
+          c.updated_at,
+          c.is_published,
+          s.id AS story_id_ref,
+          s.title AS story_title,
+          s.slug AS story_slug,
+          s.description AS story_description,
+          s.cover_image_url AS story_cover_image_url,
+          s.category AS story_category,
+          s.status AS story_status,
+          s.total_chapters AS story_total_chapters,
+          s.is_published AS story_is_published,
+          s.hidden_by_admin AS story_hidden_by_admin,
+          s.author_id AS story_author_id
+        FROM chapters c
+        INNER JOIN stories s ON s.id = c.story_id
+        WHERE s.id = $1 AND c.chapter_number = $2
+        LIMIT 1
+      `;
+      params = [storyId, parseInt(chapterNumber, 10)];
+    } else {
+      query = `
         SELECT
           c.id,
           c.story_id,
@@ -301,9 +333,11 @@ async function getChapterBySlugAndNumber(storySlug, chapterNumber) {
         INNER JOIN stories s ON s.id = c.story_id
         WHERE s.slug = $1 AND c.chapter_number = $2
         LIMIT 1
-      `,
-      [storySlug, parseInt(chapterNumber, 10)]
-    );
+      `;
+      params = [storySlug, parseInt(chapterNumber, 10)];
+    }
+
+    const result = await db.query(query, params);
 
     return result.rows[0] || null;
   } catch (error) {

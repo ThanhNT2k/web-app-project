@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS stories (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE,
+    slug VARCHAR(255),
     author_id INTEGER REFERENCES users(id),
     description TEXT,
     cover_image_url VARCHAR(500),
@@ -134,6 +134,16 @@ CREATE TABLE IF NOT EXISTS ai_summaries (
 );
 
 -- -----------------------------------------------------------------------------
+-- story_collaborators
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS story_collaborators (
+    story_id INTEGER NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (story_id, user_id)
+);
+
+-- -----------------------------------------------------------------------------
 -- Indexes
 -- -----------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_stories_author_id ON stories(author_id);
@@ -143,6 +153,8 @@ CREATE INDEX IF NOT EXISTS idx_reading_history_story_id ON reading_history(story
 CREATE INDEX IF NOT EXISTS idx_user_follows_user_id ON user_follows(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_story_id ON comments(story_id);
+CREATE INDEX IF NOT EXISTS idx_story_collaborators_story_id ON story_collaborators(story_id);
+CREATE INDEX IF NOT EXISTS idx_story_collaborators_user_id ON story_collaborators(user_id);
 
 -- -----------------------------------------------------------------------------
 -- Updated-at triggers
