@@ -1,0 +1,15 @@
+version: "1"
+services:
+  - type: web
+    name: cmc-truyen-backend
+    env: node
+    plan: free
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && npm start"
+  
+  - type: worker
+    name: cmc-truyen-moderation-worker
+    env: node
+    plan: free
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && node src/startWorker.js"

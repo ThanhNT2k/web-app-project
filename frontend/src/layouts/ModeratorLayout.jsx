@@ -13,7 +13,7 @@ function ModeratorLayout() {
   return (
     <div className="admin-layout">
       {/* Sidebar - Cấu trúc giống hệt AdminLayout */}
-      <aside className="admin-sidebar" style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100vh' }}>
+      <aside className="admin-sidebar">
         <div className="admin-logo">
           <h2>CMC Moderator</h2>
         </div>
@@ -57,7 +57,7 @@ function ModeratorLayout() {
         </nav>
 
         {/* Nút Đăng xuất đồng bộ phong cách */}
-        <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px' }}>
+        <div className="mt-auto pt-4 w-100">
           <button
             onClick={handleLogout}
             style={{
