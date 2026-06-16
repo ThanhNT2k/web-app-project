@@ -3,7 +3,7 @@ const redisConfig = require('../config/redisConfig');
 const { loadModerationData, moderateContent } = require('../services/moderationService');
 const Comment = require('../models/Comment');
 
-const connectionOptions = redisConfig.url;
+const connection = redisConfig.url;
 
 console.log("Worker đang khởi tạo với cấu hình:", connection);
 
@@ -52,8 +52,8 @@ loadModerationData().then(() => {
         
     }, { 
         connection: {
-        url: connectionOptions
-        }
+        url: connection
+        } 
         });
 
     worker.on('ready', () => console.log("Worker đã kết nối Redis thành công và đang lắng nghe job!"));
