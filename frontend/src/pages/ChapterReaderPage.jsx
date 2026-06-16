@@ -76,6 +76,16 @@ function ChapterReaderPage() {
     fetchData();
   }, [storySlug, chapterNumber]);
 
+  // Redirect to canonical URL (storyId-slug) if not already matching
+  useEffect(() => {
+    if (chapter && chapter.story_id && chapter.story_slug) {
+      const canonicalStorySlug = `${chapter.story_id}-${chapter.story_slug}`;
+      if (storySlug !== canonicalStorySlug) {
+        navigate(`/${canonicalStorySlug}/${chapterNumber}`, { replace: true });
+      }
+    }
+  }, [chapter, storySlug, chapterNumber, navigate]);
+
   useEffect(() => {
     if (!isAuthenticated || !chapter?.story_id) return;
 
@@ -250,7 +260,7 @@ function ChapterReaderPage() {
       <ReadingScrollProgress />
       <div className="reader-top-bar d-flex align-items-center justify-content-between p-3 rounded-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
         <div style={{ flex: 1, textAlign: 'left' }}>
-          <Link to={`/story/${chapter.story_slug}`} className="btn-cmc btn-cmc-outline btn-sm d-inline-flex align-items-center gap-1">
+          <Link to={`/story/${chapter.story_id}-${chapter.story_slug}`} className="btn-cmc btn-cmc-outline btn-sm d-inline-flex align-items-center gap-1">
             <span>←</span> <span className="d-none d-sm-inline">Về truyện</span>
           </Link>
         </div>

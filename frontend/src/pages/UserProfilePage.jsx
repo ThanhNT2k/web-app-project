@@ -93,7 +93,7 @@ function UserProfilePage() {
               {history.map((item) => (
                 <li key={item.id} className="history-item">
                   <div>
-                    <Link to={`/story/${item.slug}`} className="fw-semibold">
+                    <Link to={`/story/${item.story_id}-${item.slug}`} className="fw-semibold">
                       {item.title}
                     </Link>
                     <div className="small text-muted">
@@ -107,7 +107,7 @@ function UserProfilePage() {
                   {item.last_chapter_read ? (
                     <Link
                       className="btn-cmc btn-cmc-primary btn-sm"
-                      to={`/${item.slug}/${item.last_chapter_number}`}
+                      to={`/${item.story_id}-${item.slug}/${item.last_chapter_number}`}
                     >
                       Tiếp tục
                     </Link>

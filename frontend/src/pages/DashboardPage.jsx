@@ -325,7 +325,7 @@ function DashboardPage() {
                   </p>
                   <p className="small mb-3 story-clamp">{story.description}</p>
                 <div className="d-flex flex-wrap gap-2">
-                  <Link to={`/story/${story.slug}`} className="btn-cmc btn-cmc-outline btn-sm">
+                  <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-outline btn-sm">
                     Xem
                   </Link>
 

@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS stories (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE,
+    slug VARCHAR(255),
     author_id INTEGER REFERENCES users(id),
     description TEXT,
     cover_image_url VARCHAR(500),

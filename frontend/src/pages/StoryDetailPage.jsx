@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
@@ -17,6 +17,7 @@ const CHAPTERS_PER_PAGE = 50;
 
 function StoryDetailPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -52,6 +53,16 @@ function StoryDetailPage() {
     };
     fetchStory();
   }, [slug]);
+
+  // Redirect to canonical URL (storyId-slug) if not already matching
+  useEffect(() => {
+    if (story && story.id && story.slug) {
+      const canonicalSlug = `${story.id}-${story.slug}`;
+      if (slug !== canonicalSlug) {
+        navigate(`/story/${canonicalSlug}`, { replace: true });
+      }
+    }
+  }, [story, slug, navigate]);
 
   // Load chapters with pagination and sort
   useEffect(() => {
@@ -103,7 +114,7 @@ function StoryDetailPage() {
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
       {isAuthenticated && storyProgress ? (
-        <ReadingProgress progress={storyProgress} storySlug={story.slug} />
+        <ReadingProgress progress={storyProgress} storySlug={`${story.id}-${story.slug}`} />
       ) : null}
 
       <div className="story-detail-header panel-card">
@@ -153,7 +164,7 @@ function StoryDetailPage() {
             <div className="d-flex flex-wrap gap-2">
               {continueChapterNumber ? (
                 <Link
-                  to={`/${story.slug}/${continueChapterNumber}`}
+                  to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
                   className="btn-cmc btn-cmc-primary"
                 >
                   {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
@@ -204,7 +215,7 @@ function StoryDetailPage() {
                 <ul className="chapter-list">
                   {chapters.map((chapter) => (
                     <li key={chapter.id}>
-                      <Link to={`/${story.slug}/${chapter.chapter_number}`}>
+                      <Link to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}>
                         <span>
                           Ch.{chapter.chapter_number}: {chapter.title}
                         </span>
