@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const { Chapter, Story } = require('../models');
+const { Chapter, Story, StoryCollaborator } = require('../models');
 
 // Schema validate khi TẠO chương mới
 // chapter_number: số thứ tự chương, phải là số nguyên dương (bắt đầu từ 1)
@@ -29,6 +29,16 @@ function isStoryOwnerOrAdmin(user, story) {
 }
 
 /**
+ * Kiểm tra xem user có phải cộng tác viên, chủ sở hữu hoặc Admin không.
+ */
+async function isStoryCollaboratorOrOwnerOrAdmin(user, story) {
+  if (!user || !story) return false;
+  if (user.role === 'Admin') return true;
+  if (Number(user.id) === Number(story.author_id)) return true;
+  return await StoryCollaborator.isCollaborator(story.id, user.id);
+}
+
+/**
  * Lấy danh sách chương của một truyện với pagination và sắp xếp.
  * Hỗ trợ sort ascending (asc) hoặc descending (desc) theo chapter_number.
  * Thường dùng asc để hiển thị từ chương 1 lên, desc để hiển thị chương mới nhất trước.
@@ -48,7 +58,8 @@ async function getChapters(req, res) {
         req.user.role === 'Admin' ||
         Number(req.user.id) === Number(story.author_id)
       );
-      if (!isOwnerOrAdmin) {
+      const isCollaborator = req.user && await StoryCollaborator.isCollaborator(story.id, req.user.id);
+      if (!isOwnerOrAdmin && !isCollaborator) {
         return res.status(404).json({ success: false, message: 'Story not found' });
       }
     }
@@ -90,7 +101,8 @@ async function getChapterById(req, res) {
         req.user.role === 'Admin' ||
         Number(req.user.id) === Number(chapter.story_author_id)
       );
-      if (!isOwnerOrAdmin) {
+      const isCollaborator = req.user && await StoryCollaborator.isCollaborator(chapter.story_id, req.user.id);
+      if (!isOwnerOrAdmin && !isCollaborator) {
         return res.status(404).json({ success: false, message: 'Chapter not found' });
       }
     }
@@ -136,8 +148,9 @@ async function createChapter(req, res) {
       });
     }
 
-    // Kiểm tra quyền: chỉ tác giả của truyện hoặc Admin mới thêm được chương
-    if (!isStoryOwnerOrAdmin(req.user, story)) {
+    // Kiểm tra quyền: chỉ tác giả của truyện, cộng tác viên hoặc Admin mới thêm được chương
+    const hasAddPermission = await isStoryCollaboratorOrOwnerOrAdmin(req.user, story);
+    if (!hasAddPermission) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -203,8 +216,9 @@ async function updateChapter(req, res) {
       });
     }
 
-    // Kiểm tra quyền chỉnh sửa ở cấp truyện (không cần kiểm tra cấp chương riêng)
-    if (!isStoryOwnerOrAdmin(req.user, story)) {
+    // Kiểm tra quyền chỉnh sửa ở cấp truyện: chỉ tác giả, cộng tác viên hoặc Admin
+    const hasEditPermission = await isStoryCollaboratorOrOwnerOrAdmin(req.user, story);
+    if (!hasEditPermission) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -320,7 +334,8 @@ async function getChapterBySlugAndNumber(req, res) {
         req.user.role === 'Admin' ||
         Number(req.user.id) === Number(chapter.story_author_id)
       );
-      if (!isOwnerOrAdmin) {
+      const isCollaborator = req.user && await StoryCollaborator.isCollaborator(chapter.story_id, req.user.id);
+      if (!isOwnerOrAdmin && !isCollaborator) {
         return res.status(404).json({
           success: false,
           message: 'Chapter not found',

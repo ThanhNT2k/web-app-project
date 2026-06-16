@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const { Story } = require('../models');
+const { Story, User, StoryCollaborator } = require('../models');
 const Tag = require('../models/Tag');
 
 // Schema validate dữ liệu khi TẠO MỚI truyện
@@ -48,6 +48,16 @@ function isStoryOwnerOrAdmin(user, story) {
 }
 
 /**
+ * Kiểm tra xem user có phải cộng tác viên, chủ sở hữu hoặc Admin không.
+ */
+async function isStoryCollaboratorOrOwnerOrAdmin(user, story) {
+  if (!user || !story) return false;
+  if (user.role === 'Admin') return true;
+  if (Number(user.id) === Number(story.author_id)) return true;
+  return await StoryCollaborator.isCollaborator(story.id, user.id);
+}
+
+/**
  * Lấy danh sách tất cả truyện đã published với pagination và sắp xếp.
  * Hỗ trợ 3 chế độ sắp xếp: newest (mới nhất), popular (nhiều follow nhất), updated (cập nhật gần đây)
  */
@@ -89,15 +99,15 @@ async function getStoryById(req, res) {
         message: 'Story not found',
       });
     }
-    // Kiểm tra xem người đang xem có phải là tác giả hoặc Admin hay không
-    const isOwnerOrAdmin = req.user &&  (
-      req.user.role === 'Admin' ||
-      Number(req.user.id) === Number(story.author_id)
-    );
     // Nếu truyện chưa xuất bản (is_published = false) HOẶC bị Admin ẩn (hidden_by_admin = true)
     if (!story.is_published || story.hidden_by_admin) {
-      // Kiểm tra xem người đang xem có phải là tác giả hoặc Admin hay không
-      if (!isOwnerOrAdmin) {
+      const isOwnerOrAdmin = req.user &&  (
+        req.user.role === 'Admin' ||
+        Number(req.user.id) === Number(story.author_id)
+      );
+      const isCollaborator = req.user && await StoryCollaborator.isCollaborator(story.id, req.user.id);
+      
+      if (!isOwnerOrAdmin && !isCollaborator) {
         return res.status(404).json({
           success: false,
           message: 'Story not found',
@@ -208,8 +218,9 @@ async function updateStory(req, res) {
       });
     }
 
-    // Kiểm tra quyền: chỉ tác giả hoặc Admin mới được cập nhật
-    if (!isStoryOwnerOrAdmin(req.user, existingStory)) {
+    // Kiểm tra quyền: chỉ tác giả, cộng tác viên hoặc Admin mới được cập nhật
+    const hasEditPermission = await isStoryCollaboratorOrOwnerOrAdmin(req.user, existingStory);
+    if (!hasEditPermission) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -431,8 +442,9 @@ async function getStoryBySlug(req, res) {
         req.user.role === 'Admin' ||
         Number(req.user.id) === Number(story.author_id)
       );
+      const isCollaborator = req.user && await StoryCollaborator.isCollaborator(story.id, req.user.id);
 
-      if (!isOwnerOrAdmin) {
+      if (!isOwnerOrAdmin && !isCollaborator) {
         return res.status(404).json({
           success: false,
           message: 'Story not found',
@@ -453,6 +465,166 @@ async function getStoryBySlug(req, res) {
   }
 }
 
+/**
+ * Lấy danh sách cộng tác viên của truyện.
+ */
+async function getCollaborators(req, res) {
+  try {
+    const { id } = req.params;
+    const collaborators = await StoryCollaborator.getCollaborators(id);
+    return res.status(200).json({
+      success: true,
+      collaborators,
+    });
+  } catch (error) {
+    console.error('[storyController.getCollaborators]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
+/**
+ * Thêm cộng tác viên mới vào truyện bằng Email.
+ */
+async function addCollaborator(req, res) {
+  try {
+    const { id: storyId } = req.params;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp email của cộng tác viên.',
+      });
+    }
+
+    const story = await Story.getStoryById(storyId);
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy truyện.',
+      });
+    }
+
+    // Chỉ chủ truyện hoặc Admin mới được quản lý cộng tác viên
+    if (req.user.role !== 'Admin' && Number(req.user.id) !== Number(story.author_id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Chỉ chủ sở hữu truyện mới có quyền quản lý cộng tác viên.',
+      });
+    }
+
+    // Tìm user theo email
+    const targetUser = await User.findByEmail(email.trim());
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Email này không tồn tại trên hệ thống.',
+      });
+    }
+
+    // Ràng buộc: vai trò của user được thêm phải là 'Uploader'
+    if (targetUser.role !== 'Uploader') {
+      return res.status(400).json({
+        success: false,
+        message: 'Tài khoản này không phải là nhà đăng truyện (Uploader).',
+      });
+    }
+
+    // Ràng buộc: tài khoản uploader phải đang hoạt động (không bị khóa bởi admin)
+    if (!targetUser.is_active) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tài khoản này đã bị khóa hoặc ngừng hoạt động.',
+      });
+    }
+
+    // Ràng buộc: không được tự add chính mình
+    if (Number(targetUser.id) === Number(story.author_id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Chủ sở hữu truyện không cần thêm làm cộng tác viên.',
+      });
+    }
+
+    // Kiểm tra xem đã là cộng tác viên chưa
+    const isAlreadyCollaborator = await StoryCollaborator.isCollaborator(storyId, targetUser.id);
+    if (isAlreadyCollaborator) {
+      return res.status(400).json({
+        success: false,
+        message: 'Người dùng này đã là cộng tác viên của truyện rồi.',
+      });
+    }
+
+    // Thêm vào database
+    await StoryCollaborator.addCollaborator(storyId, targetUser.id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Đã thêm cộng tác viên thành công.',
+      collaborator: {
+        id: targetUser.id,
+        username: targetUser.username,
+        email: targetUser.email,
+        full_name: targetUser.full_name,
+        avatar_url: targetUser.avatar_url,
+      },
+    });
+  } catch (error) {
+    console.error('[storyController.addCollaborator]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
+/**
+ * Xóa cộng tác viên khỏi truyện.
+ */
+async function removeCollaborator(req, res) {
+  try {
+    const { id: storyId, userId } = req.params;
+
+    const story = await Story.getStoryById(storyId);
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy truyện.',
+      });
+    }
+
+    // Chỉ chủ truyện hoặc Admin mới được quản lý cộng tác viên
+    if (req.user.role !== 'Admin' && Number(req.user.id) !== Number(story.author_id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Chỉ chủ sở hữu truyện mới có quyền quản lý cộng tác viên.',
+      });
+    }
+
+    const removed = await StoryCollaborator.removeCollaborator(storyId, userId);
+    if (!removed) {
+      return res.status(404).json({
+        success: false,
+        message: 'Người này không phải là cộng tác viên của truyện.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Đã gỡ cộng tác viên thành công.',
+    });
+  } catch (error) {
+    console.error('[storyController.removeCollaborator]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
 module.exports = {
   getAllStories,
   getStoryById,
@@ -463,4 +635,7 @@ module.exports = {
   searchStories,
   toggleStoryVisibility,
   getStoryBySlug,
+  getCollaborators,
+  addCollaborator,
+  removeCollaborator,
 };

@@ -117,8 +117,15 @@ function StoryDetailPage() {
           <div>
             <h1>{story.title}</h1>
             <p className="text-muted mb-2">
-              Tác giả:{' '}
-              {story.author_full_name || story.author_username || 'CMC'}
+              Tác giả: {story.author_full_name || story.author_username || 'CMC'}
+              {story.collaborators?.length > 0 && (
+                <>
+                  {' | Đồng đóng góp: '}
+                  <span className="text-muted">
+                    {story.collaborators.map((c) => c.full_name || c.username).join(', ')}
+                  </span>
+                </>
+              )}
             </p>
             <p className="story-detail-desc">{story.description}</p>
             <div className="d-flex flex-wrap gap-2 align-items-center mb-3">

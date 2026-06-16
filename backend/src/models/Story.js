@@ -165,7 +165,21 @@ async function getStoryById(id) {
 
     // Fetch tags riêng vì không thể aggregate mảng tags trong cùng GROUP BY query
     const tags = await Tag.getTagsForStory(story.id);
-    return { ...story, tags };
+
+    // Lấy danh sách cộng tác viên
+    const collaboratorsResult = await db.query(
+      `
+        SELECT u.id, u.username, u.email, u.full_name, u.avatar_url, sc.created_at
+        FROM story_collaborators sc
+        INNER JOIN users u ON u.id = sc.user_id
+        WHERE sc.story_id = $1
+        ORDER BY sc.created_at ASC
+      `,
+      [story.id]
+    );
+    const collaborators = collaboratorsResult.rows;
+
+    return { ...story, tags, collaborators };
   } catch (error) {
     throw error;
   }
@@ -403,7 +417,12 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
         get_follower_count(s.id) AS follow_count
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
-      WHERE s.author_id = $1   -- Chỉ lấy truyện của tác giả này
+      WHERE s.author_id = $1
+         OR EXISTS (
+           SELECT 1 
+           FROM story_collaborators sc 
+           WHERE sc.story_id = s.id AND sc.user_id = $1
+         )
       ORDER BY s.updated_at DESC
       LIMIT $2 OFFSET $3
     `,
@@ -413,7 +432,7 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
   const totalItems = result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
 
   return {
-    stories: result.rows.map(({ total_count, ...story }) => story),
+    stories: await attachTagsToStories(result.rows.map(({ total_count, ...story }) => story)),
     pagination: {
       page: safePage,
       limit: safeLimit,
@@ -533,7 +552,21 @@ async function getStoryBySlug(slug) {
     if (!story) return null;
 
     const tags = await Tag.getTagsForStory(story.id);
-    return { ...story, tags };
+
+    // Lấy danh sách cộng tác viên
+    const collaboratorsResult = await db.query(
+      `
+        SELECT u.id, u.username, u.email, u.full_name, u.avatar_url, sc.created_at
+        FROM story_collaborators sc
+        INNER JOIN users u ON u.id = sc.user_id
+        WHERE sc.story_id = $1
+        ORDER BY sc.created_at ASC
+      `,
+      [story.id]
+    );
+    const collaborators = collaboratorsResult.rows;
+
+    return { ...story, tags, collaborators };
   } catch (error) {
     throw error;
   }
