@@ -97,17 +97,17 @@ function StoryReader({
             <p className="text-muted mb-0">{chapter.story_title}</p>
           </div>
           <div className="d-flex gap-2 flex-wrap">
-            <button className="btn btn-outline-secondary" onClick={onPrevious} type="button" disabled={!hasPrevious}>
+            <button className={`btn ${hasPrevious ? 'btn-brand' : 'btn-outline-secondary'}`} onClick={onPrevious} type="button" disabled={!hasPrevious}>
               Trước
             </button>
-            <button className="btn btn-brand" onClick={onNext} type="button" disabled={!hasNext}>
+            <button className={`btn ${hasNext ? 'btn-brand' : 'btn-outline-secondary'}`} onClick={onNext} type="button" disabled={!hasNext}>
               Sau 
             </button>
             </div>
             <div className="floating-reader-nav">
 
            <button
-          className="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+          className={`btn ${hasPrevious ? 'btn-brand' : 'btn-outline-secondary'} d-flex align-items-center justify-content-center`}
           onClick={onPrevious}
           type="button"
           disabled={!hasPrevious}
@@ -133,7 +133,7 @@ function StoryReader({
         </select>
 
         <button
-          className="btn btn-brand d-flex align-items-center justify-content-center"
+          className={`btn ${hasNext ? 'btn-brand' : 'btn-outline-secondary'} d-flex align-items-center justify-content-center`}
           onClick={onNext}
           type="button"
           disabled={!hasNext}
@@ -145,7 +145,8 @@ function StoryReader({
           </div>
           </div>
 
-        <div className="reader-toolbar rounded-4 p-3 mb-4 d-flex flex-wrap gap-3 align-items-center">
+        {/* --- KHU VỰC TOOLBAR ĐƯỢC NÂNG CẤP --- */}
+        <div className="reader-toolbar rounded-4 p-3 mb-4 d-flex flex-wrap gap-4 align-items-center">
           {chapters.length > 0 && onChapterSelect ? (
             <select
               className="form-select form-select-sm"
@@ -167,29 +168,53 @@ function StoryReader({
             </select>
           ) : null}
 
-          <label className="d-flex align-items-center gap-2 small mb-0">
-            Cỡ chữ
-            <input
-              type="range"
-              min="14"
-              max="28"
-              value={fontSize}
-              onChange={(e) => setFontSize(Number(e.target.value))}
-            />
-            <span>{fontSize}px</span>
-          </label>
+          {/* Cụm nút chỉnh Cỡ chữ */}
+          <div className="d-flex align-items-center gap-2 small mb-0">
+            <span className="text-muted fw-medium">Cỡ chữ</span>
+            <div className="btn-group btn-group-sm">
+              <button 
+                className="btn btn-outline-secondary px-2" 
+                onClick={() => setFontSize(Math.max(14, fontSize - 1))}
+                disabled={fontSize <= 14}
+              >
+                -
+              </button>
+              <span className="btn btn-outline-secondary disabled text-dark border-secondary px-3" style={{ opacity: 1 }}>
+                {fontSize}
+              </span>
+              <button 
+                className="btn btn-outline-secondary px-2" 
+                onClick={() => setFontSize(Math.min(28, fontSize + 1))}
+                disabled={fontSize >= 28}
+              >
+                +
+              </button>
+            </div>
+          </div>
 
-          <label className="d-flex align-items-center gap-2 small mb-0">
-            Giãn dòng
-            <input
-              type="range"
-              min="1.2"
-              max="2.4"
-              step="0.1"
-              value={lineSpacing}
-              onChange={(e) => setLineSpacing(Number(e.target.value))}
-            />
-          </label>
+          {/* Cụm nút chỉnh Giãn dòng */}
+          <div className="d-flex align-items-center gap-2 small mb-0">
+            <span className="text-muted fw-medium">Giãn dòng</span>
+            <div className="btn-group btn-group-sm">
+              <button 
+                className="btn btn-outline-secondary px-2" 
+                onClick={() => setLineSpacing(Math.max(1.2, parseFloat((lineSpacing - 0.1).toFixed(1))))}
+                disabled={lineSpacing <= 1.2}
+              >
+                -
+              </button>
+              <span className="btn btn-outline-secondary disabled text-dark border-secondary px-3" style={{ opacity: 1, minWidth: '45px' }}>
+                {lineSpacing.toFixed(1)}
+              </span>
+              <button 
+                className="btn btn-outline-secondary px-2" 
+                onClick={() => setLineSpacing(Math.min(2.4, parseFloat((lineSpacing + 0.1).toFixed(1))))}
+                disabled={lineSpacing >= 2.4}
+              >
+                +
+              </button>
+            </div>
+          </div>
 
           <select
             className="form-select form-select-sm"
@@ -203,6 +228,7 @@ function StoryReader({
             ))}
           </select>
         </div>
+        {/* --- KẾT THÚC KHU VỰC TOOLBAR --- */}
 
         <div
           className="chapter-content reader-content"
@@ -217,7 +243,7 @@ function StoryReader({
 
        <div className="d-flex justify-content-between mt-5 pt-4 border-top">
           <button 
-            className="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+            className={`btn ${hasPrevious ? 'btn-brand' : 'btn-outline-secondary'} d-flex align-items-center justify-content-center`} 
             onClick={onPrevious} 
             type="button" 
             disabled={!hasPrevious}
@@ -226,7 +252,7 @@ function StoryReader({
             ←
           </button>
           <button 
-            className="btn btn-brand d-flex align-items-center justify-content-center" 
+            className={`btn ${hasNext ? 'btn-brand' : 'btn-outline-secondary'} d-flex align-items-center justify-content-center`} 
             onClick={onNext} 
             type="button" 
             disabled={!hasNext}
