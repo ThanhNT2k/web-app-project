@@ -252,6 +252,7 @@ function ChapterReaderPage() {
 
       {isModalOpen && (
         <ReportModal 
+          storyId={chapter.story_id}
           chapterId={Number(chapter.id)} 
           onClose={() => setIsModalOpen(false)} 
         />

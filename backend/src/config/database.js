@@ -48,6 +48,14 @@ pool.query('SELECT NOW()')
     } catch (err) {
       console.error('[Database] Failed to verify/add hidden_by_admin column:', err.message);
     }
+
+    try {
+      await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS story_id INTEGER REFERENCES stories(id) ON DELETE CASCADE');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_story ON reports(story_id)');
+      console.log('[Database] Verified reports table has story_id column');
+    } catch (err) {
+      console.error('[Database] Failed to verify/add reports.story_id column:', err.message);
+    }
   })
   .catch((err) => console.error('[Database] Connection failed:', err.message));
 
