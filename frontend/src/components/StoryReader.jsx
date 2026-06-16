@@ -120,12 +120,7 @@ function StoryReader({
           className="btn px-4 py-2 text-white"
           onClick={onPrevious}
           disabled={!hasPrevious}
-          style={{
-            backgroundColor: hasPrevious ? '#73b7d2' : '#d1d5db',
-            border: 'none',
-            borderRadius: '4px',
-            fontWeight: '500'
-          }}
+          style={{ backgroundColor: hasPrevious ? '#73b7d2' : '#d1d5db', border: 'none', borderRadius: '4px', fontWeight: '500' }}
         >
           ← Chap trước
         </button>
@@ -133,12 +128,7 @@ function StoryReader({
           className="btn px-4 py-2 text-white"
           onClick={onNext}
           disabled={!hasNext}
-          style={{
-            backgroundColor: hasNext ? '#73b7d2' : '#d1d5db',
-            border: 'none',
-            borderRadius: '4px',
-            fontWeight: '500'
-          }}
+          style={{ backgroundColor: hasNext ? '#73b7d2' : '#d1d5db', border: 'none', borderRadius: '4px', fontWeight: '500' }}
         >
           Chap sau →
         </button>
@@ -208,6 +198,42 @@ function StoryReader({
       <div className="d-flex justify-content-center gap-2 mb-5">
         <button className="btn px-4 py-2 text-white" onClick={onPrevious} disabled={!hasPrevious} style={{ backgroundColor: hasPrevious ? '#73b7d2' : '#d1d5db', border: 'none', borderRadius: '4px', fontWeight: '500' }}>← Chap trước</button>
         <button className="btn px-4 py-2 text-white" onClick={onNext} disabled={!hasNext} style={{ backgroundColor: hasNext ? '#73b7d2' : '#d1d5db', border: 'none', borderRadius: '4px', fontWeight: '500' }}>Chap sau →</button>
+      </div>
+
+      {/* --- PHỤC HỒI THANH ĐIỀU HƯỚNG NỔI (FLOATING NAV) --- */}
+      <div className="floating-reader-nav">
+        <button
+          className={`btn ${hasPrevious ? 'btn-brand' : 'btn-outline-secondary'} d-flex align-items-center justify-content-center`}
+          onClick={onPrevious}
+          type="button"
+          disabled={!hasPrevious}
+          style={{ width: '40px', height: '40px', padding: '0', flexShrink: 0 }}
+        >
+          ←
+        </button>
+
+        <select
+          className="form-select"
+          value={chapter.id}
+          onChange={(e) => onChapterSelect(e.target.value)}
+          style={{ width: '180px', minWidth: '180px' }}
+        >
+          {chapters.map((item) => (
+            <option key={item.id} value={item.id}>
+              Chương {item.chapter_number}
+            </option>
+          ))}
+        </select>
+
+        <button
+          className={`btn ${hasNext ? 'btn-brand' : 'btn-outline-secondary'} d-flex align-items-center justify-content-center`}
+          onClick={onNext}
+          type="button"
+          disabled={!hasNext}
+          style={{ width: '40px', height: '40px', padding: '0', flexShrink: 0 }}
+        >
+          →
+        </button>
       </div>
 
     </section>

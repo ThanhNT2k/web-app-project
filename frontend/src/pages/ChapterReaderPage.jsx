@@ -229,7 +229,6 @@ function ChapterReaderPage() {
 
   return (
     <main className="cmc-main px-0 px-md-3">
-      {/* Nút báo cáo được dời gọn lên sát góc phải */}
       <div className="container-fluid mb-2 d-flex justify-content-end px-0">
         <button className="btn btn-sm btn-outline-danger" onClick={() => setIsModalOpen(true)}>
           Báo cáo vi phạm
@@ -248,7 +247,6 @@ function ChapterReaderPage() {
 
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
-      {/* Gọi trực tiếp StoryReader đã được nâng cấp */}
       <StoryReader
         chapter={chapter}
         chapters={chapters}
@@ -263,11 +261,39 @@ function ChapterReaderPage() {
         setFontFamily={setFontFamily}
       />
 
-      <div className="mt-4">
+      {/* --- PHỤC HỒI BẢNG CHỌN CHƯƠNG NHANH CÓ CĂN GIỮA --- */}
+      {chapters.length > 0 && (
+        <div className="panel-card mt-4 mx-auto" style={{ maxWidth: '1000px' }}>
+          <h5 className="panel-title" style={{ fontSize: '1.05rem', marginBottom: '1rem' }}>Chọn chương nhanh</h5>
+          <div className="chapter-nav-grid d-flex flex-wrap gap-2">
+            {chapters.slice(0, 30).map((ch) => {
+              const isActive = String(ch.id) === String(chapter.id);
+              return (
+                <button
+                  key={ch.id}
+                  type="button"
+                  className={`btn btn-sm ${isActive ? 'btn-brand' : 'btn-cmc-outline'}`}
+                  style={{ minWidth: '55px', borderRadius: '8px' }}
+                  onClick={() => goToChapter(ch.chapter_number)}
+                >
+                  Ch. {ch.chapter_number}
+                </button>
+              );
+            })}
+            {chapters.length > 30 && (
+              <span className="align-self-center small text-muted ms-2">
+                và {chapters.length - 30} chương khác...
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 mx-auto" style={{ maxWidth: '1000px' }}>
         <AIChapterSummary chapterId={chapterNumericId} />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 mx-auto" style={{ maxWidth: '1000px' }}>
         <CommentSection
           key={`chapter-comments-${chapter.story_id}-${chapterNumericId}`}
           storyId={chapter.story_id}
