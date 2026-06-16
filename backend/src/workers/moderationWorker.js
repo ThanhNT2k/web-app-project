@@ -3,10 +3,7 @@ const redisConfig = require('../config/redisConfig');
 const { loadModerationData, moderateContent } = require('../services/moderationService');
 const Comment = require('../models/Comment');
 
-const connection = {
-    host: redisConfig.host,
-    port: redisConfig.port
-};
+const connectionOptions = redisConfig.url;
 
 console.log("Worker đang khởi tạo với cấu hình:", connection);
 
@@ -53,7 +50,11 @@ loadModerationData().then(() => {
             console.error(`[Moderation] LỖI khi update DB:`, err);
         }
         
-    }, { connection });
+    }, { 
+        connection: {
+        url: connectionOptions
+        }
+        });
 
     worker.on('ready', () => console.log("Worker đã kết nối Redis thành công và đang lắng nghe job!"));
     worker.on('error', (err) => console.error("Worker lỗi:", err));
