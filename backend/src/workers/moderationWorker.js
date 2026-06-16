@@ -17,32 +17,26 @@ loadModerationData().then(() => {
         const result = moderateContent(content);
         
         try {
+            // Always persist the detected tier into comments.rating (int4)
+            const data = { rating: result.tier };
             switch (result.tier) {
                 case 1:
-                    await Comment.update(commentId, {
-                        status: 'rejected',
-                        is_spam: false
-                    });
+                    data.status = 'rejected';
+                    data.is_spam = false;
                     break;
                 case 2:
-                    await Comment.update(commentId, {
-                        status: 'masked'
-                    });
+                    data.status = 'masked';
                     break;
-
                 case 3:
-                    await Comment.update(commentId, {
-                        is_spam: true,
-                        status: 'flagged'
-                    });
+                    data.status = 'flagged';
+                    data.is_spam = true;
                     break;
-
                 default:
-                    await Comment.update(commentId, {
-                        status: 'approved'
-                    });
+                    data.status = 'approved';
                     break;
             }
+
+            await Comment.update(commentId, data);
         } catch (err) {
             console.error(`[Moderation] LỖI khi update DB:`, err);
         }

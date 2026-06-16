@@ -115,6 +115,9 @@ async function getComments(req, res) {
         c.rating,
         c.created_at,
         c.updated_at,
+        c.status,
+        c.rating,
+        c.is_spam,
         u.username AS user_username,
         u.full_name AS user_full_name,
         s.title AS story_title,
@@ -151,4 +154,22 @@ module.exports = {
   getDashboard,
   getPendingStories,
   getComments,
+  async updateCommentStatus(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const { status } = req.body;
+      const allowed = ['approved', 'rejected', 'masked', 'flagged'];
+      if (!id || !allowed.includes(status)) {
+        return res.status(400).json({ success: false, message: 'Invalid id or status' });
+      }
+
+      const updated = await Comment.updateStatus(id, status);
+      if (!updated) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+      return res.status(200).json({ success: true, comment: updated });
+    } catch (error) {
+      console.error('[moderatorController.updateCommentStatus]', error);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  },
 };

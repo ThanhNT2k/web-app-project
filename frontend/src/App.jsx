@@ -4,8 +4,6 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LegacyRedirect from './components/LegacyRedirect';
 
-import ModDashboard from './pages/ModDashboard';
-import ModPendingStories from './pages/ModPendingStories';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 
