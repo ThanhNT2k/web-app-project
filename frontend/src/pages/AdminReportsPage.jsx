@@ -78,7 +78,7 @@ function AdminReportsPage() {
                 <td className="px-6 py-4">
                   {report.story_title || report.chapter_title || report.story_slug ? (
                     report.story_slug ? (
-                      <Link to={`/story/${report.story_slug}${report.chapter_number ? `/${report.chapter_number}` : ''}`} className="font-semibold text-blue-600 hover:underline">
+                      <Link to={`/${report.story_slug}${report.chapter_number ? `/${report.chapter_number}` : ''}`} className="font-semibold text-blue-600 hover:underline">
                         {report.story_title || report.chapter_title || report.story_slug}{report.chapter_number ? ` — Chương ${report.chapter_number}` : ''}
                       </Link>
                     ) : (
