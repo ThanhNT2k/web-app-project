@@ -4,9 +4,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import AIChapterSummary from '../components/AIChapterSummary';
 import ReadingScrollProgress from '../components/ReadingScrollProgress';
 import CommentSection from '../components/CommentSection';
-import ReadingProgress from '../components/ReadingProgress';
 import StoryReader, { loadReaderPrefs } from '../components/StoryReader';
-import ReportModal from '../components/ReportModal'; // Đảm bảo đã import
+import ReportModal from '../components/ReportModal';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { mockChapter } from '../data/mockStories';
@@ -52,12 +51,10 @@ function ChapterReaderPage() {
       try {
         setLoading(true);
         setError('');
-        // 1. Fetch chapter details by slug and number
         const chapterResponse = await API.chapters.getBySlugAndNumber(storySlug, chapterNumber);
         const resolvedChapter = chapterResponse.chapter || chapterResponse;
         setChapter(resolvedChapter);
 
-        // 2. Fetch the list of chapters using the story ID ref from the resolved chapter
         const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, 100);
         setChapters(chaptersResponse.chapters || []);
       } catch (err) {
@@ -76,7 +73,6 @@ function ChapterReaderPage() {
     fetchData();
   }, [storySlug, chapterNumber]);
 
-  // Redirect to canonical URL (storyId-slug) if not already matching
   useEffect(() => {
     if (chapter && chapter.story_id && chapter.story_slug) {
       const canonicalStorySlug = `${chapter.story_id}-${chapter.story_slug}`;
@@ -202,18 +198,11 @@ function ChapterReaderPage() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapterIndex, chapters, chapter]);
-
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   if (loading) {
     return (
       <main className="cmc-main animate-pulse">
-        <div className="reader-top-bar mb-4">
-          <div className="skeleton-box" style={{ width: '100px', height: '36px', borderRadius: '8px' }} />
-          <div className="skeleton-box" style={{ width: '80px', height: '36px', borderRadius: '8px' }} />
-        </div>
         <div className="panel-card p-4 p-lg-5" style={{ background: 'var(--surface)', borderRadius: '16px' }}>
           <div className="skeleton-box mb-3" style={{ height: '30px', width: '40%', borderRadius: '6px' }} />
           <div className="skeleton-box mb-4" style={{ height: '20px', width: '25%', borderRadius: '6px' }} />
@@ -221,9 +210,6 @@ function ChapterReaderPage() {
           <div className="skeleton-box mb-3" style={{ height: '16px', width: '100%', borderRadius: '4px' }} />
           <div className="skeleton-box mb-3" style={{ height: '16px', width: '95%', borderRadius: '4px' }} />
           <div className="skeleton-box mb-3" style={{ height: '16px', width: '98%', borderRadius: '4px' }} />
-          <div className="skeleton-box mb-3" style={{ height: '16px', width: '90%', borderRadius: '4px' }} />
-          <div className="skeleton-box mb-3" style={{ height: '16px', width: '92%', borderRadius: '4px' }} />
-          <div className="skeleton-box mb-3" style={{ height: '16px', width: '85%', borderRadius: '4px' }} />
         </div>
       </main>
     );
@@ -242,9 +228,9 @@ function ChapterReaderPage() {
   }
 
   return (
-    <main className="cmc-main">
-      {/* Nút báo cáo */}
-      <div className="text-end mb-2">
+    <main className="cmc-main px-0 px-md-3">
+      {/* Nút báo cáo được dời gọn lên sát góc phải */}
+      <div className="container-fluid mb-2 d-flex justify-content-end px-0">
         <button className="btn btn-sm btn-outline-danger" onClick={() => setIsModalOpen(true)}>
           Báo cáo vi phạm
         </button>
@@ -259,29 +245,10 @@ function ChapterReaderPage() {
       )}
 
       <ReadingScrollProgress />
-      <div className="reader-top-bar d-flex align-items-center justify-content-between p-3 rounded-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-        <div style={{ flex: 1, textAlign: 'left' }}>
-          <Link to={`/story/${chapter.story_id}-${chapter.story_slug}`} className="btn-cmc btn-cmc-outline btn-sm d-inline-flex align-items-center gap-1">
-            <span>←</span> <span className="d-none d-sm-inline">Về truyện</span>
-          </Link>
-        </div>
-        <div style={{ flex: 2, textAlign: 'center' }}>
-          <h5 className="mb-0 text-truncate" style={{ fontSize: '1rem', fontWeight: 'bold' }}>{chapter.story_title || 'CMC Truyện'}</h5>
-          <span className="small text-muted text-truncate d-block">Chương {chapter.chapter_number}: {chapter.title}</span>
-        </div>
-        <div style={{ flex: 1, textAlign: 'right' }}>
-          <button
-            type="button"
-            className="btn-cmc btn-cmc-outline btn-sm"
-            onClick={() => navigator.clipboard?.writeText(shareUrl).then(() => alert('Đã sao chép liên kết vào bộ nhớ tạm!'))}
-          >
-            Chia sẻ
-          </button>
-        </div>
-      </div>
 
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
+      {/* Gọi trực tiếp StoryReader đã được nâng cấp */}
       <StoryReader
         chapter={chapter}
         chapters={chapters}
@@ -295,33 +262,6 @@ function ChapterReaderPage() {
         fontFamily={fontFamily}
         setFontFamily={setFontFamily}
       />
-
-      {chapters.length > 0 && (
-        <div className="panel-card mt-4">
-          <h5 className="panel-title" style={{ fontSize: '1.05rem', marginBottom: '1rem' }}>Chọn chương nhanh</h5>
-          <div className="chapter-nav-grid d-flex flex-wrap gap-2">
-            {chapters.slice(0, 30).map((ch) => {
-              const isActive = String(ch.id) === String(chapter.id);
-              return (
-                <button
-                  key={ch.id}
-                  type="button"
-                  className={`btn btn-sm ${isActive ? 'btn-brand' : 'btn-cmc-outline'}`}
-                  style={{ minWidth: '55px', borderRadius: '8px' }}
-                  onClick={() => goToChapter(ch.chapter_number)}
-                >
-                  Ch. {ch.chapter_number}
-                </button>
-              );
-            })}
-            {chapters.length > 30 && (
-              <span className="align-self-center small text-muted ms-2">
-                và {chapters.length - 30} chương khác...
-              </span>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="mt-4">
         <AIChapterSummary chapterId={chapterNumericId} />
