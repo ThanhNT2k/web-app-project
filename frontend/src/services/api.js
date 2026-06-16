@@ -211,6 +211,7 @@ const API = {
     getPendingStories: (page = 1, limit = 20) => request('/moderator/pending-stories', { method: 'GET', params: { page, limit } }),
     getComments: (page = 1, limit = 50, storyId = null, chapterId = null) =>
       request('/moderator/comments', { method: 'GET', params: { page, limit, story_id: storyId || undefined, chapter_id: chapterId || undefined } }),
+    updateCommentStatus: (id, status) => request(`/moderator/comments/${id}/status`, { method: 'PATCH', data: { status } }),
   },
   upload: {
     cover: async (file) => {

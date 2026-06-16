@@ -10,5 +10,6 @@ router.use(authenticateToken, authorizeRole('Moderator', 'Admin'));
 router.get('/dashboard', moderatorController.getDashboard);
 router.get('/pending-stories', moderatorController.getPendingStories);
 router.get('/comments', moderatorController.getComments);
+router.patch('/comments/:id/status', moderatorController.updateCommentStatus);
 
 module.exports = router;
