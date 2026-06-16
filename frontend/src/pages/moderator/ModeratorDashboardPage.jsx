@@ -1,47 +1,55 @@
-import { useEffect, useState } from 'react';
-import API from '../../services/api';
+import React from 'react';
 
 function ModeratorDashboardPage() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await API.moderator.getDashboard();
-        setStats(res.stats || null);
-      } catch (err) {
-        setError(err?.response?.data?.message || 'Lỗi khi lấy dữ liệu');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
-
   return (
-    <div>
-      <h2 className="mb-3">Bảng điều khiển Moderator</h2>
-      {loading && <div>Đang tải...</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
-      {stats && (
-        <div className="row gx-3">
-          <div className="col-6 col-md-3">
-            <div className="card p-3">Truyện chờ: <strong>{stats.pendingStories}</strong></div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div className="card p-3">Truyện bị ẩn: <strong>{stats.hiddenStories}</strong></div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div className="card p-3">Báo cáo mới: <strong>{stats.reportsPending}</strong></div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div className="card p-3">Tổng bình luận: <strong>{stats.totalComments}</strong></div>
-          </div>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+      <h2 className="section-title mb-4">Bảng điều khiển Moderator</h2>
+      
+      {/* Khối thống kê */}
+      <div className="stats-row mb-4">
+        <div className="stat-box">
+          <span>Truyện chờ duyệt</span>
+          <strong>12</strong>
         </div>
-      )}
+        <div className="stat-box">
+          <span>Truyện bị ẩn</span>
+          <strong>2</strong>
+        </div>
+        <div className="stat-box">
+          <span>Báo cáo mới</span>
+          <strong>5</strong>
+        </div>
+        <div className="stat-box">
+          <span>Tổng bình luận xử lý</span>
+          <strong>29</strong>
+        </div>
+      </div>
+
+      {/* Bảng hoạt động gần đây */}
+      <div className="panel-card">
+        <h3 className="panel-title">Hoạt động kiểm duyệt gần đây</h3>
+        <table className="admin-table mt-3">
+          <thead>
+            <tr>
+              <th>Hành động</th>
+              <th>Đối tượng</th>
+              <th>Thời gian</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span className="badge-role" style={{background: '#dcfce7', color: '#16a34a'}}>Đã duyệt</span></td>
+              <td>Truyện: Phàm Nhân Tu Tiên</td>
+              <td>10 phút trước</td>
+            </tr>
+            <tr>
+              <td><span className="badge-role" style={{background: '#fee2e2', color: '#ef4444'}}>Đã xóa</span></td>
+              <td>Bình luận vi phạm (Spam)</td>
+              <td>1 giờ trước</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

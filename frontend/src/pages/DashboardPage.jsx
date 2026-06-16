@@ -186,7 +186,6 @@ function DashboardPage() {
         loadStories();
       }
       setChapterModal(null);
-      // LUÔN LUÔN load lại danh sách chương dù là sửa hay thêm
       loadChaptersForStory(story.id); 
     } catch (err) {
       showMessage(err?.response?.data?.message || 'Thao tác chương thất bại');
@@ -258,7 +257,6 @@ function DashboardPage() {
                   </Link>
 
                   {user?.role === 'Admin' ? (
-                    // Admin: đổi nút sửa thành ẩn truyện và có quyền tuyệt đối
                     <button
                       type="button"
                       className={`btn-cmc btn-sm ${story.is_published ? 'btn-cmc-outline' : 'btn-cmc-primary'}`}
@@ -267,7 +265,6 @@ function DashboardPage() {
                       {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
                     </button>
                   ) : (
-                    // Uploader: vẫn giữ nguyên nút sửa
                     <button
                       type="button"
                       className="btn-cmc btn-cmc-outline btn-sm"
@@ -433,48 +430,59 @@ function DashboardPage() {
         </div>
       ) : null}
 
-      {/* ── Chapter modal (add / edit) ────────────────────────────────────── */}
+      {/* ── Chapter modal (Wattpad Style - FULL SCREEN) ────────────────────────────────────── */}
       {chapterModal ? (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setChapterModal(null)}>
-          <div className="modal-content modal-content-lg">
-            <button type="button" className="close-modal" onClick={() => setChapterModal(null)}>&times;</button>
-            <h2>
-              {chapterModal.chapter
-                ? `Sửa chương ${chapterModal.chapter.chapter_number} — ${chapterModal.story.title}`
-                : `Thêm chương — ${chapterModal.story.title}`}
-            </h2>
-            <form onSubmit={saveChapter} className="d-grid gap-3 mt-3">
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#fff', zIndex: 9999, overflowY: 'auto' }}>
+          <form onSubmit={saveChapter} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            
+            {/* Thanh Navbar trên cùng giống hệt Wattpad */}
+            <div className="d-flex justify-content-between align-items-center px-4 py-3 border-bottom" style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
+              <div className="d-flex align-items-center gap-3">
+                <button type="button" onClick={() => setChapterModal(null)} style={{ border: 'none', background: 'transparent', fontSize: '24px', cursor: 'pointer' }}>
+                  ←
+                </button>
+                <div className="text-muted" style={{ fontWeight: 500, fontSize: '15px' }}>
+                  {chapterModal.chapter ? `Sửa chương` : `Thêm chương mới`} — {chapterModal.story.title}
+                </div>
+              </div>
+              <button type="submit" className="btn-cmc btn-cmc-primary" style={{ borderRadius: '20px', padding: '6px 24px', fontWeight: 'bold' }}>
+                {chapterModal.chapter ? 'Lưu' : 'Đăng tải'}
+              </button>
+            </div>
+
+            {/* Khu vực soạn thảo căn giữa trang */}
+            <div className="wattpad-editor-container mx-auto" style={{ width: '100%', maxWidth: '800px', padding: '40px 20px', flex: 1 }}>
               {!chapterModal.chapter && (
                 <input
                   type="number"
-                  className="form-control-cmc"
-                  min={1}
-                  placeholder="Số chương"
+                  step="any" 
+                  placeholder="Số chương (VD: 1, 5.1, 5.2)"
+                  className="wattpad-input-muted"
                   value={chapterForm.chapter_number}
-                  onChange={(e) => setChapterForm({ ...chapterForm, chapter_number: Number(e.target.value) })}
+                  onChange={(e) => setChapterForm({ 
+                    ...chapterForm, 
+                    chapter_number: e.target.value 
+                  })}
                   required
                 />
               )}
               <input
-                className="form-control-cmc"
+                type="text"
                 placeholder="Tiêu đề chương"
+                className="wattpad-input-title"
                 value={chapterForm.title}
                 onChange={(e) => setChapterForm({ ...chapterForm, title: e.target.value })}
                 required
               />
               <textarea
-                className="form-control-cmc"
-                rows={10}
-                placeholder="Nội dung chương"
+                placeholder="Nhập nội dung chương của bạn vào đây..."
+                className="wattpad-input-content"
                 value={chapterForm.content}
                 onChange={(e) => setChapterForm({ ...chapterForm, content: e.target.value })}
                 required
-              />
-              <button type="submit" className="btn-cmc btn-cmc-primary">
-                {chapterModal.chapter ? 'Lưu thay đổi' : 'Thêm chương'}
-              </button>
-            </form>
-          </div>
+              ></textarea>
+            </div>
+          </form>
         </div>
       ) : null}
     </main>
