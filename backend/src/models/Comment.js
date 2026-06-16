@@ -1,4 +1,28 @@
 const db = require('../config/database');
+const { moderateContent } = require('../services/moderationService');
+
+function addDisplayContent(comment) {
+  if (!comment) return comment;
+
+  if (comment.status === 'rejected') {
+    return {
+      ...comment,
+      display_content: 'Bình luận đã bị từ chối do vi phạm tiêu chuẩn cộng đồng',
+    };
+  }
+
+  if (comment.status === 'flagged') {
+    return {
+      ...comment,
+      display_content: 'Bình luận này đã bị gắn cờ là spam',
+    };
+  }
+
+  const displayContent = comment.status === 'masked'
+    ? moderateContent(comment.content).maskedContent
+    : comment.content;
+  return { ...comment, display_content: displayContent };
+}
 
 /**
  * Lấy danh sách bình luận của một truyện (kèm thông tin người dùng).
@@ -21,7 +45,7 @@ async function getByStory(storyId, limit = 50) {
     `,
     [id, limit]
   );
-  return result.rows;
+  return result.rows.map(addDisplayContent);
 }
 
 /**
@@ -47,7 +71,7 @@ async function getByChapter(chapterId, storyId = null, limit = 50) {
     `,
     [chapterInt, storyId ? parseInt(storyId, 10) : null, limit]
   );
-  return result.rows;
+  return result.rows.map(addDisplayContent);
 }
 
 /**
@@ -62,7 +86,7 @@ async function create({ userId, storyId, chapterId, content, rating }) {
     `,
     [userId, storyId, chapterId || null, content, rating || null]
   );
-  return result.rows[0];
+  return addDisplayContent(result.rows[0]);
 }
 
 /**
@@ -75,7 +99,7 @@ async function update(id, data) {
   
   const query = `UPDATE comments SET ${fields} WHERE id = $1 RETURNING *`;
   const result = await db.query(query, [id, ...values]);
-  return result.rows[0];
+  return addDisplayContent(result.rows[0]);
 }
 
 /**

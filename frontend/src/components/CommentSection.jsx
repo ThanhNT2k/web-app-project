@@ -117,7 +117,7 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
               
               {/* Áp dụng class đặc biệt cho nội dung đã bị thay đổi */}
               <p className={`mb-1 ${isSpecial ? 'special-content-text' : ''}`}>
-                {comment.content}
+                {comment.display_content || comment.content}
               </p>
               
               {(user?.id === comment.user_id || user?.role === 'Admin') && (
