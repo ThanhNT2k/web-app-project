@@ -139,6 +139,9 @@ const API = {
     update: (id, data) => request(`/stories/${id}`, { method: 'PUT', data }),
     delete: (id) => request(`/stories/${id}`, { method: 'DELETE' }),
     toggleVisibility: (id) => request(`/stories/${id}/visibility`, { method: 'PATCH' }),
+    getCollaborators: (storyId) => request(`/stories/${storyId}/collaborators`, { method: 'GET' }),
+    addCollaborator: (storyId, data) => request(`/stories/${storyId}/collaborators`, { method: 'POST', data }),
+    removeCollaborator: (storyId, userId) => request(`/stories/${storyId}/collaborators/${userId}`, { method: 'DELETE' }),
     search: (query, category = null, tag = null, page = 1, limit = 12) => request('/stories/search', {
       method: 'GET',
       params: {
