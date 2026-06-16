@@ -5,7 +5,8 @@ const db = require('../config/database');
 const reportSchema = z.object({
   reason: z.string(),
   description: z.string(),
-  chapter_id: z.number().int().nullable() // Phải là chapter_id giống frontend gửi
+  story_id: z.number().int().nullable(),
+  chapter_id: z.number().int().nullable(),
 });
 
 const createReport = async (req, res) => {
@@ -26,8 +27,8 @@ const createReport = async (req, res) => {
     }
 
     await db.query(
-      "INSERT INTO reports (user_id, chapter_id, reason, description) VALUES ($1, $2, $3, $4)",
-      [userId, data.chapter_id, data.reason, data.description]
+      "INSERT INTO reports (user_id, story_id, chapter_id, reason, description) VALUES ($1, $2, $3, $4, $5)",
+      [userId, data.story_id, data.chapter_id, data.reason, data.description]
     );
 
     // Kiểm tra và ẩn chương
@@ -53,20 +54,32 @@ const createReport = async (req, res) => {
 const getReports = async (req, res) => {
   try {
     const { status } = req.query; // Nhận status từ URL params
-    let query = "SELECT * FROM reports";
+    let query = `
+      SELECT r.*, u.username AS reporter_username,
+             ch.chapter_number, ch.title AS chapter_title,
+             COALESCE(report_story.title, chapter_story.title) AS story_title,
+             COALESCE(report_story.slug, chapter_story.slug) AS story_slug,
+             COALESCE(report_story.id, chapter_story.id) AS story_id
+      FROM reports r
+      LEFT JOIN users u ON u.id = r.user_id
+      LEFT JOIN chapters ch ON ch.id = r.chapter_id
+      LEFT JOIN stories report_story ON report_story.id = r.story_id
+      LEFT JOIN stories chapter_story ON chapter_story.id = ch.story_id
+    `;
     let values = [];
 
     if (status && status !== 'ALL') {
-      query += " WHERE status = $1";
+      query += " WHERE r.status = $1";
       values.push(status);
     }
     
     // Thêm ORDER BY để báo cáo mới nhất hiện lên đầu
-    query += " ORDER BY created_at DESC";
+    query += " ORDER BY r.created_at DESC";
 
     const result = await db.query(query, values);
     res.status(200).json({ reports: result.rows });
   } catch (error) {
+    console.error('[reportController.getReports] error', error);
     res.status(500).json({ error: "Lỗi server" });
   }
 };

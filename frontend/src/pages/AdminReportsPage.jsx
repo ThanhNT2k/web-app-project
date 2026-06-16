@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import API from '../services/api';
 
@@ -64,6 +65,7 @@ function AdminReportsPage() {
           <thead className="text-xs text-gray-500 uppercase bg-gray-50">
             <tr>
               <th className="px-6 py-3">Người dùng</th>
+              <th className="px-6 py-3">Truyện / Chương</th>
               <th className="px-6 py-3">Nội dung báo cáo</th>
               <th className="px-6 py-3">Trạng thái</th>
               <th className="px-6 py-3 text-right">Hành động</th>
@@ -72,7 +74,20 @@ function AdminReportsPage() {
           <tbody className="divide-y divide-gray-200">
             {reports.map((report) => (
               <tr key={report.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 font-medium text-gray-900">ID: {report.user_id}</td>
+                <td className="px-6 py-4 font-medium text-gray-900">{report.reporter_username || `ID: ${report.user_id}`}</td>
+                <td className="px-6 py-4">
+                  {report.story_title || report.chapter_title || report.story_slug ? (
+                    report.story_slug ? (
+                      <Link to={`/story/${report.story_slug}${report.chapter_number ? `/${report.chapter_number}` : ''}`} className="font-semibold text-blue-600 hover:underline">
+                        {report.story_title || report.chapter_title || report.story_slug}{report.chapter_number ? ` — Chương ${report.chapter_number}` : ''}
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-gray-800">{report.story_title || report.chapter_title || `ID: ${report.story_id}`}</span>
+                    )
+                  ) : (
+                    <span className="text-gray-500">—</span>
+                  )}
+                </td>
                 <td className="px-6 py-4">
                   <div className="font-semibold text-gray-800">{report.reason}</div>
                   <div className="text-gray-500 truncate max-w-xs">{report.description}</div>

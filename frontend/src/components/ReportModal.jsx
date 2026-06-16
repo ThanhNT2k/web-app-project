@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { REPORT_REASONS } from '../constants/reportConstants';
 import API from '../services/api';
 
-const ReportModal = ({ chapterId, onClose }) => {
+const ReportModal = ({ chapterId, storyId, onClose }) => {
   const [formData, setFormData] = useState({ reason: 'BROKEN_IMAGE', description: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -12,9 +12,11 @@ const ReportModal = ({ chapterId, onClose }) => {
     setLoading(true);
     setError(null);
     const numericChapterId = chapterId ? parseInt(chapterId, 10) : null;
+    const numericStoryId = storyId ? parseInt(storyId, 10) : null;
     try {
       await API.reports.create({ 
         ...formData, 
+        story_id: numericStoryId,
         chapter_id: numericChapterId 
       });
     

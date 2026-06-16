@@ -48,9 +48,16 @@ function ModeratorReportsPage() {
         {reports.map((r) => (
           <div key={r.id} className="list-group-item d-flex justify-content-between align-items-start">
             <div>
-              <div className="small text-muted">Bởi: {r.user_id} • {r.created_at}</div>
+              <div className="small text-muted">Bởi: {r.reporter_username || r.user_id} • {new Date(r.created_at).toLocaleString('vi-VN')}</div>
               <div>{r.reason}</div>
-              <div className="text-muted small">{r.description}</div>
+              <div className="text-muted small mb-2">{r.description}</div>
+              {(r.story_title || r.story_slug) ? (
+                <div className="small">
+                  Báo cáo: <a href={r.story_slug ? `/${r.story_slug}${r.chapter_number ? `/${r.chapter_number}` : ''}` : '#'}>
+                    {r.story_title || r.chapter_title || r.story_slug}{r.chapter_number ? ` — Chương ${r.chapter_number}` : ''}
+                  </a>
+                </div>
+              ) : null}
             </div>
             <div className="text-end">
               <select className="form-select form-select-sm mb-2" value={r.status} onChange={(e) => handleChangeStatus(r.id, e.target.value)}>

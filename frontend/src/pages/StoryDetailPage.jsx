@@ -258,7 +258,8 @@ function StoryDetailPage() {
       </div>
       {isReportModalOpen && (
         <ReportModal 
-          storyId={story.id} 
+          storyId={story.id}
+          chapterId={null}
           onClose={() => setIsReportModalOpen(false)} 
         />
       )}
