@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LegacyRedirect from './components/LegacyRedirect';
 
+import ModDashboard from './pages/ModDashboard';
+import ModPendingStories from './pages/ModPendingStories';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 
@@ -116,10 +118,13 @@ function App() {
                 </RoleProtectedRoute>
               }
             >
-              <Route path="/moderator/dashboard" element={<ModeratorDashboardPage />} />
-              <Route path="/moderator/pending-stories" element={<ModeratorPendingStoriesPage />} />
-              <Route path="/moderator/reports" element={<AdminReportsPage />} />
-              <Route path="/moderator/comments" element={<ModeratorCommentsPage />} />
+              {/* Thay thế bằng Component thật ở đây */}
+              <Route path="/moderator/dashboard" element={<ModDashboard />} />
+              <Route path="/moderator/pending-stories" element={<ModPendingStories />} />
+              
+              {/* Các trang chưa làm thì tạm giữ nguyên thẻ div */}
+              <Route path="/moderator/reports" element={<div className="p-4">Trang Xử lý Report (Sẽ làm sau)</div>} />
+              <Route path="/moderator/comments" element={<div className="p-4">Trang Quản lý Bình luận (Sẽ làm sau)</div>} />
             </Route>
 
             <Route path="/home" element={<Navigate to="/" replace />} />

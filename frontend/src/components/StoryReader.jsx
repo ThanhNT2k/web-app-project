@@ -106,39 +106,41 @@ function StoryReader({
             </div>
             <div className="floating-reader-nav">
 
-            <button
-              className="btn btn-outline-secondary"
-              onClick={onPrevious}
-              type="button"
-              disabled={!hasPrevious}
-            >
-              ← Chap trước
-            </button>
+           <button
+          className="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+          onClick={onPrevious}
+          type="button"
+          disabled={!hasPrevious}
+          style={{ width: '40px', height: '40px', padding: '0', flexShrink: 0 }}
+        >
+          ←
+        </button>
 
-            <select
-              className="form-select"
-              value={chapter.id}
-              onChange={(e) => onChapterSelect(e.target.value)}
-              style={{
-                width: '180px',
-                minWidth: '180px'
-              }}
-            >
-              {chapters.map((item) => (
-                <option key={item.id} value={item.id}>
-                  Chương {item.chapter_number}
-                </option>
-              ))}
-            </select>
+        <select
+          className="form-select"
+          value={chapter.id}
+          onChange={(e) => onChapterSelect(e.target.value)}
+          style={{
+            width: '180px',
+            minWidth: '180px'
+          }}
+        >
+          {chapters.map((item) => (
+            <option key={item.id} value={item.id}>
+              Chương {item.chapter_number}
+            </option>
+          ))}
+        </select>
 
-            <button
-              className="btn btn-brand"
-              onClick={onNext}
-              type="button"
-              disabled={!hasNext}
-            >
-              Chap sau →
-            </button>
+        <button
+          className="btn btn-brand d-flex align-items-center justify-content-center"
+          onClick={onNext}
+          type="button"
+          disabled={!hasNext}
+          style={{ width: '40px', height: '40px', padding: '0', flexShrink: 0 }}
+        >
+          →
+        </button>
 
           </div>
           </div>
@@ -213,12 +215,24 @@ function StoryReader({
           {chapter.content}
         </div>
 
-        <div className="d-flex justify-content-between mt-5 pt-4 border-top">
-          <button className="btn btn-outline-secondary" onClick={onPrevious} type="button" disabled={!hasPrevious}>
-            ← Trước
+       <div className="d-flex justify-content-between mt-5 pt-4 border-top">
+          <button 
+            className="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+            onClick={onPrevious} 
+            type="button" 
+            disabled={!hasPrevious}
+            style={{ width: '40px', height: '40px', padding: '0', flexShrink: 0 }}
+          >
+            ←
           </button>
-          <button className="btn btn-brand" onClick={onNext} type="button" disabled={!hasNext}>
-            Sau →
+          <button 
+            className="btn btn-brand d-flex align-items-center justify-content-center" 
+            onClick={onNext} 
+            type="button" 
+            disabled={!hasNext}
+            style={{ width: '40px', height: '40px', padding: '0', flexShrink: 0 }}
+          >
+            →
           </button>
         </div>
       </div>
