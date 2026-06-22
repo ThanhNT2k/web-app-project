@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const { Story, User, StoryCollaborator } = require('../models');
+const { Story, User, StoryCollaborator, StoryRating } = require('../models');
 const Chapter = require('../models/Chapter');
 const Tag = require('../models/Tag');
 const { parseStoryUploadFile, parseStoryTextToChapters } = require('../services/storyFileImportService');
@@ -42,6 +42,10 @@ const updateStorySchema = Joi.object({
   tags: Joi.array().items(Joi.string().trim().max(100)).max(20),
 }).min(1);
 
+const storyRatingSchema = Joi.object({
+  rating: Joi.number().integer().min(1).max(5).required(),
+});
+
 /**
  * Kiểm tra quyền chỉnh sửa/xóa truyện.
  * Chỉ CHỦ SỞ HỮU (tác giả) hoặc ADMIN mới được thao tác với truyện.
@@ -68,6 +72,19 @@ async function isStoryCollaboratorOrOwnerOrAdmin(user, story) {
   if (!user || !story) return false;
   if (user.role === 'Admin') return true;
   if (Number(user.id) === Number(story.author_id)) return true;
+  return await StoryCollaborator.isCollaborator(story.id, user.id);
+}
+
+async function canViewStory(story, user) {
+  if (!story) return false;
+  if (story.is_published && !story.hidden_by_admin) return true;
+
+  if (!user) return false;
+
+  if (user.role === 'Admin' || Number(user.id) === Number(story.author_id)) {
+    return true;
+  }
+
   return await StoryCollaborator.isCollaborator(story.id, user.id);
 }
 
@@ -114,19 +131,11 @@ async function getStoryById(req, res) {
       });
     }
     // Nếu truyện chưa xuất bản (is_published = false) HOẶC bị Admin ẩn (hidden_by_admin = true)
-    if (!story.is_published || story.hidden_by_admin) {
-      const isOwnerOrAdmin = req.user &&  (
-        req.user.role === 'Admin' ||
-        Number(req.user.id) === Number(story.author_id)
-      );
-      const isCollaborator = req.user && await StoryCollaborator.isCollaborator(story.id, req.user.id);
-      
-      if (!isOwnerOrAdmin && !isCollaborator) {
-        return res.status(404).json({
-          success: false,
-          message: 'Story not found',
-        });
-      }
+    if (!(await canViewStory(story, req.user))) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
     }
     return res.status(200).json({
       success: true,
@@ -529,19 +538,11 @@ async function getStoryBySlug(req, res) {
     }
 
     // Nếu truyện chưa xuất bản HOẶC bị Admin ẩn
-    if (!story.is_published || story.hidden_by_admin) {
-      const isOwnerOrAdmin = req.user && (
-        req.user.role === 'Admin' ||
-        Number(req.user.id) === Number(story.author_id)
-      );
-      const isCollaborator = req.user && await StoryCollaborator.isCollaborator(story.id, req.user.id);
-
-      if (!isOwnerOrAdmin && !isCollaborator) {
-        return res.status(404).json({
-          success: false,
-          message: 'Story not found',
-        });
-      }
+    if (!(await canViewStory(story, req.user))) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
     }
 
     return res.status(200).json({
@@ -550,6 +551,123 @@ async function getStoryBySlug(req, res) {
     });
   } catch (error) {
     console.error('[storyController.getStoryBySlug]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
+/**
+ * Lấy tổng quan đánh giá của truyện.
+ */
+async function getStoryRating(req, res) {
+  try {
+    const { id } = req.params;
+    const story = await Story.getStoryById(id);
+
+    if (!(await canViewStory(story, req.user))) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    const rating = await StoryRating.getStoryRatingSummary(id, req.user?.id || null);
+
+    return res.status(200).json({
+      success: true,
+      rating,
+    });
+  } catch (error) {
+    console.error('[storyController.getStoryRating]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
+/**
+ * Đánh giá / cập nhật đánh giá của người dùng cho truyện.
+ */
+async function rateStory(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    const { id } = req.params;
+    const story = await Story.getStoryById(id);
+
+    if (!(await canViewStory(story, req.user))) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    const { error, value } = storyRatingSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: error.details.map((detail) => detail.message),
+      });
+    }
+
+    await StoryRating.upsertStoryRating(id, req.user.id, value.rating);
+    const rating = await StoryRating.getStoryRatingSummary(id, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Story rated successfully',
+      rating,
+    });
+  } catch (error) {
+    console.error('[storyController.rateStory]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
+
+/**
+ * Xóa đánh giá của chính người dùng cho truyện.
+ */
+async function deleteStoryRating(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    const { id } = req.params;
+    const story = await Story.getStoryById(id);
+
+    if (!(await canViewStory(story, req.user))) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    await StoryRating.deleteStoryRating(id, req.user.id);
+    const rating = await StoryRating.getStoryRatingSummary(id, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Story rating deleted successfully',
+      rating,
+    });
+  } catch (error) {
+    console.error('[storyController.deleteStoryRating]', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -728,6 +846,9 @@ module.exports = {
   searchStories,
   toggleStoryVisibility,
   getStoryBySlug,
+  getStoryRating,
+  rateStory,
+  deleteStoryRating,
   getCollaborators,
   addCollaborator,
   removeCollaborator,

@@ -1,6 +1,19 @@
 const db = require('../config/database');
 const Tag = require('./Tag');
 
+function ratingStatsJoin(alias = 's') {
+  return `
+    LEFT JOIN (
+      SELECT
+        story_id,
+        COUNT(*)::int AS rating_count,
+        COALESCE(ROUND(AVG(rating)::numeric, 2), 0)::float8 AS average_rating
+      FROM ratings
+      GROUP BY story_id
+    ) sr ON sr.story_id = ${alias}.id
+  `;
+}
+
 /**
  * Hàm utility: Gán tags vào từng story trong danh sách (batch fetch).
  * Thay vì gọi getTagsForStory() cho từng story (N+1 queries),
@@ -82,12 +95,15 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
         s.updated_at,
         s.is_published,
         s.hidden_by_admin,
+        COALESCE(sr.rating_count, 0)::int AS rating_count,
+        COALESCE(sr.average_rating, 0)::float8 AS average_rating,
         COUNT(*) OVER() AS total_count,      -- Window function: tổng số record không bị ảnh hưởng bởi LIMIT/OFFSET
         u.username AS author_username,
         u.full_name AS author_full_name,
         get_follower_count(s.id) AS follow_count
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
+      ${ratingStatsJoin('s')}
       ${includeUnpublished ? '' : 'WHERE s.is_published = true'}  -- Admin xem được truyện chưa publish
       ORDER BY ${orderBy}
       LIMIT $1 OFFSET $2
@@ -139,6 +155,8 @@ async function getStoryById(id) {
           s.updated_at,
           s.is_published,
           s.hidden_by_admin,
+          COALESCE(sr.rating_count, 0)::int AS rating_count,
+          COALESCE(sr.average_rating, 0)::float8 AS average_rating,
           COUNT(c.id)::int AS chapter_count,   -- Đếm thực tế số chương, cast sang int
           get_follower_count(s.id) AS follow_count,
           u.id AS author_user_id,
@@ -148,13 +166,16 @@ async function getStoryById(id) {
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
         LEFT JOIN chapters c ON c.story_id = s.id   -- LEFT JOIN để truyện không có chương vẫn xuất hiện
+        ${ratingStatsJoin('s')}
         WHERE s.id = $1
         GROUP BY
           s.id,
           u.id,
           u.username,
           u.full_name,
-          u.avatar_url
+          u.avatar_url,
+          sr.rating_count,
+          sr.average_rating
         LIMIT 1
       `,
       [id]
@@ -353,12 +374,15 @@ async function searchStories(query, category = null, tag = null, page = 1, limit
           s.updated_at,
           s.is_published,
           s.hidden_by_admin,
+          COALESCE(sr.rating_count, 0)::int AS rating_count,
+          COALESCE(sr.average_rating, 0)::float8 AS average_rating,
           COUNT(*) OVER() AS total_count,
           u.username AS author_username,
           u.full_name AS author_full_name,
           get_follower_count(s.id) AS follow_count
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
+        ${ratingStatsJoin('s')}
         WHERE s.is_published = true
           AND (
             $1::text IS NULL                -- Nếu không có từ khóa, bỏ qua điều kiện tìm kiếm
@@ -411,12 +435,15 @@ async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
     `
       SELECT
         s.*,
+        COALESCE(sr.rating_count, 0)::int AS rating_count,
+        COALESCE(sr.average_rating, 0)::float8 AS average_rating,
         COUNT(*) OVER() AS total_count,
         u.username AS author_username,
         u.full_name AS author_full_name,
         get_follower_count(s.id) AS follow_count
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
+      ${ratingStatsJoin('s')}
       WHERE s.author_id = $1
          OR EXISTS (
            SELECT 1 
@@ -531,6 +558,8 @@ async function getStoryBySlug(slug) {
           s.updated_at,
           s.is_published,
           s.hidden_by_admin,
+          COALESCE(sr.rating_count, 0)::int AS rating_count,
+          COALESCE(sr.average_rating, 0)::float8 AS average_rating,
           COUNT(c.id)::int AS chapter_count,
           get_follower_count(s.id) AS follow_count,
           u.id AS author_user_id,
@@ -540,13 +569,16 @@ async function getStoryBySlug(slug) {
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
         LEFT JOIN chapters c ON c.story_id = s.id
+        ${ratingStatsJoin('s')}
         WHERE s.id = $1
         GROUP BY
           s.id,
           u.id,
           u.username,
           u.full_name,
-          u.avatar_url
+          u.avatar_url,
+          sr.rating_count,
+          sr.average_rating
         LIMIT 1
       `;
       params = [storyId];
@@ -566,6 +598,8 @@ async function getStoryBySlug(slug) {
           s.updated_at,
           s.is_published,
           s.hidden_by_admin,
+          COALESCE(sr.rating_count, 0)::int AS rating_count,
+          COALESCE(sr.average_rating, 0)::float8 AS average_rating,
           COUNT(c.id)::int AS chapter_count,
           get_follower_count(s.id) AS follow_count,
           u.id AS author_user_id,
@@ -575,13 +609,16 @@ async function getStoryBySlug(slug) {
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
         LEFT JOIN chapters c ON c.story_id = s.id
+        ${ratingStatsJoin('s')}
         WHERE s.slug = $1
         GROUP BY
           s.id,
           u.id,
           u.username,
           u.full_name,
-          u.avatar_url
+          u.avatar_url,
+          sr.rating_count,
+          sr.average_rating
         LIMIT 1
       `;
       params = [slug];

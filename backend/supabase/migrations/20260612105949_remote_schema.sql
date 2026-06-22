@@ -151,6 +151,35 @@ CREATE TABLE IF NOT EXISTS "public"."comments" (
 ALTER TABLE "public"."comments" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."ratings" (
+    "id" integer NOT NULL,
+    "story_id" integer NOT NULL,
+    "user_id" integer NOT NULL,
+    "rating" integer NOT NULL,
+    "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT "ratings_rating_check" CHECK (("rating" >= 1) AND ("rating" <= 5))
+);
+
+
+ALTER TABLE "public"."ratings" OWNER TO "postgres";
+
+
+CREATE SEQUENCE IF NOT EXISTS "public"."ratings_id_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "public"."ratings_id_seq" OWNER TO "postgres";
+
+
+ALTER SEQUENCE "public"."ratings_id_seq" OWNED BY "public"."ratings"."id";
+
+
 CREATE SEQUENCE IF NOT EXISTS "public"."comments_id_seq"
     AS integer
     START WITH 1
@@ -209,6 +238,8 @@ CREATE TABLE IF NOT EXISTS "public"."stories" (
     "category" character varying(100),
     "status" character varying(50) DEFAULT 'Ongoing'::character varying NOT NULL,
     "total_chapters" integer DEFAULT 0 NOT NULL,
+    "average_rating" numeric(4,2) DEFAULT 0 NOT NULL,
+    "total_rating_count" integer DEFAULT 0 NOT NULL,
     "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     "is_published" boolean DEFAULT false NOT NULL,
@@ -513,6 +544,12 @@ CREATE INDEX "idx_comments_story_id" ON "public"."comments" USING "btree" ("stor
 CREATE INDEX "idx_comments_user_id" ON "public"."comments" USING "btree" ("user_id");
 
 
+CREATE INDEX "idx_ratings_story_id" ON "public"."ratings" USING "btree" ("story_id");
+
+
+CREATE INDEX "idx_ratings_user_id" ON "public"."ratings" USING "btree" ("user_id");
+
+
 
 CREATE INDEX "idx_reading_history_story_id" ON "public"."reading_history" USING "btree" ("story_id");
 
@@ -543,6 +580,9 @@ CREATE OR REPLACE TRIGGER "trg_chapters_updated_at" BEFORE UPDATE ON "public"."c
 
 
 CREATE OR REPLACE TRIGGER "trg_comments_updated_at" BEFORE UPDATE ON "public"."comments" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+CREATE OR REPLACE TRIGGER "trg_ratings_updated_at" BEFORE UPDATE ON "public"."ratings" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
@@ -580,6 +620,14 @@ ALTER TABLE ONLY "public"."comments"
 
 ALTER TABLE ONLY "public"."comments"
     ADD CONSTRAINT "comments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id");
+
+
+ALTER TABLE ONLY "public"."ratings"
+    ADD CONSTRAINT "ratings_story_id_fkey" FOREIGN KEY ("story_id") REFERENCES "public"."stories"("id") ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY "public"."ratings"
+    ADD CONSTRAINT "ratings_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 

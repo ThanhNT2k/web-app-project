@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS stories (
     status VARCHAR(50) NOT NULL DEFAULT 'Ongoing'
         CHECK (status IN ('Ongoing', 'Completed', 'Hiatus')),
     total_chapters INTEGER NOT NULL DEFAULT 0,
+    average_rating NUMERIC(4,2) NOT NULL DEFAULT 0,
+    total_rating_count INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_published BOOLEAN NOT NULL DEFAULT true
@@ -109,6 +111,19 @@ CREATE TABLE IF NOT EXISTS comments (
 );
 
 -- -----------------------------------------------------------------------------
+-- ratings
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ratings (
+    id SERIAL PRIMARY KEY,
+    story_id INTEGER NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (story_id, user_id)
+);
+
+-- -----------------------------------------------------------------------------
 -- user_preferences
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_preferences (
@@ -153,6 +168,8 @@ CREATE INDEX IF NOT EXISTS idx_reading_history_story_id ON reading_history(story
 CREATE INDEX IF NOT EXISTS idx_user_follows_user_id ON user_follows(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_story_id ON comments(story_id);
+CREATE INDEX IF NOT EXISTS idx_ratings_story_id ON ratings(story_id);
+CREATE INDEX IF NOT EXISTS idx_ratings_user_id ON ratings(user_id);
 CREATE INDEX IF NOT EXISTS idx_story_collaborators_story_id ON story_collaborators(story_id);
 CREATE INDEX IF NOT EXISTS idx_story_collaborators_user_id ON story_collaborators(user_id);
 
@@ -177,6 +194,11 @@ CREATE TRIGGER trg_chapters_updated_at
 DROP TRIGGER IF EXISTS trg_comments_updated_at ON comments;
 CREATE TRIGGER trg_comments_updated_at
     BEFORE UPDATE ON comments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_ratings_updated_at ON ratings;
+CREATE TRIGGER trg_ratings_updated_at
+    BEFORE UPDATE ON ratings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 DROP TRIGGER IF EXISTS trg_user_preferences_updated_at ON user_preferences;

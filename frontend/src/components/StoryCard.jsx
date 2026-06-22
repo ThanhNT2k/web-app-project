@@ -60,6 +60,12 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           <p className="story-desc-horizontal text-muted small mb-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {story.description}
           </p>
+
+          {Number(story.rating_count || story.total_rating_count) > 0 ? (
+            <p className="story-rating-inline mb-2">
+              ⭐ {Number(story.average_rating || 0).toFixed(1)} · {story.rating_count || story.total_rating_count} lượt đánh giá
+            </p>
+          ) : null}
           
           {renderTags()}
 
@@ -96,6 +102,12 @@ function StoryCard({ story, compact = false, horizontal = false }) {
         <p className="story-meta mb-2">
           📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
         </p>
+
+        {Number(story.rating_count || story.total_rating_count) > 0 ? (
+          <p className="story-meta mb-2 story-rating-inline">
+            ⭐ {Number(story.average_rating || 0).toFixed(1)} · {story.rating_count || story.total_rating_count} lượt đánh giá
+          </p>
+        ) : null}
         
         {renderTags()}
 

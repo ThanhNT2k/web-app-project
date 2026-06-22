@@ -46,6 +46,8 @@ if (process.env.NODE_ENV !== 'test') {
       console.log('[Database] Connected to PostgreSQL');
       try {
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS hidden_by_admin BOOLEAN NOT NULL DEFAULT false');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS average_rating NUMERIC(4,2) NOT NULL DEFAULT 0');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS total_rating_count INTEGER NOT NULL DEFAULT 0');
         console.log('[Database] Verified stories table has hidden_by_admin column');
       } catch (err) {
         console.error('[Database] Failed to verify/add hidden_by_admin column:', err.message);
@@ -57,6 +59,25 @@ if (process.env.NODE_ENV !== 'test') {
         console.log('[Database] Verified reports table has story_id column');
       } catch (err) {
         console.error('[Database] Failed to verify/add reports.story_id column:', err.message);
+      }
+
+      try {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS ratings (
+            id SERIAL PRIMARY KEY,
+            story_id INTEGER NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (story_id, user_id)
+          )
+        `);
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_ratings_story_id ON ratings(story_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_ratings_user_id ON ratings(user_id)');
+        console.log('[Database] Verified ratings table exists');
+      } catch (err) {
+        console.error('[Database] Failed to verify/create ratings table:', err.message);
       }
     })
     .catch((err) => console.error('[Database] Connection failed:', err.message));

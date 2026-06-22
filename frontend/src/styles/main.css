@@ -598,6 +598,124 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 }
 
 .story-detail-desc { color: var(--text-muted); line-height: 1.7; }
+.story-rating-panel {
+  margin-top: 0.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 18%, var(--border));
+  border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--primary-color) 8%), var(--surface));
+}
+
+.story-rating-header,
+.story-rating-footer,
+.story-rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.story-rating-header {
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.story-rating-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.story-rating-summary strong {
+  font-size: 1.45rem;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.story-rating-count,
+.story-rating-state,
+.story-rating-footer {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.story-rating-stars {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.55rem;
+}
+
+.story-rating-distribution {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.story-rating-distribution-row {
+  display: grid;
+  grid-template-columns: 3rem 1fr 2rem;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.story-rating-distribution-label,
+.story-rating-distribution-count {
+  white-space: nowrap;
+}
+
+.story-rating-distribution-bar {
+  position: relative;
+  height: 8px;
+  background: color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.story-rating-distribution-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f6c453, #f39c12);
+}
+
+.story-rating-star {
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--text-muted) 65%, transparent);
+  font-size: 1.45rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.story-rating-star:hover,
+.story-rating-star:focus-visible {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.story-rating-star.is-filled {
+  color: #f5b301;
+}
+
+.story-rating-footer {
+  justify-content: space-between;
+}
+
+.story-rating-error {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  color: #c0392b;
+}
+
+.story-rating-inline {
+  color: var(--primary-color);
+  font-weight: 600;
+}
 .genre-badge {
   display: inline-block;
   background: rgba(60, 106, 211, 0.12);

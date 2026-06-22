@@ -5,6 +5,7 @@ import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
 import ReadingProgress from '../components/ReadingProgress';
 import ReportModal from '../components/ReportModal';
+import StoryRating from '../components/StoryRating';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { mockStories } from '../data/mockStories';
@@ -139,6 +140,12 @@ function StoryDetailPage() {
               )}
             </p>
             <p className="story-detail-desc">{story.description}</p>
+            <StoryRating
+              storyId={story.id}
+              initialAverageRating={story.average_rating}
+              initialRatingCount={story.rating_count || story.total_rating_count}
+              className="mb-3"
+            />
             <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
               <span className="small text-muted">
                 {story.chapter_count || story.total_chapters || 0}
