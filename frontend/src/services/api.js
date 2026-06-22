@@ -136,6 +136,23 @@ const API = {
     getById: (id) => request(`/stories/${id}`, { method: 'GET' }),
     getBySlug: (slug) => request(`/stories/by-slug/${slug}`, { method: 'GET' }),
     create: (data) => request('/stories', { method: 'POST', data }),
+    createFromFile: async (payload, file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      Object.entries(payload || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(key, item));
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
+      const response = await apiClient.post('/stories/import-file', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
     update: (id, data) => request(`/stories/${id}`, { method: 'PUT', data }),
     delete: (id) => request(`/stories/${id}`, { method: 'DELETE' }),
     toggleVisibility: (id) => request(`/stories/${id}/visibility`, { method: 'PATCH' }),
@@ -160,6 +177,19 @@ const API = {
     getById: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'GET' }),
     getBySlugAndNumber: (storySlug, chapterNumber) => request(`/stories/by-slug/${storySlug}/chapters/${chapterNumber}`, { method: 'GET' }),
     create: (storyId, data) => request(`/stories/${storyId}/chapters`, { method: 'POST', data }),
+    importFromFile: async (storyId, payload, file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      Object.entries(payload || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        formData.append(key, String(value));
+      });
+
+      const response = await apiClient.post(`/stories/${storyId}/chapters/import-file`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
     update: (storyId, chapterId, data) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'PUT', data }),
     delete: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'DELETE' }),
   },

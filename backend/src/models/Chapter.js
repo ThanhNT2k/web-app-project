@@ -269,6 +269,73 @@ async function getChapterCount(storyId) {
   }
 }
 
+async function getMaxChapterNumberByStory(storyId) {
+  try {
+    const result = await db.query(
+      'SELECT COALESCE(MAX(chapter_number), 0)::int AS max_chapter_number FROM chapters WHERE story_id = $1',
+      [storyId]
+    );
+    return result.rows[0] ? result.rows[0].max_chapter_number : 0;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function createChaptersBatch(storyId, chapters, options = {}) {
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const startNumber = Number(options.startChapterNumber) || 1;
+    const created = [];
+
+    for (let i = 0; i < chapters.length; i += 1) {
+      const chapter = chapters[i];
+      const chapterNumber = startNumber + i;
+
+      const insertResult = await client.query(
+        `
+          INSERT INTO chapters (story_id, chapter_number, title, content)
+          VALUES ($1, $2, $3, $4)
+          RETURNING
+            id,
+            story_id,
+            chapter_number,
+            title,
+            content,
+            created_at,
+            updated_at,
+            is_published
+        `,
+        [storyId, chapterNumber, chapter.title || null, chapter.content || null]
+      );
+
+      created.push(insertResult.rows[0]);
+    }
+
+    if (created.length > 0) {
+      await client.query(
+        `
+          UPDATE stories
+          SET total_chapters = total_chapters + $1,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2
+        `,
+        [created.length, storyId]
+      );
+    }
+
+    await client.query('COMMIT');
+    return created;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 /**
  * Lấy chi tiết một chương dựa vào slug của truyện và số thứ tự chương (chapter_number).
  * Dùng cho URL định dạng SEO: /:storySlug/:chapterNumber
@@ -352,5 +419,7 @@ module.exports = {
   updateChapter,
   deleteChapter,
   getChapterCount,
+  getMaxChapterNumberByStory,
+  createChaptersBatch,
   getChapterBySlugAndNumber,
 };

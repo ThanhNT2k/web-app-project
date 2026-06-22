@@ -1,6 +1,7 @@
 const Joi = require('joi');
 
 const { Chapter, Story, StoryCollaborator } = require('../models');
+const { parseStoryUploadFile, parseStoryTextToChapters } = require('../services/storyFileImportService');
 
 // Schema validate khi TẠO chương mới
 // chapter_number: số thứ tự chương, phải là số nguyên dương (bắt đầu từ 1)
@@ -14,6 +15,13 @@ const createChapterSchema = Joi.object({
 const updateChapterSchema = Joi.object({
   title: Joi.string().trim().max(255).required(),
   content: Joi.string().trim().required(),
+}).required();
+
+const importChapterFileSchema = Joi.object({
+  split_chapters: Joi.boolean().optional(),
+  start_chapter_number: Joi.number().integer().min(1).optional(),
+  title: Joi.string().trim().max(255).allow('', null).optional(),
+  raw_text_override: Joi.string().trim().allow('', null).optional(),
 }).required();
 
 /**
@@ -191,6 +199,87 @@ async function createChapter(req, res) {
   }
 }
 
+async function importChapterFile(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    const { storyId } = req.params;
+    const story = await Story.getStoryById(storyId);
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    const hasAddPermission = await isStoryCollaboratorOrOwnerOrAdmin(req.user, story);
+    if (!hasAddPermission) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng tải lên tệp .txt hoặc .md hợp lệ',
+      });
+    }
+
+    const { error, value } = importChapterFileSchema.validate(req.body || {}, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: error.details.map((detail) => detail.message),
+      });
+    }
+
+    const hasRawOverride = Boolean(value.raw_text_override && value.raw_text_override.trim());
+    const chaptersFromFile = hasRawOverride
+      ? parseStoryTextToChapters(value.raw_text_override, {
+        splitChapters: value.split_chapters,
+        singleTitle: value.title,
+      })
+      : parseStoryUploadFile(req.file, {
+        splitChapters: value.split_chapters,
+        singleTitle: value.title,
+      });
+
+    const maxChapterNumber = await Chapter.getMaxChapterNumberByStory(storyId);
+    const startChapterNumber = value.start_chapter_number || (maxChapterNumber + 1);
+
+    const createdChapters = await Chapter.createChaptersBatch(storyId, chaptersFromFile, {
+      startChapterNumber,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Import chapter từ file thành công',
+      imported_count: createdChapters.length,
+      chapters: createdChapters,
+      next_chapter_number: startChapterNumber + createdChapters.length,
+    });
+  } catch (error) {
+    console.error('[chapterController.importChapterFile]', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Internal server error',
+    });
+  }
+}
+
 /**
  * Cập nhật nội dung chương (title và content).
  * Không cho phép thay đổi chapter_number (để tránh xáo trộn thứ tự chương).
@@ -360,6 +449,7 @@ module.exports = {
   getChapters,
   getChapterById,
   createChapter,
+  importChapterFile,
   updateChapter,
   deleteChapter,
   getChapterBySlugAndNumber,

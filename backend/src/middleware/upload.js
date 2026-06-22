@@ -22,8 +22,32 @@ const uploadCover = multer({
   },
 });
 
+const TEXT_UPLOAD_MAX_SIZE = 10 * 1024 * 1024;
+const textFileExtensions = new Set(['.txt', '.md']);
+const textMimeTypes = new Set([
+  'text/plain',
+  'text/markdown',
+  'application/octet-stream',
+]);
+
+const uploadStoryFile = multer({
+  storage,
+  limits: { fileSize: TEXT_UPLOAD_MAX_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (!textFileExtensions.has(ext)) {
+      return cb(new Error('Sai đuôi file. Chỉ chấp nhận .txt hoặc .md'));
+    }
+    if (!textMimeTypes.has(file.mimetype)) {
+      return cb(new Error('Định dạng file không hợp lệ. Chỉ chấp nhận .txt hoặc .md'));
+    }
+    return cb(null, true);
+  },
+});
+
 module.exports = {
   uploadCover,
+  uploadStoryFile,
   // uploadDir vẫn được export để tương thích ngược với app.js (express.static)
   // trong trường hợp Supabase chưa cấu hình và dùng fallback lưu file local
   uploadDir: path.resolve(__dirname, '../../uploads/covers'),

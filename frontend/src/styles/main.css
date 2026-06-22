@@ -674,6 +674,98 @@ kbd {
 .chapter-list-compact li { border-bottom: 1px solid var(--border); gap: 0.5rem; }
 .chapter-list-compact li:last-child { border-bottom: none; }
 
+.dashboard-import-box {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 90%, var(--primary-color) 10%);
+}
+
+.dashboard-import-box-inline {
+  margin-bottom: 16px;
+}
+
+.dashboard-import-title {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.dashboard-file-input {
+  padding: 10px 12px;
+  font-size: 0.92rem;
+}
+
+.dashboard-import-preview {
+  min-height: 180px;
+}
+
+.dashboard-checkbox-row {
+  margin-top: 4px;
+}
+
+.chapter-editor-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface);
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+.chapter-editor-form {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chapter-editor-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 10;
+}
+
+.chapter-editor-title {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.chapter-editor-backbtn {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.chapter-editor-backbtn:hover {
+  background: var(--input-bg);
+}
+
+.chapter-editor-submit {
+  border-radius: 20px;
+  padding: 6px 24px;
+  font-weight: 700;
+}
+
+.chapter-editor-container {
+  width: 100%;
+  max-width: 800px;
+  padding: 40px 20px;
+  flex: 1;
+}
+
 /* ===== Skeleton Loading ===== */
 .animate-pulse { animation: pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }

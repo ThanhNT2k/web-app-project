@@ -16,6 +16,12 @@ const EMPTY_STORY = {
 };
 
 const EMPTY_CHAPTER_FORM = { title: '', content: '', chapter_number: 1 };
+const ALLOWED_IMPORT_EXTENSIONS = ['.txt', '.md'];
+
+function hasAllowedExtension(fileName, allowedExtensions) {
+  const lowerName = String(fileName || '').toLowerCase().trim();
+  return allowedExtensions.some((ext) => lowerName.endsWith(ext));
+}
 
 function DashboardPage() {
   const { user } = useAuth();
@@ -31,6 +37,13 @@ function DashboardPage() {
   // Chapter modal (add / edit)
   const [chapterModal, setChapterModal] = useState(null); // { story, chapter|null }
   const [chapterForm, setChapterForm] = useState(EMPTY_CHAPTER_FORM);
+  const [chapterUploadFile, setChapterUploadFile] = useState(null);
+  const [splitChapterFile, setSplitChapterFile] = useState(true);
+
+  const [storyUploadFile, setStoryUploadFile] = useState(null);
+  const [storyFilePreview, setStoryFilePreview] = useState('');
+  const [createByFile, setCreateByFile] = useState(false);
+  const [splitStoryFile, setSplitStoryFile] = useState(true);
 
   // Expanded chapter list per story
   const [expandedStory, setExpandedStory] = useState(null);
@@ -51,6 +64,69 @@ function DashboardPage() {
   const showMessage = (msg) => {
     setMessage(msg);
     setTimeout(() => setMessage(''), 4000);
+  };
+
+  const readTextFromFile = async (file) => {
+    try {
+      return await file.text();
+    } catch {
+      return '';
+    }
+  };
+
+  const validateImportFile = (file) => {
+    if (!file) return false;
+    return hasAllowedExtension(file.name, ALLOWED_IMPORT_EXTENSIONS);
+  };
+
+  const handleStoryFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setStoryUploadFile(null);
+      setStoryFilePreview('');
+      return;
+    }
+
+    if (!validateImportFile(file)) {
+      showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+      event.target.value = '';
+      setStoryUploadFile(null);
+      setStoryFilePreview('');
+      return;
+    }
+
+    setStoryUploadFile(file);
+    readTextFromFile(file).then((text) => {
+      setStoryFilePreview(text || '');
+      if (!text?.trim()) {
+        showMessage('Đã chọn file nhưng không đọc được nội dung để preview');
+      }
+    });
+  };
+
+  const handleChapterFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setChapterUploadFile(null);
+      setChapterForm((prev) => ({ ...prev, content: '' }));
+      return;
+    }
+
+    if (!validateImportFile(file)) {
+      showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+      event.target.value = '';
+      setChapterUploadFile(null);
+      setChapterForm((prev) => ({ ...prev, content: '' }));
+      return;
+    }
+
+    setChapterUploadFile(file);
+    readTextFromFile(file).then((text) => {
+      setChapterForm((prev) => ({ ...prev, content: text || '' }));
+      if (!text?.trim()) {
+        showMessage('Đã chọn file nhưng không đọc được nội dung để preview');
+      }
+    });
   };
 
   const loadStories = useCallback(async () => {
@@ -91,6 +167,10 @@ function DashboardPage() {
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_STORY);
+    setStoryUploadFile(null);
+    setStoryFilePreview('');
+    setCreateByFile(false);
+    setSplitStoryFile(true);
     setStoryModalOpen(true);
   };
 
@@ -104,6 +184,10 @@ function DashboardPage() {
       status: story.status || 'Ongoing',
       tags: story.tags?.length ? story.tags.map((t) => t.name) : story.category ? [story.category] : [],
     });
+    setStoryUploadFile(null);
+    setStoryFilePreview('');
+    setCreateByFile(false);
+    setSplitStoryFile(true);
     setStoryModalOpen(true);
   };
 
@@ -136,8 +220,30 @@ function DashboardPage() {
         await API.stories.update(editing.id, payload);
         showMessage('Đã cập nhật truyện');
       } else {
-        await API.stories.create({ ...payload, slug: slugify(form.title) });
-        showMessage('Đã tạo truyện mới');
+        if (createByFile) {
+          if (!storyUploadFile) {
+            showMessage('Vui lòng chọn file để import nội dung truyện');
+            return;
+          }
+          if (!validateImportFile(storyUploadFile)) {
+            showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+            return;
+          }
+          const importRes = await API.stories.createFromFile(
+            {
+              ...payload,
+              slug: slugify(form.title),
+              split_chapters: splitStoryFile,
+              first_chapter_title: form.title,
+              raw_text_override: storyFilePreview,
+            },
+            storyUploadFile
+          );
+          showMessage(`Đã tạo truyện và import ${importRes.imported_count || 0} chương`);
+        } else {
+          await API.stories.create({ ...payload, slug: slugify(form.title) });
+          showMessage('Đã tạo truyện mới');
+        }
       }
       setStoryModalOpen(false);
       loadStories();
@@ -166,6 +272,8 @@ function DashboardPage() {
       content: '',
       chapter_number: (story.total_chapters || currentChapters.length || 0) + 1,
     });
+    setChapterUploadFile(null);
+    setSplitChapterFile(true);
   };
 
   const openEditChapter = (story, chapter) => {
@@ -175,6 +283,8 @@ function DashboardPage() {
       content: chapter.content || '',
       chapter_number: chapter.chapter_number,
     });
+    setChapterUploadFile(null);
+    setSplitChapterFile(true);
   };
 
   const saveChapter = async (event) => {
@@ -188,8 +298,26 @@ function DashboardPage() {
         });
         showMessage('Đã cập nhật chương');
       } else {
-        await API.chapters.create(story.id, chapterForm);
-        showMessage('Đã thêm chương');
+        if (chapterUploadFile) {
+          if (!validateImportFile(chapterUploadFile)) {
+            showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+            return;
+          }
+          const importRes = await API.chapters.importFromFile(
+            story.id,
+            {
+              split_chapters: splitChapterFile,
+              start_chapter_number: chapterForm.chapter_number,
+              title: chapterForm.title,
+              raw_text_override: chapterForm.content,
+            },
+            chapterUploadFile
+          );
+          showMessage(`Đã import ${importRes.imported_count || 0} chương từ file`);
+        } else {
+          await API.chapters.create(story.id, chapterForm);
+          showMessage('Đã thêm chương');
+        }
         loadStories();
       }
       setChapterModal(null);
@@ -490,6 +618,48 @@ function DashboardPage() {
                 <option value="Hiatus">Tạm dừng</option>
               </select>
               <TagInput value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
+              {!editing && (
+                <div className="d-grid gap-2">
+                  <label className="small text-muted d-flex align-items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={createByFile}
+                      onChange={(e) => setCreateByFile(e.target.checked)}
+                    />
+                    Tạo truyện từ file (tự động tách nội dung)
+                  </label>
+                  {createByFile && (
+                    <div className="dashboard-import-box">
+                      <p className="dashboard-import-title mb-2">Nhập nội dung từ file</p>
+                      <input
+                        type="file"
+                        className="form-control-cmc form-control-cmc-sm dashboard-file-input"
+                        accept=".txt,.md,text/plain,text/markdown"
+                        onChange={handleStoryFileChange}
+                        required
+                      />
+                      <p className="small text-muted mb-2">Hỗ trợ định dạng: .txt, .md</p>
+                      {storyUploadFile && (
+                        <textarea
+                          className="form-control-cmc dashboard-import-preview"
+                          rows={8}
+                          placeholder="Xem trước nội dung file và chỉnh sửa trước khi import..."
+                          value={storyFilePreview}
+                          onChange={(e) => setStoryFilePreview(e.target.value)}
+                        />
+                      )}
+                      <label className="small text-muted d-flex align-items-center gap-2 dashboard-checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={splitStoryFile}
+                          onChange={(e) => setSplitStoryFile(e.target.checked)}
+                        />
+                        Tự động tách thành nhiều chương nếu file có tiêu đề "Chương X"
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="small text-muted d-block mb-1">Ảnh bìa</label>
                 <input type="file" accept="image/*" onChange={handleCoverUpload} disabled={uploading} />
@@ -511,7 +681,7 @@ function DashboardPage() {
                 ) : null}
               </div>
               <button type="submit" className="btn-cmc btn-cmc-primary" disabled={uploading}>
-                {editing ? 'Cập nhật' : 'Tạo truyện'}
+                {editing ? 'Cập nhật' : createByFile ? 'Tạo truyện + Import file' : 'Tạo truyện'}
               </button>
             </form>
           </div>
@@ -520,54 +690,89 @@ function DashboardPage() {
 
       {/* ── Chapter modal (Wattpad Style - FULL SCREEN) ────────────────────────────────────── */}
       {chapterModal ? (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#fff', zIndex: 9999, overflowY: 'auto' }}>
-          <form onSubmit={saveChapter} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="chapter-editor-shell">
+          <form onSubmit={saveChapter} className="chapter-editor-form">
             
             {/* Thanh Navbar trên cùng giống hệt Wattpad */}
-            <div className="d-flex justify-content-between align-items-center px-4 py-3 border-bottom" style={{ position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
+            <div className="chapter-editor-topbar">
               <div className="d-flex align-items-center gap-3">
-                <button type="button" onClick={() => setChapterModal(null)} style={{ border: 'none', background: 'transparent', fontSize: '24px', cursor: 'pointer' }}>
+                <button type="button" className="chapter-editor-backbtn" onClick={() => setChapterModal(null)}>
                   ←
                 </button>
-                <div className="text-muted" style={{ fontWeight: 500, fontSize: '15px' }}>
+                <div className="text-muted chapter-editor-title">
                   {chapterModal.chapter ? `Sửa chương` : `Thêm chương mới`} — {chapterModal.story.title}
                 </div>
               </div>
-              <button type="submit" className="btn-cmc btn-cmc-primary" style={{ borderRadius: '20px', padding: '6px 24px', fontWeight: 'bold' }}>
+              <button type="submit" className="btn-cmc btn-cmc-primary chapter-editor-submit">
                 {chapterModal.chapter ? 'Lưu' : 'Đăng tải'}
               </button>
             </div>
 
             {/* Khu vực soạn thảo căn giữa trang */}
-            <div className="wattpad-editor-container mx-auto" style={{ width: '100%', maxWidth: '800px', padding: '40px 20px', flex: 1 }}>
+            <div className="wattpad-editor-container mx-auto chapter-editor-container">
               {!chapterModal.chapter && (
-                <input
-                  type="number"
-                  step="any" 
-                  placeholder="Số chương (VD: 1, 5.1, 5.2)"
-                  className="wattpad-input-muted"
-                  value={chapterForm.chapter_number}
-                  onChange={(e) => setChapterForm({ 
-                    ...chapterForm, 
-                    chapter_number: e.target.value 
-                  })}
-                  required
-                />
+                <div className="mb-3">
+                  <label className="small text-muted d-block mb-1" htmlFor="chapter-start-number">
+                    {chapterUploadFile && splitChapterFile ? 'Chương bắt đầu' : 'Số chương'}
+                  </label>
+                  <input
+                    id="chapter-start-number"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder={chapterUploadFile && splitChapterFile
+                      ? 'VD: 1 (sẽ tạo lần lượt Chương 1, 2, 3...)'
+                      : 'VD: 1'}
+                    className="wattpad-input-muted"
+                    value={chapterForm.chapter_number}
+                    onChange={(e) => setChapterForm({
+                      ...chapterForm,
+                      chapter_number: e.target.value,
+                    })}
+                    required
+                  />
+                  <p className="small text-muted mb-0 mt-1">
+                    {chapterUploadFile && splitChapterFile
+                      ? 'Nhập số chương đầu tiên. Hệ thống sẽ tự tăng cho các chương tách ra từ file.'
+                      : 'Nhập số chương bạn muốn hiển thị cho chương này.'}
+                  </p>
+                </div>
               )}
               <input
                 type="text"
-                placeholder="Tiêu đề chương"
+                placeholder={chapterUploadFile && splitChapterFile ? 'Tiêu đề chương đầu tiên (tùy chọn)' : 'Tiêu đề chương'}
                 className="wattpad-input-title"
                 value={chapterForm.title}
                 onChange={(e) => setChapterForm({ ...chapterForm, title: e.target.value })}
-                required
+                required={!chapterUploadFile || !splitChapterFile}
               />
+              {!chapterModal.chapter && (
+                <div className="dashboard-import-box dashboard-import-box-inline">
+                  <label className="small text-muted d-block mb-1 dashboard-import-title">Import từ file (tùy chọn)</label>
+                  <input
+                    type="file"
+                    className="form-control-cmc form-control-cmc-sm dashboard-file-input"
+                    accept=".txt,.md,text/plain,text/markdown"
+                    onChange={handleChapterFileChange}
+                  />
+                  {chapterUploadFile && (
+                    <label className="small text-muted d-flex align-items-center gap-2 mt-2 dashboard-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={splitChapterFile}
+                        onChange={(e) => setSplitChapterFile(e.target.checked)}
+                      />
+                      Tự động tách thành nhiều chương nếu file có tiêu đề "Chương X"
+                    </label>
+                  )}
+                </div>
+              )}
               <textarea
                 placeholder="Nhập nội dung chương của bạn vào đây..."
                 className="wattpad-input-content"
                 value={chapterForm.content}
                 onChange={(e) => setChapterForm({ ...chapterForm, content: e.target.value })}
-                required
+                required={!chapterUploadFile}
               ></textarea>
             </div>
           </form>
