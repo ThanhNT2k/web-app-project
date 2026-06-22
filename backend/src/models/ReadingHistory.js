@@ -10,6 +10,14 @@ const db = require('../config/database');
  * - Các trường khác: Thay thế bằng giá trị mới nhất (last chapter, last position)
  */
 async function saveReadingProgress(userId, storyId, chapterId, readPosition, readTime) {
+  const validUserId = Number.isInteger(Number(userId)) && Number(Number(userId)) > 0 ? Number(userId) : null;
+  const validStoryId = Number.isInteger(Number(storyId)) && Number(Number(storyId)) > 0 ? Number(storyId) : null;
+  const validChapterId = Number.isInteger(Number(chapterId)) && Number(Number(chapterId)) > 0 ? Number(chapterId) : null;
+
+  if (!validUserId || !validStoryId) {
+    throw new Error('Invalid userId or storyId');
+  }
+
   // Đảm bảo vị trí đọc và thời gian là số nguyên không âm
   const position = Math.max(parseInt(readPosition, 10) || 0, 0);
   const timeSpent = Math.max(parseInt(readTime, 10) || 0, 0);
@@ -33,7 +41,7 @@ async function saveReadingProgress(userId, storyId, chapterId, readPosition, rea
         last_read_at = CURRENT_TIMESTAMP
       RETURNING *
     `,
-    [userId, storyId, chapterId, position, timeSpent]
+    [validUserId, validStoryId, validChapterId, position, timeSpent]
   );
 
   return result.rows[0];

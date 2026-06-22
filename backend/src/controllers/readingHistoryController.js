@@ -34,6 +34,20 @@ async function saveProgress(req, res) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
+    // Dev-time debug: log headers and body to help diagnose missing saves from frontend
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        console.debug('[readingHistoryController.saveProgress] headers:', {
+          authorization: req.headers?.authorization,
+          host: req.headers?.host,
+          'content-type': req.headers?.['content-type'],
+        });
+        console.debug('[readingHistoryController.saveProgress] body:', req.body);
+      } catch (dbgErr) {
+        console.debug('[readingHistoryController.saveProgress] debug log failed', dbgErr && dbgErr.message);
+      }
+    }
+
     const { error, value } = saveProgressSchema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -53,11 +67,21 @@ async function saveProgress(req, res) {
     const readPosition = Number.isFinite(value.read_position) ? value.read_position : 0;
     const readTime = Number.isFinite(value.read_time) ? value.read_time : 0;
 
+    const storyId = Number.isInteger(value.story_id) ? Number(value.story_id) : null;
+    const chapterId = Number.isInteger(value.chapter_id) ? Number(value.chapter_id) : null;
+
+    if (!storyId || !chapterId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid story_id or chapter_id',
+      });
+    }
+
     // Lưu tiến trình đọc vào bảng reading_history (UPSERT)
     const progress = await ReadingHistory.saveReadingProgress(
       req.user.id,
-      value.story_id,
-      value.chapter_id,
+      storyId,
+      chapterId,
       readPosition,
       readTime,
     );

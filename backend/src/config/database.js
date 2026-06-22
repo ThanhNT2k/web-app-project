@@ -39,24 +39,27 @@ pool.on('error', (err) => {
 // Kiểm tra kết nối DB khi module được load lần đầu (non-blocking)
 // Chạy query SELECT NOW() đơn giản để xác nhận pool kết nối thành công
 // Lỗi ở đây không làm dừng server nhưng giúp phát hiện sự cố DB sớm
-pool.query('SELECT NOW()')
-  .then(async () => {
-    console.log('[Database] Connected to PostgreSQL');
-    try {
-      await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS hidden_by_admin BOOLEAN NOT NULL DEFAULT false');
-      console.log('[Database] Verified stories table has hidden_by_admin column');
-    } catch (err) {
-      console.error('[Database] Failed to verify/add hidden_by_admin column:', err.message);
-    }
+// Skip verification queries during tests to avoid async logging after tests complete
+if (process.env.NODE_ENV !== 'test') {
+  pool.query('SELECT NOW()')
+    .then(async () => {
+      console.log('[Database] Connected to PostgreSQL');
+      try {
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS hidden_by_admin BOOLEAN NOT NULL DEFAULT false');
+        console.log('[Database] Verified stories table has hidden_by_admin column');
+      } catch (err) {
+        console.error('[Database] Failed to verify/add hidden_by_admin column:', err.message);
+      }
 
-    try {
-      await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS story_id INTEGER REFERENCES stories(id) ON DELETE CASCADE');
-      await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_story ON reports(story_id)');
-      console.log('[Database] Verified reports table has story_id column');
-    } catch (err) {
-      console.error('[Database] Failed to verify/add reports.story_id column:', err.message);
-    }
-  })
-  .catch((err) => console.error('[Database] Connection failed:', err.message));
+      try {
+        await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS story_id INTEGER REFERENCES stories(id) ON DELETE CASCADE');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_story ON reports(story_id)');
+        console.log('[Database] Verified reports table has story_id column');
+      } catch (err) {
+        console.error('[Database] Failed to verify/add reports.story_id column:', err.message);
+      }
+    })
+    .catch((err) => console.error('[Database] Connection failed:', err.message));
+}
 
 module.exports = pool;
