@@ -48,6 +48,11 @@ function Navbar() {
               <span className="nav-text">Tìm truyện</span>
             </Link>
 
+            <Link to="/bang-xep-hang" className="cmc-nav-link">
+              <span className="nav-icon">🏆</span>
+              <span className="nav-text">Bảng xếp hạng</span>
+            </Link>
+
             {isAuthenticated && (
               <Link to="/profile" className="cmc-nav-link">
                 <span className="nav-icon">📚</span>

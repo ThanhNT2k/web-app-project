@@ -22,6 +22,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const moderatorRoutes = require('./routes/moderatorRoutes');
+const rankingRoutes = require('./routes/rankingRoutes');
 
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
@@ -75,6 +76,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/moderator', moderatorRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/rankings', rankingRoutes);
 
 // Error Handling
 app.use(notFoundHandler);

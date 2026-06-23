@@ -47,6 +47,9 @@ CREATE TABLE IF NOT EXISTS stories (
     status VARCHAR(50) NOT NULL DEFAULT 'Ongoing'
         CHECK (status IN ('Ongoing', 'Completed', 'Hiatus')),
     total_chapters INTEGER NOT NULL DEFAULT 0,
+    weekly_views INTEGER NOT NULL DEFAULT 0,
+    monthly_views INTEGER NOT NULL DEFAULT 0,
+    total_views INTEGER NOT NULL DEFAULT 0,
     average_rating NUMERIC(4,2) NOT NULL DEFAULT 0,
     total_rating_count INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -165,6 +168,7 @@ CREATE INDEX IF NOT EXISTS idx_stories_author_id ON stories(author_id);
 CREATE INDEX IF NOT EXISTS idx_chapters_story_id ON chapters(story_id);
 CREATE INDEX IF NOT EXISTS idx_reading_history_user_id ON reading_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_reading_history_story_id ON reading_history(story_id);
+CREATE INDEX IF NOT EXISTS idx_reading_history_story_last_read_at ON reading_history(story_id, last_read_at);
 CREATE INDEX IF NOT EXISTS idx_user_follows_user_id ON user_follows(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_story_id ON comments(story_id);

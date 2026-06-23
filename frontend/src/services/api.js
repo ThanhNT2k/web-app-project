@@ -173,6 +173,12 @@ const API = {
       },
     }),
   },
+  rankings: {
+    get: (type = 'trending', period = 'week', limit = 20) => request('/rankings', {
+      method: 'GET',
+      params: { type, period, limit },
+    }),
+  },
 
   // ── Quản lý chương ───────────────────────────────────────────────────────
   chapters: {
