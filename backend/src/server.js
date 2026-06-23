@@ -1,5 +1,7 @@
 require('dotenv').config();
 require('./workers/moderationWorker');
+require('./workers/notificationWorker');
+const { startRankingCron } = require('./workers/rankingCron');
 
 // Nhập vào ứng dụng Express đã được cấu hình đầy đủ từ app.js
 const app = require('./app');
@@ -11,6 +13,7 @@ const env = require('./config/environment');
 // env.PORT thường là 5000 (development) hoặc do Render/Heroku cung cấp khi deploy
 const server = app.listen(env.PORT, () => {
   console.log(`[Server] CMC Truyen backend listening on ${env.API_URL}`);
+  startRankingCron();
 });
 
 // Bắt các lỗi Promise không được xử lý (unhandled rejection) ở cấp độ process

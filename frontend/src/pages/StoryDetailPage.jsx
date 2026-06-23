@@ -110,6 +110,7 @@ function StoryDetailPage() {
   }
 
   const continueChapterNumber = storyProgress?.chapter_number || chapters[0]?.chapter_number;
+  const lastReadChapterNumber = Number(storyProgress?.chapter_number || 0);
   return (
     <main className="cmc-main">
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
@@ -220,16 +221,25 @@ function StoryDetailPage() {
             ) : (
               <>
                 <ul className="chapter-list">
-                  {chapters.map((chapter) => (
-                    <li key={chapter.id}>
-                      <Link to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}>
-                        <span>
-                          Ch.{chapter.chapter_number}: {chapter.title}
-                        </span>
-                        <span className="text-muted small">Đọc →</span>
-                      </Link>
-                    </li>
-                  ))}
+                  {chapters.map((chapter) => {
+                    const chapterNumber = Number(chapter.chapter_number || 0);
+                    const isRead = lastReadChapterNumber > 0 && chapterNumber > 0 && chapterNumber <= lastReadChapterNumber;
+
+                    return (
+                      <li key={chapter.id}>
+                        <Link
+                          to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
+                          className={isRead ? 'chapter-link-read' : ''}
+                          aria-label={isRead ? `Chương ${chapter.chapter_number} đã đọc` : undefined}
+                        >
+                          <span>
+                            Ch.{chapter.chapter_number}: {chapter.title}
+                          </span>
+                          <span className="text-muted small">{isRead ? 'Đã đọc' : 'Đọc →'}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 {/* Chapter pagination */}

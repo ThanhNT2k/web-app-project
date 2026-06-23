@@ -16,12 +16,14 @@ const chapterRoutes = require('./routes/chapterRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const followRoutes = require('./routes/followRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const preferencesRoutes = require('./routes/preferencesRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const moderatorRoutes = require('./routes/moderatorRoutes');
+const rankingRoutes = require('./routes/rankingRoutes');
 
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
@@ -69,12 +71,14 @@ app.use('/api/chapters', chapterRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/follows', followRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/moderator', moderatorRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/rankings', rankingRoutes);
 
 // Error Handling
 app.use(notFoundHandler);

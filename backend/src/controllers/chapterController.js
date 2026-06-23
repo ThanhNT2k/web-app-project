@@ -1,7 +1,11 @@
 const Joi = require('joi');
+const { Queue } = require('bullmq');
 
 const { Chapter, Story, StoryCollaborator } = require('../models');
 const { parseStoryUploadFile, parseStoryTextToChapters } = require('../services/storyFileImportService');
+const redisConfig = require('../config/redisConfig');
+
+const notificationQueue = new Queue('notificationQueue', { connection: redisConfig });
 
 // Schema validate khi TẠO chương mới
 // chapter_number: số thứ tự chương, phải là số nguyên dương (bắt đầu từ 1)
@@ -44,6 +48,37 @@ async function isStoryCollaboratorOrOwnerOrAdmin(user, story) {
   if (user.role === 'Admin') return true;
   if (Number(user.id) === Number(story.author_id)) return true;
   return await StoryCollaborator.isCollaborator(story.id, user.id);
+}
+
+async function enqueueNewChapterNotification(chapter, story) {
+  // Chi gui thong bao cho truyen dang hien thi cong khai.
+  if (!story?.is_published || story?.hidden_by_admin) {
+    return;
+  }
+
+  await notificationQueue.add(
+    'notify-new-chapter',
+    {
+      type: 'new_chapter',
+      data: {
+        storyId: story.id,
+        storyTitle: story.title,
+        storySlug: story.slug,
+        chapterId: chapter.id,
+        chapter_number: chapter.chapter_number,
+        title: chapter.title,
+      },
+    },
+    {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 1000,
+      },
+      removeOnComplete: true,
+      removeOnFail: 200,
+    }
+  );
 }
 
 /**
@@ -185,6 +220,12 @@ async function createChapter(req, res) {
 
     const createdChapter = await Chapter.createChapter(chapterData);
 
+    try {
+      await enqueueNewChapterNotification(createdChapter, story);
+    } catch (notifyError) {
+      console.error('[chapterController.createChapter] Failed to enqueue notification:', notifyError);
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Chapter created successfully',
@@ -263,6 +304,14 @@ async function importChapterFile(req, res) {
     const createdChapters = await Chapter.createChaptersBatch(storyId, chaptersFromFile, {
       startChapterNumber,
     });
+
+    try {
+      await Promise.all(
+        createdChapters.map((chapter) => enqueueNewChapterNotification(chapter, story))
+      );
+    } catch (notifyError) {
+      console.error('[chapterController.importChapterFile] Failed to enqueue notifications:', notifyError);
+    }
 
     return res.status(201).json({
       success: true,

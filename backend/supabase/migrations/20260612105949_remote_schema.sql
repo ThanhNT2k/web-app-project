@@ -238,6 +238,9 @@ CREATE TABLE IF NOT EXISTS "public"."stories" (
     "category" character varying(100),
     "status" character varying(50) DEFAULT 'Ongoing'::character varying NOT NULL,
     "total_chapters" integer DEFAULT 0 NOT NULL,
+    "weekly_views" integer DEFAULT 0 NOT NULL,
+    "monthly_views" integer DEFAULT 0 NOT NULL,
+    "total_views" integer DEFAULT 0 NOT NULL,
     "average_rating" numeric(4,2) DEFAULT 0 NOT NULL,
     "total_rating_count" integer DEFAULT 0 NOT NULL,
     "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -553,6 +556,9 @@ CREATE INDEX "idx_ratings_user_id" ON "public"."ratings" USING "btree" ("user_id
 
 CREATE INDEX "idx_reading_history_story_id" ON "public"."reading_history" USING "btree" ("story_id");
 
+
+
+CREATE INDEX "idx_reading_history_story_last_read_at" ON "public"."reading_history" USING "btree" ("story_id", "last_read_at");
 
 
 CREATE INDEX "idx_reading_history_user_id" ON "public"."reading_history" USING "btree" ("user_id");

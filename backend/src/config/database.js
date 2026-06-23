@@ -48,6 +48,9 @@ if (process.env.NODE_ENV !== 'test') {
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS hidden_by_admin BOOLEAN NOT NULL DEFAULT false');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS average_rating NUMERIC(4,2) NOT NULL DEFAULT 0');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS total_rating_count INTEGER NOT NULL DEFAULT 0');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS weekly_views INTEGER NOT NULL DEFAULT 0');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS monthly_views INTEGER NOT NULL DEFAULT 0');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS total_views INTEGER NOT NULL DEFAULT 0');
         console.log('[Database] Verified stories table has hidden_by_admin column');
       } catch (err) {
         console.error('[Database] Failed to verify/add hidden_by_admin column:', err.message);
@@ -75,6 +78,7 @@ if (process.env.NODE_ENV !== 'test') {
         `);
         await pool.query('CREATE INDEX IF NOT EXISTS idx_ratings_story_id ON ratings(story_id)');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_ratings_user_id ON ratings(user_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_reading_history_story_last_read_at ON reading_history(story_id, last_read_at)');
         console.log('[Database] Verified ratings table exists');
       } catch (err) {
         console.error('[Database] Failed to verify/create ratings table:', err.message);

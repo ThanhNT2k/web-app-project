@@ -20,6 +20,7 @@ import ModeratorCommentsPage from './pages/moderator/ModeratorCommentsPage';
 
 import HomePage from './pages/HomePage';
 import FindStoriesPage from './pages/FindStoriesPage';
+import RankingsPage from './pages/RankingsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -60,6 +61,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/browse" element={<FindStoriesPage />} />
               <Route path="/tim-truyen" element={<FindStoriesPage />} />
+              <Route path="/bang-xep-hang" element={<RankingsPage />} />
 
               <Route path="/reader" element={<LegacyRedirect />} />
               <Route path="/pages/*" element={<LegacyRedirect />} />
