@@ -80,6 +80,24 @@ function AuthProvider({ children }) {
   };
 
   /**
+   * Đăng nhập bằng Google: gửi idToken lên backend xác thực.
+   * Nếu isNewUser=true: trả về để FE chuyển sang trang đặt mật khẩu.
+   * Nếu đăng nhập thành công: lưu token + cập nhật state.
+   */
+  const loginWithGoogle = async (idToken) => {
+    const response = await API.auth.googleLogin(idToken);
+    if (response.isNewUser) {
+      // Trả về để component quyết định redirect
+      return response;
+    }
+    // Đăng nhập thành công
+    authService.saveAuthData(response.token, response.user);
+    setUser(response.user);
+    setToken(response.token);
+    return response;
+  };
+
+  /**
    * Đăng xuất: Xóa token khỏi localStorage → reset state về null.
    * Sau logout, mọi route được bảo vệ sẽ redirect về trang login.
    */
@@ -99,19 +117,19 @@ function AuthProvider({ children }) {
       user,
       token,
       loading,
-      isAuthenticated: Boolean(token), // Computed property: true nếu có token hợp lệ
+      isAuthenticated: Boolean(token),
       login,
       register,
       logout,
+      loginWithGoogle,
       setUser,
-      // refreshCurrentUser: Làm mới thông tin user từ server (dùng sau khi update profile)
       refreshCurrentUser: async () => {
         const response = await API.auth.getCurrentUser();
         setUser(response.user || null);
         return response.user || null;
       },
     }),
-    [user, token, loading] // Dependency array
+    [user, token, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

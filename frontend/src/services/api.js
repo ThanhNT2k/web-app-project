@@ -127,6 +127,15 @@ const API = {
     logout: () => request('/auth/logout', { method: 'POST' }),
     getCurrentUser: () => request('/auth/me', { method: 'GET' }),
     updateProfile: (data) => request('/auth/profile', { method: 'PUT', data }),
+    // Google OAuth
+    googleLogin: (idToken) => request('/auth/google', { method: 'POST', data: { idToken } }),
+    googleComplete: (data) => request('/auth/google/complete', { method: 'POST', data }),
+    // Quên mật khẩu
+    forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', data: { email } }),
+    verifyOtp: (email, otp) => request('/auth/verify-otp', { method: 'POST', data: { email, otp } }),
+    resetPassword: (data) => request('/auth/reset-password', { method: 'POST', data }),
+    // Đổi mật khẩu từ Profile
+    changePassword: (data) => request('/auth/change-password', { method: 'PUT', data }),
   },
 
   // ── Quản lý truyện ───────────────────────────────────────────────────────

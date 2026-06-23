@@ -22,6 +22,8 @@ import HomePage from './pages/HomePage';
 import FindStoriesPage from './pages/FindStoriesPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import GoogleRegisterCompletePage from './pages/GoogleRegisterCompletePage';
 import StoryDetailPage from './pages/StoryDetailPage';
 import ChapterReaderPage from './pages/ChapterReaderPage';
 import UserProfilePage from './pages/UserProfilePage';
@@ -64,6 +66,8 @@ function App() {
 
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/auth/google/complete" element={<GoogleRegisterCompletePage />} />
               <Route path="/account" element={<AccountPage />} />
 
               <Route path="/story/:slug" element={<StoryDetailPage />} />

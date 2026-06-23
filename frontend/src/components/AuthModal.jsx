@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
+import GoogleLoginButton from './GoogleLoginButton';
+import PasswordChecklist from './PasswordChecklist';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 function AuthModal({ open, onClose }) {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
   const [mode, setMode] = useState('login');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,6 +23,12 @@ function AuthModal({ open, onClose }) {
   if (!open) {
     return null;
   }
+
+  const passwordValid =
+    registerPassword.length >= 8 &&
+    /[A-Z]/.test(registerPassword) &&
+    /[0-9]/.test(registerPassword) &&
+    /[!@#$%^&*(),.?":{}|<>]/.test(registerPassword);
 
   const handleOverlayClick = (event) => {
     if (event.target === event.currentTarget) {
@@ -39,6 +47,8 @@ function AuthModal({ open, onClose }) {
 
       if (loggedInUser?.role === 'Admin') {
         navigate('/admin');
+      } else if (loggedInUser?.role === 'Moderator') {
+        navigate('/moderator/dashboard');
       }
 
     } catch (err) {
@@ -50,15 +60,45 @@ function AuthModal({ open, onClose }) {
 
   const handleRegister = async (event) => {
     event.preventDefault();
+    setError('');
+
+    if (!passwordValid) {
+      setError('Mật khẩu chưa đáp ứng đủ các tiêu chí bảo mật.');
+      return;
+    }
+
     try {
       setLoading(true);
-      setError('');
       await register(username, registerEmail, registerPassword, fullName);
       setMode('login');
       setError('');
       alert('Đăng ký thành công! Vui lòng đăng nhập.');
     } catch (err) {
       setError(err?.response?.data?.message || 'Đăng ký thất bại.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (idToken) => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await loginWithGoogle(idToken);
+      onClose();
+      if (result?.isNewUser) {
+        navigate('/auth/google/complete', { state: { tempToken: result.tempToken, suggestedData: result.suggestedData } });
+      } else {
+        if (result?.user?.role === 'Admin') {
+          navigate('/admin');
+        } else if (result?.user?.role === 'Moderator') {
+          navigate('/moderator/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Đăng nhập Google thất bại.');
     } finally {
       setLoading(false);
     }
@@ -99,10 +139,26 @@ function AuthModal({ open, onClose }) {
                   required
                 />
               </div>
+              <div className="text-end mb-3">
+                <Link to="/forgot-password" onClick={onClose} className="forgot-password-link">
+                  Quên mật khẩu?
+                </Link>
+              </div>
               <button type="submit" className="btn-cmc btn-cmc-primary w-100" disabled={loading}>
                 {loading ? 'Đang xử lý...' : 'Đăng Nhập'}
               </button>
             </form>
+
+            <div className="auth-divider">
+              <span>hoặc</span>
+            </div>
+
+            <GoogleLoginButton
+              onSuccess={handleGoogleSuccess}
+              onError={(err) => setError(err.message)}
+              text="signin_with"
+            />
+
             <p className="switch-auth">
               Chưa có tài khoản?
               {' '}
@@ -157,17 +213,28 @@ function AuthModal({ open, onClose }) {
                   type="password"
                   name="password"
                   autoComplete="new-password"
-                  placeholder="Mật khẩu (tối thiểu 8 ký tự)"
+                  placeholder="Mật khẩu"
                   value={registerPassword}
                   onChange={(e) => setRegisterPassword(e.target.value)}
-                  minLength={8}
                   required
                 />
+                <PasswordChecklist password={registerPassword} />
               </div>
               <button type="submit" className="btn-cmc btn-cmc-primary w-100" disabled={loading}>
                 {loading ? 'Đang xử lý...' : 'Đăng Ký'}
               </button>
             </form>
+
+            <div className="auth-divider">
+              <span>hoặc</span>
+            </div>
+
+            <GoogleLoginButton
+              onSuccess={handleGoogleSuccess}
+              onError={(err) => setError(err.message)}
+              text="signup_with"
+            />
+
             <p className="switch-auth">
               Đã có tài khoản?
               {' '}
