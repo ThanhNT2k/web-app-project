@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
+import NotificationBell from './NotificationBell';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -62,6 +63,7 @@ function Navbar() {
           </nav>
 
           <div className="cmc-nav-actions" style={{ position: 'relative' }}>
+            <NotificationBell />
             <button
               type="button"
               className="btn-theme-toggle"

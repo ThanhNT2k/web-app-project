@@ -84,6 +84,10 @@ function StoryReader({
     return null;
   }
 
+  const storyDetailPath = chapter.story_id && chapter.story_slug
+    ? `/story/${chapter.story_id}-${chapter.story_slug}`
+    : null;
+
   const currentDate = new Date().toLocaleDateString('vi-VN', {
     hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
   });
@@ -95,7 +99,11 @@ function StoryReader({
         <div className="text-muted mb-3" style={{ fontSize: '15px' }}>
           <Link to="/" className="text-decoration-none text-dark hover-primary">Trang Chủ</Link>
           <span className="mx-2">/</span>
-          <span className="text-dark">{chapter.story_title}</span>
+          {storyDetailPath ? (
+            <Link to={storyDetailPath} className="text-decoration-none text-dark hover-primary">{chapter.story_title}</Link>
+          ) : (
+            <span className="text-dark">{chapter.story_title}</span>
+          )}
           <span className="mx-2">/</span>
           <span>Chương {chapter.chapter_number}</span>
         </div>

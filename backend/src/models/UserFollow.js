@@ -60,12 +60,20 @@ async function getFollowedStories(userId) {
         s.title,
         s.slug,
         s.cover_image_url,
+        s.description,
         s.category,
         s.status,
         s.total_chapters,
+        s.total_chapters AS chapter_count,
+        s.average_rating,
+        s.total_rating_count AS rating_count,
+        get_follower_count(s.id) AS follow_count,
+        u.username AS author_username,
+        u.full_name AS author_full_name,
         uf.followed_at    -- Thời điểm user bắt đầu follow truyện này
       FROM user_follows uf
       INNER JOIN stories s ON s.id = uf.story_id
+      LEFT JOIN users u ON u.id = s.author_id
       WHERE uf.user_id = $1
       ORDER BY uf.followed_at DESC
     `,

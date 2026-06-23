@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('./workers/moderationWorker');
+require('./workers/notificationWorker');
 const { startRankingCron } = require('./workers/rankingCron');
 
 // Nhập vào ứng dụng Express đã được cấu hình đầy đủ từ app.js

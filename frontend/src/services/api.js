@@ -236,6 +236,16 @@ const API = {
     follow: (storyId) => request(`/follows/${storyId}`, { method: 'POST' }),
     unfollow: (storyId) => request(`/follows/${storyId}`, { method: 'DELETE' }),
   },
+  notifications: {
+    getAll: (page = 1, limit = 10) => request('/notifications', { method: 'GET', params: { page, limit } }),
+    getUnreadCount: () => request('/notifications/unread-count', { method: 'GET' }),
+    markAsRead: (id) => request(`/notifications/${id}/read`, { method: 'PATCH' }),
+    markAllAsRead: () => request('/notifications/read-all', { method: 'PATCH' }),
+    delete: (id) => request(`/notifications/${id}`, { method: 'DELETE' }),
+    deleteAll: () => request('/notifications', { method: 'DELETE' }),
+    getPreferences: () => request('/notifications/preferences/me', { method: 'GET' }),
+    updatePreferences: (data) => request('/notifications/preferences/me', { method: 'PATCH', data }),
+  },
   preferences: {
     get: () => request('/preferences', { method: 'GET' }),
     update: (data) => request('/preferences', { method: 'PUT', data }),

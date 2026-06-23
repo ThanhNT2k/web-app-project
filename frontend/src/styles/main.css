@@ -729,6 +729,8 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 
 .chapter-list { list-style: none; padding: 0; margin: 0; }
 .chapter-list li a { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border); transition: color 0.15s ease; }
+.chapter-list li a.chapter-link-read { opacity: 0.55; }
+.chapter-list li a.chapter-link-read:hover { opacity: 0.75; }
 .chapter-list li a:hover { color: var(--primary-color); }
 .reader-top-bar { display: flex; justify-content: space-between; margin-bottom: 1rem; }
 .story-reader.panel-card, .story-reader { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
