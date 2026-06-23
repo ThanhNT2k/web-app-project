@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'; // Thêm useNavigate
 
 import RecommendedStories from '../components/RecommendedStories';
 import StoryCard from '../components/StoryCard';
 import API from '../services/api';
 import { mockStories } from '../data/mockStories';
+import { useAuth } from '../contexts/AuthContext'; // Thêm useAuth
 
 const GENRES = [
   { slug: 'Tien Hiep', label: 'Tiên Hiệp' },
@@ -48,6 +49,8 @@ function StoryCardSkeleton({ compact }) {
 }
 
 function HomePage() {
+  const navigate = useNavigate(); // Hook để điều hướng
+  const { user, loading: authLoading } = useAuth(); // Kiểm tra user và trạng thái loading
   const [searchParams, setSearchParams] = useSearchParams();
   const [stories, setStories] = useState([]);
   const [featuredStories, setFeaturedStories] = useState([]);
@@ -65,7 +68,19 @@ function HomePage() {
 
   const isSearching = useMemo(() => Boolean(query.trim() || (category && category !== 'all')), [query, category]);
 
-  // Fetch Featured Stories (Popular - most followed)
+  // Logic tự động điều hướng nếu là Admin hoặc Moderator
+  useEffect(() => {
+    if (!authLoading && user) {
+      const role = user.role?.toLowerCase();
+      if (role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (role === 'moderator') {
+        navigate('/moderator/dashboard', { replace: true });
+      }
+    }
+  }, [user, authLoading, navigate]);
+
+  // Fetch Featured Stories
   useEffect(() => {
     if (isSearching) return;
     const fetchFeatured = async () => {
@@ -74,7 +89,6 @@ function HomePage() {
         const response = await API.stories.getAll(1, 6, 'popular');
         setFeaturedStories(response.stories || []);
       } catch {
-        // Fallback sorted by chapters as a popularity proxy
         setFeaturedStories([...mockStories].sort((a, b) => b.total_chapters - a.total_chapters).slice(0, 6));
       } finally {
         setLoadingFeatured(false);
@@ -83,7 +97,7 @@ function HomePage() {
     fetchFeatured();
   }, [isSearching]);
 
-  // Fetch Recent Updates (sortBy = updated)
+  // Fetch Recent Updates
   useEffect(() => {
     if (isSearching) return;
     const fetchRecent = async () => {
@@ -125,13 +139,6 @@ function HomePage() {
 
     fetchStories();
   }, [isSearching, query, category, page]);
-
-  const handleGenreClick = (slug) => {
-    setCategory(slug);
-    setPage(1);
-    setSearchParams({ category: slug, page: '1' });
-    document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const goToPage = (nextPage) => {
     setPage(nextPage);
@@ -213,12 +220,11 @@ function HomePage() {
         </section>
       )}
 
-      {/* Main browse list / Search list */}
+      {/* Main browse list */}
       <section id="browse" className="mb-4">
         <h2 className="section-title">
           {isSearching ? '🔍 Kết quả tìm kiếm' : '📚 Tất cả truyện'}
         </h2>
-        
         {loading ? (
           <div className="stories-grid">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -234,30 +240,6 @@ function HomePage() {
         ) : (
           <p className="no-data">Không tìm thấy truyện phù hợp.</p>
         )}
-
-        {!loading && pagination.totalPages > 1 ? (
-          <div className="d-flex justify-content-center gap-2 mt-4 flex-wrap">
-            <button
-              type="button"
-              className="btn-cmc btn-cmc-outline"
-              disabled={page <= 1}
-              onClick={() => goToPage(page - 1)}
-            >
-              Trước
-            </button>
-            <span className="align-self-center" style={{ color: 'var(--text-muted)' }}>
-              Trang {pagination.page} / {pagination.totalPages}
-            </span>
-            <button
-              type="button"
-              className="btn-cmc btn-cmc-outline"
-              disabled={page >= pagination.totalPages}
-              onClick={() => goToPage(page + 1)}
-            >
-              Sau
-            </button>
-          </div>
-        ) : null}
       </section>
     </main>
   );

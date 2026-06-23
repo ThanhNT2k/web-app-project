@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
+import NotificationBell from './NotificationBell';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -48,6 +49,11 @@ function Navbar() {
               <span className="nav-text">Tìm truyện</span>
             </Link>
 
+            <Link to="/bang-xep-hang" className="cmc-nav-link">
+              <span className="nav-icon">🏆</span>
+              <span className="nav-text">Bảng xếp hạng</span>
+            </Link>
+
             {isAuthenticated && (
               <Link to="/profile" className="cmc-nav-link">
                 <span className="nav-icon">📚</span>
@@ -57,6 +63,7 @@ function Navbar() {
           </nav>
 
           <div className="cmc-nav-actions" style={{ position: 'relative' }}>
+            <NotificationBell />
             <button
               type="button"
               className="btn-theme-toggle"
@@ -136,6 +143,15 @@ function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                       >
                         🛡️ Hệ thống Admin
+                      </Link>
+                    )}
+                    {user?.role === 'Moderator' && (
+                      <Link
+                        to="/moderator/dashboard"
+                        className="dropdown-item-cmc"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        🛡️ Hệ thống Moderator
                       </Link>
                     )}
 

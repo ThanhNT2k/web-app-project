@@ -16,6 +16,12 @@ const EMPTY_STORY = {
 };
 
 const EMPTY_CHAPTER_FORM = { title: '', content: '', chapter_number: 1 };
+const ALLOWED_IMPORT_EXTENSIONS = ['.txt', '.md'];
+
+function hasAllowedExtension(fileName, allowedExtensions) {
+  const lowerName = String(fileName || '').toLowerCase().trim();
+  return allowedExtensions.some((ext) => lowerName.endsWith(ext));
+}
 
 function DashboardPage() {
   const { user } = useAuth();
@@ -31,6 +37,13 @@ function DashboardPage() {
   // Chapter modal (add / edit)
   const [chapterModal, setChapterModal] = useState(null); // { story, chapter|null }
   const [chapterForm, setChapterForm] = useState(EMPTY_CHAPTER_FORM);
+  const [chapterUploadFile, setChapterUploadFile] = useState(null);
+  const [splitChapterFile, setSplitChapterFile] = useState(true);
+
+  const [storyUploadFile, setStoryUploadFile] = useState(null);
+  const [storyFilePreview, setStoryFilePreview] = useState('');
+  const [createByFile, setCreateByFile] = useState(false);
+  const [splitStoryFile, setSplitStoryFile] = useState(true);
 
   // Expanded chapter list per story
   const [expandedStory, setExpandedStory] = useState(null);
@@ -39,11 +52,81 @@ function DashboardPage() {
 
   const [message, setMessage] = useState('');
 
+  // Collaborators modal
+  const [collabModalStory, setCollabModalStory] = useState(null);
+  const [collabList, setCollabList] = useState([]);
+  const [collabLoading, setCollabLoading] = useState(false);
+  const [newCollabEmail, setNewCollabEmail] = useState('');
+  const [collabError, setCollabError] = useState('');
+
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const showMessage = (msg) => {
     setMessage(msg);
     setTimeout(() => setMessage(''), 4000);
+  };
+
+  const readTextFromFile = async (file) => {
+    try {
+      return await file.text();
+    } catch {
+      return '';
+    }
+  };
+
+  const validateImportFile = (file) => {
+    if (!file) return false;
+    return hasAllowedExtension(file.name, ALLOWED_IMPORT_EXTENSIONS);
+  };
+
+  const handleStoryFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setStoryUploadFile(null);
+      setStoryFilePreview('');
+      return;
+    }
+
+    if (!validateImportFile(file)) {
+      showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+      event.target.value = '';
+      setStoryUploadFile(null);
+      setStoryFilePreview('');
+      return;
+    }
+
+    setStoryUploadFile(file);
+    readTextFromFile(file).then((text) => {
+      setStoryFilePreview(text || '');
+      if (!text?.trim()) {
+        showMessage('Đã chọn file nhưng không đọc được nội dung để preview');
+      }
+    });
+  };
+
+  const handleChapterFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setChapterUploadFile(null);
+      setChapterForm((prev) => ({ ...prev, content: '' }));
+      return;
+    }
+
+    if (!validateImportFile(file)) {
+      showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+      event.target.value = '';
+      setChapterUploadFile(null);
+      setChapterForm((prev) => ({ ...prev, content: '' }));
+      return;
+    }
+
+    setChapterUploadFile(file);
+    readTextFromFile(file).then((text) => {
+      setChapterForm((prev) => ({ ...prev, content: text || '' }));
+      if (!text?.trim()) {
+        showMessage('Đã chọn file nhưng không đọc được nội dung để preview');
+      }
+    });
   };
 
   const loadStories = useCallback(async () => {
@@ -84,6 +167,10 @@ function DashboardPage() {
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_STORY);
+    setStoryUploadFile(null);
+    setStoryFilePreview('');
+    setCreateByFile(false);
+    setSplitStoryFile(true);
     setStoryModalOpen(true);
   };
 
@@ -97,6 +184,10 @@ function DashboardPage() {
       status: story.status || 'Ongoing',
       tags: story.tags?.length ? story.tags.map((t) => t.name) : story.category ? [story.category] : [],
     });
+    setStoryUploadFile(null);
+    setStoryFilePreview('');
+    setCreateByFile(false);
+    setSplitStoryFile(true);
     setStoryModalOpen(true);
   };
 
@@ -129,8 +220,30 @@ function DashboardPage() {
         await API.stories.update(editing.id, payload);
         showMessage('Đã cập nhật truyện');
       } else {
-        await API.stories.create({ ...payload, slug: slugify(form.title) });
-        showMessage('Đã tạo truyện mới');
+        if (createByFile) {
+          if (!storyUploadFile) {
+            showMessage('Vui lòng chọn file để import nội dung truyện');
+            return;
+          }
+          if (!validateImportFile(storyUploadFile)) {
+            showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+            return;
+          }
+          const importRes = await API.stories.createFromFile(
+            {
+              ...payload,
+              slug: slugify(form.title),
+              split_chapters: splitStoryFile,
+              first_chapter_title: form.title,
+              raw_text_override: storyFilePreview,
+            },
+            storyUploadFile
+          );
+          showMessage(`Đã tạo truyện và import ${importRes.imported_count || 0} chương`);
+        } else {
+          await API.stories.create({ ...payload, slug: slugify(form.title) });
+          showMessage('Đã tạo truyện mới');
+        }
       }
       setStoryModalOpen(false);
       loadStories();
@@ -159,6 +272,8 @@ function DashboardPage() {
       content: '',
       chapter_number: (story.total_chapters || currentChapters.length || 0) + 1,
     });
+    setChapterUploadFile(null);
+    setSplitChapterFile(true);
   };
 
   const openEditChapter = (story, chapter) => {
@@ -168,6 +283,8 @@ function DashboardPage() {
       content: chapter.content || '',
       chapter_number: chapter.chapter_number,
     });
+    setChapterUploadFile(null);
+    setSplitChapterFile(true);
   };
 
   const saveChapter = async (event) => {
@@ -181,12 +298,29 @@ function DashboardPage() {
         });
         showMessage('Đã cập nhật chương');
       } else {
-        await API.chapters.create(story.id, chapterForm);
-        showMessage('Đã thêm chương');
+        if (chapterUploadFile) {
+          if (!validateImportFile(chapterUploadFile)) {
+            showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+            return;
+          }
+          const importRes = await API.chapters.importFromFile(
+            story.id,
+            {
+              split_chapters: splitChapterFile,
+              start_chapter_number: chapterForm.chapter_number,
+              title: chapterForm.title,
+              raw_text_override: chapterForm.content,
+            },
+            chapterUploadFile
+          );
+          showMessage(`Đã import ${importRes.imported_count || 0} chương từ file`);
+        } else {
+          await API.chapters.create(story.id, chapterForm);
+          showMessage('Đã thêm chương');
+        }
         loadStories();
       }
       setChapterModal(null);
-      // LUÔN LUÔN load lại danh sách chương dù là sửa hay thêm
       loadChaptersForStory(story.id); 
     } catch (err) {
       showMessage(err?.response?.data?.message || 'Thao tác chương thất bại');
@@ -202,6 +336,54 @@ function DashboardPage() {
       loadStories();
     } catch {
       showMessage('Không xóa được chương');
+    }
+  };
+
+  const openCollaborators = async (story) => {
+    setCollabModalStory(story);
+    setNewCollabEmail('');
+    setCollabError('');
+    setCollabList([]);
+    try {
+      setCollabLoading(true);
+      const res = await API.stories.getCollaborators(story.id);
+      setCollabList(res.collaborators || []);
+    } catch {
+      setCollabError('Không tải được danh sách cộng tác viên');
+    } finally {
+      setCollabLoading(false);
+    }
+  };
+
+  const addCollaborator = async (e) => {
+    e.preventDefault();
+    if (!newCollabEmail.trim()) return;
+    setCollabError('');
+    try {
+      setCollabLoading(true);
+      const res = await API.stories.addCollaborator(collabModalStory.id, { email: newCollabEmail.trim() });
+      setCollabList((prev) => [...prev, res.collaborator]);
+      setNewCollabEmail('');
+      showMessage('Đã thêm cộng tác viên');
+    } catch (err) {
+      setCollabError(err?.response?.data?.message || 'Không thể thêm cộng tác viên');
+    } finally {
+      setCollabLoading(false);
+    }
+  };
+
+  const removeCollaborator = async (userId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa cộng tác viên này khỏi truyện?')) return;
+    setCollabError('');
+    try {
+      setCollabLoading(true);
+      await API.stories.removeCollaborator(collabModalStory.id, userId);
+      setCollabList((prev) => prev.filter((c) => c.id !== userId));
+      showMessage('Đã gỡ cộng tác viên');
+    } catch (err) {
+      setCollabError(err?.response?.data?.message || 'Không thể xóa cộng tác viên');
+    } finally {
+      setCollabLoading(false);
     }
   };
 
@@ -238,27 +420,44 @@ function DashboardPage() {
       {loading ? <p className="text-muted">Đang tải...</p> : null}
 
       <div className="dashboard-grid">
-        {stories.map((story) => (
-          <div key={story.id} className="panel-card">
-            <div className="d-flex gap-3">
-              {story.cover_image_url ? (
-                <img src={story.cover_image_url} alt="" className="dashboard-thumb" />
-              ) : (
-                <div className="dashboard-thumb dashboard-thumb-empty">📖</div>
-              )}
-              <div className="flex-grow-1">
-                <h5 className="mb-1">{story.title}</h5>
-                <p className="small text-muted mb-2">
-                  {story.category} · {story.total_chapters} chương · {story.status}
-                </p>
-                <p className="small mb-3 story-clamp">{story.description}</p>
+        {stories.map((story) => {
+          const isOwner = user?.role === 'Admin' || Number(story.author_id) === Number(user?.id);
+          return (
+            <div key={story.id} className="panel-card">
+              <div className="d-flex gap-3">
+                {story.cover_image_url ? (
+                  <img src={story.cover_image_url} alt="" className="dashboard-thumb" />
+                ) : (
+                  <div className="dashboard-thumb dashboard-thumb-empty">📖</div>
+                )}
+                <div className="flex-grow-1">
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <h5 className="mb-0">{story.title}</h5>
+                    {user?.role !== 'Admin' && (
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          padding: '0.15rem 0.4rem',
+                          borderRadius: '4px',
+                          background: isOwner ? 'rgba(59, 130, 246, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                          color: isOwner ? '#3b82f6' : '#f59e0b',
+                        }}
+                      >
+                        {isOwner ? 'Chủ sở hữu' : 'Cộng tác viên'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="small text-muted mb-2">
+                    {story.category} · {story.total_chapters} chương · {story.status}
+                  </p>
+                  <p className="small mb-3 story-clamp">{story.description}</p>
                 <div className="d-flex flex-wrap gap-2">
-                  <Link to={`/story/${story.slug}`} className="btn-cmc btn-cmc-outline btn-sm">
+                  <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-outline btn-sm">
                     Xem
                   </Link>
 
                   {user?.role === 'Admin' ? (
-                    // Admin: đổi nút sửa thành ẩn truyện và có quyền tuyệt đối
                     <button
                       type="button"
                       className={`btn-cmc btn-sm ${story.is_published ? 'btn-cmc-outline' : 'btn-cmc-primary'}`}
@@ -267,7 +466,6 @@ function DashboardPage() {
                       {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
                     </button>
                   ) : (
-                    // Uploader: vẫn giữ nguyên nút sửa
                     <button
                       type="button"
                       className="btn-cmc btn-cmc-outline btn-sm"
@@ -284,6 +482,16 @@ function DashboardPage() {
                   >
                     + Chương
                   </button>
+
+                  {isOwner && (
+                    <button
+                      type="button"
+                      className="btn-cmc btn-cmc-outline btn-sm"
+                      onClick={() => openCollaborators(story)}
+                    >
+                      Cộng tác viên
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -314,15 +522,17 @@ function DashboardPage() {
                         🚫 Admin ẩn
                       </span>
                     ) : (
-                      <button
-                        type="button"
-                        className={`btn-cmc btn-sm ${
-                          story.is_published ? 'btn-link-danger' : 'btn-cmc-primary'
-                        }`}
-                        onClick={() => handleToggleVisibility(story.id)}
-                      >
-                        {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
-                      </button>
+                      isOwner && (
+                        <button
+                          type="button"
+                          className={`btn-cmc btn-sm ${
+                            story.is_published ? 'btn-link-danger' : 'btn-cmc-primary'
+                          }`}
+                          onClick={() => handleToggleVisibility(story.id)}
+                        >
+                          {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
+                        </button>
+                      )
                     )
                   )}
                 </div>
@@ -349,13 +559,15 @@ function DashboardPage() {
                               >
                                 Sửa
                               </button>
-                              <button
-                                type="button"
-                                className="btn-link-danger btn-xs"
-                                onClick={() => deleteChapter(story, ch)}
-                              >
-                                Xóa
-                              </button>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  className="btn-link-danger btn-xs"
+                                  onClick={() => deleteChapter(story, ch)}
+                                >
+                                  Xóa
+                                </button>
+                              )}
                             </div>
                           </li>
                         ))}
@@ -366,7 +578,8 @@ function DashboardPage() {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {!loading && stories.length === 0 ? (
@@ -405,6 +618,48 @@ function DashboardPage() {
                 <option value="Hiatus">Tạm dừng</option>
               </select>
               <TagInput value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
+              {!editing && (
+                <div className="d-grid gap-2">
+                  <label className="small text-muted d-flex align-items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={createByFile}
+                      onChange={(e) => setCreateByFile(e.target.checked)}
+                    />
+                    Tạo truyện từ file (tự động tách nội dung)
+                  </label>
+                  {createByFile && (
+                    <div className="dashboard-import-box">
+                      <p className="dashboard-import-title mb-2">Nhập nội dung từ file</p>
+                      <input
+                        type="file"
+                        className="form-control-cmc form-control-cmc-sm dashboard-file-input"
+                        accept=".txt,.md,text/plain,text/markdown"
+                        onChange={handleStoryFileChange}
+                        required
+                      />
+                      <p className="small text-muted mb-2">Hỗ trợ định dạng: .txt, .md</p>
+                      {storyUploadFile && (
+                        <textarea
+                          className="form-control-cmc dashboard-import-preview"
+                          rows={8}
+                          placeholder="Xem trước nội dung file và chỉnh sửa trước khi import..."
+                          value={storyFilePreview}
+                          onChange={(e) => setStoryFilePreview(e.target.value)}
+                        />
+                      )}
+                      <label className="small text-muted d-flex align-items-center gap-2 dashboard-checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={splitStoryFile}
+                          onChange={(e) => setSplitStoryFile(e.target.checked)}
+                        />
+                        Tự động tách thành nhiều chương nếu file có tiêu đề "Chương X"
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="small text-muted d-block mb-1">Ảnh bìa</label>
                 <input type="file" accept="image/*" onChange={handleCoverUpload} disabled={uploading} />
@@ -426,54 +681,164 @@ function DashboardPage() {
                 ) : null}
               </div>
               <button type="submit" className="btn-cmc btn-cmc-primary" disabled={uploading}>
-                {editing ? 'Cập nhật' : 'Tạo truyện'}
+                {editing ? 'Cập nhật' : createByFile ? 'Tạo truyện + Import file' : 'Tạo truyện'}
               </button>
             </form>
           </div>
         </div>
       ) : null}
 
-      {/* ── Chapter modal (add / edit) ────────────────────────────────────── */}
+      {/* ── Chapter modal (Wattpad Style - FULL SCREEN) ────────────────────────────────────── */}
       {chapterModal ? (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setChapterModal(null)}>
-          <div className="modal-content modal-content-lg">
-            <button type="button" className="close-modal" onClick={() => setChapterModal(null)}>&times;</button>
-            <h2>
-              {chapterModal.chapter
-                ? `Sửa chương ${chapterModal.chapter.chapter_number} — ${chapterModal.story.title}`
-                : `Thêm chương — ${chapterModal.story.title}`}
-            </h2>
-            <form onSubmit={saveChapter} className="d-grid gap-3 mt-3">
+        <div className="chapter-editor-shell">
+          <form onSubmit={saveChapter} className="chapter-editor-form">
+            
+            {/* Thanh Navbar trên cùng giống hệt Wattpad */}
+            <div className="chapter-editor-topbar">
+              <div className="d-flex align-items-center gap-3">
+                <button type="button" className="chapter-editor-backbtn" onClick={() => setChapterModal(null)}>
+                  ←
+                </button>
+                <div className="text-muted chapter-editor-title">
+                  {chapterModal.chapter ? `Sửa chương` : `Thêm chương mới`} — {chapterModal.story.title}
+                </div>
+              </div>
+              <button type="submit" className="btn-cmc btn-cmc-primary chapter-editor-submit">
+                {chapterModal.chapter ? 'Lưu' : 'Đăng tải'}
+              </button>
+            </div>
+
+            {/* Khu vực soạn thảo căn giữa trang */}
+            <div className="wattpad-editor-container mx-auto chapter-editor-container">
               {!chapterModal.chapter && (
-                <input
-                  type="number"
-                  className="form-control-cmc"
-                  min={1}
-                  placeholder="Số chương"
-                  value={chapterForm.chapter_number}
-                  onChange={(e) => setChapterForm({ ...chapterForm, chapter_number: Number(e.target.value) })}
-                  required
-                />
+                <div className="mb-3">
+                  <label className="small text-muted d-block mb-1" htmlFor="chapter-start-number">
+                    {chapterUploadFile && splitChapterFile ? 'Chương bắt đầu' : 'Số chương'}
+                  </label>
+                  <input
+                    id="chapter-start-number"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder={chapterUploadFile && splitChapterFile
+                      ? 'VD: 1 (sẽ tạo lần lượt Chương 1, 2, 3...)'
+                      : 'VD: 1'}
+                    className="wattpad-input-muted"
+                    value={chapterForm.chapter_number}
+                    onChange={(e) => setChapterForm({
+                      ...chapterForm,
+                      chapter_number: e.target.value,
+                    })}
+                    required
+                  />
+                  <p className="small text-muted mb-0 mt-1">
+                    {chapterUploadFile && splitChapterFile
+                      ? 'Nhập số chương đầu tiên. Hệ thống sẽ tự tăng cho các chương tách ra từ file.'
+                      : 'Nhập số chương bạn muốn hiển thị cho chương này.'}
+                  </p>
+                </div>
               )}
               <input
-                className="form-control-cmc"
-                placeholder="Tiêu đề chương"
+                type="text"
+                placeholder={chapterUploadFile && splitChapterFile ? 'Tiêu đề chương đầu tiên (tùy chọn)' : 'Tiêu đề chương'}
+                className="wattpad-input-title"
                 value={chapterForm.title}
                 onChange={(e) => setChapterForm({ ...chapterForm, title: e.target.value })}
-                required
+                required={!chapterUploadFile || !splitChapterFile}
               />
+              {!chapterModal.chapter && (
+                <div className="dashboard-import-box dashboard-import-box-inline">
+                  <label className="small text-muted d-block mb-1 dashboard-import-title">Import từ file (tùy chọn)</label>
+                  <input
+                    type="file"
+                    className="form-control-cmc form-control-cmc-sm dashboard-file-input"
+                    accept=".txt,.md,text/plain,text/markdown"
+                    onChange={handleChapterFileChange}
+                  />
+                  {chapterUploadFile && (
+                    <label className="small text-muted d-flex align-items-center gap-2 mt-2 dashboard-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={splitChapterFile}
+                        onChange={(e) => setSplitChapterFile(e.target.checked)}
+                      />
+                      Tự động tách thành nhiều chương nếu file có tiêu đề "Chương X"
+                    </label>
+                  )}
+                </div>
+              )}
               <textarea
-                className="form-control-cmc"
-                rows={10}
-                placeholder="Nội dung chương"
+                placeholder="Nhập nội dung chương của bạn vào đây..."
+                className="wattpad-input-content"
                 value={chapterForm.content}
                 onChange={(e) => setChapterForm({ ...chapterForm, content: e.target.value })}
+                required={!chapterUploadFile}
+              ></textarea>
+            </div>
+          </form>
+        </div>
+      ) : null}
+      {/* ── Collaborators modal ────────────────────────────────────────────── */}
+      {collabModalStory ? (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setCollabModalStory(null)}>
+          <div className="modal-content">
+            <button type="button" className="close-modal" onClick={() => setCollabModalStory(null)}>&times;</button>
+            <h2 className="mb-3">Cộng tác viên — {collabModalStory.title}</h2>
+            
+            {collabError && <div className="alert-cmc alert-cmc-danger mb-3" style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', padding: '0.8rem', borderRadius: '6px' }}>{collabError}</div>}
+            
+            <form onSubmit={addCollaborator} className="d-flex gap-2 my-3">
+              <input
+                type="email"
+                className="form-control-cmc flex-grow-1"
+                placeholder="Nhập email của uploader..."
+                value={newCollabEmail}
+                onChange={(e) => setNewCollabEmail(e.target.value)}
+                disabled={collabLoading}
                 required
               />
-              <button type="submit" className="btn-cmc btn-cmc-primary">
-                {chapterModal.chapter ? 'Lưu thay đổi' : 'Thêm chương'}
+              <button type="submit" className="btn-cmc btn-cmc-primary" disabled={collabLoading}>
+                Thêm
               </button>
             </form>
+
+            <div className="mt-3">
+              <h5 className="mb-2">Danh sách thành viên</h5>
+              {collabLoading && collabList.length === 0 ? (
+                <p className="small text-muted">Đang tải...</p>
+              ) : collabList.length === 0 ? (
+                <p className="small text-muted">Chưa có cộng tác viên nào. Nhập email phía trên để thêm.</p>
+              ) : (
+                <ul className="list-unstyled d-grid gap-2" style={{ padding: 0 }}>
+                  {collabList.map((collab) => (
+                    <li key={collab.id} className="d-flex align-items-center justify-content-between p-2 rounded" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <div className="d-flex align-items-center gap-2">
+                        {collab.avatar_url ? (
+                          <img src={collab.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 600 }}>
+                            {collab.username.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <p className="small fw-semibold mb-0" style={{ fontSize: '0.9rem' }}>{collab.full_name || collab.username}</p>
+                          <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>{collab.email}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-link-danger btn-xs"
+                        onClick={() => removeCollaborator(collab.id)}
+                        disabled={collabLoading}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                      >
+                        Gỡ
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       ) : null}

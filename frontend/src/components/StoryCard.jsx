@@ -42,7 +42,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
   if (horizontal) {
     return (
       <article className="story-card-horizontal d-flex gap-3 p-3 rounded-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow)' }}>
-        <Link to={`/story/${story.slug}`} className="story-image-horizontal flex-shrink-0" style={{ width: '90px', height: '120px', borderRadius: '8px', overflow: 'hidden' }}>
+        <Link to={`/story/${story.id}-${story.slug}`} className="story-image-horizontal flex-shrink-0" style={{ width: '90px', height: '120px', borderRadius: '8px', overflow: 'hidden' }}>
           <img
             src={story.cover_image_url || FALLBACK_COVER}
             alt={story.title}
@@ -51,7 +51,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           />
         </Link>
         <div className="story-info-horizontal d-flex flex-column flex-grow-1 min-w-0">
-          <Link to={`/story/${story.slug}`} className="story-title text-decoration-none fw-bold text-truncate" style={{ fontSize: '1.05rem', color: 'var(--text)' }}>
+          <Link to={`/story/${story.id}-${story.slug}`} className="story-title text-decoration-none fw-bold text-truncate" style={{ fontSize: '1.05rem', color: 'var(--text)' }}>
             {story.title}
           </Link>
           <p className="small text-muted mb-1 text-truncate">
@@ -60,6 +60,12 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           <p className="story-desc-horizontal text-muted small mb-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {story.description}
           </p>
+
+          {Number(story.rating_count || story.total_rating_count) > 0 ? (
+            <p className="story-rating-inline mb-2">
+              ⭐ {Number(story.average_rating || 0).toFixed(1)} · {story.rating_count || story.total_rating_count} lượt đánh giá
+            </p>
+          ) : null}
           
           {renderTags()}
 
@@ -67,7 +73,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
             <span className="small text-muted">
               📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
             </span>
-            <Link to={`/story/${story.slug}`} className="btn-cmc btn-cmc-primary btn-xs">
+            <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-xs">
               Đọc ngay
             </Link>
           </div>
@@ -78,7 +84,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
 
   return (
     <article className="story-card-v2">
-      <Link to={`/story/${story.slug}`} className="story-image d-block">
+      <Link to={`/story/${story.id}-${story.slug}`} className="story-image d-block">
         <img
           src={story.cover_image_url || FALLBACK_COVER}
           alt={story.title}
@@ -86,7 +92,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
         />
       </Link>
       <div className="story-info">
-        <Link to={`/story/${story.slug}`} className="story-title text-decoration-none">
+        <Link to={`/story/${story.id}-${story.slug}`} className="story-title text-decoration-none">
           {story.title}
         </Link>
         <p className="story-meta mb-1">
@@ -96,6 +102,12 @@ function StoryCard({ story, compact = false, horizontal = false }) {
         <p className="story-meta mb-2">
           📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
         </p>
+
+        {Number(story.rating_count || story.total_rating_count) > 0 ? (
+          <p className="story-meta mb-2 story-rating-inline">
+            ⭐ {Number(story.average_rating || 0).toFixed(1)} · {story.rating_count || story.total_rating_count} lượt đánh giá
+          </p>
+        ) : null}
         
         {renderTags()}
 
@@ -105,7 +117,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           </p>
         ) : null}
         
-        <Link to={`/story/${story.slug}`} className="btn-cmc btn-cmc-primary btn-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}>
+        <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}>
           Đọc ngay
         </Link>
       </div>

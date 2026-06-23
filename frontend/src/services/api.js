@@ -58,12 +58,14 @@ const apiClient = axios.create({
  * Nếu có token trong localStorage, gắn vào header dạng "Bearer <token>".
  */
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('cmc_token'); 
-  
-  if (token && token !== 'null') {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  } else {
-    console.warn("API Call: Không tìm thấy Token trong localStorage!");
+  try {
+    const token = localStorage.getItem('cmc_token');
+    if (token && token !== 'null') {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (err) {
+    // localStorage may be unavailable in some environments (private mode, strict policies).
+    // Silently ignore so the app doesn't spam the console or throw runtime errors.
   }
   
   return config;
@@ -134,9 +136,32 @@ const API = {
     getById: (id) => request(`/stories/${id}`, { method: 'GET' }),
     getBySlug: (slug) => request(`/stories/by-slug/${slug}`, { method: 'GET' }),
     create: (data) => request('/stories', { method: 'POST', data }),
+    createFromFile: async (payload, file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      Object.entries(payload || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(key, item));
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
+      const response = await apiClient.post('/stories/import-file', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
     update: (id, data) => request(`/stories/${id}`, { method: 'PUT', data }),
     delete: (id) => request(`/stories/${id}`, { method: 'DELETE' }),
     toggleVisibility: (id) => request(`/stories/${id}/visibility`, { method: 'PATCH' }),
+    getRating: (id) => request(`/stories/${id}/rating`, { method: 'GET' }),
+    rate: (id, rating) => request(`/stories/${id}/rating`, { method: 'PUT', data: { rating } }),
+    deleteRating: (id) => request(`/stories/${id}/rating`, { method: 'DELETE' }),
+    getCollaborators: (storyId) => request(`/stories/${storyId}/collaborators`, { method: 'GET' }),
+    addCollaborator: (storyId, data) => request(`/stories/${storyId}/collaborators`, { method: 'POST', data }),
+    removeCollaborator: (storyId, userId) => request(`/stories/${storyId}/collaborators/${userId}`, { method: 'DELETE' }),
     search: (query, category = null, tag = null, page = 1, limit = 12) => request('/stories/search', {
       method: 'GET',
       params: {
@@ -148,6 +173,12 @@ const API = {
       },
     }),
   },
+  rankings: {
+    get: (type = 'trending', period = 'week', limit = 20) => request('/rankings', {
+      method: 'GET',
+      params: { type, period, limit },
+    }),
+  },
 
   // ── Quản lý chương ───────────────────────────────────────────────────────
   chapters: {
@@ -155,6 +186,19 @@ const API = {
     getById: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'GET' }),
     getBySlugAndNumber: (storySlug, chapterNumber) => request(`/stories/by-slug/${storySlug}/chapters/${chapterNumber}`, { method: 'GET' }),
     create: (storyId, data) => request(`/stories/${storyId}/chapters`, { method: 'POST', data }),
+    importFromFile: async (storyId, payload, file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      Object.entries(payload || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        formData.append(key, String(value));
+      });
+
+      const response = await apiClient.post(`/stories/${storyId}/chapters/import-file`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
     update: (storyId, chapterId, data) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'PUT', data }),
     delete: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'DELETE' }),
   },
@@ -192,6 +236,16 @@ const API = {
     follow: (storyId) => request(`/follows/${storyId}`, { method: 'POST' }),
     unfollow: (storyId) => request(`/follows/${storyId}`, { method: 'DELETE' }),
   },
+  notifications: {
+    getAll: (page = 1, limit = 10) => request('/notifications', { method: 'GET', params: { page, limit } }),
+    getUnreadCount: () => request('/notifications/unread-count', { method: 'GET' }),
+    markAsRead: (id) => request(`/notifications/${id}/read`, { method: 'PATCH' }),
+    markAllAsRead: () => request('/notifications/read-all', { method: 'PATCH' }),
+    delete: (id) => request(`/notifications/${id}`, { method: 'DELETE' }),
+    deleteAll: () => request('/notifications', { method: 'DELETE' }),
+    getPreferences: () => request('/notifications/preferences/me', { method: 'GET' }),
+    updatePreferences: (data) => request('/notifications/preferences/me', { method: 'PATCH', data }),
+  },
   preferences: {
     get: () => request('/preferences', { method: 'GET' }),
     update: (data) => request('/preferences', { method: 'PUT', data }),
@@ -200,6 +254,13 @@ const API = {
     create: (data) => request('/reports', { method: 'POST', data }),
     getAll: (params = {}) => request('/reports', { method: 'GET', params }),
     updateStatus: (id, status) => request(`/reports/${id}`, { method: 'PATCH', data: { status } }),
+  },
+  moderator: {
+    getDashboard: () => request('/moderator/dashboard', { method: 'GET' }),
+    getPendingStories: (page = 1, limit = 20) => request('/moderator/pending-stories', { method: 'GET', params: { page, limit } }),
+    getComments: (page = 1, limit = 50, storyId = null, chapterId = null) =>
+      request('/moderator/comments', { method: 'GET', params: { page, limit, story_id: storyId || undefined, chapter_id: chapterId || undefined } }),
+    updateCommentStatus: (id, status) => request(`/moderator/comments/${id}/status`, { method: 'PATCH', data: { status } }),
   },
   upload: {
     cover: async (file) => {

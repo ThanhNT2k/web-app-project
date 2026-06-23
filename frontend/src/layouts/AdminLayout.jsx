@@ -14,7 +14,7 @@ function AdminLayout() {
   return (
     <div className="admin-layout">
       {/* Sidebar */}
-      <aside className="admin-sidebar" style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100vh' }}>
+      <aside className="admin-sidebar">
         <div className="admin-logo">
           <h2>CMC Admin</h2>
         </div>
@@ -57,6 +57,15 @@ function AdminLayout() {
             🚩 Quản lý báo cáo
           </NavLink>
 
+          <NavLink
+            to="/admin/comments"
+            className={({ isActive }) =>
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
+            💬 Quản lý bình luận
+          </NavLink>
+
           {/* Mục Quản lý từ khóa */}
           <NavLink
             to="/admin/bad-words"
@@ -66,10 +75,11 @@ function AdminLayout() {
           >
             🚫 Quản lý từ khóa
           </NavLink>
+
         </nav>
 
         {/* Nút Đăng xuất được đẩy xuống dưới cùng */}
-        <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px' }}>
+        <div className="mt-auto pt-4 w-100">
           <button
             onClick={handleLogout}
             style={{

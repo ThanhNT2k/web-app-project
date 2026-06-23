@@ -1,54 +1,90 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Giả sử bạn dùng AuthContext
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function ModeratorLayout() {
-  const { user } = useAuth();
-  const location = useLocation();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
-  // Hàm kiểm tra active menu
-  const isActive = (path) => location.pathname.includes(path) ? 'active' : '';
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="admin-layout">
-      {/* Cột Menu Sidebar */}
+      {/* Sidebar - Cấu trúc giống hệt AdminLayout */}
       <aside className="admin-sidebar">
         <div className="admin-logo">
-          <h2>CMC Truyện</h2>
-          <span className="badge-role mt-2 d-inline-block">Moderator</span>
+          <h2>CMC Moderator</h2>
         </div>
 
         <nav className="admin-menu">
-          <Link to="/moderator/dashboard" className={`admin-menu-item ${isActive('/dashboard')}`}>
+          <NavLink
+            to="/moderator/dashboard"
+            className={({ isActive }) =>
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
             📊 Tổng quan
-          </Link>
-          <Link to="/moderator/pending-stories" className={`admin-menu-item ${isActive('/pending-stories')}`}>
+          </NavLink>
+
+          <NavLink
+            to="/moderator/pending-stories"
+            className={({ isActive }) =>
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
             📖 Duyệt truyện chờ
-          </Link>
-          <Link to="/moderator/reports" className={`admin-menu-item ${isActive('/reports')}`}>
-            🚩 Xử lý Report / Spam
-          </Link>
-          <Link to="/moderator/comments" className={`admin-menu-item ${isActive('/comments')}`}>
+          </NavLink>
+
+          <NavLink
+            to="/moderator/reports"
+            className={({ isActive }) => 
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
+            🚩 Quản lý báo cáo
+          </NavLink>
+
+          <NavLink
+            to="/moderator/comments"
+            className={({ isActive }) => 
+              isActive ? 'admin-menu-item active' : 'admin-menu-item'
+            }
+          >
             💬 Quản lý bình luận
-          </Link>
+          </NavLink>
         </nav>
 
-        <div className="mt-auto pt-4">
-          <div className="text-sm text-center mb-3 text-muted">
-            Xin chào, {user?.username || 'Mod'}
-          </div>
-          <Link to="/" className="admin-menu-item text-center" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-            ← Về trang chủ
-          </Link>
+        {/* Nút Đăng xuất đồng bộ phong cách */}
+        <div className="mt-auto pt-4 w-100">
+          <button
+            onClick={handleLogout}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+          >
+            🚪 Đăng xuất
+          </button>
         </div>
       </aside>
 
-      {/* Khu vực nội dung thay đổi theo Route */}
+      {/* Main Content */}
       <main className="admin-content">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1 className="section-title mb-0">Khu vực Kiểm duyệt</h1>
-        </div>
-        
-        {/* Component con sẽ được render ở đây (ví dụ: PendingStories, ReportsList...) */}
         <Outlet />
       </main>
     </div>

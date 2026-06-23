@@ -13,8 +13,14 @@ import AdminStoriesPage from './pages/AdminStoriesPage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import ManageBadWords from './pages/admin/ManageBadWords';
 
+import ModeratorDashboardPage from './pages/moderator/ModeratorDashboardPage';
+import ModeratorPendingStoriesPage from './pages/moderator/ModeratorPendingStoriesPage';
+import ModeratorReportsPage from './pages/moderator/ModeratorReportsPage';
+import ModeratorCommentsPage from './pages/moderator/ModeratorCommentsPage';
+
 import HomePage from './pages/HomePage';
 import FindStoriesPage from './pages/FindStoriesPage';
+import RankingsPage from './pages/RankingsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import StoryDetailPage from './pages/StoryDetailPage';
@@ -53,6 +59,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/browse" element={<FindStoriesPage />} />
               <Route path="/tim-truyen" element={<FindStoriesPage />} />
+              <Route path="/bang-xep-hang" element={<RankingsPage />} />
 
               <Route path="/reader" element={<LegacyRedirect />} />
               <Route path="/pages/*" element={<LegacyRedirect />} />
@@ -101,6 +108,7 @@ function App() {
               <Route path="/admin/stories" element={<AdminStoriesPage />} />
               <Route path="/admin/reports" element={<AdminReportsPage />} />
               <Route path="/admin/bad-words" element={<ManageBadWords />} />
+              <Route path="/admin/comments" element={<ModeratorCommentsPage />} />
             </Route>
 
             {/* MODERATOR LAYOUT RIÊNG */}
@@ -111,10 +119,10 @@ function App() {
                 </RoleProtectedRoute>
               }
             >
-              <Route path="/moderator/dashboard" element={<div className="p-4">Trang Tổng quan Mod (Sẽ làm sau)</div>} />
-              <Route path="/moderator/pending-stories" element={<div className="p-4">Trang Duyệt truyện (Sẽ làm sau)</div>} />
-              <Route path="/moderator/reports" element={<div className="p-4">Trang Xử lý Report (Sẽ làm sau)</div>} />
-              <Route path="/moderator/comments" element={<div className="p-4">Trang Quản lý Bình luận (Sẽ làm sau)</div>} />
+              <Route path="/moderator/dashboard" element={<ModeratorDashboardPage />} />
+              <Route path="/moderator/pending-stories" element={<ModeratorPendingStoriesPage />} />
+              <Route path="/moderator/reports" element={<AdminReportsPage />} />
+              <Route path="/moderator/comments" element={<ModeratorCommentsPage />} />
             </Route>
 
             <Route path="/home" element={<Navigate to="/" replace />} />

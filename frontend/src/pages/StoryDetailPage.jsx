@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
 import ReadingProgress from '../components/ReadingProgress';
 import ReportModal from '../components/ReportModal';
+import StoryRating from '../components/StoryRating';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { mockStories } from '../data/mockStories';
@@ -17,6 +18,7 @@ const CHAPTERS_PER_PAGE = 50;
 
 function StoryDetailPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -52,6 +54,16 @@ function StoryDetailPage() {
     };
     fetchStory();
   }, [slug]);
+
+  // Redirect to canonical URL (storyId-slug) if not already matching
+  useEffect(() => {
+    if (story && story.id && story.slug) {
+      const canonicalSlug = `${story.id}-${story.slug}`;
+      if (slug !== canonicalSlug) {
+        navigate(`/story/${canonicalSlug}`, { replace: true });
+      }
+    }
+  }, [story, slug, navigate]);
 
   // Load chapters with pagination and sort
   useEffect(() => {
@@ -98,12 +110,13 @@ function StoryDetailPage() {
   }
 
   const continueChapterNumber = storyProgress?.chapter_number || chapters[0]?.chapter_number;
+  const lastReadChapterNumber = Number(storyProgress?.chapter_number || 0);
   return (
     <main className="cmc-main">
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
       {isAuthenticated && storyProgress ? (
-        <ReadingProgress progress={storyProgress} storySlug={story.slug} />
+        <ReadingProgress progress={storyProgress} storySlug={`${story.id}-${story.slug}`} />
       ) : null}
 
       <div className="story-detail-header panel-card">
@@ -117,10 +130,23 @@ function StoryDetailPage() {
           <div>
             <h1>{story.title}</h1>
             <p className="text-muted mb-2">
-              Tác giả:{' '}
-              {story.author_full_name || story.author_username || 'CMC'}
+              Tác giả: {story.author_full_name || story.author_username || 'CMC'}
+              {story.collaborators?.length > 0 && (
+                <>
+                  {' | Đồng đóng góp: '}
+                  <span className="text-muted">
+                    {story.collaborators.map((c) => c.full_name || c.username).join(', ')}
+                  </span>
+                </>
+              )}
             </p>
             <p className="story-detail-desc">{story.description}</p>
+            <StoryRating
+              storyId={story.id}
+              initialAverageRating={story.average_rating}
+              initialRatingCount={story.rating_count || story.total_rating_count}
+              className="mb-3"
+            />
             <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
               <span className="small text-muted">
                 {story.chapter_count || story.total_chapters || 0}
@@ -146,7 +172,7 @@ function StoryDetailPage() {
             <div className="d-flex flex-wrap gap-2">
               {continueChapterNumber ? (
                 <Link
-                  to={`/${story.slug}/${continueChapterNumber}`}
+                  to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
                   className="btn-cmc btn-cmc-primary"
                 >
                   {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
@@ -195,16 +221,25 @@ function StoryDetailPage() {
             ) : (
               <>
                 <ul className="chapter-list">
-                  {chapters.map((chapter) => (
-                    <li key={chapter.id}>
-                      <Link to={`/${story.slug}/${chapter.chapter_number}`}>
-                        <span>
-                          Ch.{chapter.chapter_number}: {chapter.title}
-                        </span>
-                        <span className="text-muted small">Đọc →</span>
-                      </Link>
-                    </li>
-                  ))}
+                  {chapters.map((chapter) => {
+                    const chapterNumber = Number(chapter.chapter_number || 0);
+                    const isRead = lastReadChapterNumber > 0 && chapterNumber > 0 && chapterNumber <= lastReadChapterNumber;
+
+                    return (
+                      <li key={chapter.id}>
+                        <Link
+                          to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
+                          className={isRead ? 'chapter-link-read' : ''}
+                          aria-label={isRead ? `Chương ${chapter.chapter_number} đã đọc` : undefined}
+                        >
+                          <span>
+                            Ch.{chapter.chapter_number}: {chapter.title}
+                          </span>
+                          <span className="text-muted small">{isRead ? 'Đã đọc' : 'Đọc →'}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 {/* Chapter pagination */}
@@ -251,7 +286,8 @@ function StoryDetailPage() {
       </div>
       {isReportModalOpen && (
         <ReportModal 
-          storyId={story.id} 
+          storyId={story.id}
+          chapterId={null}
           onClose={() => setIsReportModalOpen(false)} 
         />
       )}
