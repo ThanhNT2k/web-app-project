@@ -9,3 +9,4 @@ config.js
 backend/uploads/
 coverage/
 __tests__/
+supabase/

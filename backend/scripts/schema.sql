@@ -107,11 +107,33 @@ CREATE TABLE IF NOT EXISTS comments (
     user_id INTEGER REFERENCES users(id),
     story_id INTEGER REFERENCES stories(id),
     chapter_id INTEGER REFERENCES chapters(id) ON DELETE SET NULL,
+    parent_comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
     content TEXT,
     rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+    status VARCHAR(20) NOT NULL DEFAULT 'approved'
+        CHECK (status IN ('pending', 'approved', 'masked', 'flagged', 'rejected')),
+    is_spam BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_comments_parent_comment_id ON comments(parent_comment_id);
+
+-- -----------------------------------------------------------------------------
+-- comment_votes
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS comment_votes (
+    id SERIAL PRIMARY KEY,
+    comment_id INTEGER NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    value SMALLINT NOT NULL CHECK (value IN (-1, 1)),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (comment_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_comment_votes_comment_id ON comment_votes(comment_id);
+CREATE INDEX IF NOT EXISTS idx_comment_votes_user_id ON comment_votes(user_id);
 
 -- -----------------------------------------------------------------------------
 -- ratings

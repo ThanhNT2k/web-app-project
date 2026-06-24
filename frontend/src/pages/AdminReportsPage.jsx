@@ -76,7 +76,14 @@ function AdminReportsPage() {
               <tr key={report.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 font-medium text-gray-900">{report.reporter_username || `ID: ${report.user_id}`}</td>
                 <td className="px-6 py-4">
-                  {report.story_title || report.chapter_title || report.story_slug ? (
+                  {report.comment_id ? (
+                    <div>
+                      <span className="font-semibold text-gray-800">Bình luận</span>
+                      {report.comment_content ? (
+                        <div className="text-gray-500 truncate max-w-xs">{report.comment_content}</div>
+                      ) : null}
+                    </div>
+                  ) : report.story_title || report.chapter_title || report.story_slug ? (
                     report.story_slug ? (
                       <Link to={`/${report.story_slug}${report.chapter_number ? `/${report.chapter_number}` : ''}`} className="font-semibold text-blue-600 hover:underline">
                         {report.story_title || report.chapter_title || report.story_slug}{report.chapter_number ? ` — Chương ${report.chapter_number}` : ''}

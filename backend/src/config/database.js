@@ -58,10 +58,12 @@ if (process.env.NODE_ENV !== 'test') {
 
       try {
         await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS story_id INTEGER REFERENCES stories(id) ON DELETE CASCADE');
+        await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_story ON reports(story_id)');
-        console.log('[Database] Verified reports table has story_id column');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_comment ON reports(comment_id)');
+        console.log('[Database] Verified reports table has story_id and comment_id columns');
       } catch (err) {
-        console.error('[Database] Failed to verify/add reports.story_id column:', err.message);
+        console.error('[Database] Failed to verify/add reports target columns:', err.message);
       }
 
       try {

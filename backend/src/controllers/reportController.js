@@ -7,7 +7,11 @@ const reportSchema = z.object({
   description: z.string(),
   story_id: z.number().int().nullable(),
   chapter_id: z.number().int().nullable(),
-});
+  comment_id: z.number().int().nullable(),
+}).refine(
+  (data) => data.story_id || data.chapter_id || data.comment_id,
+  { message: 'Báo cáo phải gắn với truyện, chương hoặc bình luận.' }
+);
 
 const createReport = async (req, res) => {
   console.log("--- BẮT ĐẦU CREATE REPORT ---");
@@ -27,19 +31,21 @@ const createReport = async (req, res) => {
     }
 
     await db.query(
-      "INSERT INTO reports (user_id, story_id, chapter_id, reason, description) VALUES ($1, $2, $3, $4, $5)",
-      [userId, data.story_id, data.chapter_id, data.reason, data.description]
+      "INSERT INTO reports (user_id, story_id, chapter_id, comment_id, reason, description) VALUES ($1, $2, $3, $4, $5, $6)",
+      [userId, data.story_id, data.chapter_id, data.comment_id, data.reason, data.description]
     );
 
-    // Kiểm tra và ẩn chương
-    const { rows: countCheck } = await db.query(
-      "SELECT COUNT(*) FROM reports WHERE chapter_id = $1 AND status = 'NEW'",
-      [data.chapter_id]
-    );
+    // Kiểm tra và ẩn chương nếu báo cáo gắn với chapter
+    if (data.chapter_id) {
+      const { rows: countCheck } = await db.query(
+        "SELECT COUNT(*) FROM reports WHERE chapter_id = $1 AND status = 'NEW'",
+        [data.chapter_id]
+      );
 
-    if (parseInt(countCheck[0].count) >= 10) {
-      // Lưu ý: Đảm bảo bảng 'chapters' có cột 'status'
-      await db.query("UPDATE chapters SET is_published = false WHERE id = $1", [data.chapter_id]);
+      if (parseInt(countCheck[0].count) >= 10) {
+        // Lưu ý: Đảm bảo bảng 'chapters' có cột 'status'
+        await db.query("UPDATE chapters SET is_published = false WHERE id = $1", [data.chapter_id]);
+      }
     }
 
     res.status(201).json({ message: "Báo cáo đã được ghi nhận!" });
@@ -57,14 +63,17 @@ const getReports = async (req, res) => {
     let query = `
       SELECT r.*, u.username AS reporter_username,
              ch.chapter_number, ch.title AS chapter_title,
+             c.content AS comment_content,
+             c.status AS comment_status,
              COALESCE(report_story.title, chapter_story.title) AS story_title,
              COALESCE(report_story.slug, chapter_story.slug) AS story_slug,
              COALESCE(report_story.id, chapter_story.id) AS story_id
       FROM reports r
       LEFT JOIN users u ON u.id = r.user_id
       LEFT JOIN chapters ch ON ch.id = r.chapter_id
+      LEFT JOIN comments c ON c.id = r.comment_id
       LEFT JOIN stories report_story ON report_story.id = r.story_id
-      LEFT JOIN stories chapter_story ON chapter_story.id = ch.story_id
+      LEFT JOIN stories chapter_story ON chapter_story.id = COALESCE(ch.story_id, c.story_id)
     `;
     let values = [];
 

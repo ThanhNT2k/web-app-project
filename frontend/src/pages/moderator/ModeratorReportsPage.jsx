@@ -51,6 +51,11 @@ function ModeratorReportsPage() {
               <div className="small text-muted">Bởi: {r.reporter_username || r.user_id} • {new Date(r.created_at).toLocaleString('vi-VN')}</div>
               <div>{r.reason}</div>
               <div className="text-muted small mb-2">{r.description}</div>
+              {r.comment_id ? (
+                <div className="small mb-2">
+                  Bình luận: <span className="text-dark">{r.comment_content || `#${r.comment_id}`}</span>
+                </div>
+              ) : null}
               {(r.story_title || r.story_slug) ? (
                 <div className="small">
                   Báo cáo: <a href={r.story_slug ? `/${r.story_slug}${r.chapter_number ? `/${r.chapter_number}` : ''}` : '#'}>

@@ -73,7 +73,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
             <span className="small text-muted">
               📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
             </span>
-            <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-xs">
+            <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-xs story-card-cta">
               Đọc ngay
             </Link>
           </div>
@@ -83,7 +83,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
   }
 
   return (
-    <article className="story-card-v2">
+    <article className="story-card-v2 d-flex flex-column h-100">
       <Link to={`/story/${story.id}-${story.slug}`} className="story-image d-block">
         <img
           src={story.cover_image_url || FALLBACK_COVER}
@@ -91,7 +91,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
         />
       </Link>
-      <div className="story-info">
+      <div className="story-info d-flex flex-column flex-grow-1">
         <Link to={`/story/${story.id}-${story.slug}`} className="story-title text-decoration-none">
           {story.title}
         </Link>
@@ -117,7 +117,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           </p>
         ) : null}
         
-        <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}>
+        <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-sm story-card-cta" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}>
           Đọc ngay
         </Link>
       </div>

@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
-import ReadingProgress from '../components/ReadingProgress';
+// import ReadingProgress from '../components/ReadingProgress';
 import ReportModal from '../components/ReportModal';
 import StoryRating from '../components/StoryRating';
 import API from '../services/api';
@@ -15,6 +15,20 @@ const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80';
 
 const CHAPTERS_PER_PAGE = 50;
+
+function formatChapterUploadDate(createdAt) {
+  if (!createdAt) return '--/--/----';
+  const parsed = new Date(createdAt);
+  if (Number.isNaN(parsed.getTime())) return '--/--/----';
+  return parsed.toLocaleDateString('vi-VN');
+}
+
+function formatDateOrFallback(dateValue) {
+  if (!dateValue) return 'Chưa cập nhật';
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return 'Chưa cập nhật';
+  return parsed.toLocaleDateString('vi-VN');
+}
 
 function StoryDetailPage() {
   const { slug } = useParams();
@@ -28,8 +42,9 @@ function StoryDetailPage() {
   const [error, setError] = useState('');
   const [chapterPage, setChapterPage] = useState(1);
   const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [showRatingPanel, setShowRatingPanel] = useState(false);
 
   // Load story info once
   useEffect(() => {
@@ -111,179 +126,222 @@ function StoryDetailPage() {
 
   const continueChapterNumber = storyProgress?.chapter_number || chapters[0]?.chapter_number;
   const lastReadChapterNumber = Number(storyProgress?.chapter_number || 0);
+  const totalChapters = story.chapter_count || story.total_chapters || chapterPagination.totalItems || 0;
+  const latestChapter = chapters.reduce((latest, chapter) => {
+    if (!latest) return chapter;
+    return Number(chapter.chapter_number || 0) > Number(latest.chapter_number || 0) ? chapter : latest;
+  }, null);
+  const storyCreatedDate = formatDateOrFallback(story.created_at || story.published_at || latestChapter?.created_at);
+
+  const storyMetaItems = [
+    { label: 'Số chương', value: `${totalChapters}` },
+    { label: 'Ngày đăng', value: storyCreatedDate },
+    { label: 'Đã đọc', value: `${lastReadChapterNumber || 0}` },
+  ];
+
   return (
     <main className="cmc-main">
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
       {isAuthenticated && storyProgress ? (
-        <ReadingProgress progress={storyProgress} storySlug={`${story.id}-${story.slug}`} />
+        // <ReadingProgress progress={storyProgress} storySlug={`${story.id}-${story.slug}`} />
+        null
       ) : null}
 
-      <div className="story-detail-header panel-card">
-        <div className="story-detail-grid">
+      <section className="storyqq-header panel-card">
+        <div className="storyqq-cover-wrap">
           <img
             src={story.cover_image_url || FALLBACK_COVER}
             alt={story.title}
-            className="story-detail-cover"
+            className="storyqq-cover"
             onError={(e) => { e.currentTarget.src = FALLBACK_COVER; }}
           />
-          <div>
-            <h1>{story.title}</h1>
-            <p className="text-muted mb-2">
-              Tác giả: {story.author_full_name || story.author_username || 'CMC'}
-              {story.collaborators?.length > 0 && (
-                <>
-                  {' | Đồng đóng góp: '}
-                  <span className="text-muted">
-                    {story.collaborators.map((c) => c.full_name || c.username).join(', ')}
-                  </span>
-                </>
-              )}
-            </p>
-            <p className="story-detail-desc">{story.description}</p>
+          <span className="storyqq-status-badge">{story.status || 'Đang cập nhật'}</span>
+        </div>
+
+        <div className="storyqq-header-content">
+          <h1 className="storyqq-title">{story.title}</h1>
+
+          <p className="storyqq-author">
+            Tác giả: {story.author_full_name || story.author_username || 'CMC'}
+            {story.collaborators?.length > 0 && (
+              <>
+                {' · Đồng đăng: '}
+                <span className="text-muted">
+                  {story.collaborators.map((c) => c.full_name || c.username).join(', ')}
+                </span>
+              </>
+            )}
+          </p>
+
+          <div className="storyqq-meta-grid">
+            {storyMetaItems.map((item) => (
+              <div key={item.label} className="storyqq-meta-item">
+                <span className="storyqq-meta-label">{item.label}</span>
+                <strong className="storyqq-meta-value">{item.value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="storyqq-intro-block">
+            <p className="storyqq-intro-label">Giới thiệu truyện</p>
+            <p className="storyqq-intro-note">Phần giới thiệu nội dung truyện:</p>
+            <p className="storyqq-desc">{story.description || 'Chưa có mô tả cho truyện này.'}</p>
+          </div>
+
+          {story.tags?.length > 0 ? (
+            <div className="story-tags-row mb-3">
+              {story.tags.map((tag) => (
+                <Link key={tag.id} to={`/tim-truyen?tag=${tag.slug}`} className="story-tag-chip">
+                  {tag.name}
+                </Link>
+              ))}
+            </div>
+          ) : story.category ? (
+            <div className="mb-3">
+              <Link to={`/tim-truyen?tag=${slugify(story.category)}`} className="story-tag-chip">
+                {story.category}
+              </Link>
+            </div>
+          ) : null}
+
+          <div className="storyqq-actions">
+            {continueChapterNumber ? (
+              <Link
+                to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
+                className="btn-cmc btn-cmc-primary"
+              >
+                {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
+              </Link>
+            ) : null}
+
+            {latestChapter ? (
+              <Link
+                to={`/${story.id}-${story.slug}/${latestChapter.chapter_number}`}
+                className="btn-cmc btn-cmc-outline"
+              >
+                Đọc chương mới nhất
+              </Link>
+            ) : null}
+
+            <FollowButton storyId={story.id} />
+
+            <button
+              type="button"
+              className="btn-cmc btn-cmc-outline"
+              onClick={() => setIsReportModalOpen(true)}
+            >
+              Báo cáo
+            </button>
+
+            <button
+              type="button"
+              className="btn-cmc btn-cmc-outline"
+              onClick={() => setShowRatingPanel((prev) => !prev)}
+            >
+              {showRatingPanel ? 'Ẩn đánh giá truyện' : 'Đánh giá truyện'}
+            </button>
+          </div>
+
+          {showRatingPanel ? (
             <StoryRating
               storyId={story.id}
               initialAverageRating={story.average_rating}
               initialRatingCount={story.rating_count || story.total_rating_count}
-              className="mb-3"
+              className="storyqq-rating-panel"
             />
-            <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
-              <span className="small text-muted">
-                {story.chapter_count || story.total_chapters || 0}
-                {' chương · '}
-                {story.status}
-              </span>
-            </div>
-            {story.tags?.length > 0 ? (
-              <div className="story-tags-row mb-3">
-                {story.tags.map((tag) => (
-                  <Link key={tag.id} to={`/tim-truyen?tag=${tag.slug}`} className="story-tag-chip">
-                    {tag.name}
-                  </Link>
-                ))}
-              </div>
-            ) : story.category ? (
-              <div className="mb-3">
-                <Link to={`/tim-truyen?tag=${slugify(story.category)}`} className="story-tag-chip">
-                  {story.category}
-                </Link>
-              </div>
-            ) : null}
-            <div className="d-flex flex-wrap gap-2">
-              {continueChapterNumber ? (
-                <Link
-                  to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
-                  className="btn-cmc btn-cmc-primary"
-                >
-                  {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
-                </Link>
-              ) : null}
-              <FollowButton storyId={story.id} />
+          ) : null}
+        </div>
+      </section>
 
-              <button 
-                type="button" 
-                className="btn-cmc btn-cmc-outline" 
-                onClick={() => setIsReportModalOpen(true)}
-              >
-                Báo cáo
-              </button>
-            </div>
+      <section className="panel-card mt-4">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h4 className="panel-title mb-0">
+            Danh sách chương ({chapterPagination.totalItems || 0})
+          </h4>
+          <div className="d-flex align-items-center gap-2">
+            <select
+              className="form-select form-select-sm"
+              style={{ width: '170px' }}
+              value={sortOrder}
+              onChange={(e) => {
+                setSortOrder(e.target.value);
+                setChapterPage(1);
+              }}
+              aria-label="Sắp xếp chương"
+            >
+              <option value="asc">Sắp xếp: Cũ nhất</option>
+              <option value="desc">Sắp xếp: Mới nhất</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      <div className="row g-4 mt-2">
-        <div className="col-lg-8">
-          <section className="panel-card">
-            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-              <h4 className="panel-title mb-0">
-                Danh sách chương ({chapterPagination.totalItems || 0})
-              </h4>
-              <div className="d-flex align-items-center gap-2">
-                <select
-                  className="form-select form-select-sm"
-                  style={{ width: '170px' }}
-                  value={sortOrder}
-                  onChange={(e) => {
-                    setSortOrder(e.target.value);
-                    setChapterPage(1);
-                  }}
-                  aria-label="Sắp xếp chương"
+        {chapterLoading ? (
+          <p className="loading-text">Đang tải danh sách chương...</p>
+        ) : (
+          <>
+            <ul className="chapter-list storyqq-chapter-list">
+              {chapters.map((chapter) => {
+                const chapterNumber = Number(chapter.chapter_number || 0);
+                const isRead = lastReadChapterNumber > 0 && chapterNumber > 0 && chapterNumber <= lastReadChapterNumber;
+
+                return (
+                  <li key={chapter.id}>
+                    <Link
+                      to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
+                      className={isRead ? 'chapter-link-is-read' : ''}
+                    >
+                      <span>
+                        Ch.{chapter.chapter_number}: {chapter.title}
+                      </span>
+                      <span className="text-muted small chapter-upload-date">
+                        {formatChapterUploadDate(chapter.created_at)}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {chapterPagination.totalPages > 1 && (
+              <div className="d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap">
+                <button
+                  type="button"
+                  className="btn-cmc btn-cmc-outline btn-sm"
+                  disabled={chapterPage <= 1}
+                  onClick={() => setChapterPage((p) => p - 1)}
                 >
-                  <option value="asc">Sắp xếp: Cũ nhất</option>
-                  <option value="desc">Sắp xếp: Mới nhất</option>
-                </select>
+                  ← Trước
+                </button>
+                {Array.from({ length: chapterPagination.totalPages }, (_, i) => i + 1)
+                  .filter((p) => Math.abs(p - chapterPage) <= 2)
+                  .map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className={`btn-cmc btn-sm ${p === chapterPage ? 'btn-cmc-primary' : 'btn-cmc-outline'}`}
+                      onClick={() => setChapterPage(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                <button
+                  type="button"
+                  className="btn-cmc btn-cmc-outline btn-sm"
+                  disabled={chapterPage >= chapterPagination.totalPages}
+                  onClick={() => setChapterPage((p) => p + 1)}
+                >
+                  Sau →
+                </button>
               </div>
-            </div>
-
-            {chapterLoading ? (
-              <p className="loading-text">Đang tải danh sách chương...</p>
-            ) : (
-              <>
-                <ul className="chapter-list">
-                  {chapters.map((chapter) => {
-                    const chapterNumber = Number(chapter.chapter_number || 0);
-                    const isRead = lastReadChapterNumber > 0 && chapterNumber > 0 && chapterNumber <= lastReadChapterNumber;
-
-                    return (
-                      <li key={chapter.id}>
-                        <Link
-                          to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
-                          className={isRead ? 'chapter-link-read' : ''}
-                          aria-label={isRead ? `Chương ${chapter.chapter_number} đã đọc` : undefined}
-                        >
-                          <span>
-                            Ch.{chapter.chapter_number}: {chapter.title}
-                          </span>
-                          <span className="text-muted small">{isRead ? 'Đã đọc' : 'Đọc →'}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-
-                {/* Chapter pagination */}
-                {chapterPagination.totalPages > 1 && (
-                  <div className="d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap">
-                    <button
-                      type="button"
-                      className="btn-cmc btn-cmc-outline btn-sm"
-                      disabled={chapterPage <= 1}
-                      onClick={() => setChapterPage((p) => p - 1)}
-                    >
-                      ← Trước
-                    </button>
-                    {/* Page number buttons — show max 5 around current */}
-                    {Array.from({ length: chapterPagination.totalPages }, (_, i) => i + 1)
-                      .filter((p) => Math.abs(p - chapterPage) <= 2)
-                      .map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          className={`btn-cmc btn-sm ${p === chapterPage ? 'btn-cmc-primary' : 'btn-cmc-outline'}`}
-                          onClick={() => setChapterPage(p)}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                    <button
-                      type="button"
-                      className="btn-cmc btn-cmc-outline btn-sm"
-                      disabled={chapterPage >= chapterPagination.totalPages}
-                      onClick={() => setChapterPage((p) => p + 1)}
-                    >
-                      Sau →
-                    </button>
-                  </div>
-                )}
-              </>
             )}
-          </section>
-        </div>
-        <div className="col-lg-4">
-          <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
-        </div>
-      </div>
+          </>
+        )}
+      </section>
+
+      <section className="mt-4">
+        <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
+      </section>
       {isReportModalOpen && (
         <ReportModal 
           storyId={story.id}

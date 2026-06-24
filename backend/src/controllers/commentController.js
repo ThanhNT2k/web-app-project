@@ -14,8 +14,13 @@ const moderationQueue = new Queue('moderationQueue', { connection: redisConfig }
 const createSchema = Joi.object({
   story_id: Joi.number().integer().required(),
   chapter_id: Joi.number().integer().allow(null),
+  parent_comment_id: Joi.number().integer().allow(null),
   content: Joi.string().trim().min(1).max(2000).required(),
   rating: Joi.number().integer().min(1).max(5).allow(null),
+}).required();
+
+const voteSchema = Joi.object({
+  value: Joi.number().integer().valid(1, -1).required(),
 }).required();
 
 /**
@@ -29,7 +34,7 @@ async function getByStory(req, res) {
     if (!storyId) {
       return res.status(400).json({ success: false, message: 'Invalid story id' });
     }
-    const comments = await Comment.getByStory(storyId);
+    const comments = await Comment.getByStory(storyId, 100, req.user?.id || null);
     return res.status(200).json({ success: true, story_id: storyId, comments });
   } catch (err) {
     console.error('[commentController.getByStory]', err);
@@ -49,7 +54,7 @@ async function getByChapter(req, res) {
     if (!chapterId) {
       return res.status(400).json({ success: false, message: 'Invalid chapter id' });
     }
-    const comments = await Comment.getByChapter(chapterId, storyId);
+    const comments = await Comment.getByChapter(chapterId, storyId, 100, req.user?.id || null);
     return res.status(200).json({ success: true, chapter_id: chapterId, comments });
   } catch (err) {
     console.error('[commentController.getByChapter]', err);
@@ -78,10 +83,29 @@ async function create(req, res) {
     }
 
     // Tạo bình luận trong database
+    if (value.parent_comment_id) {
+      const parentComment = await Comment.findById(value.parent_comment_id);
+      if (!parentComment) {
+        return res.status(404).json({ success: false, message: 'Parent comment not found' });
+      }
+
+      const sameStory = Number(parentComment.story_id) === Number(value.story_id);
+      const parentChapterId = parentComment.chapter_id ? Number(parentComment.chapter_id) : null;
+      const currentChapterId = value.chapter_id ? Number(value.chapter_id) : null;
+      const sameChapter = parentChapterId === currentChapterId;
+      if (!sameStory || !sameChapter) {
+        return res.status(400).json({
+          success: false,
+          message: 'Parent comment does not belong to this thread',
+        });
+      }
+    }
+
     const comment = await Comment.create({
       userId: req.user.id,
       storyId: value.story_id,
       chapterId: value.chapter_id,
+      parentCommentId: value.parent_comment_id,
       content: value.content,
       rating: value.rating,
       status: 'pending'
@@ -94,7 +118,7 @@ async function create(req, res) {
 
     // Re-fetch danh sách bình luận của truyện (chỉ lấy 1 bình luận mới nhất)
     // để lấy thêm thông tin user (username, avatar) mà raw INSERT không trả về
-    const enriched = await Comment.getByStory(value.story_id, 1);
+    const enriched = await Comment.getByStory(value.story_id, 100, req.user.id);
 
     // Tìm bình luận vừa tạo trong danh sách fetch về, fallback về raw comment nếu không tìm thấy
     const created = enriched.find((c) => c.id === comment.id) || comment;
@@ -102,6 +126,51 @@ async function create(req, res) {
     return res.status(201).json({ success: true, comment: created });
   } catch (err) {
     console.error('[commentController.create]', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+async function vote(req, res) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const commentId = parseInt(req.params.id, 10);
+    if (!commentId) {
+      return res.status(400).json({ success: false, message: 'Invalid comment id' });
+    }
+
+    const { error, value } = voteSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: error.details.map((d) => d.message),
+      });
+    }
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Comment not found' });
+    }
+
+    const voteResult = await Comment.vote(commentId, req.user.id, value.value);
+    return res.status(200).json({
+      success: true,
+      vote: {
+        comment_id: voteResult.comment_id,
+        user_id: voteResult.user_id,
+        value: voteResult.value,
+      },
+      summary: {
+        vote_score: voteResult.vote_score,
+        upvote_count: voteResult.upvote_count,
+        downvote_count: voteResult.downvote_count,
+      },
+    });
+  } catch (err) {
+    console.error('[commentController.vote]', err);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
@@ -147,4 +216,5 @@ module.exports = {
   getByChapter,
   create,
   remove,
+  vote,
 };

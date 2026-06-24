@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { REPORT_REASONS } from '../constants/reportConstants';
 import API from '../services/api';
 
-const ReportModal = ({ chapterId, storyId, onClose }) => {
+const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) => {
   const [formData, setFormData] = useState({ reason: 'BROKEN_IMAGE', description: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -13,11 +13,13 @@ const ReportModal = ({ chapterId, storyId, onClose }) => {
     setError(null);
     const numericChapterId = chapterId ? parseInt(chapterId, 10) : null;
     const numericStoryId = storyId ? parseInt(storyId, 10) : null;
+    const numericCommentId = commentId ? parseInt(commentId, 10) : null;
     try {
       await API.reports.create({ 
         ...formData, 
         story_id: numericStoryId,
-        chapter_id: numericChapterId 
+        chapter_id: numericChapterId,
+        comment_id: numericCommentId,
       });
     
       alert("Cảm ơn bạn đã báo cáo!");
@@ -36,6 +38,12 @@ const ReportModal = ({ chapterId, storyId, onClose }) => {
         <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           🚩 Báo cáo vi phạm
         </h3>
+
+        {targetLabel ? (
+          <p className="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+            Đang báo cáo: {targetLabel}
+          </p>
+        ) : null}
         
         {error && <p className="mb-4 text-sm text-red-500 bg-red-50 p-2 rounded">{error}</p>}
 

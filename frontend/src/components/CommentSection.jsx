@@ -2,14 +2,41 @@ import { useCallback, useEffect, useState } from 'react';
 
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import ReportModal from './ReportModal';
+
+function buildCommentTree(comments) {
+  const nodes = new Map();
+  const roots = [];
+
+  comments.forEach((comment) => {
+    nodes.set(comment.id, { ...comment, replies: [] });
+  });
+
+  comments.forEach((comment) => {
+    const current = nodes.get(comment.id);
+    const parentId = comment.parent_comment_id;
+    if (parentId && nodes.has(parentId)) {
+      nodes.get(parentId).replies.push(current);
+      return;
+    }
+    roots.push(current);
+  });
+
+  return roots;
+}
 
 function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
   const { isAuthenticated, user } = useAuth();
   const [comments, setComments] = useState([]);
   const [content, setContent] = useState('');
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const [activeReplyId, setActiveReplyId] = useState(null);
+  const [replySubmittingMap, setReplySubmittingMap] = useState({});
+  const [voteSubmittingMap, setVoteSubmittingMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [reportTarget, setReportTarget] = useState(null);
 
   const numericStoryId = storyId ? Number(storyId) : null;
   const numericChapterId = chapterId ? Number(chapterId) : null;
@@ -37,6 +64,8 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
       setLoading(false);
     }
   }, [numericStoryId, numericChapterId, isChapterMode]);
+
+  const commentTree = buildCommentTree(comments);
 
   useEffect(() => {
     loadComments();
@@ -81,6 +110,170 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
     }
   };
 
+  const handleVote = async (id, voteValue) => {
+    if (!isAuthenticated) {
+      setError('Vui lòng đăng nhập để bình chọn bình luận.');
+      return;
+    }
+
+    try {
+      setVoteSubmittingMap((prev) => ({ ...prev, [id]: true }));
+      setError('');
+      await API.comments.vote(id, voteValue);
+      await loadComments();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Không thể bình chọn lúc này.');
+    } finally {
+      setVoteSubmittingMap((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleReplySubmit = async (event, parentCommentId) => {
+    event.preventDefault();
+    if (!isAuthenticated) {
+      setError('Vui lòng đăng nhập để trả lời bình luận.');
+      return;
+    }
+
+    const draft = (replyDrafts[parentCommentId] || '').trim();
+    if (!draft) return;
+
+    try {
+      setReplySubmittingMap((prev) => ({ ...prev, [parentCommentId]: true }));
+      setError('');
+      await API.comments.create({
+        story_id: numericStoryId,
+        chapter_id: isChapterMode ? numericChapterId : null,
+        parent_comment_id: parentCommentId,
+        content: draft,
+      });
+
+      setReplyDrafts((prev) => ({ ...prev, [parentCommentId]: '' }));
+      setActiveReplyId(null);
+      await loadComments();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Không gửi được phản hồi.');
+    } finally {
+      setReplySubmittingMap((prev) => ({ ...prev, [parentCommentId]: false }));
+    }
+  };
+
+  const renderComment = (comment, depth = 0) => {
+    const isFlagged = comment.status === 'flagged';
+    const isRejected = comment.status === 'rejected';
+    const isSpecial = isFlagged || isRejected;
+    const isReplying = activeReplyId === comment.id;
+    const isVoteSubmitting = Boolean(voteSubmittingMap[comment.id]);
+
+    return (
+      <div
+        key={comment.id}
+        className={`comment-item ${depth > 0 ? 'comment-reply-item' : ''} ${isFlagged ? 'is-spam' : ''} ${isRejected ? 'is-rejected' : ''}`}
+      >
+        {isRejected && <span className="rejected-badge">🚫 Bình luận đã bị từ chối</span>}
+
+        <div className="d-flex justify-content-between gap-2 mb-1">
+          <strong>{comment.full_name || comment.username || 'Độc giả'}</strong>
+          <span className="text-muted small">
+            {new Date(comment.created_at).toLocaleString('vi-VN')}
+          </span>
+        </div>
+
+        <p className={`mb-1 ${isSpecial ? 'special-content-text' : ''}`}>
+          {comment.display_content || comment.content}
+        </p>
+
+        <div className="comment-actions-row">
+          <div className="comment-vote-stack" aria-label="Bình chọn bình luận">
+            <button
+              type="button"
+              className={`comment-vote-arrow comment-vote-up ${comment.my_vote === 1 ? 'is-active' : ''}`}
+              onClick={() => handleVote(comment.id, 1)}
+              disabled={isVoteSubmitting}
+              aria-label="Upvote bình luận"
+            >
+              ▲
+            </button>
+            <span className="comment-vote-score" aria-live="polite">
+              {comment.vote_score || 0}
+            </span>
+            <button
+              type="button"
+              className={`comment-vote-arrow comment-vote-down ${comment.my_vote === -1 ? 'is-active' : ''}`}
+              onClick={() => handleVote(comment.id, -1)}
+              disabled={isVoteSubmitting}
+              aria-label="Downvote bình luận"
+            >
+              ▼
+            </button>
+          </div>
+
+          {isAuthenticated && (
+            <button
+              type="button"
+              className="btn-link btn-sm"
+              onClick={() => setActiveReplyId((prev) => (prev === comment.id ? null : comment.id))}
+            >
+              Trả lời
+            </button>
+          )}
+
+          {(user?.id === comment.user_id || user?.role === 'Admin') && (
+            <button type="button" className="btn-link-danger btn-sm" onClick={() => handleDelete(comment.id)}>
+              Xóa
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="btn-link-danger btn-sm"
+            onClick={() => setReportTarget({
+              commentId: comment.id,
+              targetLabel: `bình luận của ${comment.full_name || comment.username || 'độc giả'}`,
+            })}
+          >
+            Báo cáo vi phạm
+          </button>
+        </div>
+
+        {isReplying && (
+          <form className="comment-reply-form" onSubmit={(event) => handleReplySubmit(event, comment.id)}>
+            <textarea
+              className="form-control-cmc form-control-cmc-sm"
+              rows={2}
+              placeholder="Viết phản hồi..."
+              value={replyDrafts[comment.id] || ''}
+              onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [comment.id]: e.target.value }))}
+              disabled={Boolean(replySubmittingMap[comment.id])}
+            />
+            <div className="d-flex gap-2 mt-2">
+              <button
+                type="submit"
+                className="btn-cmc btn-cmc-primary btn-sm"
+                disabled={Boolean(replySubmittingMap[comment.id])}
+              >
+                {replySubmittingMap[comment.id] ? 'Đang gửi...' : 'Gửi phản hồi'}
+              </button>
+              <button
+                type="button"
+                className="btn-cmc btn-cmc-outline btn-sm"
+                onClick={() => setActiveReplyId(null)}
+              >
+                Hủy
+              </button>
+            </div>
+          </form>
+        )}
+
+        {comment.replies?.length > 0 && (
+          <div className="comment-replies-list">
+            {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const title = isChapterMode ? 'Bình luận chương này' : 'Bình luận truyện';
 
   return (
@@ -96,38 +289,7 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
       ) : null}
 
       <div className="comment-list">
-        {comments.map((comment) => {
-          const isFlagged = comment.status === 'flagged';
-          const isRejected = comment.status === 'rejected';
-          const isSpecial = isFlagged || isRejected;
-
-          return (
-            <div 
-              key={comment.id} 
-              className={`comment-item ${isFlagged ? 'is-spam' : ''} ${isRejected ? 'is-rejected' : ''}`}
-            >
-              {isRejected && <span className="rejected-badge">🚫 Bình luận đã bị từ chối</span>}
-              
-              <div className="d-flex justify-content-between gap-2 mb-1">
-                <strong>{comment.full_name || comment.username || 'Độc giả'}</strong>
-                <span className="text-muted small">
-                  {new Date(comment.created_at).toLocaleString('vi-VN')}
-                </span>
-              </div>
-              
-              {/* Áp dụng class đặc biệt cho nội dung đã bị thay đổi */}
-              <p className={`mb-1 ${isSpecial ? 'special-content-text' : ''}`}>
-                {comment.display_content || comment.content}
-              </p>
-              
-              {(user?.id === comment.user_id || user?.role === 'Admin') && (
-                <button type="button" className="btn-link-danger btn-sm" onClick={() => handleDelete(comment.id)}>
-                  Xóa
-                </button>
-              )}
-            </div>
-          );
-        })}
+        {commentTree.map((comment) => renderComment(comment))}
       </div>
 
       {error ? <p className="text-danger small mt-2">{error}</p> : null}
@@ -149,6 +311,16 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
           {submitting ? 'Đang gửi...' : 'Gửi bình luận'}
         </button>
       </form>
+
+      {reportTarget ? (
+        <ReportModal
+          storyId={storyId}
+          chapterId={chapterId}
+          commentId={reportTarget.commentId}
+          targetLabel={reportTarget.targetLabel}
+          onClose={() => setReportTarget(null)}
+        />
+      ) : null}
     </section>
   );
 }

@@ -211,6 +211,7 @@ const API = {
       params: storyId ? { story_id: storyId } : undefined,
     }),
     create: (data) => request('/comments', { method: 'POST', data }),
+    vote: (id, value) => request(`/comments/${id}/vote`, { method: 'POST', data: { value } }),
     delete: (id) => request(`/comments/${id}`, { method: 'DELETE' }),
     
     // ĐÃ SỬA: Dùng hàm request để tự động gắn baseURL (/api) và Token
