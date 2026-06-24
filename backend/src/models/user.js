@@ -14,7 +14,9 @@ const baseSelect = `
   bio,
   created_at,
   updated_at,
-  is_active
+  is_active,
+  google_id,
+  auth_provider
 `;
 
 /**
@@ -143,6 +145,76 @@ async function findByUsername(username) {
   return result.rows[0] || null;
 }
 
+/**
+ * Tìm user theo Google ID (dùng khi đăng nhập bằng Google).
+ */
+async function findByGoogleId(googleId) {
+  const result = await db.query(
+    `SELECT ${baseSelect} FROM users WHERE google_id = $1 LIMIT 1`,
+    [googleId]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * Tạo user mới từ đăng ký Google.
+ * auth_provider = 'google', lưu google_id và avatar_url từ Google.
+ */
+async function createGoogleUser({ googleId, email, password, fullName, avatarUrl, username }) {
+  const result = await db.query(
+    `
+      INSERT INTO users (username, email, password, full_name, avatar_url, role, google_id, auth_provider)
+      VALUES ($1, $2, $3, $4, $5, 'User', $6, 'google')
+      RETURNING ${baseSelect}
+    `,
+    [username, email, password, fullName || null, avatarUrl || null, googleId]
+  );
+  return result.rows[0];
+}
+
+/**
+ * Link google_id vào tài khoản đã có (user đăng ký thường trước, sau đó đăng nhập Google lần đầu).
+ */
+async function linkGoogleId(userId, googleId) {
+  const result = await db.query(
+    `
+      UPDATE users SET google_id = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING ${baseSelect}
+    `,
+    [googleId, userId]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * Cập nhật mật khẩu của user (dùng cho forgot-password và change-password).
+ * password phải đã được hash trước khi truyền vào.
+ */
+async function updatePassword(id, hashedPassword) {
+  const result = await db.query(
+    `
+      UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, username, email
+    `,
+    [hashedPassword, id]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * Lấy user kèm password hash — chỉ dùng nội bộ cho change-password.
+ * Không dùng cho các endpoint trả dữ liệu về client.
+ */
+async function findByIdWithPassword(id) {
+  const result = await db.query(
+    `SELECT ${baseSelect} FROM users WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   findByEmail,
   findById,
@@ -152,4 +224,9 @@ module.exports = {
   updateProfile,
   updateActiveStatus,
   findByUsername,
+  findByGoogleId,
+  createGoogleUser,
+  linkGoogleId,
+  updatePassword,
+  findByIdWithPassword,
 };

@@ -46,6 +46,13 @@ const env = {
 
   REDIS_URL: process.env.REDIS_URL,
 
+  // Google OAuth - Client ID để xác thực Google ID Token trên backend
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+
+  // Resend - Dịch vụ gửi email cho OTP quên mật khẩu
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'CMC Truyện <no-reply@cmctruyen.vn>',
+
   // Các helper boolean để kiểm tra môi trường nhanh trong code
   // isDevelopment: true khi chạy local (npm run dev)
   // isProduction: true khi deploy lên server thật

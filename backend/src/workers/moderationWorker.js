@@ -43,7 +43,8 @@ loadModerationData().then(() => {
         
     }, { 
         connection: {
-        url: connection
+        url: connection,
+        maxRetriesPerRequest: null
         } 
         });
 
