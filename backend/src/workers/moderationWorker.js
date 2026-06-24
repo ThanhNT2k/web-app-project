@@ -3,9 +3,7 @@ const redisConfig = require('../config/redisConfig');
 const { loadModerationData, moderateContent } = require('../services/moderationService');
 const Comment = require('../models/Comment');
 
-const connection = redisConfig.url;
-
-console.log("Worker đang khởi tạo với cấu hình:", connection);
+console.log("Worker đang khởi tạo với cấu hình:", redisConfig.host, redisConfig.port);
 
 // Đợi dữ liệu từ DB nạp xong xuôi rồi mới khởi động Worker
 loadModerationData().then(() => {
@@ -17,8 +15,8 @@ loadModerationData().then(() => {
         const result = moderateContent(content);
         
         try {
-            // Always persist the detected tier into comments.rating (int4)
-            const data = { rating: result.tier };
+            // Chỉ cập nhật status và is_spam, KHÔNG ghi đè rating (đánh giá sao của user)
+            const data = {};
             switch (result.tier) {
                 case 1:
                     data.status = 'rejected';
@@ -41,12 +39,7 @@ loadModerationData().then(() => {
             console.error(`[Moderation] LỖI khi update DB:`, err);
         }
         
-    }, { 
-        connection: {
-        url: connection,
-        maxRetriesPerRequest: null
-        } 
-        });
+    }, { connection: redisConfig });
 
     worker.on('ready', () => console.log("Worker đã kết nối Redis thành công và đang lắng nghe job!"));
     worker.on('error', (err) => console.error("Worker lỗi:", err));

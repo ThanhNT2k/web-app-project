@@ -4,9 +4,7 @@ const notificationService = require('../services/notificationService');
 const Notification = require('../models/Notification');
 const NotificationPreference = require('../models/NotificationPreference');
 
-const connection = redisConfig.url;
-
-console.log('[Notification Worker] Initializing with Redis config:', connection);
+console.log('[Notification Worker] Initializing with Redis config:', redisConfig.host, redisConfig.port);
 
 // Khởi tạo worker để xử lý job từ notification queue
 const worker = new Worker(
@@ -86,9 +84,7 @@ const worker = new Worker(
     }
   },
   {
-    connection: {
-      url: connection,
-    },
+    connection: redisConfig,
   }
 );
 
