@@ -6,7 +6,7 @@ function Footer() {
         Liên hệ: support@cmctruyen.com
         {' | '}
         Điều khoản sử dụng
-        {' | '}
+        {' | '} 
         Chính sách bảo mật
       </p>
     </footer>

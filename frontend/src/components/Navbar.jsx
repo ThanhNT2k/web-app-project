@@ -53,13 +53,6 @@ function Navbar() {
               <span className="nav-icon">🏆</span>
               <span className="nav-text">Bảng xếp hạng</span>
             </Link>
-
-            {isAuthenticated && (
-              <Link to="/profile" className="cmc-nav-link">
-                <span className="nav-icon">📚</span>
-                <span className="nav-text">Tủ sách</span>
-              </Link>
-            )}
           </nav>
 
           <div className="cmc-nav-actions" style={{ position: 'relative' }}>
