@@ -53,11 +53,7 @@ alter table "public"."comments" add column "status" text not null;
 
 alter table "public"."ratings" alter column "id" set default nextval('public.ratings_id_seq'::regclass);
 
-alter table "public"."stories" add column "monthly_views" integer not null default 0;
-
-alter table "public"."stories" add column "total_views" integer not null default 0;
-
-alter table "public"."stories" add column "weekly_views" integer not null default 0;
+-- monthly_views, total_views, weekly_views already exist from initial migration (20260612105949)
 
 alter sequence "public"."bad_words_id_seq" owned by "public"."bad_words"."id";
 
