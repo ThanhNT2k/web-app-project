@@ -178,7 +178,7 @@ async function createGoogleUser({ googleId, email, password, fullName, avatarUrl
 async function linkGoogleId(userId, googleId) {
   const result = await db.query(
     `
-      UPDATE users SET google_id = $1, updated_at = CURRENT_TIMESTAMP
+      UPDATE users SET google_id = $1, auth_provider = 'google', updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
       RETURNING ${baseSelect}
     `,
