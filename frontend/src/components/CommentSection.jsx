@@ -165,6 +165,15 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
     const isReplying = activeReplyId === comment.id;
     const isVoteSubmitting = Boolean(voteSubmittingMap[comment.id]);
 
+    // Bóc tách số lượng Like và Dislike riêng biệt để không hiện số âm
+    const likesCount = comment.upvote_count !== undefined 
+      ? comment.upvote_count 
+      : Math.max(0, comment.vote_score || 0);
+
+    const dislikesCount = comment.downvote_count !== undefined 
+      ? comment.downvote_count 
+      : Math.max(0, -(comment.vote_score || 0));
+
     return (
       <div
         key={comment.id}
@@ -184,28 +193,36 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
         </p>
 
         <div className="comment-actions-row">
-          <div className="comment-vote-stack" aria-label="Bình chọn bình luận">
+          <div className="d-flex align-items-center" aria-label="Bình chọn bình luận" style={{ gap: '1rem', marginRight: '1rem' }}>
+            
+            {/* Nút Like */}
             <button
               type="button"
-              className={`comment-vote-arrow comment-vote-up ${comment.my_vote === 1 ? 'is-active' : ''}`}
-              onClick={() => handleVote(comment.id, 1)}
+              className="d-flex align-items-center"
+              style={{ background: 'none', border: 'none', padding: 0, opacity: comment.my_vote === 1 ? 1 : 0.5, gap: '0.25rem' }}
+              // Nếu đang Like mà nhấn lại -> Gửi tiếp 1 hoặc 0 để Backend kích hoạt xóa
+              onClick={() => handleVote(comment.id, comment.my_vote === 1 ? null : 1)}
               disabled={isVoteSubmitting}
-              aria-label="Upvote bình luận"
+              title="Thích"
             >
-              ▲
+              <span style={{ fontSize: '1.1rem', transform: comment.my_vote === 1 ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s' }}>👍</span>
+              {likesCount > 0 && <span className="small fw-bold text-muted">{likesCount}</span>}
             </button>
-            <span className="comment-vote-score" aria-live="polite">
-              {comment.vote_score || 0}
-            </span>
+            
+            {/* Nút Dislike */}
             <button
               type="button"
-              className={`comment-vote-arrow comment-vote-down ${comment.my_vote === -1 ? 'is-active' : ''}`}
-              onClick={() => handleVote(comment.id, -1)}
+              className="d-flex align-items-center"
+              style={{ background: 'none', border: 'none', padding: 0, opacity: comment.my_vote === -1 ? 1 : 0.5, gap: '0.25rem' }}
+              // Nếu đang Dislike mà nhấn lại -> Gửi tiếp -1 hoặc 0 để Backend kích hoạt xóa
+              onClick={() => handleVote(comment.id, comment.my_vote === -1 ? null : -1)}
               disabled={isVoteSubmitting}
-              aria-label="Downvote bình luận"
+              title="Không thích"
             >
-              ▼
+              <span style={{ fontSize: '1.1rem', transform: comment.my_vote === -1 ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s' }}>👎</span>
+              {dislikesCount > 0 && <span className="small fw-bold text-muted">{dislikesCount}</span>}
             </button>
+
           </div>
 
           {isAuthenticated && (
@@ -284,17 +301,9 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
 
       {loading ? <p className="text-muted small">Đang tải...</p> : null}
 
-      {!loading && comments.length === 0 ? (
-        <p className="text-muted small mb-3">Chưa có bình luận. Hãy là người đầu tiên!</p>
-      ) : null}
+      {error ? <p className="text-danger small mb-2">{error}</p> : null}
 
-      <div className="comment-list">
-        {commentTree.map((comment) => renderComment(comment))}
-      </div>
-
-      {error ? <p className="text-danger small mt-2">{error}</p> : null}
-
-      <form className="mt-3" onSubmit={handleSubmit}>
+      <form className="mb-4" onSubmit={handleSubmit}>
         <textarea
           className="form-control-cmc"
           rows={3}
@@ -311,6 +320,14 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
           {submitting ? 'Đang gửi...' : 'Gửi bình luận'}
         </button>
       </form>
+
+      {!loading && comments.length === 0 ? (
+        <p className="text-muted small mb-3">Chưa có bình luận. Hãy là người đầu tiên!</p>
+      ) : null}
+
+      <div className="comment-list">
+        {commentTree.map((comment) => renderComment(comment))}
+      </div>
 
       {reportTarget ? (
         <ReportModal

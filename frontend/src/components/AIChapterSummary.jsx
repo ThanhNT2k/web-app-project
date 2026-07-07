@@ -7,7 +7,7 @@ function SummarySkeleton() {
     <div className="placeholder-glow" aria-hidden="true">
       <span className="placeholder col-12 mb-2" />
       <span className="placeholder col-11 mb-2" />
-      <span className="placeholder col-10 mb-2" />
+      <span className="placeholder col-10 2mb-2" />
       <span className="placeholder col-9" />
     </div>
   );
