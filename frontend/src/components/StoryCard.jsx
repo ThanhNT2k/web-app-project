@@ -83,7 +83,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
   }
 
   return (
-    <article className="story-card-v2 d-flex flex-column h-100">
+    <article className="story-card-v2 d-flex flex-column">
       <Link to={`/story/${story.id}-${story.slug}`} className="story-image d-block">
         <img
           src={story.cover_image_url || FALLBACK_COVER}
@@ -91,7 +91,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
         />
       </Link>
-      <div className="story-info d-flex flex-column flex-grow-1">
+      <div className="story-info d-flex flex-column">
         <Link to={`/story/${story.id}-${story.slug}`} className="story-title text-decoration-none">
           {story.title}
         </Link>

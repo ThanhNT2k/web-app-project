@@ -61,7 +61,7 @@ alter sequence "public"."story_ratings_id_seq" owned by "public"."story_ratings"
 
 CREATE UNIQUE INDEX bad_words_pkey ON public.bad_words USING btree (id);
 
-CREATE INDEX idx_reading_history_story_last_read_at ON public.reading_history USING btree (story_id, last_read_at);
+CREATE INDEX IF NOT EXISTS idx_reading_history_story_last_read_at ON public.reading_history USING btree (story_id, last_read_at);
 
 CREATE INDEX idx_reports_story ON public.reports USING btree (story_id);
 
