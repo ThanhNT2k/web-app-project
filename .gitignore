@@ -9,6 +9,8 @@ config.js
 backend/uploads/
 coverage/
 __tests__/
+test-results/
+playwright-report/
 # Scratch / analysis files
 commits_grouped.json
 

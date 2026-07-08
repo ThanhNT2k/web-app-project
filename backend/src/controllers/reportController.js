@@ -1,4 +1,4 @@
-const {z} = require('zod');
+const { z } = require('zod');
 
 const db = require('../config/database');
 
@@ -14,8 +14,6 @@ const reportSchema = z.object({
 );
 
 const createReport = async (req, res) => {
-  console.log("--- BẮT ĐẦU CREATE REPORT ---");
-  console.log("Body nhận được:", req.body);
   try {
     const data = reportSchema.parse(req.body);
     const userId = req.user.id;
@@ -51,7 +49,7 @@ const createReport = async (req, res) => {
     res.status(201).json({ message: "Báo cáo đã được ghi nhận!" });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
-    console.error(error); // Log để dễ debug
+    console.error('[reportController.createReport] error', error);
     res.status(500).json({ error: "Lỗi máy chủ nội bộ." });
   }
 };
@@ -110,7 +108,7 @@ const updateReportStatus = async (req, res) => {
 
     res.status(200).json({ message: "Trạng thái báo cáo đã được cập nhật!" });
   } catch (error) {
-    console.error(error); // Log lỗi ra console để debug
+    console.error('[reportController.updateReportStatus] error', error);
     res.status(500).json({ error: "Lỗi máy chủ nội bộ." });
   }
 };

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import API from '../services/api';
 
 function AdminReportsPage() {
@@ -14,25 +13,24 @@ function AdminReportsPage() {
   }, [statusFilter]);
 
   const fetchReports = async () => {
-  try {
-    setLoading(true);
-    const data = await API.admin.getReports(statusFilter);
-    console.log("Dữ liệu mới nhận được từ server:", data.reports);
-    setReports(data.reports || []);
-  } catch (err) {
-    setError("Không thể tải danh sách báo cáo.");
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      const data = await API.admin.getReports(statusFilter);
+      setReports(data.reports || []);
+    } catch (err) {
+      setError("Không thể tải danh sách báo cáo.");
+      console.error('[AdminReportsPage.fetchReports] error', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleUpdateStatus = async (id, status) => {
     try {
       await API.reports.updateStatus(id, status);
       fetchReports();
     } catch (err) {
-      console.error("Lỗi cập nhật:", err.response || err);
+      console.error('[AdminReportsPage.handleUpdateStatus] error', err.response || err);
       alert("Cập nhật trạng thái thất bại: " + (err.response?.data?.message || "Lỗi server"));
     }
   };

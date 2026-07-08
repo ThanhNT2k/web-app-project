@@ -4,7 +4,11 @@
   "description": "Kho lưu trữ này chứa toàn bộ mã nguồn, tài liệu và các bài tập thuộc học phần **Phát triển Ứng dụng Web**. Dự án tập trung vào việc xây dựng một ứng dụng web hoàn chỉnh từ giao diện người dùng (Frontend) đến hệ thống xử lý và cơ sở dữ liệu (Backend).",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "npm run test:baseline --prefix backend",
+    "test:frontend": "npm test --prefix frontend",
+    "test:e2e": "playwright test",
+    "test:all": "npm test && npm run test:e2e"
   },
   "repository": {
     "type": "git",
@@ -20,5 +24,8 @@
   "homepage": "https://github.com/ThanhNT2k/web-app-project#readme",
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
   }
 }

@@ -31,7 +31,6 @@ const moderateContent = (text) => {
     // Duyệt qua danh sách để tìm từ khóa
     badWordsData.forEach(bw => {
         if (lowerText.includes(bw.keyword)) {
-            console.log(`[DEBUG] Tìm thấy từ: "${bw.keyword}", Tier: ${bw.tier}`);
             if (bw.tier > maxTier) maxTier = bw.tier;
 
             // Nếu tier >= 2, tiến hành che mờ
