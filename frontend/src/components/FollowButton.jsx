@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { FontAwesomeIcon, faBookmark, faCheck } from '../lib/icons';
 
 function FollowButton({ storyId }) {
   const { isAuthenticated } = useAuth();
@@ -74,7 +75,12 @@ function FollowButton({ storyId }) {
       disabled={loading}
     >
       {/* eslint-disable-next-line no-nested-ternary */}
-      {loading ? '...' : following ? '✓ Đang theo dõi' : '+ Theo dõi'}
+      {loading ? '...' : (
+        <>
+          <FontAwesomeIcon icon={following ? faCheck : faBookmark} />
+          {following ? 'Đang theo dõi' : 'Theo dõi'}
+        </>
+      )}
     </button>
   );
 }

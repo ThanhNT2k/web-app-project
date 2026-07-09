@@ -1,5 +1,15 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  FontAwesomeIcon,
+  faBan,
+  faBookOpen,
+  faComments,
+  faFlag,
+  faGaugeHigh,
+  faRightFromBracket,
+  faUsers,
+} from '../lib/icons';
 
 function AdminLayout() {
   const { logout } = useAuth();
@@ -27,7 +37,8 @@ function AdminLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            📊 Dashboard
+            <FontAwesomeIcon icon={faGaugeHigh} />
+            <span>Dashboard</span>
           </NavLink>
 
           <NavLink
@@ -36,7 +47,8 @@ function AdminLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            👥 Quản lý người dùng
+            <FontAwesomeIcon icon={faUsers} />
+            <span>Quản lý người dùng</span>
           </NavLink>
 
           <NavLink
@@ -45,7 +57,8 @@ function AdminLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            📚 Quản lý truyện
+            <FontAwesomeIcon icon={faBookOpen} />
+            <span>Quản lý truyện</span>
           </NavLink>
 
           <NavLink
@@ -54,7 +67,8 @@ function AdminLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            🚩 Quản lý báo cáo
+            <FontAwesomeIcon icon={faFlag} />
+            <span>Quản lý báo cáo</span>
           </NavLink>
 
           <NavLink
@@ -63,7 +77,8 @@ function AdminLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            💬 Quản lý bình luận
+            <FontAwesomeIcon icon={faComments} />
+            <span>Quản lý bình luận</span>
           </NavLink>
 
           {/* Mục Quản lý từ khóa */}
@@ -73,7 +88,8 @@ function AdminLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            🚫 Quản lý từ khóa
+            <FontAwesomeIcon icon={faBan} />
+            <span>Quản lý từ khóa</span>
           </NavLink>
 
         </nav>
@@ -100,7 +116,8 @@ function AdminLayout() {
             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
           >
-            🚪 Đăng xuất
+            <FontAwesomeIcon icon={faRightFromBracket} />
+            <span>Đăng xuất</span>
           </button>
         </div>
       </aside>

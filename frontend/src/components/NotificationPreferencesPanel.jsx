@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import IconBadge from './IconBadge';
 import API from '../services/api';
+import { faBell } from '../lib/icons';
 
 function NotificationPreferencesPanel() {
   const [preferences, setPreferences] = useState({
@@ -60,8 +62,9 @@ function NotificationPreferencesPanel() {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        🔔 Cài đặt Thông báo
+      <h2 className="page-title-with-icon text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <IconBadge icon={faBell} size="md" tone="primary" />
+        Cài đặt Thông báo
       </h2>
 
       {/* Message */}

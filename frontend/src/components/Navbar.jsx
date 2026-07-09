@@ -3,8 +3,24 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
 import NotificationBell from './NotificationBell';
+import LogoMark from './LogoMark';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import {
+  FontAwesomeIcon,
+  faBookOpen,
+  faChevronDown,
+  faGear,
+  faHouse,
+  faLightbulb,
+  faMagnifyingGlass,
+  faMoon,
+  faPenNib,
+  faRankingStar,
+  faRightFromBracket,
+  faShieldHalved,
+  faUser,
+} from '../lib/icons';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -35,35 +51,38 @@ function Navbar() {
         <div className="cmc-navbar-inner">
 
           <Link to="/" className="cmc-logo">
-            📚 CMC Truyện
+            <LogoMark />
           </Link>
 
-          <nav className="cmc-nav-links">
+          <nav className="cmc-nav-links" aria-label="Điều hướng chính">
             <Link to="/" className="cmc-nav-link">
-              <span className="nav-icon">🏠</span>
+              <FontAwesomeIcon className="nav-icon" icon={faHouse} />
               <span className="nav-text">Trang chủ</span>
             </Link>
 
             <Link to="/tim-truyen" className="cmc-nav-link">
-              <span className="nav-icon">🔍</span>
+              <FontAwesomeIcon className="nav-icon" icon={faMagnifyingGlass} />
               <span className="nav-text">Tìm truyện</span>
             </Link>
 
             <Link to="/bang-xep-hang" className="cmc-nav-link">
-              <span className="nav-icon">🏆</span>
+              <FontAwesomeIcon className="nav-icon" icon={faRankingStar} />
               <span className="nav-text">Bảng xếp hạng</span>
             </Link>
           </nav>
 
-          <div className="cmc-nav-actions" style={{ position: 'relative' }}>
+          <div className="cmc-nav-actions">
             <NotificationBell />
             <button
               type="button"
-              className="btn-theme-toggle"
+              className={`btn-theme-toggle ${isDarkMode ? 'is-light-target' : 'is-dark-target'}`}
               onClick={toggleDarkMode}
               title={isDarkMode ? 'Bật sáng' : 'Bật tối'}
+              aria-label={isDarkMode ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
             >
-              {isDarkMode ? '☀️' : '🌙'}
+              <span className="theme-toggle-icon" aria-hidden="true">
+                <FontAwesomeIcon icon={isDarkMode ? faLightbulb : faMoon} />
+              </span>
             </button>
 
             {isAuthenticated ? (
@@ -77,31 +96,30 @@ function Navbar() {
                     <img
                       src={user.avatar_url}
                       alt=""
-                      className="rounded-circle"
-                      style={{ width: '28px', height: '28px', objectFit: 'cover' }}
+                      className="nav-profile-avatar"
                     />
                   ) : (
-                    <div
-                      className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold bg-brand"
-                      style={{ width: '28px', height: '28px', fontSize: '0.8rem', minWidth: '28px' }}
-                    >
+                    <div className="nav-profile-avatar nav-profile-avatar-fallback">
                       {(user?.full_name || user?.username || 'U').charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="nav-username d-none d-md-inline" style={{ maxWidth: '100px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {user?.full_name || user?.username}
+                  <span className="nav-profile-copy">
+                    <span className="nav-username">
+                      {user?.full_name || user?.username}
+                    </span>
+                    <span className="nav-role">{user?.role}</span>
                   </span>
-                  <span className="nav-caret">▼</span>
+                  <FontAwesomeIcon className="nav-caret" icon={faChevronDown} />
                 </button>
 
                 {dropdownOpen && (
                   <div className="nav-profile-dropdown-menu">
-                    <div className="px-3 py-2 border-bottom mb-2">
-                      <div className="fw-semibold text-truncate" style={{ color: 'var(--text)' }}>
+                    <div className="nav-dropdown-header">
+                      <div className="fw-semibold text-truncate">
                         {user?.full_name || user?.username}
                       </div>
-                      <div className="small text-muted text-truncate" style={{ fontSize: '0.8rem' }}>{user?.email}</div>
-                      <span className="badge text-bg-primary mt-1" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>{user?.role}</span>
+                      <div className="small text-muted text-truncate">{user?.email}</div>
+                      <span className="nav-dropdown-role">{user?.role}</span>
                     </div>
 
                     <Link
@@ -109,7 +127,8 @@ function Navbar() {
                       className="dropdown-item-cmc"
                       onClick={() => setDropdownOpen(false)}
                     >
-                      📚 Tủ sách & Hồ sơ
+                      <FontAwesomeIcon icon={faBookOpen} />
+                      <span>Tủ sách & Hồ sơ</span>
                     </Link>
 
                     <Link
@@ -117,7 +136,8 @@ function Navbar() {
                       className="dropdown-item-cmc"
                       onClick={() => setDropdownOpen(false)}
                     >
-                      ⚙️ Cài đặt tài khoản
+                      <FontAwesomeIcon icon={faGear} />
+                      <span>Cài đặt tài khoản</span>
                     </Link>
                     {user?.role === 'Uploader' && (
                       <Link
@@ -125,7 +145,8 @@ function Navbar() {
                         className="dropdown-item-cmc"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        ✍️ Quản lý truyện
+                        <FontAwesomeIcon icon={faPenNib} />
+                        <span>Quản lý truyện</span>
                       </Link>
                     )}
 
@@ -135,7 +156,8 @@ function Navbar() {
                         className="dropdown-item-cmc"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        🛡️ Hệ thống Admin
+                        <FontAwesomeIcon icon={faShieldHalved} />
+                        <span>Hệ thống Admin</span>
                       </Link>
                     )}
                     {user?.role === 'Moderator' && (
@@ -144,7 +166,8 @@ function Navbar() {
                         className="dropdown-item-cmc"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        🛡️ Hệ thống Moderator
+                        <FontAwesomeIcon icon={faShieldHalved} />
+                        <span>Hệ thống Moderator</span>
                       </Link>
                     )}
 
@@ -158,13 +181,15 @@ function Navbar() {
                         handleLogout();
                       }}
                     >
-                      🚪 Đăng xuất
+                      <FontAwesomeIcon icon={faRightFromBracket} />
+                      <span>Đăng xuất</span>
                     </button>
                   </div>
                 )}
               </div>
             ) : (
               <button type="button" className="btn-cmc btn-cmc-primary btn-sm" onClick={() => setAuthOpen(true)}>
+                <FontAwesomeIcon icon={faUser} />
                 Đăng nhập
               </button>
             )}

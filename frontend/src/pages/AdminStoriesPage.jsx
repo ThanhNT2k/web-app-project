@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import API from '../services/api';
 import { Link } from 'react-router-dom';
+import { FontAwesomeIcon, faBookOpen } from '../lib/icons';
 
 function AdminStoriesPage() {
   const [stories, setStories] = useState([]);
@@ -115,7 +116,7 @@ function AdminStoriesPage() {
                               borderRadius: '4px',
                             }}
                           >
-                            📖
+                            <FontAwesomeIcon icon={faBookOpen} />
                           </div>
                         )}
                       </td>

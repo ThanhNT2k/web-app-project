@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import StoryCard from '../components/StoryCard';
+import IconBadge from '../components/IconBadge';
 import API from '../services/api';
+import { FontAwesomeIcon, faMagnifyingGlass } from '../lib/icons';
 
 function FindStoriesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -64,7 +66,10 @@ function FindStoriesPage() {
 
   return (
     <main className="cmc-main">
-      <h1 className="mb-2">🔍 Tìm truyện</h1>
+      <h1 className="page-title-with-icon mb-2">
+        <IconBadge icon={faMagnifyingGlass} size="md" tone="primary" />
+        Tìm truyện
+      </h1>
       <p className="text-muted mb-4">Tìm theo tên truyện hoặc chọn thẻ (tag) bên dưới.</p>
 
       <section className="panel-card mb-4">
@@ -76,6 +81,7 @@ function FindStoriesPage() {
             onChange={(e) => setQuery(e.target.value)}
           />
           <button type="submit" className="btn-cmc btn-cmc-primary">
+            <FontAwesomeIcon icon={faMagnifyingGlass} />
             Tìm kiếm
           </button>
         </form>

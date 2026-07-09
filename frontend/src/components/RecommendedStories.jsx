@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import StoryCard from './StoryCard';
+import IconBadge from './IconBadge';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { FontAwesomeIcon, faRobot, faRotateRight, faWandMagicSparkles } from '../lib/icons';
 
 function RecommendedStories() {
   const { isAuthenticated } = useAuth();
@@ -10,28 +12,28 @@ function RecommendedStories() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const fetchRecommendations = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await API.ai.getRecommendations();
+      setStories(response.stories || []);
+    } catch {
+      setError('Chưa thể tải gợi ý cá nhân hóa lúc này.');
+      setStories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) {
       setStories([]);
       return;
     }
 
-    const fetchRecommendations = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const response = await API.ai.getRecommendations();
-        setStories(response.stories || []);
-      } catch {
-        setError('Không thể tải gợi ý truyện.');
-        setStories([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchRecommendations();
-  }, [isAuthenticated]);
+  }, [fetchRecommendations, isAuthenticated]);
 
   if (!isAuthenticated) {
     return null;
@@ -42,18 +44,40 @@ function RecommendedStories() {
   }
 
   return (
-    <section className="mb-5">
-      <div className="d-flex align-items-center justify-content-between mb-3">
-        <h3 className="h4 mb-0">Gợi ý cho bạn</h3>
-        <span className="badge text-bg-info">AI</span>
+    <section className="home-section recommended-section">
+      <div className="section-heading">
+        <div>
+          <p className="section-eyebrow">Cá nhân hóa</p>
+          <h2 className="section-title">
+            <IconBadge icon={faWandMagicSparkles} size="sm" tone="aqua" />
+            Gợi ý cho bạn
+          </h2>
+        </div>
+        <span className="ai-pill">
+          <FontAwesomeIcon icon={faRobot} />
+          AI
+        </span>
       </div>
-      {error ? <div className="alert alert-warning">{error}</div> : null}
-      {loading ? <div className="text-muted">Đang tải gợi ý...</div> : null}
-      <div className="row g-4">
-        {stories.map((story) => (
-          <div className="col-12 col-md-6 col-xl-4" key={story.id}>
-            <StoryCard story={story} />
+
+      {error ? (
+        <div className="empty-state-card">
+          <IconBadge icon={faWandMagicSparkles} size="lg" tone="aqua" />
+          <div>
+            <h3>Gợi ý đang tạm nghỉ</h3>
+            <p>{error} Bạn vẫn có thể khám phá danh sách truyện nổi bật bên dưới.</p>
           </div>
+          <button type="button" className="btn-cmc btn-cmc-outline" onClick={fetchRecommendations}>
+            <FontAwesomeIcon icon={faRotateRight} />
+            Thử lại
+          </button>
+        </div>
+      ) : null}
+
+      {loading ? <div className="recommended-loading">Đang chọn vài bộ hợp gu đọc của bạn...</div> : null}
+
+      <div className="stories-grid stories-grid-recommended">
+        {stories.map((story) => (
+          <StoryCard story={story} key={story.id} />
         ))}
       </div>
     </section>

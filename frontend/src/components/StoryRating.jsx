@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { useAuth } from '../contexts/AuthContext';
 import API from '../services/api';
+import { FontAwesomeIcon, faStar } from '../lib/icons';
 
 const STAR_VALUES = [1, 2, 3, 4, 5];
 
@@ -142,7 +143,7 @@ function StoryRating({
               aria-checked={userRating === value}
               role="radio"
             >
-              ★
+              <FontAwesomeIcon icon={faStar} />
             </button>
           );
         })}
@@ -153,7 +154,10 @@ function StoryRating({
           const percent = maxDistributionCount > 0 ? (item.count / maxDistributionCount) * 100 : 0;
           return (
             <div key={item.rating} className="story-rating-distribution-row">
-              <span className="story-rating-distribution-label">{item.rating}★</span>
+              <span className="story-rating-distribution-label">
+                {item.rating}
+                <FontAwesomeIcon icon={faStar} />
+              </span>
               <div className="story-rating-distribution-bar">
                 <span className="story-rating-distribution-fill" style={{ width: `${percent}%` }} />
               </div>

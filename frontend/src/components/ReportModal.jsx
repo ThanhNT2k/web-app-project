@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { REPORT_REASONS } from '../constants/reportConstants';
 import API from '../services/api';
+import { FontAwesomeIcon, faFlag } from '../lib/icons';
 
 const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) => {
   const [formData, setFormData] = useState({ reason: 'BROKEN_IMAGE', description: '' });
@@ -36,7 +37,8 @@ const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) =>
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
         <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-          🚩 Báo cáo vi phạm
+          <FontAwesomeIcon icon={faFlag} />
+          Báo cáo vi phạm
         </h3>
 
         {targetLabel ? (

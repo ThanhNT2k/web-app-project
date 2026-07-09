@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import ReportModal from './ReportModal';
+import { FontAwesomeIcon, faBan, faThumbsDown, faThumbsUp } from '../lib/icons';
 
 function buildCommentTree(comments) {
   const nodes = new Map();
@@ -179,7 +180,12 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
         key={comment.id}
         className={`comment-item ${depth > 0 ? 'comment-reply-item' : ''} ${isFlagged ? 'is-spam' : ''} ${isRejected ? 'is-rejected' : ''}`}
       >
-        {isRejected && <span className="rejected-badge">🚫 Bình luận đã bị từ chối</span>}
+        {isRejected && (
+          <span className="rejected-badge">
+            <FontAwesomeIcon icon={faBan} />
+            Bình luận đã bị từ chối
+          </span>
+        )}
 
         <div className="d-flex justify-content-between gap-2 mb-1">
           <strong>{comment.full_name || comment.username || 'Độc giả'}</strong>
@@ -205,7 +211,11 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
               disabled={isVoteSubmitting}
               title="Thích"
             >
-              <span style={{ fontSize: '1.1rem', transform: comment.my_vote === 1 ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s' }}>👍</span>
+              <FontAwesomeIcon
+                className="comment-vote-icon"
+                icon={faThumbsUp}
+                style={{ transform: comment.my_vote === 1 ? 'scale(1.15)' : 'scale(1)' }}
+              />
               {likesCount > 0 && <span className="small fw-bold text-muted">{likesCount}</span>}
             </button>
             
@@ -219,7 +229,11 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
               disabled={isVoteSubmitting}
               title="Không thích"
             >
-              <span style={{ fontSize: '1.1rem', transform: comment.my_vote === -1 ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s' }}>👎</span>
+              <FontAwesomeIcon
+                className="comment-vote-icon"
+                icon={faThumbsDown}
+                style={{ transform: comment.my_vote === -1 ? 'scale(1.15)' : 'scale(1)' }}
+              />
               {dislikesCount > 0 && <span className="small fw-bold text-muted">{dislikesCount}</span>}
             </button>
 

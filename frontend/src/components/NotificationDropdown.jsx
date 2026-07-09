@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../services/api';
+import { FontAwesomeIcon, faCheck, faXmark } from '../lib/icons';
 
 function NotificationDropdown({ onClose, onUnreadCountChange }) {
   const [notifications, setNotifications] = useState([]);
@@ -146,19 +147,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
                       className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       title="Mark as read"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <FontAwesomeIcon className="w-4 h-4" icon={faCheck} />
                     </button>
                   )}
                   <button
@@ -166,19 +155,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
                     className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                     title="Delete"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <FontAwesomeIcon className="w-4 h-4" icon={faXmark} />
                   </button>
                 </div>
               </div>

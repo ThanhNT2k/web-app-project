@@ -1,56 +1,68 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'; // Thêm useNavigate
 
+import FeaturedCarousel from '../components/FeaturedCarousel';
 import RecommendedStories from '../components/RecommendedStories';
 import StoryCard from '../components/StoryCard';
+import IconBadge from '../components/IconBadge';
 import API from '../services/api';
 import { mockStories } from '../data/mockStories';
-import { useAuth } from '../contexts/AuthContext'; // Thêm useAuth
-
-const GENRES = [
-  { slug: 'Tien Hiep', label: 'Tiên Hiệp' },
-  { slug: 'Kiem Hiep', label: 'Kiếm Hiệp' },
-  { slug: 'Do Thi', label: 'Đô Thị' },
-  { slug: 'Huyen Huyen', label: 'Huyền Huyễn' },
-  { slug: 'Ngon Tinh', label: 'Ngôn Tình' },
-  { slug: 'Lich Su', label: 'Lịch Sử' },
-];
+import { useAuth } from '../contexts/AuthContext';
+import {
+  faBookOpen,
+  faClockRotateLeft,
+  faMagnifyingGlass,
+  faRotateRight,
+  faTriangleExclamation,
+} from '../lib/icons';
 
 function StoryCardSkeleton({ compact }) {
   return (
-    <div
-      className="story-card-skeleton animate-pulse"
-      style={{
-        background: 'var(--surface)',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        padding: '12px',
-        border: '1px solid var(--border)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        minHeight: compact ? '200px' : '280px',
-      }}
-    >
-      <div
-        className="skeleton-box"
-        style={{ width: '100%', height: compact ? '120px' : '180px', borderRadius: '12px' }}
-      />
-      <div className="skeleton-box" style={{ height: '20px', borderRadius: '4px', width: '80%' }} />
-      <div className="skeleton-box" style={{ height: '14px', borderRadius: '4px', width: '50%' }} />
+    <div className={`story-card-skeleton animate-pulse ${compact ? 'is-compact' : ''}`}>
+      <div className="skeleton-box skeleton-cover" />
+      <div className="skeleton-box skeleton-title" />
+      <div className="skeleton-box skeleton-line" />
       {!compact && (
-        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-          <div className="skeleton-box" style={{ height: '24px', borderRadius: '12px', width: '60px' }} />
-          <div className="skeleton-box" style={{ height: '24px', borderRadius: '12px', width: '60px' }} />
+        <div className="skeleton-chip-row">
+          <div className="skeleton-box skeleton-chip" />
+          <div className="skeleton-box skeleton-chip" />
         </div>
       )}
     </div>
   );
 }
 
+function RecentStorySkeleton() {
+  return (
+    <div className="story-card-skeleton story-card-skeleton-horizontal animate-pulse">
+      <div className="skeleton-box skeleton-cover-horizontal" />
+      <div className="skeleton-horizontal-content">
+        <div className="skeleton-box skeleton-title" />
+        <div className="skeleton-box skeleton-line short" />
+        <div className="skeleton-box skeleton-line" />
+      </div>
+    </div>
+  );
+}
+
+function SectionHeading({ eyebrow, title, icon, action }) {
+  return (
+    <div className="section-heading">
+      <div>
+        {eyebrow ? <p className="section-eyebrow">{eyebrow}</p> : null}
+        <h2 className="section-title">
+          {icon ? <IconBadge icon={icon} size="sm" tone="primary" /> : null}
+          {title}
+        </h2>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 function HomePage() {
-  const navigate = useNavigate(); // Hook để điều hướng
-  const { user, loading: authLoading } = useAuth(); // Kiểm tra user và trạng thái loading
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [stories, setStories] = useState([]);
   const [featuredStories, setFeaturedStories] = useState([]);
@@ -67,6 +79,11 @@ function HomePage() {
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
 
   const isSearching = useMemo(() => Boolean(query.trim() || (category && category !== 'all')), [query, category]);
+  const heroStories = useMemo(() => {
+    if (!isSearching && featuredStories.length > 0) return featuredStories;
+    if (stories.length > 0) return stories;
+    return mockStories;
+  }, [featuredStories, isSearching, stories]);
 
   // Logic tự động điều hướng nếu là Admin hoặc Moderator
   useEffect(() => {
@@ -122,7 +139,7 @@ function HomePage() {
         setError('');
         const cat = category && category !== 'all' ? category : null;
         const response = isSearching
-          ? await API.stories.search(query.trim(), cat, page)
+          ? await API.stories.search(query.trim(), cat, null, page)
           : await API.stories.getAll(page, 12, 'newest');
 
         const list = response.stories || [];
@@ -151,80 +168,89 @@ function HomePage() {
   };
 
   return (
-    <main className="cmc-main">
-      <section className="cmc-hero">
-        <h1>Chào mừng đến CMC Truyện</h1>
-        <p>Thư viện truyện online — Đọc truyện yêu thích mọi lúc, mọi nơi</p>
-        <div className="cmc-hero-actions">
-          <Link to="/tim-truyen" className="btn-cmc btn-cmc-secondary">
-            Bắt đầu đọc
-          </Link>
-          <Link to="/tim-truyen" className="btn-cmc btn-cmc-ghost">
-            Khám phá thêm
-          </Link>
-        </div>
-      </section>
+    <main className="cmc-main cmc-home-page">
+      <FeaturedCarousel stories={heroStories} />
 
-      {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
+      {error ? (
+        <div className="home-service-note">
+          <IconBadge icon={faTriangleExclamation} size="md" tone="warning" />
+          <div>
+            <strong>Đang dùng dữ liệu dự phòng.</strong>
+            <span>{error}</span>
+          </div>
+        </div>
+      ) : null}
 
       {!isSearching && <RecommendedStories />}
 
       {/* Featured Stories */}
       {!isSearching && (
-        <section className="mb-5">
-          <h2 className="section-title">📖 Truyện Nổi Bật</h2>
+        <section className="home-section">
+          <SectionHeading
+            eyebrow="Được quan tâm"
+            title="Truyện nổi bật"
+            icon={faBookOpen}
+            action={<Link to="/tim-truyen" className="section-action-link">Xem thêm</Link>}
+          />
           {loadingFeatured ? (
-            <div className="stories-grid">
+            <div className="stories-grid stories-grid-featured">
               {Array.from({ length: 6 }).map((_, i) => (
                 <StoryCardSkeleton key={`skeleton-feat-${i}`} compact />
               ))}
             </div>
           ) : featuredStories.length > 0 ? (
-            <div className="stories-grid">
+            <div className="stories-grid stories-grid-featured">
               {featuredStories.map((story) => (
                 <StoryCard key={`feat-${story.id}`} story={story} compact />
               ))}
             </div>
           ) : (
-            <p className="no-data">Hiện tại chưa có truyện nổi bật nào.</p>
+            <div className="empty-state-card">
+              <IconBadge icon={faBookOpen} size="lg" tone="primary" />
+              <div>
+                <h3>Chưa có truyện nổi bật</h3>
+                <p>Danh sách sẽ được cập nhật khi có thêm dữ liệu đọc và theo dõi.</p>
+              </div>
+            </div>
           )}
         </section>
       )}
 
       {/* Recent Updates */}
       {!isSearching && (
-        <section className="mb-5">
-          <h2 className="section-title">⚡ Cập Nhật Gần Đây</h2>
+        <section className="home-section">
+          <SectionHeading eyebrow="Vừa lên chương" title="Cập nhật gần đây" icon={faClockRotateLeft} />
           {loadingRecent ? (
-            <div className="stories-grid-horizontal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            <div className="stories-grid-horizontal">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={`skeleton-recent-${i}`} className="story-card-skeleton animate-pulse d-flex gap-3 p-3 rounded-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', minHeight: '150px' }}>
-                  <div className="skeleton-box flex-shrink-0" style={{ width: '90px', height: '120px', borderRadius: '8px' }} />
-                  <div className="d-flex flex-column flex-grow-1 gap-2">
-                    <div className="skeleton-box" style={{ height: '20px', width: '80%', borderRadius: '4px' }} />
-                    <div className="skeleton-box" style={{ height: '14px', width: '50%', borderRadius: '4px' }} />
-                    <div className="skeleton-box mt-auto" style={{ height: '14px', width: '90%', borderRadius: '4px' }} />
-                  </div>
-                </div>
+                <RecentStorySkeleton key={`skeleton-recent-${i}`} />
               ))}
             </div>
           ) : recentStories.length > 0 ? (
-            <div className="stories-grid-horizontal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            <div className="stories-grid-horizontal">
               {recentStories.map((story) => (
                 <StoryCard key={`recent-${story.id}`} story={story} horizontal={true} />
               ))}
             </div>
           ) : (
-            <p className="no-data">Không có cập nhật mới.</p>
+            <div className="empty-state-card compact">
+              <IconBadge icon={faRotateRight} size="lg" tone="aqua" />
+              <div>
+                <h3>Chưa có cập nhật mới</h3>
+                <p>Quay lại sau để xem các chương vừa được đăng.</p>
+              </div>
+            </div>
           )}
         </section>
       )}
 
       {/* Main browse list */}
-      <section id="browse" className="mb-4">
-        <h2 className="section-title">
-          {isSearching ? '🔍 Kết quả tìm kiếm' : '📚 Tất cả truyện'}
-        </h2>
+      <section id="browse" className="home-section">
+        <SectionHeading
+          eyebrow={isSearching ? 'Đang lọc' : 'Thư viện'}
+          title={isSearching ? 'Kết quả tìm kiếm' : 'Tất cả truyện'}
+          icon={isSearching ? faMagnifyingGlass : faBookOpen}
+        />
         {loading ? (
           <div className="stories-grid">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -238,8 +264,38 @@ function HomePage() {
             ))}
           </div>
         ) : (
-          <p className="no-data">Không tìm thấy truyện phù hợp.</p>
+          <div className="empty-state-card">
+            <IconBadge icon={faMagnifyingGlass} size="lg" tone="primary" />
+            <div>
+              <h3>Không tìm thấy truyện phù hợp</h3>
+              <p>Thử đổi từ khóa hoặc chọn một thể loại khác để khám phá thêm.</p>
+            </div>
+          </div>
         )}
+
+        {!loading && pagination.totalPages > 1 ? (
+          <div className="home-pagination">
+            <button
+              type="button"
+              className="btn-cmc btn-cmc-outline"
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
+            >
+              Trước
+            </button>
+            <span>
+              Trang {pagination.page}/{pagination.totalPages}
+            </span>
+            <button
+              type="button"
+              className="btn-cmc btn-cmc-outline"
+              disabled={page >= pagination.totalPages}
+              onClick={() => goToPage(page + 1)}
+            >
+              Sau
+            </button>
+          </div>
+        ) : null}
       </section>
     </main>
   );

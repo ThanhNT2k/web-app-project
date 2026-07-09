@@ -5,6 +5,7 @@ import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import TagInput from '../components/TagInput';
 import { slugify } from '../utils/slugify';
+import { FontAwesomeIcon, faBan, faBookOpen, faPenNib } from '../lib/icons';
 
 const EMPTY_STORY = {
   title: '',
@@ -412,7 +413,8 @@ function DashboardPage() {
           </p>
         </div>
         <button type="button" className="btn-cmc btn-cmc-primary" onClick={openCreate}>
-          + Thêm truyện
+          <FontAwesomeIcon icon={faPenNib} />
+          Thêm truyện
         </button>
       </div>
 
@@ -428,7 +430,9 @@ function DashboardPage() {
                 {story.cover_image_url ? (
                   <img src={story.cover_image_url} alt="" className="dashboard-thumb" />
                 ) : (
-                  <div className="dashboard-thumb dashboard-thumb-empty">📖</div>
+                  <div className="dashboard-thumb dashboard-thumb-empty">
+                    <FontAwesomeIcon icon={faBookOpen} />
+                  </div>
                 )}
                 <div className="flex-grow-1">
                   <div className="d-flex align-items-center gap-2 mb-1">
@@ -480,7 +484,8 @@ function DashboardPage() {
                     className="btn-cmc btn-cmc-primary btn-sm"
                     onClick={() => openAddChapter(story)}
                   >
-                    + Chương
+                    <FontAwesomeIcon icon={faBookOpen} />
+                    Chương
                   </button>
 
                   {isOwner && (
@@ -519,7 +524,8 @@ function DashboardPage() {
                         }}
                         title="Truyện này đã bị Admin ẩn. Bạn không thể hiện lại."
                       >
-                        🚫 Admin ẩn
+                        <FontAwesomeIcon icon={faBan} />
+                        Admin ẩn
                       </span>
                     ) : (
                       isOwner && (

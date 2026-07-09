@@ -1,3 +1,5 @@
+import { FontAwesomeIcon, faPenNib } from '../lib/icons';
+
 function UserProfile({ user, onEditClick }) {
   if (!user) {
     return null;
@@ -38,7 +40,8 @@ function UserProfile({ user, onEditClick }) {
               style={{ fontSize: '0.8rem', borderRadius: '8px', padding: '0.35rem 0.85rem' }}
               onClick={onEditClick}
             >
-              ✏️ Chỉnh sửa hồ sơ
+              <FontAwesomeIcon icon={faPenNib} />
+              Chỉnh sửa hồ sơ
             </button>
           </div>
         </div>

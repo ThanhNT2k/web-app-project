@@ -1,81 +1,127 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  FontAwesomeIcon,
+  faBookOpen,
+  faEye,
+  faLayerGroup,
+  faUsers,
+} from '../lib/icons';
+import StoryHoverPreview from './StoryHoverPreview';
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80';
 
+const PREVIEW_WIDTH = 336;
+const PREVIEW_HEIGHT = 360;
+const PREVIEW_GAP = 14;
+const VIEWPORT_PADDING = 16;
+
+function getTagList(story) {
+  const tagData = story.tags;
+  const tags = tagData && (!Array.isArray(tagData) || tagData.length > 0)
+    ? (Array.isArray(tagData) ? tagData : [tagData])
+    : (story.category ? [story.category] : []);
+
+  return tags
+    .map((tag) => (typeof tag === 'object' && tag !== null ? (tag.name || tag.title || '') : tag))
+    .filter(Boolean)
+    .slice(0, 2);
+}
+
 function StoryCard({ story, compact = false, horizontal = false }) {
-  const renderTags = () => {
-    const tagData = story.tags;
+  const cardRef = useRef(null);
+  const hideTimerRef = useRef(null);
+  const [previewPosition, setPreviewPosition] = useState(null);
 
-    if (!tagData || (Array.isArray(tagData) && tagData.length === 0)) return null;
+  const storyPath = `/story/${story.id}-${story.slug}`;
+  const chapterCount = story.chapter_count || story.total_chapters || 0;
+  const followCount = story.follow_count || 0;
+  const viewCount = story.view_count ?? story.views ?? story.total_views ?? story.views_metric ?? null;
+  const tags = getTagList(story);
 
-    const tags = Array.isArray(tagData) ? tagData : [tagData];
+  const formatCount = (value) => Number(value || 0).toLocaleString('vi-VN');
 
-    return (
-      <div className="d-flex flex-wrap gap-1 mb-2">
-        {tags.slice(0, 3).map((tag, index) => {
-          // Xử lý lấy tên thẻ: ưu tiên tag.name, nếu là chuỗi thì lấy trực tiếp
-          const tagName = typeof tag === 'object' && tag !== null ? (tag.name || tag.title || '') : tag;
-          
-          if (!tagName) return null;
-
-          return (
-            <span 
-              key={index} 
-              className="badge" 
-              style={{ 
-                fontSize: '0.65rem', 
-                padding: '0.2rem 0.5rem', 
-                backgroundColor: '#e9ecef', 
-                color: '#495057',
-                borderRadius: '4px'
-              }}
-            >
-              {tagName}
-            </span>
-          );
-        })}
-      </div>
-    );
+  const clearHideTimer = () => {
+    if (hideTimerRef.current) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
   };
+
+  const hidePreview = () => {
+    clearHideTimer();
+    hideTimerRef.current = window.setTimeout(() => {
+      setPreviewPosition(null);
+    }, 120);
+  };
+
+  const showPreview = () => {
+    if (horizontal || typeof window === 'undefined' || !cardRef.current) return;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 768px)').matches) return;
+
+    clearHideTimer();
+
+    const rect = cardRef.current.getBoundingClientRect();
+    const hasSpaceRight = rect.right + PREVIEW_GAP + PREVIEW_WIDTH <= window.innerWidth - VIEWPORT_PADDING;
+    const hasSpaceLeft = rect.left - PREVIEW_GAP - PREVIEW_WIDTH >= VIEWPORT_PADDING;
+    const openLeft = !hasSpaceRight && hasSpaceLeft;
+    const rawLeft = openLeft ? rect.left - PREVIEW_GAP - PREVIEW_WIDTH : rect.right + PREVIEW_GAP;
+    const left = Math.min(
+      Math.max(rawLeft, VIEWPORT_PADDING),
+      window.innerWidth - PREVIEW_WIDTH - VIEWPORT_PADDING,
+    );
+    const maxTop = Math.max(VIEWPORT_PADDING, window.innerHeight - PREVIEW_HEIGHT - VIEWPORT_PADDING);
+    const top = Math.min(Math.max(rect.top, VIEWPORT_PADDING), maxTop);
+
+    setPreviewPosition({
+      placement: openLeft ? 'left' : 'right',
+      style: {
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${PREVIEW_WIDTH}px`,
+      },
+    });
+  };
+
+  useEffect(() => () => clearHideTimer(), []);
+
+  useEffect(() => {
+    if (!previewPosition) return undefined;
+
+    const closePreview = () => setPreviewPosition(null);
+    window.addEventListener('scroll', closePreview, true);
+    window.addEventListener('resize', closePreview);
+
+    return () => {
+      window.removeEventListener('scroll', closePreview, true);
+      window.removeEventListener('resize', closePreview);
+    };
+  }, [previewPosition]);
 
   if (horizontal) {
     return (
-      <article className="story-card-horizontal d-flex gap-3 p-3 rounded-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow)' }}>
-        <Link to={`/story/${story.id}-${story.slug}`} className="story-image-horizontal flex-shrink-0" style={{ width: '90px', height: '120px', borderRadius: '8px', overflow: 'hidden' }}>
+      <article className="story-card-horizontal">
+        <Link to={storyPath} className="story-image-horizontal">
           <img
             src={story.cover_image_url || FALLBACK_COVER}
             alt={story.title}
             onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </Link>
-        <div className="story-info-horizontal d-flex flex-column flex-grow-1 min-w-0">
-          <Link to={`/story/${story.id}-${story.slug}`} className="story-title text-decoration-none fw-bold text-truncate" style={{ fontSize: '1.05rem', color: 'var(--text)' }}>
+        <div className="story-info-horizontal">
+          <Link to={storyPath} className="story-title">
             {story.title}
           </Link>
-          <p className="small text-muted mb-1 text-truncate">
-            Tác giả: {story.author_full_name || story.author_username || 'CMC'}
-          </p>
-          <p className="story-desc-horizontal text-muted small mb-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {story.description}
-          </p>
 
-          {Number(story.rating_count || story.total_rating_count) > 0 ? (
-            <p className="story-rating-inline mb-2">
-              ⭐ {Number(story.average_rating || 0).toFixed(1)} · {story.rating_count || story.total_rating_count} lượt đánh giá
-            </p>
-          ) : null}
-          
-          {renderTags()}
-
-          <div className="mt-auto d-flex justify-content-between align-items-center">
-            <span className="small text-muted">
-              📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
+          <div className="story-card-footer">
+            <span className="story-card-metrics">
+              <span><FontAwesomeIcon icon={faBookOpen} /> {formatCount(chapterCount)} chương</span>
+              <span><FontAwesomeIcon icon={faUsers} /> {formatCount(followCount)} theo dõi</span>
+              {viewCount != null ? (
+                <span><FontAwesomeIcon icon={faEye} /> {formatCount(viewCount)} lượt xem</span>
+              ) : null}
             </span>
-            <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-xs story-card-cta">
-              Đọc ngay
-            </Link>
           </div>
         </div>
       </article>
@@ -83,45 +129,57 @@ function StoryCard({ story, compact = false, horizontal = false }) {
   }
 
   return (
-    <article className="story-card-v2 d-flex flex-column">
-      <Link to={`/story/${story.id}-${story.slug}`} className="story-image d-block">
-        <img
-          src={story.cover_image_url || FALLBACK_COVER}
-          alt={story.title}
-          onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
+    <>
+      <article
+        ref={cardRef}
+        className={`story-card-v2 ${compact ? 'story-card-compact' : ''}`}
+        onMouseEnter={showPreview}
+        onMouseLeave={hidePreview}
+        onFocus={showPreview}
+        onBlur={hidePreview}
+      >
+        <Link to={storyPath} className="story-image" aria-label={`Xem chi tiết ${story.title}`}>
+          <img
+            src={story.cover_image_url || FALLBACK_COVER}
+            alt={story.title}
+            onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
+          />
+        </Link>
+        <div className="story-info">
+          {tags.length > 0 ? (
+            <div className="story-card-tags">
+              {tags.map((tag) => (
+                <span key={tag} className="story-card-tag">
+                  <FontAwesomeIcon icon={faLayerGroup} />
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <Link to={storyPath} className="story-title">
+            {story.title}
+          </Link>
+
+          <div className="story-card-metrics">
+            <span><FontAwesomeIcon icon={faBookOpen} /> {formatCount(chapterCount)} chương</span>
+            <span><FontAwesomeIcon icon={faUsers} /> {formatCount(followCount)} theo dõi</span>
+            {viewCount != null ? (
+              <span><FontAwesomeIcon icon={faEye} /> {formatCount(viewCount)} lượt xem</span>
+            ) : null}
+          </div>
+        </div>
+      </article>
+      {previewPosition ? (
+        <StoryHoverPreview
+          story={story}
+          placement={previewPosition.placement}
+          style={previewPosition.style}
+          onMouseEnter={clearHideTimer}
+          onMouseLeave={hidePreview}
         />
-      </Link>
-      <div className="story-info d-flex flex-column">
-        <Link to={`/story/${story.id}-${story.slug}`} className="story-title text-decoration-none">
-          {story.title}
-        </Link>
-        <p className="story-meta mb-1">
-          ✍️ {story.author_full_name || story.author_username || 'CMC'}
-        </p>
-
-        <p className="story-meta mb-2">
-          📖 {story.chapter_count || story.total_chapters || 0} chương · 👥 {story.follow_count || 0} theo dõi
-        </p>
-
-        {Number(story.rating_count || story.total_rating_count) > 0 ? (
-          <p className="story-meta mb-2 story-rating-inline">
-            ⭐ {Number(story.average_rating || 0).toFixed(1)} · {story.rating_count || story.total_rating_count} lượt đánh giá
-          </p>
-        ) : null}
-        
-        {renderTags()}
-
-        {!compact && story.description ? (
-          <p className="story-meta mb-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {story.description}
-          </p>
-        ) : null}
-        
-        <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-primary btn-sm story-card-cta" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}>
-          Đọc ngay
-        </Link>
-      </div>
-    </article>
+      ) : null}
+    </>
   );
 }
 

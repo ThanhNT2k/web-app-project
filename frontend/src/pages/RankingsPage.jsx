@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
+import IconBadge from '../components/IconBadge';
 import API from '../services/api';
+import {
+  FontAwesomeIcon,
+  faBookOpen,
+  faEye,
+  faFeatherPointed,
+  faRankingStar,
+  faStar,
+  faUsers,
+} from '../lib/icons';
 
 const RANKING_TYPES = [
   { key: 'trending', label: 'Xu hướng' },
@@ -84,7 +94,10 @@ function RankingsPage() {
   return (
     <main className="cmc-main rankings-page">
       <section className="rankings-hero">
-        <h1>Bảng Xếp Hạng Truyện</h1>
+        <h1>
+          <IconBadge icon={faRankingStar} size="md" tone="warning" />
+          Bảng Xếp Hạng Truyện
+        </h1>
         <p>Theo dõi các bộ truyện đang bứt phá theo xu hướng, lượt đọc, đánh giá và lượt theo dõi.</p>
       </section>
 
@@ -149,14 +162,14 @@ function RankingsPage() {
                   </Link>
 
                   <p className="ranking-meta">
-                    ✍️ {story.author_full_name || story.author_username || 'CMC'}
+                    <FontAwesomeIcon icon={faFeatherPointed} /> {story.author_full_name || story.author_username || 'CMC'}
                   </p>
 
                   <div className="ranking-metrics">
-                    <span>📖 {formatWholeNumber(story.total_chapters)} chương</span>
-                    <span>👁️ {formatWholeNumber(story.views_metric)} lượt đọc</span>
-                    <span>⭐ {Number(story.rating_avg_metric || story.average_rating || 0).toFixed(1)}</span>
-                    <span>👥 {formatWholeNumber(story.total_followers)} theo dõi</span>
+                    <span><FontAwesomeIcon icon={faBookOpen} /> {formatWholeNumber(story.total_chapters)} chương</span>
+                    <span><FontAwesomeIcon icon={faEye} /> {formatWholeNumber(story.views_metric)} lượt đọc</span>
+                    <span><FontAwesomeIcon icon={faStar} /> {Number(story.rating_avg_metric || story.average_rating || 0).toFixed(1)}</span>
+                    <span><FontAwesomeIcon icon={faUsers} /> {formatWholeNumber(story.total_followers)} theo dõi</span>
                   </div>
                 </div>
               </article>

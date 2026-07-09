@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import IconBadge from '../components/IconBadge';
 import API from '../services/api';
+import {
+  FontAwesomeIcon,
+  faArrowLeft,
+  faArrowRight,
+  faBell,
+  faBookOpen,
+  faCheck,
+  faCircleInfo,
+  faEnvelopeOpenText,
+  faGear,
+  faTrash,
+  faXmark,
+} from '../lib/icons';
 
 function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -97,8 +111,9 @@ function NotificationsPage() {
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            🔔 Thông báo
+          <h1 className="page-title-with-icon text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <IconBadge icon={faBell} size="md" tone="primary" />
+            Thông báo
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Quản lý và xem toàn bộ thông báo của bạn
@@ -124,15 +139,17 @@ function NotificationsPage() {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                  className="notifications-page-action px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
                 >
+                  <FontAwesomeIcon icon={faCheck} />
                   Đánh dấu tất cả đã đọc
                 </button>
               )}
               <button
                 onClick={handleDeleteAll}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+                className="notifications-page-action px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
               >
+                <FontAwesomeIcon icon={faTrash} />
                 Xóa tất cả
               </button>
             </div>
@@ -228,12 +245,20 @@ function NotificationsPage() {
                       {formatDate(notif.created_at)}
                     </p>
                     {notif.type && (
-                      <span className="inline-block mt-2 px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded">
-                        {notif.type === 'new_chapter'
-                          ? '📖 Chương mới'
-                          : notif.type === 'system'
-                            ? '⚙️ Hệ thống'
-                            : 'ℹ️ Thông báo'}
+                      <span className="notifications-type-badge inline-flex mt-2 px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded">
+                        {notif.type === 'new_chapter' ? (
+                          <>
+                            <FontAwesomeIcon icon={faBookOpen} /> Chương mới
+                          </>
+                        ) : notif.type === 'system' ? (
+                          <>
+                            <FontAwesomeIcon icon={faGear} /> Hệ thống
+                          </>
+                        ) : (
+                          <>
+                            <FontAwesomeIcon icon={faCircleInfo} /> Thông báo
+                          </>
+                        )}
                       </span>
                     )}
                   </div>
@@ -243,18 +268,18 @@ function NotificationsPage() {
                     {!notif.is_read && (
                       <button
                         onClick={() => handleMarkAsRead(notif.id)}
-                        className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                        title="Mark as read"
-                      >
-                        ✓
-                      </button>
-                    )}
+                        className="notifications-page-action px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                      title="Mark as read"
+                    >
+                        <FontAwesomeIcon icon={faCheck} />
+                    </button>
+                  )}
                     <button
                       onClick={() => handleDelete(notif.id)}
-                      className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
-                      title="Delete"
-                    >
-                      ✕
+                      className="notifications-page-action px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    title="Delete"
+                  >
+                      <FontAwesomeIcon icon={faXmark} />
                     </button>
                   </div>
                 </div>
@@ -269,9 +294,10 @@ function NotificationsPage() {
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              className="notifications-page-action px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-              ← Trước
+              <FontAwesomeIcon icon={faArrowLeft} />
+              Trước
             </button>
 
             {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
@@ -291,9 +317,10 @@ function NotificationsPage() {
             <button
               onClick={() => setPage(Math.min(pages, page + 1))}
               disabled={page === pages}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              className="notifications-page-action px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-              Sau →
+              Sau
+              <FontAwesomeIcon icon={faArrowRight} />
             </button>
           </div>
         )}
@@ -302,9 +329,10 @@ function NotificationsPage() {
         <div className="mt-8 text-center">
           <Link
             to="/settings/notifications"
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="notifications-page-action text-blue-600 dark:text-blue-400 hover:underline"
           >
-            Quản lý cài đặt thông báo →
+            <FontAwesomeIcon icon={faEnvelopeOpenText} />
+            Quản lý cài đặt thông báo
           </Link>
         </div>
       </div>

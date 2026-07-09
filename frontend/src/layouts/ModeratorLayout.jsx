@@ -1,5 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  FontAwesomeIcon,
+  faBookOpen,
+  faComments,
+  faFlag,
+  faGaugeHigh,
+  faRightFromBracket,
+} from '../lib/icons';
 
 function ModeratorLayout() {
   const { logout } = useAuth();
@@ -25,7 +33,8 @@ function ModeratorLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            📊 Tổng quan
+            <FontAwesomeIcon icon={faGaugeHigh} />
+            <span>Tổng quan</span>
           </NavLink>
 
           <NavLink
@@ -34,7 +43,8 @@ function ModeratorLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            📖 Duyệt truyện chờ
+            <FontAwesomeIcon icon={faBookOpen} />
+            <span>Duyệt truyện chờ</span>
           </NavLink>
 
           <NavLink
@@ -43,7 +53,8 @@ function ModeratorLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            🚩 Quản lý báo cáo
+            <FontAwesomeIcon icon={faFlag} />
+            <span>Quản lý báo cáo</span>
           </NavLink>
 
           <NavLink
@@ -52,7 +63,8 @@ function ModeratorLayout() {
               isActive ? 'admin-menu-item active' : 'admin-menu-item'
             }
           >
-            💬 Quản lý bình luận
+            <FontAwesomeIcon icon={faComments} />
+            <span>Quản lý bình luận</span>
           </NavLink>
         </nav>
 
@@ -78,7 +90,8 @@ function ModeratorLayout() {
             onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
             onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
           >
-            🚪 Đăng xuất
+            <FontAwesomeIcon icon={faRightFromBracket} />
+            <span>Đăng xuất</span>
           </button>
         </div>
       </aside>
