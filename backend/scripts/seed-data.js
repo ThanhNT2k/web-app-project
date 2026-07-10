@@ -45,6 +45,7 @@ async function clearExistingData(client) {
       ai_summaries,
       comments,
       user_follows,
+      user_chapter_reads,
       reading_history,
       user_preferences,
       chapters,

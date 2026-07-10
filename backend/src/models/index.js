@@ -10,6 +10,7 @@ const UserPreference = require('./UserPreference');
 const BadWord = require('./BadWord');
 const StoryCollaborator = require('./StoryCollaborator');
 const StoryRating = require('./StoryRating');
+const UserChapterRead = require('./UserChapterRead');
 
 module.exports = {
   db,
@@ -23,5 +24,6 @@ module.exports = {
   UserPreference,
   BadWord,
   StoryCollaborator,
-  StoryRating
+  StoryRating,
+  UserChapterRead
 };

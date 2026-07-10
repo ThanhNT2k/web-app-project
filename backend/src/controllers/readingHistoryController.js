@@ -3,6 +3,7 @@ const Joi = require('joi');
 const aiService = require('../services/aiService');
 const { Chapter, Story } = require('../models');
 const ReadingHistory = require('../models/ReadingHistory');
+const UserChapterRead = require('../models/UserChapterRead');
 const AISummary = require('../models/AISummary');
 
 // Schema validate dữ liệu khi lưu tiến trình đọc
@@ -86,6 +87,12 @@ async function saveProgress(req, res) {
       readTime,
     );
 
+    try {
+      await UserChapterRead.markChapterRead(req.user.id, storyId, chapterId);
+    } catch (chapterReadErr) {
+      console.warn('[readingHistoryController.saveProgress] mark chapter read failed:', chapterReadErr.message);
+    }
+
     // Cập nhật completion_rate (phần trăm hoàn thành truyện) - best-effort
     // Được bao bởi try/catch riêng để không làm fail toàn bộ request nếu gặp lỗi
     try {
@@ -159,6 +166,32 @@ async function getStoryProgressHandler(req, res) {
     return res.status(200).json({ success: true, progress });
   } catch (err) {
     console.error('[readingHistoryController.getStoryProgress]', err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+async function getReadChaptersByStory(req, res) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const storyId = Number.parseInt(req.params.storyId, 10);
+    if (!Number.isInteger(storyId) || storyId <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid story id' });
+    }
+
+    const chapters = await UserChapterRead.getReadChaptersByStory(req.user.id, storyId);
+
+    return res.status(200).json({
+      success: true,
+      chapters,
+      chapter_numbers: chapters
+        .map((chapter) => Number(chapter.chapter_number))
+        .filter((chapterNumber) => Number.isInteger(chapterNumber) && chapterNumber > 0),
+    });
+  } catch (err) {
+    console.error('[readingHistoryController.getReadChaptersByStory]', err);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
@@ -294,6 +327,7 @@ module.exports = {
   saveProgress,
   getHistory,
   getStoryProgress: getStoryProgressHandler,
+  getReadChaptersByStory,
   getChapterSummary,
   getRecommendations,
 };

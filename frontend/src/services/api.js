@@ -239,6 +239,7 @@ const API = {
     save: (data) => request('/reading-history', { method: 'POST', data }),
     getAll: () => request('/reading-history', { method: 'GET' }),
     getStoryProgress: (storyId) => request(`/reading-history/story/${storyId}`, { method: 'GET' }),
+    getReadChapters: (storyId) => request(`/reading-history/story/${storyId}/read-chapters`, { method: 'GET' }),
   },
   follows: {
     getAll: () => request('/follows', { method: 'GET' }),

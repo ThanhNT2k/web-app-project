@@ -81,9 +81,38 @@ if (process.env.NODE_ENV !== 'test') {
         await pool.query('CREATE INDEX IF NOT EXISTS idx_ratings_story_id ON ratings(story_id)');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_ratings_user_id ON ratings(user_id)');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_reading_history_story_last_read_at ON reading_history(story_id, last_read_at)');
-        console.log('[Database] Verified ratings table exists');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_user_follows_story_id ON user_follows(story_id)');
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS user_chapter_reads (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            story_id INTEGER NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+            chapter_id INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+            read_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (user_id, chapter_id)
+          )
+        `);
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_user_chapter_reads_user_story ON user_chapter_reads(user_id, story_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_user_chapter_reads_chapter_id ON user_chapter_reads(chapter_id)');
+        await pool.query(`
+          INSERT INTO user_chapter_reads (user_id, story_id, chapter_id, read_at, created_at)
+          SELECT
+            rh.user_id,
+            rh.story_id,
+            rh.last_chapter_read,
+            rh.last_read_at,
+            rh.created_at
+          FROM reading_history rh
+          INNER JOIN chapters c ON c.id = rh.last_chapter_read
+          WHERE rh.user_id IS NOT NULL
+            AND rh.story_id IS NOT NULL
+            AND rh.last_chapter_read IS NOT NULL
+          ON CONFLICT (user_id, chapter_id) DO NOTHING
+        `);
+        console.log('[Database] Verified ratings and user_chapter_reads tables exist');
       } catch (err) {
-        console.error('[Database] Failed to verify/create ratings table:', err.message);
+        console.error('[Database] Failed to verify/create ratings or user_chapter_reads table:', err.message);
       }
     })
     .catch((err) => console.error('[Database] Connection failed:', err.message));

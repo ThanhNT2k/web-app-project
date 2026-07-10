@@ -10,6 +10,7 @@ const requiredTables = [
   'stories',
   'chapters',
   'reading_history',
+  'user_chapter_reads',
   'user_follows',
   'comments',
   'user_preferences',

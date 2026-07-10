@@ -30,6 +30,18 @@ function formatDateOrFallback(dateValue) {
   return parsed.toLocaleDateString('vi-VN');
 }
 
+function formatWholeNumber(value) {
+  return Number(value || 0).toLocaleString('vi-VN');
+}
+
+function formatAverageRating(value) {
+  const rating = Number(value || 0);
+  return `${rating.toLocaleString('vi-VN', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })}/5`;
+}
+
 function StoryDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -37,6 +49,7 @@ function StoryDetailPage() {
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [storyProgress, setStoryProgress] = useState(null);
+  const [readChapterNumbers, setReadChapterNumbers] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
   const [chapterLoading, setChapterLoading] = useState(false);
   const [error, setError] = useState('');
@@ -102,10 +115,48 @@ function StoryDetailPage() {
   }, [story?.id, chapterPage, sortOrder]);
 
   useEffect(() => {
-    if (!isAuthenticated || !story?.id) return;
-    API.readingHistory.getStoryProgress(story.id)
-      .then((res) => setStoryProgress(res.progress || null))
-      .catch(() => setStoryProgress(null));
+    if (!isAuthenticated || !story?.id) {
+      setStoryProgress(null);
+      setReadChapterNumbers(new Set());
+      return;
+    }
+
+    let isActive = true;
+
+    const fetchReadingState = async () => {
+      const [progressResult, readChaptersResult] = await Promise.allSettled([
+        API.readingHistory.getStoryProgress(story.id),
+        API.readingHistory.getReadChapters(story.id),
+      ]);
+
+      if (!isActive) return;
+
+      const progress = progressResult.status === 'fulfilled'
+        ? progressResult.value?.progress || null
+        : null;
+      setStoryProgress(progress);
+
+      const readChapterList = readChaptersResult.status === 'fulfilled'
+        ? readChaptersResult.value?.chapter_numbers || []
+        : [];
+      const nextReadChapters = new Set(
+        readChapterList
+          .map((chapterNumber) => Number(chapterNumber))
+          .filter((chapterNumber) => Number.isInteger(chapterNumber) && chapterNumber > 0),
+      );
+
+      if (nextReadChapters.size === 0 && progress?.chapter_number) {
+        nextReadChapters.add(Number(progress.chapter_number));
+      }
+
+      setReadChapterNumbers(nextReadChapters);
+    };
+
+    fetchReadingState();
+
+    return () => {
+      isActive = false;
+    };
   }, [isAuthenticated, story?.id]);
 
   if (loading) {
@@ -124,19 +175,25 @@ function StoryDetailPage() {
     );
   }
 
-  const continueChapterNumber = storyProgress?.chapter_number || chapters[0]?.chapter_number;
   const lastReadChapterNumber = Number(storyProgress?.chapter_number || 0);
   const totalChapters = story.chapter_count || story.total_chapters || chapterPagination.totalItems || 0;
+  const firstChapterNumber = totalChapters > 0 ? 1 : null;
+  const continueChapterNumber = storyProgress?.chapter_number || firstChapterNumber;
   const latestChapter = chapters.reduce((latest, chapter) => {
     if (!latest) return chapter;
     return Number(chapter.chapter_number || 0) > Number(latest.chapter_number || 0) ? chapter : latest;
   }, null);
   const storyCreatedDate = formatDateOrFallback(story.created_at || story.published_at || latestChapter?.created_at);
+  const followCount = story.follow_count ?? story.follower_count ?? 0;
+  const totalViews = story.total_views ?? story.view_count ?? story.views ?? story.views_metric ?? 0;
+  const averageRating = story.average_rating ?? 0;
 
   const storyMetaItems = [
-    { label: 'Số chương', value: `${totalChapters}` },
+    { label: 'Số chương', value: formatWholeNumber(totalChapters) },
+    { label: 'Người theo dõi', value: formatWholeNumber(followCount) },
+    { label: 'Tổng lượt đọc', value: formatWholeNumber(totalViews) },
+    { label: 'Đánh giá', value: formatAverageRating(averageRating) },
     { label: 'Ngày đăng', value: storyCreatedDate },
-    { label: 'Đã đọc', value: `${lastReadChapterNumber || 0}` },
   ];
 
   return (
@@ -249,6 +306,16 @@ function StoryDetailPage() {
               initialAverageRating={story.average_rating}
               initialRatingCount={story.rating_count || story.total_rating_count}
               className="storyqq-rating-panel"
+              onRatingChange={(nextRating) => {
+                setStory((currentStory) => currentStory
+                  ? {
+                    ...currentStory,
+                    average_rating: nextRating.average_rating,
+                    rating_count: nextRating.rating_count,
+                    total_rating_count: nextRating.rating_count,
+                  }
+                  : currentStory);
+              }}
             />
           ) : null}
         </div>
@@ -283,7 +350,7 @@ function StoryDetailPage() {
             <ul className="chapter-list storyqq-chapter-list">
               {chapters.map((chapter) => {
                 const chapterNumber = Number(chapter.chapter_number || 0);
-                const isRead = lastReadChapterNumber > 0 && chapterNumber > 0 && chapterNumber <= lastReadChapterNumber;
+                const isRead = readChapterNumbers.has(chapterNumber);
 
                 return (
                   <li key={chapter.id}>

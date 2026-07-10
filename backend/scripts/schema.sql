@@ -89,6 +89,19 @@ CREATE TABLE IF NOT EXISTS reading_history (
 );
 
 -- -----------------------------------------------------------------------------
+-- user_chapter_reads
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS user_chapter_reads (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    story_id INTEGER NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+    chapter_id INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+    read_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, chapter_id)
+);
+
+-- -----------------------------------------------------------------------------
 -- user_follows
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_follows (
@@ -222,7 +235,10 @@ CREATE INDEX IF NOT EXISTS idx_chapters_story_id ON chapters(story_id);
 CREATE INDEX IF NOT EXISTS idx_reading_history_user_id ON reading_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_reading_history_story_id ON reading_history(story_id);
 CREATE INDEX IF NOT EXISTS idx_reading_history_story_last_read_at ON reading_history(story_id, last_read_at);
+CREATE INDEX IF NOT EXISTS idx_user_chapter_reads_user_story ON user_chapter_reads(user_id, story_id);
+CREATE INDEX IF NOT EXISTS idx_user_chapter_reads_chapter_id ON user_chapter_reads(chapter_id);
 CREATE INDEX IF NOT EXISTS idx_user_follows_user_id ON user_follows(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_follows_story_id ON user_follows(story_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_story_id ON comments(story_id);
 CREATE INDEX IF NOT EXISTS idx_ratings_story_id ON ratings(story_id);
