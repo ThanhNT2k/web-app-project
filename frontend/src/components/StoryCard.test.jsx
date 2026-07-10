@@ -32,13 +32,14 @@ describe('StoryCard', () => {
     expect(screen.getByText(/4 theo dõi/i)).toBeInTheDocument();
   });
 
-  it('renders in compact mode without crashing', () => {
-    render(
+  it('applies compact class and still renders story link in compact mode', () => {
+    const { container } = render(
       <MemoryRouter>
         <StoryCard story={story} compact />
       </MemoryRouter>
     );
 
     expect(screen.getAllByRole('link', { name: 'Demo Story' })[0]).toHaveAttribute('href', '/story/7-demo-story');
+    expect(container.querySelector('.story-card-compact')).toBeInTheDocument();
   });
 });
