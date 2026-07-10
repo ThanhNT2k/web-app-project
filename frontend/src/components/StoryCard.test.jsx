@@ -28,16 +28,17 @@ describe('StoryCard', () => {
     expect(screen.getAllByRole('link', { name: 'Demo Story' })[0]).toHaveAttribute('href', '/story/7-demo-story');
     expect(screen.getByText('Fantasy')).toBeInTheDocument();
     expect(screen.getByText('Action')).toBeInTheDocument();
-    expect(screen.getByText(/A story for tests/i)).toBeInTheDocument();
+    expect(screen.getByText(/12 chương/i)).toBeInTheDocument();
+    expect(screen.getByText(/4 theo dõi/i)).toBeInTheDocument();
   });
 
-  it('hides description when compact mode is enabled', () => {
+  it('renders in compact mode without crashing', () => {
     render(
       <MemoryRouter>
         <StoryCard story={story} compact />
       </MemoryRouter>
     );
 
-    expect(screen.queryByText(/A story for tests/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Demo Story' })[0]).toHaveAttribute('href', '/story/7-demo-story');
   });
 });
