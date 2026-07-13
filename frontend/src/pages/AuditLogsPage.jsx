@@ -15,6 +15,7 @@ const ACTION_LABELS = {
   UPDATE_COMMENT_STATUS: 'Kiểm duyệt bình luận',
   PROCESS_REPORT: 'Xử lý báo cáo',
   UPDATE_REPORT_STATUS: 'Đổi trạng thái báo cáo',
+  PROCESS_PROFILE_AVATAR: 'Xử lý avatar profile',
   TOGGLE_STORY_VISIBILITY: 'Đổi hiển thị truyện',
 };
 
@@ -123,7 +124,28 @@ function AuditLogsPage() {
                     <td><time>{new Date(log.created_at).toLocaleString('vi-VN')}</time></td>
                     <td><strong>{log.actor_full_name || log.actor_username || `User #${log.actor_id || '?'}`}</strong><span className={`audit-role-badge ${String(log.actor_role).toLowerCase()}`}>{log.actor_role}</span></td>
                     <td><span className="audit-action-badge">{ACTION_LABELS[log.action] || log.action}</span></td>
-                    <td>{ENTITY_LABELS[log.entity_type] || log.entity_type}{log.entity_id ? <small>#{log.entity_id}</small> : null}</td>
+                    <td>
+                      <div className="audit-target-cell">
+                        <strong>{ENTITY_LABELS[log.entity_type] || log.entity_type}</strong>
+                        {log.entity_id ? <small>#{log.entity_id}</small> : null}
+                        {log.affected_user_id || log.affected_username ? (
+                          <div className="audit-affected-user">
+                            {log.affected_avatar_url ? (
+                              <img src={log.affected_avatar_url} alt="" />
+                            ) : (
+                              <span>{(log.affected_full_name || log.affected_username || 'U').charAt(0).toUpperCase()}</span>
+                            )}
+                            <div>
+                              <em>Người bị ảnh hưởng</em>
+                              <b>{log.affected_full_name || log.affected_username || `User #${log.affected_user_id}`}</b>
+                              {log.affected_username ? <small>@{log.affected_username}</small> : null}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="audit-no-affected-user">Không xác định người dùng</span>
+                        )}
+                      </div>
+                    </td>
                     <td><p title={formatDetails(log.details)}>{formatDetails(log.details)}</p></td>
                     <td><code>{log.ip_address || '—'}</code></td>
                   </tr>

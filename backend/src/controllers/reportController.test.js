@@ -45,7 +45,34 @@ describe('reportController', () => {
     expect(db.query).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining('INSERT INTO reports'),
-      [5, 10, null, null, 'Copyright', 'Copied content']
+      [5, 10, null, null, null, 'Copyright', 'Copied content']
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it('binds an avatar report to the author of the reported comment', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ count: '0' }] })
+      .mockResolvedValueOnce({ rows: [{ user_id: 27 }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const req = {
+      user: { id: 5 },
+      body: {
+        reason: 'AVATAR_INAPPROPRIATE',
+        description: 'Avatar phản cảm',
+        story_id: 10,
+        comment_id: 18,
+      },
+    };
+    const res = createResponse();
+
+    await createReport(req, res);
+
+    expect(db.query).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('reported_user_id'),
+      [5, 10, null, 18, 27, 'AVATAR_INAPPROPRIATE', 'Avatar phản cảm']
     );
     expect(res.status).toHaveBeenCalledWith(201);
   });

@@ -187,8 +187,24 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
           </span>
         )}
 
-        <div className="d-flex justify-content-between gap-2 mb-1">
-          <strong>{comment.full_name || comment.username || 'Độc giả'}</strong>
+        <div className="comment-heading-row mb-1">
+          <div className="comment-author-block">
+            {comment.avatar_url ? (
+              <img
+                src={comment.avatar_url}
+                alt={`Avatar của ${comment.full_name || comment.username || 'độc giả'}`}
+                className="comment-avatar"
+                onError={(event) => {
+                  event.currentTarget.hidden = true;
+                  event.currentTarget.nextElementSibling.hidden = false;
+                }}
+              />
+            ) : null}
+            <span className="comment-avatar comment-avatar-fallback" hidden={Boolean(comment.avatar_url)}>
+              {(comment.full_name || comment.username || 'Đ').charAt(0).toUpperCase()}
+            </span>
+            <strong>{comment.full_name || comment.username || 'Độc giả'}</strong>
+          </div>
           <span className="text-muted small">
             {new Date(comment.created_at).toLocaleString('vi-VN')}
           </span>
@@ -260,6 +276,7 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
             className="btn-link-danger btn-sm"
             onClick={() => setReportTarget({
               commentId: comment.id,
+              reportedUserId: comment.user_id,
               targetLabel: `bình luận của ${comment.full_name || comment.username || 'độc giả'}`,
             })}
           >
@@ -348,6 +365,7 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
           storyId={storyId}
           chapterId={chapterId}
           commentId={reportTarget.commentId}
+          reportedUserId={reportTarget.reportedUserId}
           targetLabel={reportTarget.targetLabel}
           onClose={() => setReportTarget(null)}
         />

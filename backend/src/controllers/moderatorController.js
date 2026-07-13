@@ -258,6 +258,7 @@ async function getComments(req, res) {
         c.is_spam,
         u.username AS user_username,
         u.full_name AS user_full_name,
+        u.avatar_url AS user_avatar_url,
         s.title AS story_title,
         s.slug AS story_slug,
         ch.chapter_number,
@@ -304,12 +305,130 @@ async function getComments(req, res) {
   }
 }
 
+async function getReportedProfiles(req, res) {
+  try {
+    const status = ['NEW', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED'].includes(req.query.status)
+      ? req.query.status
+      : null;
+    const values = [];
+    let statusFilter = '';
+    if (status) {
+      values.push(status);
+      statusFilter = `AND r.status = $${values.length}`;
+    }
+
+    const result = await db.query(`
+      SELECT
+        u.id,
+        u.username,
+        u.full_name,
+        u.avatar_url,
+        u.is_active,
+        COUNT(r.id)::int AS report_count,
+        COUNT(r.id) FILTER (WHERE r.status IN ('NEW', 'IN_PROGRESS'))::int AS active_report_count,
+        MAX(r.created_at) AS last_reported_at,
+        (ARRAY_AGG(r.status ORDER BY r.created_at DESC))[1] AS latest_status,
+        (ARRAY_AGG(r.resolution_action ORDER BY r.created_at DESC))[1] AS latest_resolution_action,
+        (ARRAY_AGG(r.resolution_note ORDER BY r.created_at DESC))[1] AS latest_resolution_note,
+        (ARRAY_AGG(r.resolved_at ORDER BY r.created_at DESC))[1] AS latest_resolved_at,
+        (ARRAY_AGG(resolver.username ORDER BY r.created_at DESC))[1] AS latest_resolver_username,
+        (ARRAY_AGG(resolver.full_name ORDER BY r.created_at DESC))[1] AS latest_resolver_full_name
+      FROM reports r
+      LEFT JOIN comments c ON c.id = r.comment_id
+      JOIN users u ON u.id = COALESCE(r.reported_user_id, c.user_id)
+      LEFT JOIN users resolver ON resolver.id = r.resolved_by
+      WHERE r.reason = 'AVATAR_INAPPROPRIATE'
+        ${statusFilter}
+      GROUP BY u.id, u.username, u.full_name, u.avatar_url, u.is_active
+      ORDER BY MAX(r.created_at) DESC
+    `, values);
+
+    return res.status(200).json({ success: true, profiles: result.rows });
+  } catch (error) {
+    console.error('[moderatorController.getReportedProfiles]', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+async function processProfileAvatar(req, res) {
+  const allowedActions = ['START_REVIEW', 'REMOVE_AVATAR', 'KEEP_AVATAR'];
+  const userId = parseInt(req.params.id, 10);
+  const action = req.body?.action;
+  const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
+
+  if (!userId || !allowedActions.includes(action) || note.length > 500) {
+    return res.status(400).json({ success: false, message: 'Phương án xử lý profile không hợp lệ.' });
+  }
+
+  let client;
+  try {
+    client = await db.connect();
+    await client.query('BEGIN');
+
+    const profileResult = await client.query(
+      'SELECT id, username, avatar_url FROM users WHERE id = $1 FOR UPDATE',
+      [userId]
+    );
+    if (!profileResult.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, message: 'Không tìm thấy profile.' });
+    }
+
+    const nextStatus = action === 'START_REVIEW'
+      ? 'IN_PROGRESS'
+      : action === 'KEEP_AVATAR' ? 'DISMISSED' : 'RESOLVED';
+    const resolutionAction = action === 'REMOVE_AVATAR'
+      ? 'REMOVE_REPORTED_AVATAR'
+      : action;
+    const isResolved = nextStatus === 'RESOLVED' || nextStatus === 'DISMISSED';
+
+    if (action === 'REMOVE_AVATAR') {
+      await client.query(
+        'UPDATE users SET avatar_url = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [userId]
+      );
+    }
+
+    const reportsResult = await client.query(`
+      UPDATE reports
+      SET status = $1,
+          resolution_action = $2,
+          resolution_note = NULLIF($3, ''),
+          resolved_by = $4,
+          resolved_at = CASE WHEN $6 THEN CURRENT_TIMESTAMP ELSE NULL END
+      WHERE reason = 'AVATAR_INAPPROPRIATE'
+        AND reported_user_id = $5
+        AND status IN ('NEW', 'IN_PROGRESS')
+      RETURNING id
+    `, [nextStatus, resolutionAction, note, req.user.id, userId, isResolved]);
+
+    await client.query('COMMIT');
+    return res.status(200).json({
+      success: true,
+      message: action === 'REMOVE_AVATAR'
+        ? 'Đã gỡ avatar và hoàn tất các báo cáo liên quan.'
+        : action === 'KEEP_AVATAR'
+          ? 'Đã giữ avatar và bác các báo cáo liên quan.'
+          : 'Đã chuyển các báo cáo avatar sang trạng thái đang xem xét.',
+      processedReports: reportsResult.rowCount,
+    });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK');
+    console.error('[moderatorController.processProfileAvatar]', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  } finally {
+    if (client) client.release();
+  }
+}
+
 module.exports = {
   getDashboard,
   getPendingStories,
   approvePendingStory,
   processPendingStory,
   getComments,
+  getReportedProfiles,
+  processProfileAvatar,
   async updateCommentStatus(req, res) {
     try {
       const id = parseInt(req.params.id, 10);

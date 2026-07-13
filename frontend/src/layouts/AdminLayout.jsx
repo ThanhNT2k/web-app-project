@@ -6,6 +6,7 @@ import {
   faFlag,
   faGaugeHigh,
   faUsers,
+  faUser,
 } from '../lib/icons';
 import ManagementLayoutShell from './ManagementLayoutShell';
 
@@ -15,6 +16,7 @@ const ADMIN_NAV_ITEMS = [
   { to: '/admin/stories', label: 'Quản lý truyện', icon: faBookOpen },
   { to: '/admin/reports', label: 'Quản lý báo cáo', icon: faFlag },
   { to: '/admin/comments', label: 'Quản lý bình luận', icon: faComments },
+  { to: '/admin/profiles', label: 'Quản lý profile', icon: faUser },
   { to: '/admin/bad-words', label: 'Quản lý từ khóa', icon: faBan },
   { to: '/admin/logs', label: 'Nhật ký hoạt động', icon: faClockRotateLeft },
 ];

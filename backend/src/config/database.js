@@ -85,12 +85,14 @@ if (process.env.NODE_ENV !== 'test') {
       try {
         await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS story_id INTEGER REFERENCES stories(id) ON DELETE CASCADE');
         await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE');
+        await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS reported_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL');
         await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS resolution_action VARCHAR(50)');
         await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS resolution_note TEXT');
         await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL');
         await pool.query('ALTER TABLE reports ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP WITH TIME ZONE');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_story ON reports(story_id)');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_comment ON reports(comment_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_reports_reported_user ON reports(reported_user_id)');
         console.log('[Database] Verified reports table has story_id and comment_id columns');
       } catch (err) {
         console.error('[Database] Failed to verify/add reports target columns:', err.message);
@@ -115,6 +117,8 @@ if (process.env.NODE_ENV !== 'test') {
         await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_role ON audit_logs(actor_role)');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)');
         await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id)');
+        await pool.query('ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS affected_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_affected_user ON audit_logs(affected_user_id)');
         console.log('[Database] Verified audit_logs table exists');
       } catch (err) {
         console.error('[Database] Failed to verify/create audit_logs table:', err.message);

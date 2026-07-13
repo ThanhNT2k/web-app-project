@@ -296,6 +296,11 @@ const API = {
     }),
     getComments: (params = {}) => request('/moderator/comments', { method: 'GET', params }),
     updateCommentStatus: (id, status) => request(`/moderator/comments/${id}/status`, { method: 'PATCH', data: { status } }),
+    getProfiles: (status) => request('/moderator/profiles', { method: 'GET', params: status ? { status } : undefined }),
+    processProfileAvatar: (id, action, note = '') => request(`/moderator/profiles/${id}/avatar`, {
+      method: 'PATCH',
+      data: { action, note },
+    }),
   },
   upload: {
     cover: async (file) => {

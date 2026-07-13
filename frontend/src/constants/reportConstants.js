@@ -25,6 +25,7 @@ export const REPORT_REASONS_BY_TARGET = {
     COMMENT_HATE_SPEECH: 'Ngôn từ thù ghét hoặc phân biệt đối xử',
     COMMENT_PERSONAL_INFO: 'Tiết lộ thông tin cá nhân',
     COMMENT_INAPPROPRIATE: 'Nội dung phản cảm hoặc không phù hợp',
+    AVATAR_INAPPROPRIATE: 'Avatar không phù hợp',
     OTHER: 'Lý do khác',
   },
 };
@@ -58,6 +59,7 @@ export const REPORT_ACTION_LABELS = {
   DISMISS: 'Bác bỏ báo cáo',
   REJECT_COMMENT: 'Ẩn bình luận vi phạm',
   FLAG_COMMENT_SPAM: 'Gắn cờ bình luận là spam',
+  REMOVE_REPORTED_AVATAR: 'Gỡ avatar không phù hợp',
   UNPUBLISH_CHAPTER: 'Ẩn chương khỏi hệ thống',
   HIDE_STORY: 'Ẩn truyện khỏi hệ thống',
 };
@@ -70,7 +72,9 @@ export const getReportTargetType = ({ commentId, chapterId }) => {
 
 export const getReportActions = (report) => {
   const actions = ['START_REVIEW', 'RESOLVE_NO_ACTION', 'DISMISS'];
-  if (report.comment_id) actions.splice(1, 0, 'REJECT_COMMENT', 'FLAG_COMMENT_SPAM');
+  if (report.reason === 'AVATAR_INAPPROPRIATE') {
+    actions.splice(1, 0, 'REMOVE_REPORTED_AVATAR');
+  } else if (report.comment_id) actions.splice(1, 0, 'REJECT_COMMENT', 'FLAG_COMMENT_SPAM');
   else if (report.chapter_id) actions.splice(1, 0, 'UNPUBLISH_CHAPTER');
   else if (report.story_id) actions.splice(1, 0, 'HIDE_STORY');
   return actions;

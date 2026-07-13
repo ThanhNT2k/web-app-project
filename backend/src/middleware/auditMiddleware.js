@@ -12,7 +12,15 @@ function sanitizeDetails(value) {
 }
 
 function auditAction(action, entityType) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
+    const entityId = req.params.id || req.params.storyId || null;
+    let affectedUserId = null;
+    try {
+      affectedUserId = await AuditLog.resolveAffectedUser(entityType, entityId);
+    } catch (error) {
+      console.error('[auditAction.resolveAffectedUser]', error.message);
+    }
+
     res.on('finish', () => {
       if (res.statusCode < 200 || res.statusCode >= 300 || !req.user) return;
       AuditLog.create({
@@ -20,7 +28,8 @@ function auditAction(action, entityType) {
         actorRole: req.user.role,
         action,
         entityType,
-        entityId: req.params.id || req.params.storyId || null,
+        entityId,
+        affectedUserId,
         details: sanitizeDetails(req.body),
         ipAddress: req.ip,
       }).catch((error) => console.error('[auditAction]', error.message));

@@ -1,5 +1,6 @@
 jest.mock('../config/database', () => ({
   query: jest.fn(),
+  connect: jest.fn(),
 }));
 
 jest.mock('../models', () => ({
@@ -17,7 +18,12 @@ jest.mock('../models/Notification', () => ({
 
 const db = require('../config/database');
 const Notification = require('../models/Notification');
-const { approvePendingStory, processPendingStory, getComments } = require('./moderatorController');
+const {
+  approvePendingStory,
+  processPendingStory,
+  getComments,
+  processProfileAvatar,
+} = require('./moderatorController');
 
 function createResponse() {
   return {
@@ -143,5 +149,40 @@ describe('moderatorController.processPendingStory', () => {
 
     expect(db.query).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
+describe('moderatorController.processProfileAvatar', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('uses a separate boolean parameter when resolving enum-backed reports', async () => {
+    const client = {
+      query: jest.fn()
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({ rows: [{ id: 11, username: 'reader', avatar_url: '/avatar.jpg' }] })
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 2, rows: [{ id: 1 }, { id: 2 }] })
+        .mockResolvedValueOnce({}),
+      release: jest.fn(),
+    };
+    db.connect.mockResolvedValueOnce(client);
+    const req = {
+      params: { id: '11' },
+      body: { action: 'REMOVE_AVATAR', note: 'Ảnh phản cảm' },
+      user: { id: 3 },
+    };
+    const res = createResponse();
+
+    await processProfileAvatar(req, res);
+
+    expect(client.query).toHaveBeenCalledWith(
+      expect.stringContaining('CASE WHEN $6'),
+      ['RESOLVED', 'REMOVE_REPORTED_AVATAR', 'Ảnh phản cảm', 3, 11, true]
+    );
+    expect(client.query).toHaveBeenCalledWith('COMMIT');
+    expect(client.release).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });

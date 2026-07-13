@@ -1,6 +1,7 @@
 jest.mock('../models/AuditLog', () => ({
   create: jest.fn().mockResolvedValue({ id: 1 }),
   findAll: jest.fn(),
+  resolveAffectedUser: jest.fn().mockResolvedValue(null),
 }));
 
 const AuditLog = require('../models/AuditLog');
@@ -24,7 +25,8 @@ describe('audit logging', () => {
     };
     const next = jest.fn();
 
-    auditAction('UPDATE_USER_ROLE', 'user')(req, res, next);
+    AuditLog.resolveAffectedUser.mockResolvedValueOnce(14);
+    await auditAction('UPDATE_USER_ROLE', 'user')(req, res, next);
     finishHandler();
     await Promise.resolve();
 
@@ -33,14 +35,15 @@ describe('audit logging', () => {
       actorId: 9,
       actorRole: 'Admin',
       entityId: '14',
+      affectedUserId: 14,
       details: { role: 'Moderator' },
     }));
   });
 
-  it('does not record failed requests', () => {
+  it('does not record failed requests', async () => {
     let finishHandler;
     const res = { statusCode: 400, on: jest.fn((event, handler) => { finishHandler = handler; }) };
-    auditAction('PROCESS_REPORT', 'report')({ user: { id: 2, role: 'Moderator' }, params: {}, body: {} }, res, jest.fn());
+    await auditAction('PROCESS_REPORT', 'report')({ user: { id: 2, role: 'Moderator' }, params: {}, body: {} }, res, jest.fn());
     finishHandler();
     expect(AuditLog.create).not.toHaveBeenCalled();
   });

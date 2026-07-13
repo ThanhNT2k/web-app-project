@@ -14,5 +14,7 @@ router.patch('/pending-stories/:id/approve', auditAction('APPROVE_STORY', 'story
 router.patch('/pending-stories/:id/process', auditAction('PROCESS_STORY', 'story'), moderatorController.processPendingStory);
 router.get('/comments', moderatorController.getComments);
 router.patch('/comments/:id/status', auditAction('UPDATE_COMMENT_STATUS', 'comment'), moderatorController.updateCommentStatus);
+router.get('/profiles', moderatorController.getReportedProfiles);
+router.patch('/profiles/:id/avatar', auditAction('PROCESS_PROFILE_AVATAR', 'user'), moderatorController.processProfileAvatar);
 
 module.exports = router;

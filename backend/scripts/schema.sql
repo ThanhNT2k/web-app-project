@@ -244,6 +244,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     action VARCHAR(80) NOT NULL,
     entity_type VARCHAR(50) NOT NULL,
     entity_id VARCHAR(100),
+    affected_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     details JSONB NOT NULL DEFAULT '{}'::jsonb,
     ip_address VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP

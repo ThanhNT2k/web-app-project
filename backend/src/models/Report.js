@@ -5,6 +5,9 @@ const sequelize = require('../config/database'); // Đường dẫn đến file 
 const Report = sequelize.define('Report', {
     user_id: DataTypes.INTEGER,
     chapter_id: DataTypes.INTEGER,
+    story_id: DataTypes.INTEGER,
+    comment_id: DataTypes.INTEGER,
+    reported_user_id: DataTypes.INTEGER,
     reason: DataTypes.STRING,
     description: DataTypes.TEXT,
     status: DataTypes.ENUM('NEW', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED')

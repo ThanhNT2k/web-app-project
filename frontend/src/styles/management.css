@@ -270,6 +270,41 @@
 .moderation-comment-meta { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .moderation-comment-user { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
 .moderation-comment-user > span { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 50%; color: #fff; background: var(--admin-accent); font-size: 0.85rem; font-weight: 800; }
+.moderation-user-avatar { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; object-fit: cover; border: 1px solid #dfe7f1; }
+
+.profiles-workspace { display: grid; max-width: 1280px; margin: 0 auto; gap: 1rem; }
+.profiles-filter-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border: 1px solid #dfe7f1; border-radius: 13px; background: #fff; }
+.profiles-filter-row > span, .profile-moderation-controls label { flex: 0 0 auto; color: #475467; font-size: 0.78rem; font-weight: 750; }
+.profiles-status-filters { display: flex; min-width: 0; gap: 0.35rem; overflow-x: auto; }
+.profiles-status-filters button { flex: 0 0 auto; padding: 0.52rem 0.75rem; border: 0; border-radius: 9px; color: #667085; background: #f3f6fa; font-size: 0.76rem; font-weight: 750; cursor: pointer; }
+.profiles-status-filters button:hover { color: var(--admin-accent); }
+.profiles-status-filters button.active { color: var(--admin-accent); background: var(--admin-accent-soft); }
+.profiles-status-filters button:disabled { cursor: wait; opacity: 0.7; }
+.profiles-filter-row select, .profile-moderation-controls select, .profile-moderation-controls textarea { padding: 0.58rem 0.7rem; border: 1px solid #d0d8e5; border-radius: 9px; color: #344054; background: #fff; }
+.profile-moderation-grid { display: grid; gap: 0.8rem; }
+.profile-moderation-card { display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1.2fr); gap: 1.25rem; padding: 1.1rem; border: 1px solid #dfe7f1; border-radius: 16px; background: #fff; box-shadow: 0 7px 22px rgba(24,39,75,.045); }
+.profile-moderation-summary { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
+.profile-moderation-summary > img, .profile-moderation-summary > span { display: grid; width: 72px; height: 72px; flex: 0 0 72px; place-items: center; border-radius: 50%; object-fit: cover; color: #fff; background: var(--admin-accent); font-size: 1.3rem; font-weight: 800; }
+.profile-moderation-summary h3 { margin: 0; color: #172033; font-size: 1rem; }
+.profile-moderation-summary p { margin: 0.2rem 0; color: #667085; font-size: 0.8rem; }
+.profile-moderation-summary small { display: inline-block; padding: 0.2rem 0.45rem; border-radius: 999px; color: var(--admin-accent); background: var(--admin-accent-soft); font-weight: 700; }
+.profile-moderation-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.55rem; }
+.profile-moderation-controls label, .profile-moderation-controls textarea { grid-column: 1 / -1; }
+.profile-resolution-result { display: grid; grid-column: 1 / -1; gap: 0.18rem; padding: 0.7rem 0.8rem; border-left: 3px solid #10b981; border-radius: 8px; color: #065f46; background: #ecfdf5; }
+.profile-resolution-result > span { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.profile-resolution-result > strong { font-size: 0.82rem; }
+.profile-resolution-result > p { margin: 0.15rem 0; color: #356859; font-size: 0.76rem; line-height: 1.4; }
+.profile-resolution-result > small { color: #518071; font-size: 0.68rem; }
+.profile-moderation-controls textarea { resize: vertical; }
+.profile-moderation-controls button { padding: 0.6rem 0.9rem; border: 0; border-radius: 9px; color: #fff; background: var(--admin-accent); font-weight: 750; cursor: pointer; }
+.profile-moderation-controls button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+@media (max-width: 760px) {
+  .profiles-filter-row { align-items: stretch; flex-direction: column; }
+  .profile-moderation-card { grid-template-columns: 1fr; }
+  .profile-moderation-controls { grid-template-columns: 1fr; }
+  .profile-moderation-controls label, .profile-moderation-controls textarea { grid-column: auto; }
+}
 .moderation-comment-user div { display: grid; min-width: 0; }
 .moderation-comment-user strong { overflow: hidden; color: #172033; font-size: 0.87rem; text-overflow: ellipsis; white-space: nowrap; }
 .moderation-comment-user small { color: #98a2b3; font-size: 0.72rem; }

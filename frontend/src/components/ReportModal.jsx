@@ -7,7 +7,7 @@ import {
 import API from '../services/api';
 import { FontAwesomeIcon, faFlag } from '../lib/icons';
 
-const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) => {
+const ReportModal = ({ chapterId, storyId, commentId, reportedUserId, targetLabel, onClose }) => {
   const targetType = getReportTargetType({ commentId, chapterId });
   const reasons = REPORT_REASONS_BY_TARGET[targetType];
   const targetName = REPORT_TARGET_LABELS[targetType];
@@ -31,6 +31,7 @@ const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) =>
         story_id: numericStoryId,
         chapter_id: numericChapterId,
         comment_id: numericCommentId,
+        reported_user_id: reportedUserId ? parseInt(reportedUserId, 10) : null,
       });
     
       alert("Cảm ơn bạn đã báo cáo!");

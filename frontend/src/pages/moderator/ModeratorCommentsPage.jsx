@@ -16,7 +16,7 @@ function ModeratorCommentsPage() {
   const [comments, setComments] = useState([]);
   const [stats, setStats] = useState({ total: 0, approved: 0, masked: 0, flagged: 0, rejected: 0 });
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('approved');
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedActions, setSelectedActions] = useState({});
@@ -169,7 +169,11 @@ function ModeratorCommentsPage() {
             <article className="moderation-comment-card" key={comment.id}>
               <div className="moderation-comment-meta">
                 <div className="moderation-comment-user">
-                  <span>{displayName.trim().charAt(0).toUpperCase()}</span>
+                  {comment.user_avatar_url ? (
+                    <img className="moderation-user-avatar" src={comment.user_avatar_url} alt={`Avatar của ${displayName}`} />
+                  ) : (
+                    <span>{displayName.trim().charAt(0).toUpperCase()}</span>
+                  )}
                   <div>
                     <strong>{displayName}</strong>
                     <small>@{comment.user_username || `user-${comment.user_id}`}</small>
