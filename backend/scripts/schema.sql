@@ -54,7 +54,13 @@ CREATE TABLE IF NOT EXISTS stories (
     total_rating_count INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_published BOOLEAN NOT NULL DEFAULT true
+    is_published BOOLEAN NOT NULL DEFAULT false,
+    hidden_by_admin BOOLEAN NOT NULL DEFAULT false,
+    moderation_status VARCHAR(30) NOT NULL DEFAULT 'pending'
+        CHECK (moderation_status IN ('pending', 'approved', 'changes_requested', 'rejected')),
+    moderation_note TEXT,
+    reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMP
 );
 
 -- -----------------------------------------------------------------------------

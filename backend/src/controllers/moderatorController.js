@@ -1,11 +1,12 @@
 const db = require('../config/database');
 const { Story, Comment } = require('../models');
 const Tag = require('../models/Tag');
+const Notification = require('../models/Notification');
 
 async function getDashboard(req, res) {
   try {
     const [pendingStories, hiddenStories, newReports, totalComments] = await Promise.all([
-      db.query('SELECT COUNT(*)::int AS c FROM stories WHERE is_published = false AND hidden_by_admin = false'),
+      db.query("SELECT COUNT(*)::int AS c FROM stories WHERE is_published = false AND hidden_by_admin = false AND COALESCE(moderation_status, 'pending') = 'pending'"),
       db.query('SELECT COUNT(*)::int AS c FROM stories WHERE hidden_by_admin = true'),
       db.query("SELECT COUNT(*)::int AS c FROM reports WHERE status = 'NEW'"),
       db.query('SELECT COUNT(*)::int AS c FROM comments'),
@@ -47,12 +48,16 @@ async function getPendingStories(req, res) {
         s.updated_at,
         s.is_published,
         s.hidden_by_admin,
+        s.moderation_status,
+        s.moderation_note,
         u.username AS author_username,
         u.full_name AS author_full_name,
         COUNT(*) OVER() AS total_count
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
-      WHERE s.is_published = false AND s.hidden_by_admin = false
+      WHERE s.is_published = false
+        AND s.hidden_by_admin = false
+        AND COALESCE(s.moderation_status, 'pending') = 'pending'
       ORDER BY s.created_at DESC
       LIMIT $1 OFFSET $2
     `;
@@ -92,12 +97,16 @@ async function approvePendingStory(req, res) {
     const result = await db.query(
       `UPDATE stories
        SET is_published = true,
+           moderation_status = 'approved',
+           moderation_note = NULL,
+           reviewed_by = $2,
+           reviewed_at = CURRENT_TIMESTAMP,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
          AND is_published = false
          AND hidden_by_admin = false
-       RETURNING id, title, slug, is_published`,
-      [storyId]
+       RETURNING id, title, slug, is_published, moderation_status`,
+      [storyId, req.user?.id || null]
     );
 
     if (!result.rows[0]) {
@@ -106,6 +115,88 @@ async function approvePendingStory(req, res) {
     return res.status(200).json({ success: true, message: 'Đã duyệt và hiển thị truyện', story: result.rows[0] });
   } catch (error) {
     console.error('[moderatorController.approvePendingStory]', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+const STORY_REVIEW_ACTIONS = {
+  approve: {
+    status: 'approved',
+    published: true,
+    message: 'Đã duyệt và hiển thị truyện',
+    notification: 'Truyện của bạn đã được duyệt và hiển thị công khai.',
+  },
+  request_changes: {
+    status: 'changes_requested',
+    published: false,
+    message: 'Đã gửi yêu cầu chỉnh sửa',
+    notification: 'Truyện của bạn cần được chỉnh sửa trước khi có thể xuất bản.',
+  },
+  reject: {
+    status: 'rejected',
+    published: false,
+    message: 'Đã từ chối truyện',
+    notification: 'Truyện của bạn đã bị từ chối xuất bản.',
+  },
+};
+
+async function processPendingStory(req, res) {
+  try {
+    const storyId = parseInt(req.params.id, 10);
+    const action = typeof req.body?.action === 'string' ? req.body.action : '';
+    const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
+    const option = STORY_REVIEW_ACTIONS[action];
+
+    if (!storyId || !option) {
+      return res.status(400).json({ success: false, message: 'Mã truyện hoặc phương án xử lý không hợp lệ' });
+    }
+    if (note.length > 1000) {
+      return res.status(400).json({ success: false, message: 'Ghi chú xử lý không được vượt quá 1000 ký tự' });
+    }
+    if (action !== 'approve' && !note) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập lý do cho phương án này' });
+    }
+
+    const result = await db.query(
+      `UPDATE stories
+       SET is_published = $2,
+           moderation_status = $3,
+           moderation_note = $4,
+           reviewed_by = $5,
+           reviewed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+         AND is_published = false
+         AND hidden_by_admin = false
+         AND COALESCE(moderation_status, 'pending') = 'pending'
+       RETURNING id, title, slug, author_id, is_published, moderation_status, moderation_note, reviewed_at`,
+      [storyId, option.published, option.status, note || null, req.user?.id || null]
+    );
+
+    const story = result.rows[0];
+    if (!story) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy truyện đang chờ duyệt' });
+    }
+
+    if (story.author_id) {
+      const detail = note ? ` Lý do: ${note}` : '';
+      try {
+        await Notification.create(
+          story.author_id,
+          story.id,
+          null,
+          `${option.notification}${detail}`,
+          '/dashboard',
+          'system'
+        );
+      } catch (notificationError) {
+        console.error('[moderatorController.processPendingStory.notification]', notificationError);
+      }
+    }
+
+    return res.status(200).json({ success: true, message: option.message, story });
+  } catch (error) {
+    console.error('[moderatorController.processPendingStory]', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
@@ -216,6 +307,7 @@ module.exports = {
   getDashboard,
   getPendingStories,
   approvePendingStory,
+  processPendingStory,
   getComments,
   async updateCommentStatus(req, res) {
     try {

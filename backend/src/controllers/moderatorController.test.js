@@ -11,8 +11,13 @@ jest.mock('../models/Tag', () => ({
   getTagsForStory: jest.fn(),
 }));
 
+jest.mock('../models/Notification', () => ({
+  create: jest.fn(),
+}));
+
 const db = require('../config/database');
-const { approvePendingStory, getComments } = require('./moderatorController');
+const Notification = require('../models/Notification');
+const { approvePendingStory, processPendingStory, getComments } = require('./moderatorController');
 
 function createResponse() {
   return {
@@ -78,8 +83,65 @@ describe('moderatorController.approvePendingStory', () => {
 
     expect(db.query).toHaveBeenCalledWith(
       expect.stringContaining('hidden_by_admin = false'),
-      [11]
+      [11, null]
     );
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+describe('moderatorController.processPendingStory', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('requests changes with a required reason and notifies the uploader', async () => {
+    db.query.mockResolvedValueOnce({
+      rows: [{
+        id: 12,
+        title: 'Needs work',
+        slug: 'needs-work',
+        author_id: 8,
+        is_published: false,
+        moderation_status: 'changes_requested',
+        moderation_note: 'Bổ sung mô tả',
+      }],
+    });
+    Notification.create.mockResolvedValueOnce({ id: 1 });
+    const req = {
+      params: { id: '12' },
+      body: { action: 'request_changes', note: 'Bổ sung mô tả' },
+      user: { id: 3 },
+    };
+    const res = createResponse();
+
+    await processPendingStory(req, res);
+
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("COALESCE(moderation_status, 'pending') = 'pending'"),
+      [12, false, 'changes_requested', 'Bổ sung mô tả', 3]
+    );
+    expect(Notification.create).toHaveBeenCalledWith(
+      8,
+      12,
+      null,
+      expect.stringContaining('Bổ sung mô tả'),
+      '/dashboard',
+      'system'
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('rejects request changes without a reason', async () => {
+    const req = {
+      params: { id: '12' },
+      body: { action: 'request_changes', note: '   ' },
+      user: { id: 3 },
+    };
+    const res = createResponse();
+
+    await processPendingStory(req, res);
+
+    expect(db.query).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 });

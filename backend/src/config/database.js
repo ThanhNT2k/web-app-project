@@ -51,6 +51,22 @@ if (process.env.NODE_ENV !== 'test') {
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS weekly_views INTEGER NOT NULL DEFAULT 0');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS monthly_views INTEGER NOT NULL DEFAULT 0');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS total_views INTEGER NOT NULL DEFAULT 0');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS moderation_status VARCHAR(30)');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS moderation_note TEXT');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP');
+        await pool.query(`
+          UPDATE stories
+          SET moderation_status = CASE
+            WHEN is_published = true THEN 'approved'
+            WHEN hidden_by_admin = true THEN 'rejected'
+            ELSE 'pending'
+          END
+          WHERE moderation_status IS NULL
+        `);
+        await pool.query("ALTER TABLE stories ALTER COLUMN moderation_status SET DEFAULT 'pending'");
+        await pool.query('ALTER TABLE stories ALTER COLUMN moderation_status SET NOT NULL');
+        await pool.query('ALTER TABLE stories ALTER COLUMN is_published SET DEFAULT false');
         console.log('[Database] Verified stories table has hidden_by_admin column');
       } catch (err) {
         console.error('[Database] Failed to verify/add hidden_by_admin column:', err.message);

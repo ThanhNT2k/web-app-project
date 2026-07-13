@@ -274,6 +274,10 @@ const API = {
     getDashboard: () => request('/moderator/dashboard', { method: 'GET' }),
     getPendingStories: (page = 1, limit = 20) => request('/moderator/pending-stories', { method: 'GET', params: { page, limit } }),
     approvePendingStory: (id) => request(`/moderator/pending-stories/${id}/approve`, { method: 'PATCH' }),
+    processPendingStory: (id, action, note = '') => request(`/moderator/pending-stories/${id}/process`, {
+      method: 'PATCH',
+      data: { action, note },
+    }),
     getComments: (params = {}) => request('/moderator/comments', { method: 'GET', params }),
     updateCommentStatus: (id, status) => request(`/moderator/comments/${id}/status`, { method: 'PATCH', data: { status } }),
   },

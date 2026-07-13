@@ -446,6 +446,16 @@
 .pending-story-actions a { border: 1px solid #d0d8e4; color: #475467; background: #fff; }
 .pending-story-actions button { border: 0; color: #fff; background: var(--admin-accent); }
 .pending-empty { grid-column: 1 / -1; }
+.pending-story-process-dialog { width: min(100%,580px); }
+.pending-story-process-context { display: flex; align-items: center; gap: .75rem; }
+.pending-story-process-context img { width: 44px; height: 60px; flex: 0 0 44px; border-radius: 7px; object-fit: cover; }
+.pending-story-process-context div { display: grid; gap: .15rem; min-width: 0; }
+.pending-story-process-context strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pending-review-guidance { padding: .65rem .75rem; border-left: 3px solid #10b981; border-radius: 8px; color: #065f46; background: #ecfdf5; font-size: .76rem; line-height: 1.5; }
+.pending-review-guidance.request_changes { border-left-color: #f59e0b; color: #92400e; background: #fffbeb; }
+.pending-review-guidance.reject { border-left-color: #ef4444; color: #991b1b; background: #fef2f2; }
+.pending-process-error { margin: 0; }
+.report-process-actions button.danger-action { color: #fff; background: #dc2626; }
 
 @media (max-width: 1050px) {
   .management-quick-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
