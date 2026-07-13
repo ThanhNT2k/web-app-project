@@ -16,6 +16,7 @@ router.delete('/comments/:id', adminController.deleteComment);
 router.get('/stories', adminController.getAllStories);
 router.get('/bad-words', badWordController.getAll);
 router.post('/bad-words', badWordController.create);
+router.patch('/bad-words/:id', badWordController.update);
 router.delete('/bad-words/:id', badWordController.remove);
 
 module.exports = router;

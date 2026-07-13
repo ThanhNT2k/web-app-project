@@ -84,16 +84,45 @@ async function getPendingStories(req, res) {
   }
 }
 
+async function approvePendingStory(req, res) {
+  try {
+    const storyId = parseInt(req.params.id, 10);
+    if (!storyId) return res.status(400).json({ success: false, message: 'Mã truyện không hợp lệ' });
+
+    const result = await db.query(
+      `UPDATE stories
+       SET is_published = true,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+         AND is_published = false
+         AND hidden_by_admin = false
+       RETURNING id, title, slug, is_published`,
+      [storyId]
+    );
+
+    if (!result.rows[0]) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy truyện đang chờ duyệt' });
+    }
+    return res.status(200).json({ success: true, message: 'Đã duyệt và hiển thị truyện', story: result.rows[0] });
+  } catch (error) {
+    console.error('[moderatorController.approvePendingStory]', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
 async function getComments(req, res) {
   try {
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.max(parseInt(req.query.limit, 10) || 50, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
     const offset = (page - 1) * limit;
     const storyId = req.query.story_id ? parseInt(req.query.story_id, 10) : null;
     const chapterId = req.query.chapter_id ? parseInt(req.query.chapter_id, 10) : null;
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const allowedStatuses = ['approved', 'rejected', 'masked', 'flagged'];
+    const status = allowedStatuses.includes(req.query.status) ? req.query.status : null;
 
     const filters = [];
-    const values = [limit, offset];
+    const values = [];
 
     if (storyId) {
       values.push(storyId);
@@ -103,40 +132,73 @@ async function getComments(req, res) {
       values.push(chapterId);
       filters.push(`c.chapter_id = $${values.length}`);
     }
+    if (status) {
+      values.push(status);
+      filters.push(`c.status = $${values.length}`);
+    }
+    if (search) {
+      values.push(`%${search}%`);
+      filters.push(`(
+        c.content ILIKE $${values.length}
+        OR u.username ILIKE $${values.length}
+        OR u.full_name ILIKE $${values.length}
+        OR s.title ILIKE $${values.length}
+      )`);
+    }
 
     const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+    values.push(limit);
+    const limitPosition = values.length;
+    values.push(offset);
+    const offsetPosition = values.length;
     const query = `
       SELECT
         c.id,
         c.user_id,
         c.story_id,
         c.chapter_id,
+        c.parent_comment_id,
         c.content,
         c.rating,
         c.created_at,
         c.updated_at,
         c.status,
-        c.rating,
         c.is_spam,
         u.username AS user_username,
         u.full_name AS user_full_name,
         s.title AS story_title,
         s.slug AS story_slug,
+        ch.chapter_number,
+        ch.title AS chapter_title,
         COUNT(*) OVER() AS total_count
       FROM comments c
       LEFT JOIN users u ON u.id = c.user_id
       LEFT JOIN stories s ON s.id = c.story_id
+      LEFT JOIN chapters ch ON ch.id = c.chapter_id
       ${whereClause}
       ORDER BY c.created_at DESC
-      LIMIT $1 OFFSET $2
+      LIMIT $${limitPosition} OFFSET $${offsetPosition}
     `;
 
-    const result = await db.query(query, values);
+    const [result, statsResult] = await Promise.all([
+      db.query(query, values),
+      db.query(`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE status = 'approved')::int AS approved,
+          COUNT(*) FILTER (WHERE status = 'masked')::int AS masked,
+          COUNT(*) FILTER (WHERE status = 'flagged')::int AS flagged,
+          COUNT(*) FILTER (WHERE status = 'rejected')::int AS rejected
+        FROM comments
+      `),
+    ]);
     const totalItems = result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
+    const comments = result.rows.map(({ total_count, ...comment }) => comment);
 
     return res.status(200).json({
       success: true,
-      comments: result.rows,
+      comments,
+      stats: statsResult.rows[0] || { total: 0, approved: 0, masked: 0, flagged: 0, rejected: 0 },
       pagination: {
         page,
         limit,
@@ -153,6 +215,7 @@ async function getComments(req, res) {
 module.exports = {
   getDashboard,
   getPendingStories,
+  approvePendingStory,
   getComments,
   async updateCommentStatus(req, res) {
     try {

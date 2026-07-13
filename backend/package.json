@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "test": "jest",
-    "test:baseline": "jest src/health.test.js src/middleware/authMiddleware.test.js src/middleware/roleMiddleware.test.js src/services/storyFileImportService.test.js src/services/otpService.test.js src/services/rankingService.test.js src/services/moderationService.test.js src/controllers/reportController.test.js --runInBand --coverage=false",
+    "test:baseline": "jest src/health.test.js src/middleware/authMiddleware.test.js src/middleware/roleMiddleware.test.js src/services/storyFileImportService.test.js src/services/otpService.test.js src/services/rankingService.test.js src/services/moderationService.test.js src/controllers/reportController.test.js src/controllers/moderatorController.test.js src/controllers/badWordController.test.js --runInBand --coverage=false",
     "test:coverage": "jest --coverage",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",

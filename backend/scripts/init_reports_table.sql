@@ -9,6 +9,10 @@ CREATE TABLE Reports (
     reason VARCHAR(50) NOT NULL, -- Dùng để lưu giá trị từ Enum
     description TEXT,
     status report_status DEFAULT 'NEW',
+    resolution_action VARCHAR(50),
+    resolution_note TEXT,
+    resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    resolved_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

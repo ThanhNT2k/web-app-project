@@ -265,12 +265,16 @@ const API = {
     create: (data) => request('/reports', { method: 'POST', data }),
     getAll: (params = {}) => request('/reports', { method: 'GET', params }),
     updateStatus: (id, status) => request(`/reports/${id}`, { method: 'PATCH', data: { status } }),
+    process: (id, action, note = '') => request(`/reports/${id}/process`, {
+      method: 'PATCH',
+      data: { action, note },
+    }),
   },
   moderator: {
     getDashboard: () => request('/moderator/dashboard', { method: 'GET' }),
     getPendingStories: (page = 1, limit = 20) => request('/moderator/pending-stories', { method: 'GET', params: { page, limit } }),
-    getComments: (page = 1, limit = 50, storyId = null, chapterId = null) =>
-      request('/moderator/comments', { method: 'GET', params: { page, limit, story_id: storyId || undefined, chapter_id: chapterId || undefined } }),
+    approvePendingStory: (id) => request(`/moderator/pending-stories/${id}/approve`, { method: 'PATCH' }),
+    getComments: (params = {}) => request('/moderator/comments', { method: 'GET', params }),
     updateCommentStatus: (id, status) => request(`/moderator/comments/${id}/status`, { method: 'PATCH', data: { status } }),
   },
   upload: {
@@ -293,13 +297,14 @@ const API = {
     updateUserRole: (id, role) => request(`/admin/users/${id}/role`, { method: 'PATCH', data: { role } }),
     updateUserStatus: (id, isActive) => request(`/admin/users/${id}/status`, { method: 'PATCH', data: { is_active: isActive } }),
     deleteComment: (id) => request(`/admin/comments/${id}`, { method: 'DELETE' }),
-    getStories: (page = 1) => request('/admin/stories', { method: 'GET', params: { page, limit: 50 } }),
+    getStories: (page = 1, limit = 50) => request('/admin/stories', { method: 'GET', params: { page, limit } }),
     getReports: (status = 'ALL', page = 1) => 
       request('/reports', { method: 'GET', params: { status, page, limit: 50 } }),
   },
   badWords: {
     getAll: () => request('/admin/bad-words', { method: 'GET' }),
     create: (data) => request('/admin/bad-words', { method: 'POST', data }),
+    update: (id, data) => request(`/admin/bad-words/${id}`, { method: 'PATCH', data }),
     delete: (id) => request(`/admin/bad-words/${id}`, { method: 'DELETE' }),
   },
 };

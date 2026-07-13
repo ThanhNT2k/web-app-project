@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/main.css';
+import './styles/management.css';
 import './styles/darkMode.css';
 import './styles/reader.css';
 import App from './App';

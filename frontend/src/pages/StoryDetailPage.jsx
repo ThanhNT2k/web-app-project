@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import CommentSection from '../components/CommentSection';
@@ -14,7 +14,7 @@ import { slugify } from '../utils/slugify';
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80';
 
-const CHAPTERS_PER_PAGE = 50;
+const CHAPTERS_SCROLL_LIMIT = 1000;
 
 function formatChapterUploadDate(createdAt) {
   if (!createdAt) return '--/--/----';
@@ -53,9 +53,9 @@ function StoryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [chapterLoading, setChapterLoading] = useState(false);
   const [error, setError] = useState('');
-  const [chapterPage, setChapterPage] = useState(1);
   const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [sortOrder, setSortOrder] = useState('desc');
+  const [chapterSearch, setChapterSearch] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showRatingPanel, setShowRatingPanel] = useState(false);
 
@@ -93,13 +93,13 @@ function StoryDetailPage() {
     }
   }, [story, slug, navigate]);
 
-  // Load chapters with pagination and sort
+  // Load chapter metadata for the in-list vertical scroller.
   useEffect(() => {
     if (!story?.id) return;
     const fetchChapters = async () => {
       try {
         setChapterLoading(true);
-        const chaptersResponse = await API.chapters.getByStory(story.id, chapterPage, CHAPTERS_PER_PAGE, sortOrder);
+        const chaptersResponse = await API.chapters.getByStory(story.id, 1, CHAPTERS_SCROLL_LIMIT, sortOrder);
         setChapters(chaptersResponse.chapters || []);
         setChapterPagination(chaptersResponse.pagination || { page: 1, totalPages: 1, totalItems: 0 });
       } catch {
@@ -112,7 +112,7 @@ function StoryDetailPage() {
       }
     };
     fetchChapters();
-  }, [story?.id, chapterPage, sortOrder]);
+  }, [story?.id, sortOrder]);
 
   useEffect(() => {
     if (!isAuthenticated || !story?.id) {
@@ -158,6 +158,18 @@ function StoryDetailPage() {
       isActive = false;
     };
   }, [isAuthenticated, story?.id]);
+
+  const filteredChapters = useMemo(() => {
+    const keyword = chapterSearch.trim().toLocaleLowerCase('vi-VN');
+    if (!keyword) return chapters;
+    const numberKeyword = keyword.replace(/^(?:ch|chương)\.?\s*/u, '');
+
+    return chapters.filter((chapter) => {
+      const chapterNumber = String(chapter.chapter_number ?? '');
+      const chapterTitle = String(chapter.title || '').toLocaleLowerCase('vi-VN');
+      return chapterNumber.includes(numberKeyword) || chapterTitle.includes(keyword);
+    });
+  }, [chapters, chapterSearch]);
 
   if (loading) {
     return <main className="cmc-main"><p className="loading-text">Đang tải...</p></main>;
@@ -206,14 +218,25 @@ function StoryDetailPage() {
       ) : null}
 
       <section className="storyqq-header panel-card">
-        <div className="storyqq-cover-wrap">
-          <img
-            src={story.cover_image_url || FALLBACK_COVER}
-            alt={story.title}
-            className="storyqq-cover"
-            onError={(e) => { e.currentTarget.src = FALLBACK_COVER; }}
-          />
-          <span className="storyqq-status-badge">{story.status || 'Đang cập nhật'}</span>
+        <div className="storyqq-cover-column">
+          <div className="storyqq-cover-wrap">
+            <img
+              src={story.cover_image_url || FALLBACK_COVER}
+              alt={story.title}
+              className="storyqq-cover"
+              onError={(e) => { e.currentTarget.src = FALLBACK_COVER; }}
+            />
+            <span className="storyqq-status-badge">{story.status || 'Đang cập nhật'}</span>
+          </div>
+
+          <dl className="storyqq-meta-table">
+            {storyMetaItems.map((item) => (
+              <div key={item.label} className="storyqq-meta-item">
+                <dt className="storyqq-meta-label">{item.label}</dt>
+                <dd className="storyqq-meta-value">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
         <div className="storyqq-header-content">
@@ -230,15 +253,6 @@ function StoryDetailPage() {
               </>
             )}
           </p>
-
-          <div className="storyqq-meta-grid">
-            {storyMetaItems.map((item) => (
-              <div key={item.label} className="storyqq-meta-item">
-                <span className="storyqq-meta-label">{item.label}</span>
-                <strong className="storyqq-meta-value">{item.value}</strong>
-              </div>
-            ))}
-          </div>
 
           <div className="storyqq-intro-block">
             <p className="storyqq-intro-label">Giới thiệu truyện</p>
@@ -262,62 +276,63 @@ function StoryDetailPage() {
             </div>
           ) : null}
 
-          <div className="storyqq-actions">
-            {continueChapterNumber ? (
-              <Link
-                to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
-                className="btn-cmc btn-cmc-primary"
-              >
-                {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
-              </Link>
-            ) : null}
+        </div>
 
-            {latestChapter ? (
-              <Link
-                to={`/${story.id}-${story.slug}/${latestChapter.chapter_number}`}
-                className="btn-cmc btn-cmc-outline"
-              >
-                Đọc chương mới nhất
-              </Link>
-            ) : null}
+        {showRatingPanel ? (
+          <StoryRating
+            storyId={story.id}
+            initialAverageRating={story.average_rating}
+            initialRatingCount={story.rating_count || story.total_rating_count}
+            className="storyqq-rating-panel"
+            onRatingChange={(nextRating) => {
+              setStory((currentStory) => currentStory
+                ? {
+                  ...currentStory,
+                  average_rating: nextRating.average_rating,
+                  rating_count: nextRating.rating_count,
+                  total_rating_count: nextRating.rating_count,
+                }
+                : currentStory);
+            }}
+          />
+        ) : null}
 
-            <FollowButton storyId={story.id} />
-
-            <button
-              type="button"
-              className="btn-cmc btn-cmc-outline"
-              onClick={() => setIsReportModalOpen(true)}
+        <div className="storyqq-actions">
+          {continueChapterNumber ? (
+            <Link
+              to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
+              className="btn-cmc btn-cmc-primary"
             >
-              Báo cáo
-            </button>
-
-            <button
-              type="button"
-              className="btn-cmc btn-cmc-outline"
-              onClick={() => setShowRatingPanel((prev) => !prev)}
-            >
-              {showRatingPanel ? 'Ẩn đánh giá truyện' : 'Đánh giá truyện'}
-            </button>
-          </div>
-
-          {showRatingPanel ? (
-            <StoryRating
-              storyId={story.id}
-              initialAverageRating={story.average_rating}
-              initialRatingCount={story.rating_count || story.total_rating_count}
-              className="storyqq-rating-panel"
-              onRatingChange={(nextRating) => {
-                setStory((currentStory) => currentStory
-                  ? {
-                    ...currentStory,
-                    average_rating: nextRating.average_rating,
-                    rating_count: nextRating.rating_count,
-                    total_rating_count: nextRating.rating_count,
-                  }
-                  : currentStory);
-              }}
-            />
+              {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
+            </Link>
           ) : null}
+
+          {latestChapter ? (
+            <Link
+              to={`/${story.id}-${story.slug}/${latestChapter.chapter_number}`}
+              className="btn-cmc btn-cmc-outline"
+            >
+              Đọc chương mới nhất
+            </Link>
+          ) : null}
+
+          <FollowButton storyId={story.id} />
+
+          <button
+            type="button"
+            className="btn-cmc btn-cmc-outline"
+            onClick={() => setIsReportModalOpen(true)}
+          >
+            Báo cáo
+          </button>
+
+          <button
+            type="button"
+            className="btn-cmc btn-cmc-outline"
+            onClick={() => setShowRatingPanel((prev) => !prev)}
+          >
+            {showRatingPanel ? 'Ẩn đánh giá truyện' : 'Đánh giá truyện'}
+          </button>
         </div>
       </section>
 
@@ -326,15 +341,24 @@ function StoryDetailPage() {
           <h4 className="panel-title mb-0">
             Danh sách chương ({chapterPagination.totalItems || 0})
           </h4>
-          <div className="d-flex align-items-center gap-2">
+          <div className="storyqq-chapter-tools">
+            <label className="storyqq-chapter-search">
+              <span className="visually-hidden">Tìm kiếm chương</span>
+              <input
+                type="search"
+                value={chapterSearch}
+                onChange={(e) => setChapterSearch(e.target.value)}
+                placeholder="Tìm số hoặc tên chương..."
+                aria-label="Tìm kiếm chương"
+              />
+              {chapterSearch ? (
+                <button type="button" onClick={() => setChapterSearch('')} aria-label="Xóa tìm kiếm chương">×</button>
+              ) : null}
+            </label>
             <select
               className="form-select form-select-sm"
-              style={{ width: '170px' }}
               value={sortOrder}
-              onChange={(e) => {
-                setSortOrder(e.target.value);
-                setChapterPage(1);
-              }}
+              onChange={(e) => setSortOrder(e.target.value)}
               aria-label="Sắp xếp chương"
             >
               <option value="asc">Sắp xếp: Cũ nhất</option>
@@ -346,9 +370,8 @@ function StoryDetailPage() {
         {chapterLoading ? (
           <p className="loading-text">Đang tải danh sách chương...</p>
         ) : (
-          <>
-            <ul className="chapter-list storyqq-chapter-list">
-              {chapters.map((chapter) => {
+          <ul className="chapter-list storyqq-chapter-list">
+              {filteredChapters.map((chapter) => {
                 const chapterNumber = Number(chapter.chapter_number || 0);
                 const isRead = readChapterNumbers.has(chapterNumber);
 
@@ -359,7 +382,7 @@ function StoryDetailPage() {
                       className={isRead ? 'chapter-link-is-read' : ''}
                     >
                       <span>
-                        Ch.{chapter.chapter_number}: {chapter.title}
+                        Ch.{chapter.chapter_number}: {chapter.title || `Chương ${chapter.chapter_number}`}
                       </span>
                       <span className="text-muted small chapter-upload-date">
                         {formatChapterUploadDate(chapter.created_at)}
@@ -368,41 +391,12 @@ function StoryDetailPage() {
                   </li>
                 );
               })}
+              {filteredChapters.length === 0 ? (
+                <li className="storyqq-chapter-empty">
+                  Không tìm thấy chương phù hợp với “{chapterSearch.trim()}”.
+                </li>
+              ) : null}
             </ul>
-
-            {chapterPagination.totalPages > 1 && (
-              <div className="d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap">
-                <button
-                  type="button"
-                  className="btn-cmc btn-cmc-outline btn-sm"
-                  disabled={chapterPage <= 1}
-                  onClick={() => setChapterPage((p) => p - 1)}
-                >
-                  ← Trước
-                </button>
-                {Array.from({ length: chapterPagination.totalPages }, (_, i) => i + 1)
-                  .filter((p) => Math.abs(p - chapterPage) <= 2)
-                  .map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      className={`btn-cmc btn-sm ${p === chapterPage ? 'btn-cmc-primary' : 'btn-cmc-outline'}`}
-                      onClick={() => setChapterPage(p)}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                <button
-                  type="button"
-                  className="btn-cmc btn-cmc-outline btn-sm"
-                  disabled={chapterPage >= chapterPagination.totalPages}
-                  onClick={() => setChapterPage((p) => p + 1)}
-                >
-                  Sau →
-                </button>
-              </div>
-            )}
-          </>
         )}
       </section>
 

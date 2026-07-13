@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBan,
+  faBars,
   faArrowLeft,
   faArrowRight,
   faBell,
@@ -47,6 +48,7 @@ import {
 export {
   FontAwesomeIcon,
   faBan,
+  faBars,
   faArrowLeft,
   faArrowRight,
   faBell,

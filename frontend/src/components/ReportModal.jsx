@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
-import { REPORT_REASONS } from '../constants/reportConstants';
+import {
+  getReportTargetType,
+  REPORT_REASONS_BY_TARGET,
+  REPORT_TARGET_LABELS,
+} from '../constants/reportConstants';
 import API from '../services/api';
 import { FontAwesomeIcon, faFlag } from '../lib/icons';
 
 const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) => {
-  const [formData, setFormData] = useState({ reason: 'BROKEN_IMAGE', description: '' });
+  const targetType = getReportTargetType({ commentId, chapterId });
+  const reasons = REPORT_REASONS_BY_TARGET[targetType];
+  const targetName = REPORT_TARGET_LABELS[targetType];
+  const [formData, setFormData] = useState({
+    reason: Object.keys(reasons)[0],
+    description: '',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -38,7 +48,7 @@ const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) =>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
         <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <FontAwesomeIcon icon={faFlag} />
-          Báo cáo vi phạm
+          Báo cáo {targetName}
         </h3>
 
         {targetLabel ? (
@@ -57,7 +67,7 @@ const ReportModal = ({ chapterId, storyId, commentId, targetLabel, onClose }) =>
               value={formData.reason}
               onChange={(e) => setFormData({...formData, reason: e.target.value})}
             >
-              {Object.entries(REPORT_REASONS).map(([key, value]) => (
+              {Object.entries(reasons).map(([key, value]) => (
                 <option key={key} value={key}>{value}</option>
               ))}
             </select>

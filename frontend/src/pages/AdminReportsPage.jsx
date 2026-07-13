@@ -1,125 +1,258 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+import {
+  getReportActions,
+  REPORT_ACTION_LABELS,
+  REPORT_REASON_LABELS,
+  REPORT_STATUS_LABELS,
+} from '../constants/reportConstants';
 import API from '../services/api';
+
+const FILTERS = ['NEW', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED', 'ALL'];
+
+function getTargetType(report) {
+  if (report.comment_id) return 'Bình luận';
+  if (report.chapter_id) return 'Chương';
+  return 'Truyện';
+}
+
+function getTargetTitle(report) {
+  if (report.comment_id) {
+    return report.comment_author_username
+      ? `Bình luận của ${report.comment_author_username}`
+      : `Bình luận #${report.comment_id}`;
+  }
+  if (report.chapter_id) {
+    return `${report.story_title || 'Truyện'} — Chương ${report.chapter_number || report.chapter_id}`;
+  }
+  return report.story_title || `Truyện #${report.story_id}`;
+}
 
 function AdminReportsPage() {
   const [statusFilter, setStatusFilter] = useState('NEW');
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchReports();
-  }, [statusFilter]);
+  const [error, setError] = useState('');
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedAction, setSelectedAction] = useState('');
+  const [resolutionNote, setResolutionNote] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   const fetchReports = async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await API.admin.getReports(statusFilter);
       setReports(data.reports || []);
     } catch (err) {
-      setError("Không thể tải danh sách báo cáo.");
+      setError('Không thể tải danh sách báo cáo.');
       console.error('[AdminReportsPage.fetchReports] error', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateStatus = async (id, status) => {
+  useEffect(() => {
+    fetchReports();
+  }, [statusFilter]);
+
+  const statusCounts = useMemo(() => reports.reduce((counts, report) => ({
+    ...counts,
+    [report.status]: (counts[report.status] || 0) + 1,
+  }), {}), [reports]);
+
+  const openProcessPanel = (report) => {
+    const actions = getReportActions(report);
+    setSelectedReport(report);
+    setSelectedAction(actions[0]);
+    setResolutionNote('');
+  };
+
+  const closeProcessPanel = () => {
+    if (processing) return;
+    setSelectedReport(null);
+    setSelectedAction('');
+    setResolutionNote('');
+  };
+
+  const handleProcessReport = async (event) => {
+    event.preventDefault();
+    if (!selectedReport || !selectedAction) return;
+
     try {
-      await API.reports.updateStatus(id, status);
-      fetchReports();
+      setProcessing(true);
+      await API.reports.process(selectedReport.id, selectedAction, resolutionNote);
+      setSelectedReport(null);
+      setSelectedAction('');
+      setResolutionNote('');
+      await fetchReports();
     } catch (err) {
-      console.error('[AdminReportsPage.handleUpdateStatus] error', err.response || err);
-      alert("Cập nhật trạng thái thất bại: " + (err.response?.data?.message || "Lỗi server"));
+      alert(err?.response?.data?.message || 'Không thể xử lý báo cáo.');
+    } finally {
+      setProcessing(false);
     }
   };
 
-  if (loading) return <div className="p-6">Đang tải...</div>;
-  if (error) return <div className="p-6 text-red-500">{error}</div>;
-
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Danh sách báo cáo</h2>
-        <div className="flex bg-gray-100 p-1 rounded-lg">
-          {['NEW', 'RESOLVED', 'ALL'].map((status) => (
+    <section className="management-page reports-workspace">
+      <header className="management-page-header">
+        <div>
+          <p className="management-eyebrow">TRUNG TÂM KIỂM DUYỆT</p>
+          <h2>Quản lý báo cáo</h2>
+          <p>Đánh giá đúng đối tượng và chọn phương án xử lý phù hợp cho từng vi phạm.</p>
+        </div>
+        <button type="button" onClick={fetchReports} disabled={loading}>
+          {loading ? 'Đang tải...' : 'Làm mới'}
+        </button>
+      </header>
+
+      <section className="management-data-panel reports-management-panel">
+        <div className="reports-filter-bar" role="tablist" aria-label="Lọc trạng thái báo cáo">
+          {FILTERS.map((status) => (
             <button
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === status}
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                statusFilter === status 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={statusFilter === status ? 'active' : ''}
             >
-              {status === 'NEW' ? 'Báo cáo mới' : status === 'RESOLVED' ? 'Đã xử lý' : 'Tất cả'}
+              <span>{status === 'ALL' ? 'Tất cả' : REPORT_STATUS_LABELS[status]}</span>
+              {status !== 'ALL' && statusFilter === 'ALL' ? <strong>{statusCounts[status] || 0}</strong> : null}
             </button>
           ))}
         </div>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-gray-500 uppercase bg-gray-50">
-            <tr>
-              <th className="px-6 py-3">Người dùng</th>
-              <th className="px-6 py-3">Truyện / Chương</th>
-              <th className="px-6 py-3">Nội dung báo cáo</th>
-              <th className="px-6 py-3">Trạng thái</th>
-              <th className="px-6 py-3 text-right">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {reports.map((report) => (
-              <tr key={report.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 font-medium text-gray-900">{report.reporter_username || `ID: ${report.user_id}`}</td>
-                <td className="px-6 py-4">
-                  {report.comment_id ? (
-                    <div>
-                      <span className="font-semibold text-gray-800">Bình luận</span>
-                      {report.comment_content ? (
-                        <div className="text-gray-500 truncate max-w-xs">{report.comment_content}</div>
-                      ) : null}
-                    </div>
-                  ) : report.story_title || report.chapter_title || report.story_slug ? (
-                    report.story_slug ? (
-                      <Link to={`/${report.story_slug}${report.chapter_number ? `/${report.chapter_number}` : ''}`} className="font-semibold text-blue-600 hover:underline">
-                        {report.story_title || report.chapter_title || report.story_slug}{report.chapter_number ? ` — Chương ${report.chapter_number}` : ''}
+
+      {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
+
+      {!loading && reports.length === 0 ? (
+        <div className="reports-empty-state">
+          <strong>Không có báo cáo trong nhóm này</strong>
+          <span>Các báo cáo mới sẽ xuất hiện tại đây.</span>
+        </div>
+      ) : null}
+
+      <div className="reports-list" aria-busy={loading}>
+        {reports.map((report) => (
+          <article className="report-card" key={report.id}>
+            <div className="report-card-main">
+              <div className="report-card-heading">
+                <span className="report-target-badge">{getTargetType(report)}</span>
+                <span className={`report-status-badge status-${report.status.toLowerCase()}`}>
+                  {REPORT_STATUS_LABELS[report.status] || report.status}
+                </span>
+              </div>
+
+              <h3>{REPORT_REASON_LABELS[report.reason] || report.reason}</h3>
+              <p className="report-description">{report.description || 'Người báo cáo không cung cấp mô tả thêm.'}</p>
+
+              <dl className="report-details">
+                <div>
+                  <dt>Đối tượng</dt>
+                  <dd>
+                    {report.story_slug ? (
+                      <Link to={`/${report.story_slug}${report.chapter_number ? `/${report.chapter_number}` : ''}`}>
+                        {getTargetTitle(report)}
                       </Link>
-                    ) : (
-                      <span className="font-semibold text-gray-800">{report.story_title || report.chapter_title || `ID: ${report.story_id}`}</span>
-                    )
-                  ) : (
-                    <span className="text-gray-500">—</span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="font-semibold text-gray-800">{report.reason}</div>
-                  <div className="text-gray-500 truncate max-w-xs">{report.description}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                    report.status === 'NEW' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
-                  }`}>
-                    {report.status}
+                    ) : getTargetTitle(report)}
+                  </dd>
+                </div>
+                {report.comment_id ? (
+                  <div>
+                    <dt>Nội dung bình luận</dt>
+                    <dd className="report-comment-quote">“{report.comment_content || 'Bình luận không còn tồn tại'}”</dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt>Người báo cáo</dt>
+                  <dd>{report.reporter_username || `Người dùng #${report.user_id}`}</dd>
+                </div>
+                <div>
+                  <dt>Thời gian</dt>
+                  <dd>{new Date(report.created_at).toLocaleString('vi-VN')}</dd>
+                </div>
+              </dl>
+
+              {report.resolution_action ? (
+                <div className="report-resolution-summary">
+                  <strong>{REPORT_ACTION_LABELS[report.resolution_action] || report.resolution_action}</strong>
+                  <span>
+                    {report.resolved_by_username ? `Bởi ${report.resolved_by_username}` : 'Đã ghi nhận phương án'}
+                    {report.resolution_note ? ` · ${report.resolution_note}` : ''}
                   </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  {report.status === 'NEW' && (
-                    <button 
-                      onClick={() => handleUpdateStatus(report.id, 'RESOLVED')}
-                      className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-xs font-medium transition-all"
-                    >
-                      Xử lý
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="report-card-actions">
+              <button type="button" onClick={() => openProcessPanel(report)}>
+                {report.status === 'RESOLVED' || report.status === 'DISMISSED'
+                  ? 'Xử lý lại'
+                  : 'Chọn phương án xử lý'}
+              </button>
+            </div>
+          </article>
+        ))}
       </div>
-    </div>
+      </section>
+
+      {selectedReport ? (
+        <div className="report-process-overlay" role="presentation" onMouseDown={closeProcessPanel}>
+          <form
+            className="report-process-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="process-report-title"
+            onSubmit={handleProcessReport}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="report-process-heading">
+              <div>
+                <span>{getTargetType(selectedReport)} #{selectedReport.id}</span>
+                <h3 id="process-report-title">Chọn phương án xử lý</h3>
+              </div>
+              <button type="button" onClick={closeProcessPanel} aria-label="Đóng">×</button>
+            </div>
+
+            <div className="report-process-context">
+              <strong>{REPORT_REASON_LABELS[selectedReport.reason] || selectedReport.reason}</strong>
+              <span>{getTargetTitle(selectedReport)}</span>
+            </div>
+
+            <label htmlFor="report-action">Phương án</label>
+            <select
+              id="report-action"
+              value={selectedAction}
+              onChange={(event) => setSelectedAction(event.target.value)}
+              required
+            >
+              {getReportActions(selectedReport).map((action) => (
+                <option value={action} key={action}>{REPORT_ACTION_LABELS[action]}</option>
+              ))}
+            </select>
+
+            <label htmlFor="resolution-note">Ghi chú xử lý</label>
+            <textarea
+              id="resolution-note"
+              value={resolutionNote}
+              onChange={(event) => setResolutionNote(event.target.value)}
+              maxLength={500}
+              rows={4}
+              placeholder="Ghi rõ căn cứ hoặc lưu ý cho lần kiểm tra sau..."
+            />
+            <small>{resolutionNote.length}/500</small>
+
+            <div className="report-process-actions">
+              <button type="button" onClick={closeProcessPanel} disabled={processing}>Hủy</button>
+              <button type="submit" disabled={processing || !selectedAction}>
+                {processing ? 'Đang xử lý...' : 'Xác nhận xử lý'}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

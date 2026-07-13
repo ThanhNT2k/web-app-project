@@ -40,4 +40,20 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { getAll, create, remove };
+async function update(req, res) {
+  try {
+    const tier = Number(req.body.tier);
+    if (![1, 2, 3].includes(tier)) {
+      return res.status(400).json({ success: false, message: 'Cấp độ từ khóa không hợp lệ' });
+    }
+    const word = await BadWord.update(req.params.id, { tier });
+    if (!word) return res.status(404).json({ success: false, message: 'Không tìm thấy từ khóa' });
+    await loadModerationData();
+    return res.status(200).json({ success: true, data: word });
+  } catch (err) {
+    console.error('[badWordController.update]', err);
+    return res.status(500).json({ success: false, message: 'Lỗi khi cập nhật từ khóa' });
+  }
+}
+
+module.exports = { getAll, create, remove, update };

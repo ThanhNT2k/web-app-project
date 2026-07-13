@@ -15,5 +15,12 @@ module.exports = {
   destroy: async ({ where }) => {
     const res = await pool.query('DELETE FROM bad_words WHERE id = $1', [where.id]);
     return res.rowCount;
-  }
+  },
+  update: async (id, { tier }) => {
+    const res = await pool.query(
+      'UPDATE bad_words SET tier = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING *',
+      [tier, id]
+    );
+    return res.rows[0] || null;
+  },
 };

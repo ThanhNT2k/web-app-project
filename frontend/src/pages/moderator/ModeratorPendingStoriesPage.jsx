@@ -1,116 +1,87 @@
 import { useEffect, useState } from 'react';
-import API from '../../services/api';
 import { Link } from 'react-router-dom';
+
+import API from '../../services/api';
 
 function ModeratorPendingStoriesPage() {
   const [stories, setStories] = useState([]);
-  const [pagination, setPagination] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await API.moderator.getPendingStories(page, 20);
-        setStories(res.stories || []);
-        setPagination(res.pagination || null);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [page]);
+  const loadStories = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await API.moderator.getPendingStories(page, 20);
+      setStories(response.stories || []);
+      setPagination(response.pagination || { page, totalPages: 1, totalItems: 0 });
+    } catch (err) {
+      console.error('[ModeratorPendingStoriesPage.loadStories] error', err);
+      setError('Không thể tải danh sách truyện chờ duyệt.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadStories(); }, [page]);
+
+  const approveStory = async (story) => {
+    if (!window.confirm(`Duyệt và hiển thị truyện “${story.title}”?`)) return;
+    try {
+      setProcessingId(story.id);
+      await API.moderator.approvePendingStory(story.id);
+      setMessage(`Đã duyệt truyện “${story.title}”.`);
+      setTimeout(() => setMessage(''), 4000);
+      await loadStories();
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Không thể duyệt truyện.');
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
-      <h2 className="section-title mb-4">Duyệt truyện chờ</h2>
+    <section className="management-page">
+      <header className="management-page-header">
+        <div><p className="management-eyebrow">HÀNG ĐỢI XUẤT BẢN</p><h2>Truyện chờ duyệt</h2><p>Kiểm tra thông tin tác phẩm trước khi cho phép hiển thị công khai.</p></div>
+        <button type="button" onClick={loadStories} disabled={loading}>{loading ? 'Đang tải...' : 'Làm mới hàng đợi'}</button>
+      </header>
 
-      <div className="panel-card">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3 className="panel-title mb-0">Danh sách chờ</h3>
-          <button 
-            className="btn-cmc btn-cmc-outline btn-sm" 
-            onClick={() => setPage(1)} // Nút làm mới sẽ gọi lại trang 1
-          >
-            Làm mới 🔄
-          </button>
-        </div>
-
-        <div style={{ overflowX: 'auto' }}>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Tên truyện</th>
-                <th>Người đăng</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan="4" className="text-center py-4 text-muted">Đang tải dữ liệu...</td>
-                </tr>
-              )}
-              
-              {!loading && stories.length === 0 && (
-                <tr>
-                  <td colSpan="4" className="text-center py-4 text-muted">Không có truyện nào đang chờ duyệt.</td>
-                </tr>
-              )}
-
-              {!loading && stories.map((s) => (
-                <tr key={s.id}>
-                  <td><strong>{s.title}</strong></td>
-                  <td>@{s.author_username}</td>
-                  <td>
-                    <span className="badge-role" style={{ background: '#fef08a', color: '#ca8a04' }}>
-                      Chờ xử lý
-                    </span>
-                  </td>
-                  <td>
-                    <Link 
-                      to={`/moderator/pending-stories/${s.id}`} 
-                      className="btn-cmc btn-cmc-primary btn-sm"
-                    >
-                      Xem chi tiết
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Cụm Phân Trang (Pagination) phong cách CMC */}
-        {pagination && pagination.totalPages > 0 && (
-          <div className="mt-4 d-flex justify-content-between align-items-center border-top pt-3">
-            <div className="text-muted small">
-              Trang <strong>{pagination.page}</strong> / {pagination.totalPages}
-            </div>
-            <div className="d-flex gap-2">
-              <button 
-                className="btn-cmc btn-cmc-outline btn-sm" 
-                disabled={page <= 1} 
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                ← Quay lại
-              </button>
-              <button 
-                className="btn-cmc btn-cmc-primary btn-sm" 
-                disabled={page >= pagination.totalPages} 
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Tiếp →
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="pending-summary-bar">
+        <div><span>Đang chờ xử lý</span><strong>{pagination.totalItems || 0}</strong></div>
+        <p>Mở trang truyện để kiểm tra mô tả, tác giả và nội dung chương trước khi duyệt.</p>
       </div>
-    </div>
+
+      {message ? <div className="alert-cmc">{message}</div> : null}
+      {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
+
+      {loading ? <div className="management-loading panel-like">Đang tải danh sách chờ...</div> : (
+        <div className="pending-story-grid">
+          {stories.map((story) => (
+            <article className="pending-story-card" key={story.id}>
+              <div className="pending-story-cover">{story.cover_image_url ? <img src={story.cover_image_url} alt="" /> : <span>{story.title.charAt(0)}</span>}</div>
+              <div className="pending-story-body">
+                <div className="pending-story-heading"><span className="management-badge warning">Chờ xử lý</span><small>#{story.id}</small></div>
+                <h3>{story.title}</h3>
+                <p>{story.description || 'Tác giả chưa cung cấp mô tả cho truyện này.'}</p>
+                <dl><div><dt>Người đăng</dt><dd>{story.author_full_name || `@${story.author_username}`}</dd></div><div><dt>Thể loại</dt><dd>{story.category || 'Chưa phân loại'}</dd></div><div><dt>Số chương</dt><dd>{story.total_chapters || 0}</dd></div><div><dt>Ngày gửi</dt><dd>{new Date(story.created_at).toLocaleDateString('vi-VN')}</dd></div></dl>
+                <div className="pending-story-actions">
+                  <Link to={`/story/${story.id}-${story.slug}`} target="_blank" rel="noreferrer">Xem trang truyện</Link>
+                  <button type="button" onClick={() => approveStory(story)} disabled={processingId === story.id}>{processingId === story.id ? 'Đang duyệt...' : 'Duyệt & hiển thị'}</button>
+                </div>
+              </div>
+            </article>
+          ))}
+          {!stories.length ? <div className="comments-empty-state pending-empty"><strong>Hàng đợi đã được xử lý</strong><span>Hiện không có truyện nào đang chờ duyệt.</span></div> : null}
+        </div>
+      )}
+
+      {pagination.totalPages > 1 ? <nav className="comments-pagination"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}>Trang trước</button><span>Trang {page} / {pagination.totalPages}</span><button type="button" disabled={page >= pagination.totalPages || loading} onClick={() => setPage((value) => value + 1)}>Trang sau</button></nav> : null}
+    </section>
   );
 }
 

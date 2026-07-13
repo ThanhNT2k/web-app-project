@@ -99,6 +99,7 @@ async function getChapters(req, res) {
     if (!story.is_published || story.hidden_by_admin) {
       const isOwnerOrAdmin = req.user && (
         req.user.role === 'Admin' ||
+        (req.user.role === 'Moderator' && !story.hidden_by_admin) ||
         Number(req.user.id) === Number(story.author_id)
       );
       const isCollaborator = req.user && await StoryCollaborator.isCollaborator(story.id, req.user.id);
@@ -142,6 +143,7 @@ async function getChapterById(req, res) {
     if (!chapter.story_is_published || chapter.story_hidden_by_admin) {
       const isOwnerOrAdmin = req.user && (
         req.user.role === 'Admin' ||
+        (req.user.role === 'Moderator' && !chapter.story_hidden_by_admin) ||
         Number(req.user.id) === Number(chapter.story_author_id)
       );
       const isCollaborator = req.user && await StoryCollaborator.isCollaborator(chapter.story_id, req.user.id);
@@ -470,6 +472,7 @@ async function getChapterBySlugAndNumber(req, res) {
     if (!chapter.story_is_published || chapter.story_hidden_by_admin) {
       const isOwnerOrAdmin = req.user && (
         req.user.role === 'Admin' ||
+        (req.user.role === 'Moderator' && !chapter.story_hidden_by_admin) ||
         Number(req.user.id) === Number(chapter.story_author_id)
       );
       const isCollaborator = req.user && await StoryCollaborator.isCollaborator(chapter.story_id, req.user.id);

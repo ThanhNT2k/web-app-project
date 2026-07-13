@@ -708,6 +708,13 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
   position: relative;
 }
 
+.storyqq-cover-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
 .storyqq-cover {
   width: 100%;
   border-radius: 12px;
@@ -743,20 +750,30 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
   color: var(--text-muted);
 }
 
-.storyqq-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.65rem;
-  margin-bottom: 0.9rem;
+.storyqq-header-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.storyqq-meta-table {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--primary-color) 6%);
+  overflow: hidden;
 }
 
 .storyqq-meta-item {
-  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
-  border-radius: 10px;
-  padding: 0.5rem 0.65rem;
-  background: color-mix(in srgb, var(--surface) 90%, var(--primary-color) 10%);
   display: grid;
-  gap: 0.15rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.58rem 0.65rem;
+}
+
+.storyqq-meta-item + .storyqq-meta-item {
+  border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
 }
 
 .storyqq-meta-label {
@@ -767,9 +784,12 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 }
 
 .storyqq-meta-value {
+  margin: 0;
   font-size: 0.93rem;
+  font-weight: 700;
   color: var(--text);
   line-height: 1.35;
+  text-align: right;
 }
 
 .storyqq-desc {
@@ -779,8 +799,10 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 }
 
 .storyqq-intro-block {
+  flex: 1;
+  min-height: 180px;
   margin-bottom: 0.95rem;
-  padding: 0.7rem 0.75rem;
+  padding: 0.9rem 1rem;
   border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface) 94%, var(--primary-color) 6%);
@@ -802,13 +824,16 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 }
 
 .storyqq-rating-panel {
-  margin-top: 0.75rem;
+  grid-column: 1 / -1;
 }
 
 .storyqq-actions {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
 }
 
 .storyqq-quick-list {
@@ -846,6 +871,99 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 
 .storyqq-chapter-list li a {
   border-bottom-style: dashed;
+}
+
+.storyqq-chapter-list {
+  max-height: 620px;
+  padding-right: 0.35rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary-color) 45%, var(--border)) transparent;
+}
+
+.storyqq-chapter-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.storyqq-chapter-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.storyqq-chapter-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 45%, var(--border));
+}
+
+.storyqq-chapter-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.storyqq-chapter-tools .form-select {
+  width: 170px;
+}
+
+.storyqq-chapter-search {
+  position: relative;
+  display: block;
+  width: min(280px, 42vw);
+}
+
+.storyqq-chapter-search input {
+  width: 100%;
+  height: 31px;
+  padding: 0.35rem 2rem 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.storyqq-chapter-search input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 14%, transparent);
+}
+
+.storyqq-chapter-search button {
+  position: absolute;
+  top: 50%;
+  right: 0.45rem;
+  padding: 0;
+  border: 0;
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.storyqq-chapter-empty {
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .storyqq-chapter-list {
+    max-height: 460px;
+  }
+
+  .storyqq-chapter-tools {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .storyqq-chapter-search,
+  .storyqq-chapter-tools .form-select {
+    width: 100%;
+  }
 }
 
 .story-detail-cover {
@@ -1002,8 +1120,8 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 @media (max-width: 768px) {
   .story-detail-grid { grid-template-columns: 1fr; }
   .storyqq-header { grid-template-columns: 1fr; }
-  .storyqq-cover-wrap { max-width: 240px; }
-  .storyqq-meta-grid { grid-template-columns: 1fr; }
+  .storyqq-cover-column { max-width: 240px; }
+  .storyqq-intro-block { min-height: 0; }
 }
 
 /* ===== Navbar Search ===== */

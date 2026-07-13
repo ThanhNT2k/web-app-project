@@ -1,132 +1,257 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+
 import API from '../../services/api';
+
+const STATUS_CONFIG = {
+  approved: { label: 'Đã duyệt', description: 'Hiển thị bình thường' },
+  masked: { label: 'Đã che nội dung', description: 'Che các từ nhạy cảm' },
+  flagged: { label: 'Đã gắn spam', description: 'Cảnh báo nội dung khả nghi' },
+  rejected: { label: 'Đã từ chối', description: 'Ẩn khỏi khu vực bình luận' },
+};
+
+const FILTERS = ['all', 'approved', 'masked', 'flagged', 'rejected'];
 
 function ModeratorCommentsPage() {
   const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTier, setActiveTier] = useState('all'); 
+  const [stats, setStats] = useState({ total: 0, approved: 0, masked: 0, flagged: 0, rejected: 0 });
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedActions, setSelectedActions] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput.trim());
+      setPagination((current) => ({ ...current, page: 1 }));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const loadComments = async () => {
     try {
       setLoading(true);
-      const res = await API.moderator.getComments();
-      setComments(res.comments || []);
-    } catch (err) { console.error(err); } 
-    finally { setLoading(false); }
+      setError('');
+      const response = await API.moderator.getComments({
+        page: pagination.page,
+        limit: 20,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        search: searchQuery || undefined,
+      });
+      setComments(response.comments || []);
+      setStats(response.stats || { total: 0, approved: 0, masked: 0, flagged: 0, rejected: 0 });
+      setPagination((current) => ({
+        ...current,
+        ...(response.pagination || {}),
+      }));
+    } catch (err) {
+      console.error('[ModeratorCommentsPage.loadComments] error', err);
+      setError('Không thể tải danh sách bình luận.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { loadComments(); }, []);
+  useEffect(() => {
+    loadComments();
+  }, [pagination.page, statusFilter, searchQuery]);
 
-  // Lọc theo status (T1=rejected, T2=masked, T3=flagged)
-  const filteredComments = useMemo(() => {
-    return comments.filter((c) => {
-      const content = (c.content || '').toLowerCase();
-      const matchesSearch = content.includes(searchTerm.toLowerCase());
-
-      // Prefer numeric rating written by worker; fallback to status mapping
-      const statusToTier = { 'rejected': '1', 'masked': '2', 'flagged': '3' };
-      const commentTier = (typeof c.rating === 'number') ? String(c.rating) : (statusToTier[c.status] || '0'); // '0' = no violation / approved
-
-      if (activeTier === 'all') return matchesSearch;
-      return commentTier === activeTier && matchesSearch;
-    });
-  }, [comments, activeTier, searchTerm]);
-
-  // Counts per tier for UI buttons
-  const tierCounts = useMemo(() => {
-    const counts = { '1': 0, '2': 0, '3': 0, all: comments.length };
-    const statusToTier = { 'rejected': '1', 'masked': '2', 'flagged': '3' };
-    comments.forEach((c) => {
-      const t = (typeof c.rating === 'number') ? String(c.rating) : statusToTier[c.status];
-      if (t) counts[t] = (counts[t] || 0) + 1;
-    });
-    return counts;
-  }, [comments]);
-
-  const getStatusBadge = (status) => {
-    const config = {
-      'rejected': { label: 'T1 (Nghiêm trọng)', class: 'bg-danger' },
-      'masked':   { label: 'T2 (Nhẹ)', class: 'bg-warning text-dark' },
-      'flagged':  { label: 'T3 (Spam)', class: 'bg-info' },
-      'approved': { label: 'Đã duyệt', class: 'bg-success' }
-    };
-    const item = config[status] || { label: status, class: 'bg-secondary' };
-    return <span className={`badge ${item.class}`}>{item.label}</span>;
+  const changeFilter = (status) => {
+    setStatusFilter(status);
+    setPagination((current) => ({ ...current, page: 1 }));
   };
 
-  const getTierBadge = (status, rating) => {
-    // If worker populated rating, use it; otherwise infer from status
-    const r = typeof rating === 'number' ? rating : (status === 'rejected' ? 1 : status === 'masked' ? 2 : status === 'flagged' ? 3 : 0);
-    const map = {
-      1: { tier: 'T1', text: 'Nghiêm trọng — vi phạm nặng' , className: 'bg-danger'},
-      2: { tier: 'T2', text: 'Nhẹ — cần xem xét', className: 'bg-warning text-dark'},
-      3: { tier: 'T3', text: 'Spam / Khả nghi', className: 'bg-info'},
-      0: { tier: '—', text: 'Không vi phạm', className: 'bg-secondary'},
-    };
-    const item = map[r] || map[0];
-    return <span className={`badge ${item.className}`} title={item.text}>{item.tier}</span>;
+  const handleActionChange = (commentId, status) => {
+    setSelectedActions((current) => ({ ...current, [commentId]: status }));
   };
 
-  const handleApprove = async (id) => {
+  const handleApplyAction = async (comment) => {
+    const nextStatus = selectedActions[comment.id];
+    if (!nextStatus || nextStatus === comment.status) return;
+
+    if (
+      (nextStatus === 'rejected' || nextStatus === 'flagged')
+      && !window.confirm(`Xác nhận: ${STATUS_CONFIG[nextStatus].description.toLowerCase()}?`)
+    ) return;
+
     try {
-      setLoading(true);
-      await API.moderator.updateCommentStatus(id, 'approved');
+      setProcessingId(comment.id);
+      await API.moderator.updateCommentStatus(comment.id, nextStatus);
+      setSelectedActions((current) => ({ ...current, [comment.id]: '' }));
       await loadComments();
-    } catch (err) { console.error(err); alert('Không thể duyệt bình luận'); }
-    finally { setLoading(false); }
-  };
-
-  const handleReject = async (id) => {
-    if (!confirm('Xác nhận từ chối (T1) bình luận này?')) return;
-    try {
-      setLoading(true);
-      await API.moderator.updateCommentStatus(id, 'rejected');
-      await loadComments();
-    } catch (err) { console.error(err); alert('Không thể từ chối bình luận'); }
-    finally { setLoading(false); }
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Không thể cập nhật bình luận.');
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="mb-4">Quản lý bình luận</h2>
-      <div className="row g-3 mb-4">
-        <div className="col-md-6">
-          <input className="form-control" placeholder="Tìm kiếm..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+    <section className="comments-workspace">
+      <header className="comments-page-header">
+        <div>
+          <p className="comments-eyebrow">KIỂM DUYỆT CỘNG ĐỒNG</p>
+          <h2>Quản lý bình luận</h2>
+          <p>Tìm kiếm, phân loại và xử lý nội dung theo mức độ vi phạm.</p>
         </div>
-        <div className="col-md-6 d-flex justify-content-end align-items-center gap-2">
-          <button onClick={() => loadComments()} className={`btn btn-primary fw-bold`} disabled={loading} title="Làm mới danh sách bình luận">
-            {loading ? <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> : null}
-            Làm mới
-          </button>
+        <button type="button" onClick={loadComments} disabled={loading}>
+          {loading ? 'Đang tải...' : 'Làm mới dữ liệu'}
+        </button>
+      </header>
 
-          <div className="btn-group" role="group" aria-label="Tier filters">
-            <button onClick={() => setActiveTier('all')} className={`btn ${activeTier === 'all' ? 'btn-primary' : 'btn-outline-secondary'}`}>Tất cả <span className="badge bg-light text-dark ms-2">{tierCounts.all}</span></button>
-            <button onClick={() => setActiveTier('1')} className={`btn ${activeTier === '1' ? 'btn-danger' : 'btn-outline-danger'}`}>T1 <span className="badge bg-light text-dark ms-2">{tierCounts['1'] || 0}</span></button>
-            <button onClick={() => setActiveTier('2')} className={`btn ${activeTier === '2' ? 'btn-warning' : 'btn-outline-warning'}`}>T2 <span className="badge bg-light text-dark ms-2">{tierCounts['2'] || 0}</span></button>
-            <button onClick={() => setActiveTier('3')} className={`btn ${activeTier === '3' ? 'btn-info' : 'btn-outline-info'}`}>T3 <span className="badge bg-light text-dark ms-2">{tierCounts['3'] || 0}</span></button>
+      <div className="comment-stats-grid">
+        {[
+          ['total', 'Tổng bình luận'],
+          ['approved', 'Đang hiển thị'],
+          ['masked', 'Đã che nội dung'],
+          ['flagged', 'Đã gắn spam'],
+          ['rejected', 'Đã từ chối'],
+        ].map(([key, label]) => (
+          <div className={`comment-stat-card stat-${key}`} key={key}>
+            <span>{label}</span>
+            <strong>{stats[key] || 0}</strong>
           </div>
+        ))}
+      </div>
+
+      <div className="comments-toolbar">
+        <label className="comments-search-field">
+          <span>Tìm kiếm bình luận</span>
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Nội dung, người dùng hoặc tên truyện..."
+          />
+        </label>
+
+        <div className="comments-status-filters" role="tablist" aria-label="Lọc trạng thái bình luận">
+          {FILTERS.map((status) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === status}
+              className={statusFilter === status ? 'active' : ''}
+              key={status}
+              onClick={() => changeFilter(status)}
+            >
+              {status === 'all' ? 'Tất cả' : STATUS_CONFIG[status].label}
+              <strong>{status === 'all' ? stats.total : stats[status]}</strong>
+            </button>
+          ))}
         </div>
       </div>
 
-      <table className="table table-hover">
-        <thead><tr><th>Thông tin</th><th>Nội dung</th><th>Tier</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-        <tbody>
-          {filteredComments.map((c) => (
-            <tr key={c.id}>
-              <td>{c.user_username}</td>
-              <td>{c.content}</td>
-              <td>{getTierBadge(c.status, c.rating)}</td>
-              <td>{getStatusBadge(c.status)}</td>
-              <td>
-                <button className="btn btn-sm btn-success me-2" onClick={() => handleApprove(c.id)}>Duyệt</button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleReject(c.id)}>Từ chối (T1)</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
+
+      {!loading && comments.length === 0 ? (
+        <div className="comments-empty-state">
+          <strong>Không tìm thấy bình luận</strong>
+          <span>Hãy thử thay đổi từ khóa hoặc bộ lọc trạng thái.</span>
+        </div>
+      ) : null}
+
+      <div className="moderation-comment-list" aria-busy={loading}>
+        {comments.map((comment) => {
+          const statusInfo = STATUS_CONFIG[comment.status] || {
+            label: comment.status,
+            description: 'Trạng thái khác',
+          };
+          const displayName = comment.user_full_name || comment.user_username || `Người dùng #${comment.user_id}`;
+          const selectedStatus = selectedActions[comment.id] || '';
+          const isProcessing = processingId === comment.id;
+
+          return (
+            <article className="moderation-comment-card" key={comment.id}>
+              <div className="moderation-comment-meta">
+                <div className="moderation-comment-user">
+                  <span>{displayName.trim().charAt(0).toUpperCase()}</span>
+                  <div>
+                    <strong>{displayName}</strong>
+                    <small>@{comment.user_username || `user-${comment.user_id}`}</small>
+                  </div>
+                </div>
+                <span className={`moderation-status status-${comment.status}`}>
+                  {statusInfo.label}
+                </span>
+              </div>
+
+              <p className="moderation-comment-content">{comment.content || 'Bình luận không có nội dung.'}</p>
+
+              <dl className="moderation-comment-context">
+                <div>
+                  <dt>Vị trí</dt>
+                  <dd>
+                    {comment.story_slug ? (
+                      <Link to={`/${comment.story_slug}${comment.chapter_number ? `/${comment.chapter_number}` : ''}`}>
+                        {comment.story_title || 'Truyện'}
+                        {comment.chapter_number ? ` — Chương ${comment.chapter_number}` : ''}
+                      </Link>
+                    ) : 'Không xác định'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Thời gian</dt>
+                  <dd>{new Date(comment.created_at).toLocaleString('vi-VN')}</dd>
+                </div>
+                <div>
+                  <dt>Mã bình luận</dt>
+                  <dd>#{comment.id}{comment.parent_comment_id ? ` · Trả lời #${comment.parent_comment_id}` : ''}</dd>
+                </div>
+              </dl>
+
+              <div className="moderation-comment-actions">
+                <label htmlFor={`comment-action-${comment.id}`}>Phương án xử lý</label>
+                <select
+                  id={`comment-action-${comment.id}`}
+                  value={selectedStatus}
+                  onChange={(event) => handleActionChange(comment.id, event.target.value)}
+                  disabled={isProcessing}
+                >
+                  <option value="">Chọn phương án...</option>
+                  {Object.entries(STATUS_CONFIG).map(([status, config]) => (
+                    <option value={status} key={status} disabled={status === comment.status}>
+                      {config.label} — {config.description}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => handleApplyAction(comment)}
+                  disabled={!selectedStatus || selectedStatus === comment.status || isProcessing}
+                >
+                  {isProcessing ? 'Đang cập nhật...' : 'Áp dụng'}
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {pagination.totalPages > 1 ? (
+        <nav className="comments-pagination" aria-label="Phân trang bình luận">
+          <button
+            type="button"
+            disabled={pagination.page <= 1 || loading}
+            onClick={() => setPagination((current) => ({ ...current, page: current.page - 1 }))}
+          >
+            Trang trước
+          </button>
+          <span>Trang {pagination.page} / {pagination.totalPages} · {pagination.totalItems} kết quả</span>
+          <button
+            type="button"
+            disabled={pagination.page >= pagination.totalPages || loading}
+            onClick={() => setPagination((current) => ({ ...current, page: current.page + 1 }))}
+          >
+            Trang sau
+          </button>
+        </nav>
+      ) : null}
+    </section>
   );
 }
 

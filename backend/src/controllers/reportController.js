@@ -3,66 +3,80 @@ const { z } = require('zod');
 const db = require('../config/database');
 
 const reportSchema = z.object({
-  reason: z.string(),
-  description: z.string(),
-  story_id: z.number().int().nullable(),
-  chapter_id: z.number().int().nullable(),
-  comment_id: z.number().int().nullable(),
+  reason: z.string().min(1).max(50),
+  description: z.string().max(500).default(''),
+  story_id: z.number().int().positive().nullable().optional().default(null),
+  chapter_id: z.number().int().positive().nullable().optional().default(null),
+  comment_id: z.number().int().positive().nullable().optional().default(null),
 }).refine(
   (data) => data.story_id || data.chapter_id || data.comment_id,
   { message: 'Báo cáo phải gắn với truyện, chương hoặc bình luận.' }
 );
+
+const REPORT_STATUSES = ['NEW', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED'];
+const REPORT_ACTIONS = [
+  'START_REVIEW',
+  'RESOLVE_NO_ACTION',
+  'DISMISS',
+  'REJECT_COMMENT',
+  'FLAG_COMMENT_SPAM',
+  'UNPUBLISH_CHAPTER',
+  'HIDE_STORY',
+];
+
+const processReportSchema = z.object({
+  action: z.enum(REPORT_ACTIONS),
+  note: z.string().max(500).optional().default(''),
+});
 
 const createReport = async (req, res) => {
   try {
     const data = reportSchema.parse(req.body);
     const userId = req.user.id;
 
-    // Chống spam: Dùng 'reports' (thường) thay vì 'Reports' (hoa)
     const { rows: spamCheck } = await db.query(
       "SELECT COUNT(*) FROM reports WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 hour'",
       [userId]
     );
-    
-    if (parseInt(spamCheck[0].count) >= 10) {
-      return res.status(429).json({ error: "Bạn đã báo cáo quá nhiều lần." });
+
+    if (parseInt(spamCheck[0].count, 10) >= 10) {
+      return res.status(429).json({ error: 'Bạn đã báo cáo quá nhiều lần.' });
     }
 
     await db.query(
-      "INSERT INTO reports (user_id, story_id, chapter_id, comment_id, reason, description) VALUES ($1, $2, $3, $4, $5, $6)",
+      'INSERT INTO reports (user_id, story_id, chapter_id, comment_id, reason, description) VALUES ($1, $2, $3, $4, $5, $6)',
       [userId, data.story_id, data.chapter_id, data.comment_id, data.reason, data.description]
     );
 
-    // Kiểm tra và ẩn chương nếu báo cáo gắn với chapter
     if (data.chapter_id) {
       const { rows: countCheck } = await db.query(
         "SELECT COUNT(*) FROM reports WHERE chapter_id = $1 AND status = 'NEW'",
         [data.chapter_id]
       );
 
-      if (parseInt(countCheck[0].count) >= 10) {
-        // Lưu ý: Đảm bảo bảng 'chapters' có cột 'status'
-        await db.query("UPDATE chapters SET is_published = false WHERE id = $1", [data.chapter_id]);
+      if (parseInt(countCheck[0].count, 10) >= 10) {
+        await db.query('UPDATE chapters SET is_published = false WHERE id = $1', [data.chapter_id]);
       }
     }
 
-    res.status(201).json({ message: "Báo cáo đã được ghi nhận!" });
+    return res.status(201).json({ message: 'Báo cáo đã được ghi nhận!' });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
     console.error('[reportController.createReport] error', error);
-    res.status(500).json({ error: "Lỗi máy chủ nội bộ." });
+    return res.status(500).json({ error: 'Lỗi máy chủ nội bộ.' });
   }
 };
 
-// Trong Controller lấy danh sách báo cáo
 const getReports = async (req, res) => {
   try {
-    const { status } = req.query; // Nhận status từ URL params
+    const { status } = req.query;
     let query = `
       SELECT r.*, u.username AS reporter_username,
              ch.chapter_number, ch.title AS chapter_title,
              c.content AS comment_content,
              c.status AS comment_status,
+             comment_author.username AS comment_author_username,
+             resolver.username AS resolved_by_username,
              COALESCE(report_story.title, chapter_story.title) AS story_title,
              COALESCE(report_story.slug, chapter_story.slug) AS story_slug,
              COALESCE(report_story.id, chapter_story.id) AS story_id
@@ -70,24 +84,24 @@ const getReports = async (req, res) => {
       LEFT JOIN users u ON u.id = r.user_id
       LEFT JOIN chapters ch ON ch.id = r.chapter_id
       LEFT JOIN comments c ON c.id = r.comment_id
+      LEFT JOIN users comment_author ON comment_author.id = c.user_id
+      LEFT JOIN users resolver ON resolver.id = r.resolved_by
       LEFT JOIN stories report_story ON report_story.id = r.story_id
       LEFT JOIN stories chapter_story ON chapter_story.id = COALESCE(ch.story_id, c.story_id)
     `;
-    let values = [];
+    const values = [];
 
     if (status && status !== 'ALL') {
-      query += " WHERE r.status = $1";
+      query += ' WHERE r.status = $1';
       values.push(status);
     }
-    
-    // Thêm ORDER BY để báo cáo mới nhất hiện lên đầu
-    query += " ORDER BY r.created_at DESC";
 
+    query += ' ORDER BY r.created_at DESC';
     const result = await db.query(query, values);
-    res.status(200).json({ reports: result.rows });
+    return res.status(200).json({ reports: result.rows });
   } catch (error) {
     console.error('[reportController.getReports] error', error);
-    res.status(500).json({ error: "Lỗi server" });
+    return res.status(500).json({ error: 'Lỗi server' });
   }
 };
 
@@ -96,25 +110,131 @@ const updateReportStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    if (!REPORT_STATUSES.includes(status)) {
+      return res.status(400).json({ message: 'Trạng thái báo cáo không hợp lệ.' });
+    }
+
     const result = await db.query(
-      "UPDATE reports SET status = $1 WHERE id = $2",
+      'UPDATE reports SET status = $1 WHERE id = $2',
       [status, id]
     );
 
-    // Kiểm tra xem có dòng nào được cập nhật không
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Không tìm thấy báo cáo." });
+      return res.status(404).json({ message: 'Không tìm thấy báo cáo.' });
     }
 
-    res.status(200).json({ message: "Trạng thái báo cáo đã được cập nhật!" });
+    return res.status(200).json({ message: 'Trạng thái báo cáo đã được cập nhật!' });
   } catch (error) {
     console.error('[reportController.updateReportStatus] error', error);
-    res.status(500).json({ error: "Lỗi máy chủ nội bộ." });
+    return res.status(500).json({ error: 'Lỗi máy chủ nội bộ.' });
+  }
+};
+
+const processReport = async (req, res) => {
+  let client;
+  try {
+    const reportId = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(reportId) || reportId <= 0) {
+      return res.status(400).json({ message: 'Mã báo cáo không hợp lệ.' });
+    }
+
+    const { action, note } = processReportSchema.parse(req.body);
+    client = await db.connect();
+    await client.query('BEGIN');
+
+    const reportResult = await client.query(
+      `SELECT id, story_id, chapter_id, comment_id, status
+       FROM reports
+       WHERE id = $1
+       FOR UPDATE`,
+      [reportId]
+    );
+    const report = reportResult.rows[0];
+
+    if (!report) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Không tìm thấy báo cáo.' });
+    }
+
+    let nextStatus = 'RESOLVED';
+
+    if (action === 'START_REVIEW') {
+      nextStatus = 'IN_PROGRESS';
+    } else if (action === 'DISMISS') {
+      nextStatus = 'DISMISSED';
+    } else if (action === 'REJECT_COMMENT' || action === 'FLAG_COMMENT_SPAM') {
+      if (!report.comment_id) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'Phương án này chỉ áp dụng cho báo cáo bình luận.' });
+      }
+      const commentStatus = action === 'REJECT_COMMENT' ? 'rejected' : 'flagged';
+      await client.query(
+        `UPDATE comments
+         SET status = $1,
+             is_spam = CASE WHEN $1 = 'flagged' THEN true ELSE is_spam END,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [commentStatus, report.comment_id]
+      );
+    } else if (action === 'UNPUBLISH_CHAPTER') {
+      if (!report.chapter_id) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'Phương án này chỉ áp dụng cho báo cáo chương.' });
+      }
+      await client.query(
+        'UPDATE chapters SET is_published = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [report.chapter_id]
+      );
+    } else if (action === 'HIDE_STORY') {
+      if (!report.story_id || report.chapter_id || report.comment_id) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'Phương án này chỉ áp dụng cho báo cáo truyện.' });
+      }
+      await client.query(
+        `UPDATE stories
+         SET is_published = false,
+             hidden_by_admin = CASE WHEN $2 THEN true ELSE hidden_by_admin END,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [report.story_id, req.user?.role === 'Admin']
+      );
+    }
+
+    const resolved = nextStatus === 'RESOLVED' || nextStatus === 'DISMISSED';
+    const updatedResult = await client.query(
+      `UPDATE reports
+       SET status = $1,
+           resolution_action = $2,
+           resolution_note = NULLIF($3, ''),
+           resolved_by = $4,
+           resolved_at = CASE WHEN $5 THEN CURRENT_TIMESTAMP ELSE NULL END
+       WHERE id = $6
+       RETURNING *`,
+      [nextStatus, action, note.trim(), req.user.id, resolved, reportId]
+    );
+
+    await client.query('COMMIT');
+    return res.status(200).json({
+      message: nextStatus === 'IN_PROGRESS'
+        ? 'Báo cáo đã được chuyển sang trạng thái đang xem xét.'
+        : 'Báo cáo đã được xử lý.',
+      report: updatedResult.rows[0],
+    });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK');
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: 'Phương án xử lý không hợp lệ.', error: error.errors });
+    }
+    console.error('[reportController.processReport] error', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ nội bộ.' });
+  } finally {
+    if (client) client.release();
   }
 };
 
 module.exports = {
   createReport,
   getReports,
-  updateReportStatus
+  processReport,
+  updateReportStatus,
 };

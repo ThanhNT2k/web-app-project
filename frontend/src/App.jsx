@@ -15,7 +15,6 @@ import ManageBadWords from './pages/admin/ManageBadWords';
 
 import ModeratorDashboardPage from './pages/moderator/ModeratorDashboardPage';
 import ModeratorPendingStoriesPage from './pages/moderator/ModeratorPendingStoriesPage';
-import ModeratorReportsPage from './pages/moderator/ModeratorReportsPage';
 import ModeratorCommentsPage from './pages/moderator/ModeratorCommentsPage';
 
 import HomePage from './pages/HomePage';

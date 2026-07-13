@@ -81,6 +81,10 @@ async function canViewStory(story, user) {
 
   if (!user) return false;
 
+  if (user.role === 'Moderator' && !story.hidden_by_admin) {
+    return true;
+  }
+
   if (user.role === 'Admin' || Number(user.id) === Number(story.author_id)) {
     return true;
   }
