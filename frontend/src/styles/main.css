@@ -1048,8 +1048,10 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 }
 .dashboard-thumb {
   width: 72px;
-  height: 100px;
+  height: 108px;
+  display: block;
   object-fit: cover;
+  object-position: center;
   border-radius: 8px;
   flex-shrink: 0;
 }
@@ -2582,7 +2584,7 @@ kbd {
 
 .ranking-cover {
   width: 72px;
-  height: 96px;
+  height: 108px;
   border-radius: 10px;
   overflow: hidden;
   background: var(--border);
@@ -2591,7 +2593,9 @@ kbd {
 .ranking-cover img {
   width: 100%;
   height: 100%;
+  display: block;
   object-fit: cover;
+  object-position: center;
 }
 
 .ranking-title {
@@ -3752,7 +3756,8 @@ body {
 .story-card-v2 .story-image img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  display: block;
+  object-fit: cover;
   object-position: center center;
   transition: transform 0.28s ease;
 }
@@ -3958,7 +3963,7 @@ body {
 .story-image-horizontal {
   width: 92px;
   min-width: 92px;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 2 / 3;
   border-radius: 8px;
   overflow: hidden;
   background: var(--surface-elevated);
@@ -4257,7 +4262,7 @@ body {
 .skeleton-cover-horizontal {
   width: 92px;
   min-width: 92px;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 2 / 3;
   border-radius: 8px;
 }
 

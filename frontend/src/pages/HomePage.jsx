@@ -103,10 +103,10 @@ function HomePage() {
     const fetchFeatured = async () => {
       try {
         setLoadingFeatured(true);
-        const response = await API.stories.getAll(1, 6, 'popular');
+        const response = await API.stories.getAll(1, 10, 'popular');
         setFeaturedStories(response.stories || []);
       } catch {
-        setFeaturedStories([...mockStories].sort((a, b) => b.total_chapters - a.total_chapters).slice(0, 6));
+        setFeaturedStories([...mockStories].sort((a, b) => b.total_chapters - a.total_chapters).slice(0, 10));
       } finally {
         setLoadingFeatured(false);
       }
@@ -139,8 +139,8 @@ function HomePage() {
         setError('');
         const cat = category && category !== 'all' ? category : null;
         const response = isSearching
-          ? await API.stories.search(query.trim(), cat, null, page)
-          : await API.stories.getAll(page, 12, 'newest');
+          ? await API.stories.search(query.trim(), cat, null, page, 15)
+          : await API.stories.getAll(page, 15, 'newest');
 
         const list = response.stories || [];
         setStories(list);
@@ -200,7 +200,7 @@ function HomePage() {
             </div>
           ) : featuredStories.length > 0 ? (
             <div className="stories-grid stories-grid-featured">
-              {featuredStories.map((story) => (
+              {featuredStories.slice(0, 6).map((story) => (
                 <StoryCard key={`feat-${story.id}`} story={story} compact />
               ))}
             </div>

@@ -10,6 +10,8 @@ import {
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=80';
+const MAX_FEATURED_STORIES = 10;
+const AUTO_SLIDE_DELAY = 4000;
 
 function getStoryPath(story) {
   return `/story/${story.id}-${story.slug}`;
@@ -30,12 +32,22 @@ function getTagList(story) {
 function FeaturedCarousel({ stories = [] }) {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
-  const slides = useMemo(() => stories.filter(Boolean).slice(0, 6), [stories]);
+  const slides = useMemo(() => stories.filter(Boolean).slice(0, MAX_FEATURED_STORIES), [stories]);
   const activeStory = slides[activeIndex] || slides[0];
 
   useEffect(() => {
     setActiveIndex(0);
   }, [slides.length]);
+
+  useEffect(() => {
+    if (slides.length <= 1) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setActiveIndex((current) => (current + 1) % slides.length);
+    }, AUTO_SLIDE_DELAY);
+
+    return () => window.clearTimeout(timer);
+  }, [activeIndex, slides.length]);
 
   if (!activeStory) return null;
 

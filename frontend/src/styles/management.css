@@ -423,8 +423,8 @@
 .management-person div, .management-story > div:last-child { min-width: 0; }
 .management-person strong { display: block; color: #172033; font-size: .8rem; }
 .management-person small { color: #98a2b3; font-size: .67rem; }
-.management-story-cover { display: grid; width: 38px; height: 52px; flex: 0 0 38px; place-items: center; overflow: hidden; border-radius: 6px; color: #fff; background: var(--admin-accent); font-weight: 800; }
-.management-story-cover img { width: 100%; height: 100%; object-fit: cover; }
+.management-story-cover { display: grid; width: 38px; height: 57px; flex: 0 0 38px; place-items: center; overflow: hidden; border-radius: 6px; color: #fff; background: var(--admin-accent); font-weight: 800; }
+.management-story-cover img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 
 .moderation-priority-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .75rem; }
 .moderation-priority-card { display: grid; gap: .35rem; padding: 1.1rem; border: 1px solid #dfe7f1; border-left: 4px solid #94a3b8; border-radius: 14px; color: inherit; background: #fff; }
@@ -466,8 +466,8 @@
 .pending-summary-bar p { margin: 0; color: #a16207; font-size: .75rem; }
 .pending-story-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; }
 .pending-story-card { display: grid; grid-template-columns: 112px minmax(0,1fr); overflow: hidden; border: 1px solid #dfe7f1; border-radius: 15px; background: #fff; box-shadow: 0 6px 20px rgba(24,39,75,.04); }
-.pending-story-cover { display: grid; min-height: 180px; place-items: center; color: #fff; background: var(--admin-accent); font-size: 1.5rem; font-weight: 800; }
-.pending-story-cover img { width: 100%; height: 100%; object-fit: cover; }
+.pending-story-cover { display: grid; width: 112px; height: 168px; place-items: center; align-self: start; color: #fff; background: var(--admin-accent); font-size: 1.5rem; font-weight: 800; }
+.pending-story-cover img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .pending-story-body { display: grid; gap: .45rem; padding: .85rem; }
 .pending-story-heading { display: flex; align-items: center; justify-content: space-between; }
 .pending-story-heading small { color: #98a2b3; }
