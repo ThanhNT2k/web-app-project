@@ -1,6 +1,7 @@
 import {
   faBookOpen,
   faComments,
+  faClockRotateLeft,
   faFlag,
   faGaugeHigh,
 } from '../lib/icons';
@@ -11,6 +12,7 @@ const MODERATOR_NAV_ITEMS = [
   { to: '/moderator/pending-stories', label: 'Truyện chờ duyệt', icon: faBookOpen },
   { to: '/moderator/reports', label: 'Quản lý báo cáo', icon: faFlag },
   { to: '/moderator/comments', label: 'Quản lý bình luận', icon: faComments },
+  { to: '/moderator/logs', label: 'Nhật ký hoạt động', icon: faClockRotateLeft },
 ];
 
 function ModeratorLayout() {

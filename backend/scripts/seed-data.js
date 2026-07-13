@@ -42,6 +42,7 @@ async function clearExistingData(client) {
   await client.query('BEGIN');
   await client.query(`
     TRUNCATE TABLE
+      audit_logs,
       ai_summaries,
       comments,
       user_follows,

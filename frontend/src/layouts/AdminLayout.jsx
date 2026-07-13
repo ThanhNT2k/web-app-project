@@ -2,6 +2,7 @@ import {
   faBan,
   faBookOpen,
   faComments,
+  faClockRotateLeft,
   faFlag,
   faGaugeHigh,
   faUsers,
@@ -15,6 +16,7 @@ const ADMIN_NAV_ITEMS = [
   { to: '/admin/reports', label: 'Quản lý báo cáo', icon: faFlag },
   { to: '/admin/comments', label: 'Quản lý bình luận', icon: faComments },
   { to: '/admin/bad-words', label: 'Quản lý từ khóa', icon: faBan },
+  { to: '/admin/logs', label: 'Nhật ký hoạt động', icon: faClockRotateLeft },
 ];
 
 function AdminLayout() {

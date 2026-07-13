@@ -5,6 +5,7 @@ const chapterController = require('../controllers/chapterController');
 const { authenticateToken, optionalAuth } = require('../middleware/authMiddleware');
 const { authorizeRole } = require('../middleware/roleMiddleware');
 const { uploadStoryFile } = require('../middleware/upload');
+const { auditAction } = require('../middleware/auditMiddleware');
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.post('/', authenticateToken, authorizeRole('Uploader'), storyController.c
 router.post('/import-file', authenticateToken, authorizeRole('Uploader'), uploadStoryFile.single('file'), storyController.createStoryFromFile);
 router.put('/:id', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.updateStory);
 router.delete('/:id', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.deleteStory);
-router.patch('/:id/visibility', authenticateToken, authorizeRole('Uploader', 'Admin'), storyController.toggleStoryVisibility);
+router.patch('/:id/visibility', authenticateToken, authorizeRole('Uploader', 'Admin'), auditAction('TOGGLE_STORY_VISIBILITY', 'story'), storyController.toggleStoryVisibility);
 
 // Collaborator Management
 router.get('/:id/collaborators', authenticateToken, storyController.getCollaborators);

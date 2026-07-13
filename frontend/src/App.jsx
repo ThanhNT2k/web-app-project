@@ -16,6 +16,7 @@ import ManageBadWords from './pages/admin/ManageBadWords';
 import ModeratorDashboardPage from './pages/moderator/ModeratorDashboardPage';
 import ModeratorPendingStoriesPage from './pages/moderator/ModeratorPendingStoriesPage';
 import ModeratorCommentsPage from './pages/moderator/ModeratorCommentsPage';
+import AuditLogsPage from './pages/AuditLogsPage';
 
 import HomePage from './pages/HomePage';
 import FindStoriesPage from './pages/FindStoriesPage';
@@ -138,6 +139,7 @@ function App() {
               <Route path="/admin/reports" element={<AdminReportsPage />} />
               <Route path="/admin/bad-words" element={<ManageBadWords />} />
               <Route path="/admin/comments" element={<ModeratorCommentsPage />} />
+              <Route path="/admin/logs" element={<AuditLogsPage />} />
             </Route>
 
             {/* MODERATOR LAYOUT RIÊNG */}
@@ -152,6 +154,7 @@ function App() {
               <Route path="/moderator/pending-stories" element={<ModeratorPendingStoriesPage />} />
               <Route path="/moderator/reports" element={<AdminReportsPage />} />
               <Route path="/moderator/comments" element={<ModeratorCommentsPage />} />
+              <Route path="/moderator/logs" element={<AuditLogsPage />} />
             </Route>
 
             <Route path="/home" element={<Navigate to="/" replace />} />

@@ -98,6 +98,30 @@ if (process.env.NODE_ENV !== 'test') {
 
       try {
         await pool.query(`
+          CREATE TABLE IF NOT EXISTS audit_logs (
+            id BIGSERIAL PRIMARY KEY,
+            actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            actor_role VARCHAR(30) NOT NULL,
+            action VARCHAR(80) NOT NULL,
+            entity_type VARCHAR(50) NOT NULL,
+            entity_id VARCHAR(100),
+            details JSONB NOT NULL DEFAULT '{}'::jsonb,
+            ip_address VARCHAR(100),
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_id ON audit_logs(actor_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_role ON audit_logs(actor_role)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id)');
+        console.log('[Database] Verified audit_logs table exists');
+      } catch (err) {
+        console.error('[Database] Failed to verify/create audit_logs table:', err.message);
+      }
+
+      try {
+        await pool.query(`
           CREATE TABLE IF NOT EXISTS ratings (
             id SERIAL PRIMARY KEY,
             story_id INTEGER NOT NULL REFERENCES stories(id) ON DELETE CASCADE,

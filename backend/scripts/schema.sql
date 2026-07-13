@@ -235,6 +235,21 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
 );
 
 -- -----------------------------------------------------------------------------
+-- audit_logs
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    actor_role VARCHAR(30) NOT NULL,
+    action VARCHAR(80) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id VARCHAR(100),
+    details JSONB NOT NULL DEFAULT '{}'::jsonb,
+    ip_address VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
 -- Indexes
 -- -----------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_stories_author_id ON stories(author_id);
@@ -257,6 +272,11 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_is_read ON notifications(user_
 CREATE INDEX IF NOT EXISTS idx_notifications_story_id ON notifications(story_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON notification_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_id ON audit_logs(actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_role ON audit_logs(actor_role);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
 
 -- -----------------------------------------------------------------------------
 -- Updated-at triggers

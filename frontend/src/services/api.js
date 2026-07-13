@@ -120,6 +120,9 @@ async function request(path, options = {}) {
  * Giúp dễ tìm và quản lý các API call trong toàn bộ codebase frontend.
  */
 const API = {
+  auditLogs: {
+    get: (params = {}) => request('/audit-logs', { method: 'GET', params }),
+  },
   // ── Xác thực người dùng ──────────────────────────────────────────────────
   auth: {
     register: (data) => request('/auth/register', { method: 'POST', data }),
