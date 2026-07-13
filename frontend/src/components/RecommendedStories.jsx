@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import StoryCard from './StoryCard';
+import AutoSlidingStoryRow from './AutoSlidingStoryRow';
 import IconBadge from './IconBadge';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -75,11 +76,11 @@ function RecommendedStories() {
 
       {loading ? <div className="recommended-loading">Đang chọn vài bộ hợp gu đọc của bạn...</div> : null}
 
-      <div className="stories-grid stories-grid-recommended">
+      <AutoSlidingStoryRow className="stories-grid stories-grid-recommended" label="Gợi ý truyện cho bạn" variant="recommended">
         {stories.map((story) => (
           <StoryCard story={story} key={story.id} />
         ))}
-      </div>
+      </AutoSlidingStoryRow>
     </section>
   );
 }

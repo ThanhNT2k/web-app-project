@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'; // Thêm useNavigate
 
 import FeaturedCarousel from '../components/FeaturedCarousel';
+import AutoSlidingStoryRow from '../components/AutoSlidingStoryRow';
 import RecommendedStories from '../components/RecommendedStories';
 import StoryCard from '../components/StoryCard';
 import IconBadge from '../components/IconBadge';
@@ -120,10 +121,10 @@ function HomePage() {
     const fetchRecent = async () => {
       try {
         setLoadingRecent(true);
-        const response = await API.stories.getAll(1, 3, 'updated');
+        const response = await API.stories.getAll(1, 9, 'updated');
         setRecentStories(response.stories || []);
       } catch {
-        setRecentStories([...mockStories].slice(0, 3));
+        setRecentStories([...mockStories].slice(0, 9));
       } finally {
         setLoadingRecent(false);
       }
@@ -199,11 +200,11 @@ function HomePage() {
               ))}
             </div>
           ) : featuredStories.length > 0 ? (
-            <div className="stories-grid stories-grid-featured">
-              {featuredStories.slice(0, 6).map((story) => (
+            <AutoSlidingStoryRow className="stories-grid stories-grid-featured" label="Truyện nổi bật">
+              {featuredStories.slice(0, 10).map((story) => (
                 <StoryCard key={`feat-${story.id}`} story={story} compact />
               ))}
-            </div>
+            </AutoSlidingStoryRow>
           ) : (
             <div className="empty-state-card">
               <IconBadge icon={faBookOpen} size="lg" tone="primary" />
@@ -227,11 +228,11 @@ function HomePage() {
               ))}
             </div>
           ) : recentStories.length > 0 ? (
-            <div className="stories-grid-horizontal">
+            <AutoSlidingStoryRow className="stories-grid-horizontal" label="Truyện cập nhật gần đây" variant="horizontal">
               {recentStories.map((story) => (
                 <StoryCard key={`recent-${story.id}`} story={story} horizontal={true} />
               ))}
-            </div>
+            </AutoSlidingStoryRow>
           ) : (
             <div className="empty-state-card compact">
               <IconBadge icon={faRotateRight} size="lg" tone="aqua" />

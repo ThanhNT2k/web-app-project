@@ -28,8 +28,8 @@ function FindStoriesPage() {
         setLoading(true);
         const hasQuery = query.trim() || activeTag;
         const response = hasQuery
-          ? await API.stories.search(query.trim(), null, activeTag || null, page, 12)
-          : await API.stories.getAll(page, 12);
+          ? await API.stories.search(query.trim(), null, activeTag || null, page, 15)
+          : await API.stories.getAll(page, 15);
 
         setStories(response.stories || []);
         setPagination(response.pagination || { page: 1, totalPages: 1 });

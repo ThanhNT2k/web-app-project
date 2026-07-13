@@ -264,6 +264,8 @@ async function getRecommendations(req, res) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
+    const recommendationLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 20);
+
     // Lấy lịch sử đọc để phân tích sở thích của user
     const history = await ReadingHistory.getReadingHistory(req.user.id);
 
@@ -275,8 +277,8 @@ async function getRecommendations(req, res) {
     }
 
     if (storyIds.length === 0) {
-      // Trường hợp 1: User chưa đọc truyện nào => gợi ý 5 truyện phổ biến nhất
-      const popular = await Story.getAllStories(1, 5);
+      // User chưa đọc truyện nào => lấy các truyện phổ biến nhất theo giới hạn yêu cầu
+      const popular = await Story.getAllStories(1, recommendationLimit, 'popular');
       storyIds = popular.stories.map((s) => s.id);
     } else {
       // Trường hợp 2: AI đã gợi ý nhưng cần validate và lọc
@@ -290,14 +292,14 @@ async function getRecommendations(req, res) {
       // Giữ lại những ID do AI gợi ý mà:
       // - Tồn tại trong hệ thống (validIds)
       // - User chưa đọc (không có trong readIds)
-      // - Chỉ lấy tối đa 5 gợi ý
-      storyIds = storyIds.filter((id) => validIds.has(id) && !readIds.has(id)).slice(0, 5);
+      // - Chỉ lấy tối đa số lượng gợi ý được yêu cầu
+      storyIds = storyIds.filter((id) => validIds.has(id) && !readIds.has(id)).slice(0, recommendationLimit);
 
-      // Nếu AI không đủ 5 gợi ý, bổ sung thêm truyện chưa đọc từ danh sách phổ biến
-      if (storyIds.length < 5) {
+      // Nếu AI không đủ gợi ý, bổ sung thêm truyện chưa đọc từ danh sách phổ biến
+      if (storyIds.length < recommendationLimit) {
         const extras = allStories.stories
           .filter((s) => !readIds.has(s.id) && !storyIds.includes(s.id)) // Chưa đọc và chưa có trong list gợi ý
-          .slice(0, 5 - storyIds.length) // Chỉ lấy đủ số còn thiếu
+          .slice(0, recommendationLimit - storyIds.length) // Chỉ lấy đủ số còn thiếu
           .map((s) => s.id);
         storyIds = [...storyIds, ...extras];
       }

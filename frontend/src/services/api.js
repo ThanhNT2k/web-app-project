@@ -249,7 +249,7 @@ const API = {
       method: 'GET',
       params: regenerate ? { regenerate: 'true' } : undefined,
     }),
-    getRecommendations: () => request('/ai/recommendations', { method: 'GET' }),
+    getRecommendations: (limit = 10) => request('/ai/recommendations', { method: 'GET', params: { limit } }),
   },
   readingHistory: {
     save: (data) => request('/reading-history', { method: 'POST', data }),
