@@ -59,6 +59,7 @@ async function getFollowedStories(userId) {
         s.id,
         s.title,
         s.slug,
+        s.author_name,
         s.cover_image_url,
         s.description,
         s.category,

@@ -42,7 +42,7 @@ function FeaturedCarousel({ stories = [] }) {
   const cover = activeStory.cover_image_url || FALLBACK_COVER;
   const tags = getTagList(activeStory);
   const storyPath = getStoryPath(activeStory);
-  const authorName = activeStory.author_full_name || activeStory.author_username || '';
+  const authorName = activeStory.author_name || 'Không rõ tác giả';
   const description = activeStory.description || 'Một tựa truyện đang được nhiều độc giả CMC Truyện quan tâm hôm nay.';
   const currentRank = activeIndex + 1;
 

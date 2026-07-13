@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import TagInput from '../components/TagInput';
 import { slugify } from '../utils/slugify';
-import { FontAwesomeIcon, faBan, faBookOpen, faPenNib } from '../lib/icons';
+import { FontAwesomeIcon, faBan, faBookOpen, faMagnifyingGlass, faPenNib } from '../lib/icons';
 
 const EMPTY_STORY = {
   title: '',
+  author_name: '',
   description: '',
   category: '',
   cover_image_url: '',
@@ -17,34 +18,48 @@ const EMPTY_STORY = {
 };
 
 const EMPTY_CHAPTER_FORM = { title: '', content: '', chapter_number: 1 };
-const ALLOWED_IMPORT_EXTENSIONS = ['.txt', '.md'];
+const ALLOWED_IMPORT_EXTENSIONS = ['.txt', '.md', '.epub'];
+
+const MODERATION_STATUS = {
+  pending: { label: 'Chờ Moderator duyệt', className: 'pending' },
+  approved: { label: 'Đã được duyệt', className: 'approved' },
+  changes_requested: { label: 'Cần chỉnh sửa', className: 'changes' },
+  rejected: { label: 'Bị từ chối', className: 'rejected' },
+};
 
 function hasAllowedExtension(fileName, allowedExtensions) {
   const lowerName = String(fileName || '').toLowerCase().trim();
   return allowedExtensions.some((ext) => lowerName.endsWith(ext));
 }
 
+function getStoryModerationStatus(story) {
+  return story.moderation_status || (story.is_published ? 'approved' : 'pending');
+}
+
 function DashboardPage() {
   const { user } = useAuth();
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [storySearch, setStorySearch] = useState('');
+  const [moderationFilter, setModerationFilter] = useState('all');
 
   // Story modal
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_STORY);
   const [uploading, setUploading] = useState(false);
+  const [savingStory, setSavingStory] = useState(false);
 
   // Chapter modal (add / edit)
   const [chapterModal, setChapterModal] = useState(null); // { story, chapter|null }
   const [chapterForm, setChapterForm] = useState(EMPTY_CHAPTER_FORM);
+  const [chapterEntryMode, setChapterEntryMode] = useState('manual');
   const [chapterUploadFile, setChapterUploadFile] = useState(null);
   const [splitChapterFile, setSplitChapterFile] = useState(true);
-
-  const [storyUploadFile, setStoryUploadFile] = useState(null);
-  const [storyFilePreview, setStoryFilePreview] = useState('');
-  const [createByFile, setCreateByFile] = useState(false);
-  const [splitStoryFile, setSplitStoryFile] = useState(true);
+  const [chapterFilePreview, setChapterFilePreview] = useState(null);
+  const [chapterPreviewLoading, setChapterPreviewLoading] = useState(false);
+  const [chapterPreviewError, setChapterPreviewError] = useState('');
+  const chapterUploadIsEpub = chapterUploadFile?.name?.toLowerCase().endsWith('.epub') || false;
 
   // Expanded chapter list per story
   const [expandedStory, setExpandedStory] = useState(null);
@@ -80,54 +95,65 @@ function DashboardPage() {
     return hasAllowedExtension(file.name, ALLOWED_IMPORT_EXTENSIONS);
   };
 
-  const handleStoryFileChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setStoryUploadFile(null);
-      setStoryFilePreview('');
-      return;
+  const loadChapterFilePreview = async (file, shouldSplit = splitChapterFile) => {
+    if (!file || !chapterModal?.story?.id) return;
+    try {
+      setChapterPreviewLoading(true);
+      setChapterPreviewError('');
+      setChapterFilePreview(null);
+      const preview = await API.chapters.previewFile(chapterModal.story.id, {
+        split_chapters: shouldSplit,
+        title: chapterForm.title,
+      }, file);
+      setChapterFilePreview(preview);
+    } catch (err) {
+      setChapterPreviewError(err?.response?.data?.message || 'Không thể tạo bản xem trước cho file này.');
+    } finally {
+      setChapterPreviewLoading(false);
     }
-
-    if (!validateImportFile(file)) {
-      showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
-      event.target.value = '';
-      setStoryUploadFile(null);
-      setStoryFilePreview('');
-      return;
-    }
-
-    setStoryUploadFile(file);
-    readTextFromFile(file).then((text) => {
-      setStoryFilePreview(text || '');
-      if (!text?.trim()) {
-        showMessage('Đã chọn file nhưng không đọc được nội dung để preview');
-      }
-    });
   };
 
-  const handleChapterFileChange = (event) => {
+  const handleChapterFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       setChapterUploadFile(null);
+      setChapterFilePreview(null);
+      setChapterPreviewError('');
       setChapterForm((prev) => ({ ...prev, content: '' }));
       return;
     }
 
     if (!validateImportFile(file)) {
-      showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+      showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt, .md hoặc .epub');
       event.target.value = '';
       setChapterUploadFile(null);
+      setChapterFilePreview(null);
       setChapterForm((prev) => ({ ...prev, content: '' }));
       return;
     }
 
     setChapterUploadFile(file);
-    readTextFromFile(file).then((text) => {
+    if (file.name.toLowerCase().endsWith('.epub')) {
+      setChapterForm((prev) => ({ ...prev, content: '' }));
+    } else {
+      const text = await readTextFromFile(file);
       setChapterForm((prev) => ({ ...prev, content: text || '' }));
-      if (!text?.trim()) {
-        showMessage('Đã chọn file nhưng không đọc được nội dung để preview');
-      }
-    });
+    }
+    await loadChapterFilePreview(file, splitChapterFile);
+  };
+
+  const handleSplitChapterFileChange = (event) => {
+    const shouldSplit = event.target.checked;
+    setSplitChapterFile(shouldSplit);
+    if (chapterUploadFile) loadChapterFilePreview(chapterUploadFile, shouldSplit);
+  };
+
+  const selectChapterEntryMode = (mode) => {
+    setChapterEntryMode(mode);
+    setChapterUploadFile(null);
+    setChapterFilePreview(null);
+    setChapterPreviewError('');
+    setChapterForm((prev) => ({ ...prev, content: '' }));
   };
 
   const loadStories = useCallback(async () => {
@@ -151,6 +177,21 @@ function DashboardPage() {
     loadStories();
   }, [loadStories]);
 
+  const filteredStories = useMemo(() => {
+    const keyword = storySearch.trim().toLocaleLowerCase('vi');
+    return stories.filter((story) => {
+      const matchesStatus = moderationFilter === 'all'
+        || getStoryModerationStatus(story) === moderationFilter;
+      const matchesSearch = !keyword || [
+        story.title,
+        story.author_name,
+        story.category,
+        story.description,
+      ].some((value) => String(value || '').toLocaleLowerCase('vi').includes(keyword));
+      return matchesStatus && matchesSearch;
+    });
+  }, [stories, storySearch, moderationFilter]);
+
   const loadChaptersForStory = useCallback(async (storyId) => {
     try {
       setChaptersLoading(true);
@@ -168,10 +209,6 @@ function DashboardPage() {
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_STORY);
-    setStoryUploadFile(null);
-    setStoryFilePreview('');
-    setCreateByFile(false);
-    setSplitStoryFile(true);
     setStoryModalOpen(true);
   };
 
@@ -179,16 +216,13 @@ function DashboardPage() {
     setEditing(story);
     setForm({
       title: story.title,
+      author_name: story.author_name || '',
       description: story.description || '',
       category: story.category || '',
       cover_image_url: story.cover_image_url || '',
       status: story.status || 'Ongoing',
       tags: story.tags?.length ? story.tags.map((t) => t.name) : story.category ? [story.category] : [],
     });
-    setStoryUploadFile(null);
-    setStoryFilePreview('');
-    setCreateByFile(false);
-    setSplitStoryFile(true);
     setStoryModalOpen(true);
   };
 
@@ -209,8 +243,10 @@ function DashboardPage() {
   const saveStory = async (event) => {
     event.preventDefault();
     try {
+      setSavingStory(true);
       const payload = {
         title: form.title,
+        author_name: form.author_name.trim(),
         description: form.description,
         category: form.category || form.tags[0] || null,
         cover_image_url: form.cover_image_url,
@@ -219,37 +255,19 @@ function DashboardPage() {
       };
       if (editing) {
         await API.stories.update(editing.id, payload);
-        showMessage('Đã cập nhật truyện');
+        showMessage(editing.moderation_status === 'changes_requested' || editing.moderation_status === 'rejected'
+          ? 'Đã cập nhật và gửi lại truyện vào hàng chờ duyệt'
+          : 'Đã cập nhật truyện');
       } else {
-        if (createByFile) {
-          if (!storyUploadFile) {
-            showMessage('Vui lòng chọn file để import nội dung truyện');
-            return;
-          }
-          if (!validateImportFile(storyUploadFile)) {
-            showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
-            return;
-          }
-          const importRes = await API.stories.createFromFile(
-            {
-              ...payload,
-              slug: slugify(form.title),
-              split_chapters: splitStoryFile,
-              first_chapter_title: form.title,
-              raw_text_override: storyFilePreview,
-            },
-            storyUploadFile
-          );
-          showMessage(`Đã tạo truyện và import ${importRes.imported_count || 0} chương`);
-        } else {
-          await API.stories.create({ ...payload, slug: slugify(form.title) });
-          showMessage('Đã tạo truyện mới');
-        }
+        await API.stories.create({ ...payload, slug: slugify(form.title) });
+        showMessage('Đã gửi truyện mới tới Moderator. Bạn có thể thêm chương sau khi truyện được duyệt.');
       }
       setStoryModalOpen(false);
       loadStories();
     } catch (err) {
       showMessage(err?.response?.data?.message || 'Lưu thất bại');
+    } finally {
+      setSavingStory(false);
     }
   };
 
@@ -275,6 +293,10 @@ function DashboardPage() {
     });
     setChapterUploadFile(null);
     setSplitChapterFile(true);
+    setChapterEntryMode('manual');
+    setChapterFilePreview(null);
+    setChapterPreviewError('');
+    setChapterPreviewLoading(false);
   };
 
   const openEditChapter = (story, chapter) => {
@@ -286,6 +308,10 @@ function DashboardPage() {
     });
     setChapterUploadFile(null);
     setSplitChapterFile(true);
+    setChapterEntryMode('manual');
+    setChapterFilePreview(null);
+    setChapterPreviewError('');
+    setChapterPreviewLoading(false);
   };
 
   const saveChapter = async (event) => {
@@ -299,9 +325,13 @@ function DashboardPage() {
         });
         showMessage('Đã cập nhật chương');
       } else {
+        if (chapterEntryMode === 'file' && !chapterUploadFile) {
+          showMessage('Vui lòng chọn file truyện trước khi đăng tải');
+          return;
+        }
         if (chapterUploadFile) {
           if (!validateImportFile(chapterUploadFile)) {
-            showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt hoặc .md');
+            showMessage('File không hợp lệ. Chỉ chấp nhận đuôi .txt, .md hoặc .epub');
             return;
           }
           const importRes = await API.chapters.importFromFile(
@@ -310,7 +340,7 @@ function DashboardPage() {
               split_chapters: splitChapterFile,
               start_chapter_number: chapterForm.chapter_number,
               title: chapterForm.title,
-              raw_text_override: chapterForm.content,
+              raw_text_override: chapterUploadIsEpub ? '' : chapterForm.content,
             },
             chapterUploadFile
           );
@@ -421,9 +451,40 @@ function DashboardPage() {
       {message ? <div className="alert-cmc mb-3">{message}</div> : null}
       {loading ? <p className="text-muted">Đang tải...</p> : null}
 
+      {user?.role !== 'Admin' && stories.length > 0 ? (
+        <section className="dashboard-story-toolbar" aria-label="Tìm kiếm và lọc truyện">
+          <div className="dashboard-story-search">
+            <FontAwesomeIcon icon={faMagnifyingGlass} />
+            <input
+              type="search"
+              value={storySearch}
+              onChange={(event) => setStorySearch(event.target.value)}
+              placeholder="Tìm theo tên truyện, tác giả hoặc thể loại..."
+              aria-label="Tìm trong danh sách truyện"
+            />
+          </div>
+          <label className="dashboard-story-filter">
+            <span>Trạng thái duyệt</span>
+            <select value={moderationFilter} onChange={(event) => setModerationFilter(event.target.value)}>
+              <option value="all">Tất cả trạng thái</option>
+              <option value="pending">Chờ Moderator duyệt</option>
+              <option value="approved">Đã được duyệt</option>
+              <option value="changes_requested">Cần chỉnh sửa</option>
+              <option value="rejected">Bị từ chối</option>
+            </select>
+          </label>
+          <div className="dashboard-story-filter-result">
+            <strong>{filteredStories.length}</strong>
+            <span>/ {stories.length} truyện</span>
+          </div>
+        </section>
+      ) : null}
+
       <div className="dashboard-grid">
-        {stories.map((story) => {
+        {filteredStories.map((story) => {
           const isOwner = user?.role === 'Admin' || Number(story.author_id) === Number(user?.id);
+          const moderation = MODERATION_STATUS[getStoryModerationStatus(story)] || MODERATION_STATUS.pending;
+          const canAddChapters = story.moderation_status === 'approved' && story.is_published && !story.hidden_by_admin;
           return (
             <div key={story.id} className="panel-card">
               <div className="d-flex gap-3">
@@ -453,8 +514,14 @@ function DashboardPage() {
                     )}
                   </div>
                   <p className="small text-muted mb-2">
-                    {story.category} · {story.total_chapters} chương · {story.status}
+                    Tác giả: {story.author_name || 'Chưa cập nhật'} · {story.category} · {story.total_chapters} chương · {story.status}
                   </p>
+                  {user?.role !== 'Admin' ? (
+                    <div className={`story-moderation-status ${moderation.className}`}>
+                      <strong>{moderation.label}</strong>
+                      {story.moderation_note ? <span>{story.moderation_note}</span> : null}
+                    </div>
+                  ) : null}
                   <p className="small mb-3 story-clamp">{story.description}</p>
                 <div className="d-flex flex-wrap gap-2">
                   <Link to={`/story/${story.id}-${story.slug}`} className="btn-cmc btn-cmc-outline btn-sm">
@@ -479,14 +546,16 @@ function DashboardPage() {
                     </button>
                   )}
 
-                  <button
-                    type="button"
-                    className="btn-cmc btn-cmc-primary btn-sm"
-                    onClick={() => openAddChapter(story)}
-                  >
-                    <FontAwesomeIcon icon={faBookOpen} />
-                    Chương
-                  </button>
+                  {canAddChapters ? (
+                    <button type="button" className="btn-cmc btn-cmc-primary btn-sm" onClick={() => openAddChapter(story)}>
+                      <FontAwesomeIcon icon={faBookOpen} />
+                      Thêm chương
+                    </button>
+                  ) : user?.role !== 'Admin' ? (
+                    <span className="dashboard-chapter-locked" title="Chỉ có thể thêm chương sau khi Moderator duyệt truyện">
+                      <FontAwesomeIcon icon={faBan} /> Chưa thể thêm chương
+                    </span>
+                  ) : null}
 
                   {isOwner && (
                     <button
@@ -506,41 +575,11 @@ function DashboardPage() {
                     {expandedStory === story.id ? '▲ Ẩn chương' : '▼ Xem chương'}
                   </button>
 
-                  {user?.role !== 'Admin' && (
-                    story.hidden_by_admin ? (
-                      <span 
-                        className="badge-role" 
-                        style={{ 
-                          background: 'rgba(239, 68, 68, 0.15)', 
-                          color: '#ef4444', 
-                          padding: '0.4rem 0.8rem',
-                          borderRadius: '6px',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          cursor: 'not-allowed'
-                        }}
-                        title="Truyện này đã bị Admin ẩn. Bạn không thể hiện lại."
-                      >
-                        <FontAwesomeIcon icon={faBan} />
-                        Admin ẩn
-                      </span>
-                    ) : (
-                      isOwner && (
-                        <button
-                          type="button"
-                          className={`btn-cmc btn-sm ${
-                            story.is_published ? 'btn-link-danger' : 'btn-cmc-primary'
-                          }`}
-                          onClick={() => handleToggleVisibility(story.id)}
-                        >
-                          {story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}
-                        </button>
-                      )
-                    )
-                  )}
+                  {user?.role !== 'Admin' && story.hidden_by_admin ? (
+                    <span className="dashboard-chapter-locked danger" title="Truyện này đã bị Admin ẩn">
+                      <FontAwesomeIcon icon={faBan} /> Admin ẩn
+                    </span>
+                  ) : null}
                 </div>
 
                 {/* Inline chapter list */}
@@ -592,103 +631,133 @@ function DashboardPage() {
         <p className="text-muted">Chưa có truyện. Bấm &quot;Thêm truyện&quot; để bắt đầu.</p>
       ) : null}
 
+      {!loading && stories.length > 0 && filteredStories.length === 0 ? (
+        <div className="dashboard-story-empty-filter">
+          <FontAwesomeIcon icon={faMagnifyingGlass} />
+          <strong>Không tìm thấy truyện phù hợp</strong>
+          <span>Hãy thử từ khóa khác hoặc chọn lại trạng thái duyệt.</span>
+          <button type="button" onClick={() => { setStorySearch(''); setModerationFilter('all'); }}>
+            Xóa bộ lọc
+          </button>
+        </div>
+      ) : null}
+
       {/* ── Story modal ──────────────────────────────────────────────────── */}
       {storyModalOpen ? (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setStoryModalOpen(false)}>
-          <div className="modal-content modal-content-lg">
+          <div className="modal-content story-form-modal">
             <button type="button" className="close-modal" onClick={() => setStoryModalOpen(false)}>&times;</button>
-            <h2>{editing ? 'Sửa truyện' : 'Thêm truyện mới'}</h2>
-            <form onSubmit={saveStory} className="d-grid gap-3 mt-3">
-              <input
-                className="form-control-cmc"
-                placeholder="Tiêu đề"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                required
-              />
-              <textarea
-                className="form-control-cmc"
-                rows={4}
-                placeholder="Mô tả"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                required
-              />
-              <select
-                className="form-control-cmc"
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-              >
-                <option value="Ongoing">Đang ra</option>
-                <option value="Completed">Hoàn thành</option>
-                <option value="Hiatus">Tạm dừng</option>
-              </select>
-              <TagInput value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
-              {!editing && (
-                <div className="d-grid gap-2">
-                  <label className="small text-muted d-flex align-items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={createByFile}
-                      onChange={(e) => setCreateByFile(e.target.checked)}
-                    />
-                    Tạo truyện từ file (tự động tách nội dung)
+            <header className="story-form-header">
+              <span>{editing ? 'Cập nhật tác phẩm' : 'Tác phẩm mới'}</span>
+              <h2>{editing ? 'Chỉnh sửa thông tin truyện' : 'Thêm truyện mới'}</h2>
+              <p>{editing
+                ? 'Hoàn thiện thông tin để người đọc dễ tìm thấy tác phẩm.'
+                : 'Gửi thông tin tác phẩm trước. Sau khi Moderator duyệt, bạn mới có thể đăng chương.'}</p>
+            </header>
+
+            {!editing ? (
+              <div className="story-approval-flow" aria-label="Quy trình xuất bản">
+                <div className="active"><strong>1</strong><span>Tạo thông tin</span></div>
+                <div><strong>2</strong><span>Moderator duyệt</span></div>
+                <div><strong>3</strong><span>Thêm chương</span></div>
+              </div>
+            ) : null}
+
+            <form onSubmit={saveStory} className="story-create-form">
+              <div className="story-create-fields">
+                <label className="story-form-field">
+                  <span>Tiêu đề truyện <b>*</b></span>
+                  <input
+                    className="form-control-cmc"
+                    placeholder="Ví dụ: Hành trình qua miền ký ức"
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    maxLength={255}
+                    required
+                  />
+                  <small>{form.title.length}/255 ký tự</small>
+                </label>
+
+                <label className="story-form-field">
+                  <span>Tên tác giả <b>*</b></span>
+                  <input
+                    className="form-control-cmc"
+                    placeholder="Ví dụ: Kim Dung"
+                    value={form.author_name}
+                    onChange={(e) => setForm({ ...form, author_name: e.target.value })}
+                    maxLength={255}
+                    required
+                  />
+                  <small>Tên tác giả của tác phẩm, không phải tài khoản người đăng.</small>
+                </label>
+
+                <label className="story-form-field">
+                  <span>Giới thiệu truyện <b>*</b></span>
+                  <textarea
+                    className="form-control-cmc"
+                    rows={6}
+                    placeholder="Tóm tắt bối cảnh, nhân vật và điểm hấp dẫn của truyện..."
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    required
+                  />
+                </label>
+
+                <div className="story-form-row">
+                  <label className="story-form-field">
+                    <span>Tiến độ sáng tác</span>
+                    <select className="form-control-cmc" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                      <option value="Ongoing">Đang ra</option>
+                      <option value="Completed">Hoàn thành</option>
+                      <option value="Hiatus">Tạm dừng</option>
+                    </select>
                   </label>
-                  {createByFile && (
-                    <div className="dashboard-import-box">
-                      <p className="dashboard-import-title mb-2">Nhập nội dung từ file</p>
-                      <input
-                        type="file"
-                        className="form-control-cmc form-control-cmc-sm dashboard-file-input"
-                        accept=".txt,.md,text/plain,text/markdown"
-                        onChange={handleStoryFileChange}
-                        required
-                      />
-                      <p className="small text-muted mb-2">Hỗ trợ định dạng: .txt, .md</p>
-                      {storyUploadFile && (
-                        <textarea
-                          className="form-control-cmc dashboard-import-preview"
-                          rows={8}
-                          placeholder="Xem trước nội dung file và chỉnh sửa trước khi import..."
-                          value={storyFilePreview}
-                          onChange={(e) => setStoryFilePreview(e.target.value)}
-                        />
-                      )}
-                      <label className="small text-muted d-flex align-items-center gap-2 dashboard-checkbox-row">
-                        <input
-                          type="checkbox"
-                          checked={splitStoryFile}
-                          onChange={(e) => setSplitStoryFile(e.target.checked)}
-                        />
-                        Tự động tách thành nhiều chương nếu file có tiêu đề "Chương X"
-                      </label>
-                    </div>
+                  <label className="story-form-field">
+                    <span>Thể loại chính</span>
+                    <input
+                      className="form-control-cmc"
+                      placeholder="Ví dụ: Tiên hiệp"
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    />
+                  </label>
+                </div>
+
+                <div className="story-form-field">
+                  <span>Thẻ nội dung</span>
+                  <TagInput value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
+                  <small>Thêm các từ khóa giúp người đọc tìm thấy truyện chính xác hơn.</small>
+                </div>
+              </div>
+
+              <aside className="story-cover-panel">
+                <span className="story-cover-panel__label">Ảnh bìa</span>
+                <div className="story-cover-preview">
+                  {form.cover_image_url ? (
+                    <img src={form.cover_image_url} alt="Xem trước ảnh bìa" />
+                  ) : (
+                    <div><FontAwesomeIcon icon={faBookOpen} /><span>Chưa có ảnh bìa</span></div>
                   )}
                 </div>
-              )}
-              <div>
-                <label className="small text-muted d-block mb-1">Ảnh bìa</label>
-                <input type="file" accept="image/*" onChange={handleCoverUpload} disabled={uploading} />
-                {uploading && <span className="small text-muted ms-2">Đang upload...</span>}
-                {form.cover_image_url ? (
-                  <>
-                    <img
-                      src={form.cover_image_url}
-                      alt="preview"
-                      style={{ width: 80, height: 110, objectFit: 'cover', borderRadius: 6, marginTop: 8 }}
-                    />
-                    <input
-                      className="form-control-cmc mt-2"
-                      value={form.cover_image_url}
-                      onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })}
-                      placeholder="URL ảnh bìa"
-                    />
-                  </>
-                ) : null}
-              </div>
-              <button type="submit" className="btn-cmc btn-cmc-primary" disabled={uploading}>
-                {editing ? 'Cập nhật' : createByFile ? 'Tạo truyện + Import file' : 'Tạo truyện'}
-              </button>
+                <label className="story-cover-upload">
+                  <span>{uploading ? 'Đang tải ảnh...' : 'Chọn ảnh từ máy'}</span>
+                  <input type="file" accept="image/*" onChange={handleCoverUpload} disabled={uploading} />
+                </label>
+                <input
+                  className="form-control-cmc"
+                  value={form.cover_image_url}
+                  onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })}
+                  placeholder="Hoặc dán URL ảnh bìa"
+                />
+                <small>Nên dùng ảnh dọc, tỷ lệ 2:3 và dung lượng dưới 5 MB.</small>
+              </aside>
+
+              <footer className="story-form-actions">
+                <button type="button" className="btn-cmc btn-cmc-outline" onClick={() => setStoryModalOpen(false)} disabled={savingStory}>Hủy</button>
+                <button type="submit" className="btn-cmc btn-cmc-primary" disabled={uploading || savingStory}>
+                  {savingStory ? 'Đang lưu...' : editing ? 'Lưu thay đổi' : 'Gửi Moderator duyệt'}
+                </button>
+              </footer>
             </form>
           </div>
         </div>
@@ -709,24 +778,45 @@ function DashboardPage() {
                   {chapterModal.chapter ? `Sửa chương` : `Thêm chương mới`} — {chapterModal.story.title}
                 </div>
               </div>
-              <button type="submit" className="btn-cmc btn-cmc-primary chapter-editor-submit">
+              <button type="submit" className="btn-cmc btn-cmc-primary chapter-editor-submit" disabled={chapterPreviewLoading}>
                 {chapterModal.chapter ? 'Lưu' : 'Đăng tải'}
               </button>
             </div>
 
             {/* Khu vực soạn thảo căn giữa trang */}
             <div className="wattpad-editor-container mx-auto chapter-editor-container">
+              {!chapterModal.chapter ? (
+                <div className="chapter-entry-methods" aria-label="Phương thức thêm nội dung truyện">
+                  <button
+                    type="button"
+                    className={chapterEntryMode === 'manual' ? 'is-active' : ''}
+                    onClick={() => selectChapterEntryMode('manual')}
+                  >
+                    <FontAwesomeIcon icon={faPenNib} />
+                    <span><strong>Soạn thủ công</strong><small>Nhập trực tiếp nội dung một chương</small></span>
+                  </button>
+                  <button
+                    type="button"
+                    className={chapterEntryMode === 'file' ? 'is-active' : ''}
+                    onClick={() => selectChapterEntryMode('file')}
+                  >
+                    <FontAwesomeIcon icon={faBookOpen} />
+                    <span><strong>Tải lên từ file</strong><small>Nhập TXT, Markdown hoặc EPUB</small></span>
+                  </button>
+                </div>
+              ) : null}
+
               {!chapterModal.chapter && (
                 <div className="mb-3">
                   <label className="small text-muted d-block mb-1" htmlFor="chapter-start-number">
-                    {chapterUploadFile && splitChapterFile ? 'Chương bắt đầu' : 'Số chương'}
+                    {chapterEntryMode === 'file' && splitChapterFile ? 'Chương bắt đầu' : 'Số chương'}
                   </label>
                   <input
                     id="chapter-start-number"
                     type="number"
                     min="1"
                     step="1"
-                    placeholder={chapterUploadFile && splitChapterFile
+                    placeholder={chapterEntryMode === 'file' && splitChapterFile
                       ? 'VD: 1 (sẽ tạo lần lượt Chương 1, 2, 3...)'
                       : 'VD: 1'}
                     className="wattpad-input-muted"
@@ -738,7 +828,7 @@ function DashboardPage() {
                     required
                   />
                   <p className="small text-muted mb-0 mt-1">
-                    {chapterUploadFile && splitChapterFile
+                    {chapterEntryMode === 'file' && splitChapterFile
                       ? 'Nhập số chương đầu tiên. Hệ thống sẽ tự tăng cho các chương tách ra từ file.'
                       : 'Nhập số chương bạn muốn hiển thị cho chương này.'}
                   </p>
@@ -746,40 +836,76 @@ function DashboardPage() {
               )}
               <input
                 type="text"
-                placeholder={chapterUploadFile && splitChapterFile ? 'Tiêu đề chương đầu tiên (tùy chọn)' : 'Tiêu đề chương'}
+                placeholder={chapterEntryMode === 'file' && splitChapterFile ? 'Tiêu đề dự phòng (tùy chọn)' : 'Tiêu đề chương'}
                 className="wattpad-input-title"
                 value={chapterForm.title}
                 onChange={(e) => setChapterForm({ ...chapterForm, title: e.target.value })}
-                required={!chapterUploadFile || !splitChapterFile}
+                required={chapterEntryMode === 'manual' || !splitChapterFile}
               />
-              {!chapterModal.chapter && (
-                <div className="dashboard-import-box dashboard-import-box-inline">
-                  <label className="small text-muted d-block mb-1 dashboard-import-title">Import từ file (tùy chọn)</label>
-                  <input
-                    type="file"
-                    className="form-control-cmc form-control-cmc-sm dashboard-file-input"
-                    accept=".txt,.md,text/plain,text/markdown"
-                    onChange={handleChapterFileChange}
-                  />
-                  {chapterUploadFile && (
-                    <label className="small text-muted d-flex align-items-center gap-2 mt-2 dashboard-checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={splitChapterFile}
-                        onChange={(e) => setSplitChapterFile(e.target.checked)}
-                      />
-                      Tự động tách thành nhiều chương nếu file có tiêu đề "Chương X"
-                    </label>
-                  )}
-                </div>
+
+              {!chapterModal.chapter && chapterEntryMode === 'file' ? (
+                <section className="chapter-file-upload-panel">
+                  <div className="chapter-file-upload-heading">
+                    <div><strong>Tải nội dung truyện</strong><span>File chỉ được dùng để xem trước cho đến khi bạn nhấn Đăng tải.</span></div>
+                    <span className="chapter-file-format-badge">TXT · MD · EPUB</span>
+                  </div>
+
+                  <label className={`chapter-file-dropzone${chapterUploadFile ? ' has-file' : ''}`}>
+                    <FontAwesomeIcon icon={faBookOpen} />
+                    <span>
+                      <strong>{chapterUploadFile?.name || 'Chọn file từ máy tính'}</strong>
+                      <small>{chapterUploadFile
+                        ? `${(chapterUploadFile.size / 1024 / 1024).toFixed(2)} MB · Nhấn để chọn file khác`
+                        : 'Dung lượng tối đa 25 MB'}</small>
+                    </span>
+                    <input
+                      type="file"
+                      accept=".txt,.md,.epub,text/plain,text/markdown,application/epub+zip"
+                      onChange={handleChapterFileChange}
+                      required
+                    />
+                  </label>
+
+                  <label className="chapter-file-split-option">
+                    <input type="checkbox" checked={splitChapterFile} onChange={handleSplitChapterFileChange} />
+                    <span><strong>Tự động tách chương</strong><small>Nhận diện tiêu đề chương trong TXT/MD; EPUB được đọc theo thứ tự nội dung của sách.</small></span>
+                  </label>
+
+                  {chapterPreviewLoading ? (
+                    <div className="chapter-file-preview-state">Đang đọc và phân tích file...</div>
+                  ) : null}
+                  {chapterPreviewError ? (
+                    <div className="chapter-file-preview-state is-error">{chapterPreviewError}</div>
+                  ) : null}
+                  {chapterFilePreview ? (
+                    <div className="chapter-file-preview">
+                      <header>
+                        <div><strong>Xem trước nội dung</strong><span>{chapterFilePreview.chapter_count} chương được nhận diện</span></div>
+                        <small>{chapterFilePreview.file_name}</small>
+                      </header>
+                      <div className="chapter-file-preview-list">
+                        {chapterFilePreview.chapters.map((chapter) => (
+                          <article key={`${chapter.index}-${chapter.title}`}>
+                            <span>Chương {chapter.index}</span>
+                            <strong>{chapter.title}</strong>
+                            <p>{chapter.content_preview || 'Chương này chưa có nội dung xem trước.'}</p>
+                            <small>{Number(chapter.character_count || 0).toLocaleString('vi-VN')} ký tự</small>
+                          </article>
+                        ))}
+                      </div>
+                      {chapterFilePreview.preview_truncated ? <p className="chapter-file-preview-note">Chỉ hiển thị 50 chương đầu trong bản xem trước.</p> : null}
+                    </div>
+                  ) : null}
+                </section>
+              ) : (
+                <textarea
+                  placeholder="Nhập nội dung chương của bạn vào đây..."
+                  className="wattpad-input-content"
+                  value={chapterForm.content}
+                  onChange={(e) => setChapterForm({ ...chapterForm, content: e.target.value })}
+                  required
+                />
               )}
-              <textarea
-                placeholder="Nhập nội dung chương của bạn vào đây..."
-                className="wattpad-input-content"
-                value={chapterForm.content}
-                onChange={(e) => setChapterForm({ ...chapterForm, content: e.target.value })}
-                required={!chapterUploadFile}
-              ></textarea>
             </div>
           </form>
         </div>

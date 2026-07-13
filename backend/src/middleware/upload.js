@@ -22,11 +22,13 @@ const uploadCover = multer({
   },
 });
 
-const TEXT_UPLOAD_MAX_SIZE = 10 * 1024 * 1024;
-const textFileExtensions = new Set(['.txt', '.md']);
+const TEXT_UPLOAD_MAX_SIZE = 25 * 1024 * 1024;
+const textFileExtensions = new Set(['.txt', '.md', '.epub']);
 const textMimeTypes = new Set([
   'text/plain',
   'text/markdown',
+  'application/epub+zip',
+  'application/zip',
   'application/octet-stream',
 ]);
 
@@ -36,10 +38,10 @@ const uploadStoryFile = multer({
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname || '').toLowerCase();
     if (!textFileExtensions.has(ext)) {
-      return cb(new Error('Sai đuôi file. Chỉ chấp nhận .txt hoặc .md'));
+      return cb(new Error('Sai đuôi file. Chỉ chấp nhận .txt, .md hoặc .epub'));
     }
     if (!textMimeTypes.has(file.mimetype)) {
-      return cb(new Error('Định dạng file không hợp lệ. Chỉ chấp nhận .txt hoặc .md'));
+      return cb(new Error('Định dạng file không hợp lệ. Chỉ chấp nhận .txt, .md hoặc .epub'));
     }
     return cb(null, true);
   },

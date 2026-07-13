@@ -4,6 +4,7 @@ import {
   FontAwesomeIcon,
   faBookOpen,
   faEye,
+  faFeatherPointed,
   faLayerGroup,
   faUsers,
 } from '../lib/icons';
@@ -38,6 +39,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
   const chapterCount = story.chapter_count || story.total_chapters || 0;
   const followCount = story.follow_count || 0;
   const viewCount = story.view_count ?? story.views ?? story.total_views ?? story.views_metric ?? null;
+  const authorName = story.author_name || 'Không rõ tác giả';
   const tags = getTagList(story);
 
   const formatCount = (value) => Number(value || 0).toLocaleString('vi-VN');
@@ -113,6 +115,9 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           <Link to={storyPath} className="story-title">
             {story.title}
           </Link>
+          <p className="story-card-author" title={authorName}>
+            <FontAwesomeIcon icon={faFeatherPointed} /> {authorName}
+          </p>
 
           <div className="story-card-footer">
             <span className="story-card-metrics">
@@ -160,6 +165,10 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           <Link to={storyPath} className="story-title">
             {story.title}
           </Link>
+
+          <p className="story-card-author" title={authorName}>
+            <FontAwesomeIcon icon={faFeatherPointed} /> {authorName}
+          </p>
 
           <div className="story-card-metrics">
             <span><FontAwesomeIcon icon={faBookOpen} /> {formatCount(chapterCount)} chương</span>

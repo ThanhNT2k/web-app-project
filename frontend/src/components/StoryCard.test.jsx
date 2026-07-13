@@ -9,6 +9,7 @@ const story = {
   slug: 'demo-story',
   title: 'Demo Story',
   description: 'A story for tests.',
+  author_name: 'Test Author',
   author_username: 'tester',
   chapter_count: 12,
   follow_count: 4,
@@ -28,6 +29,7 @@ describe('StoryCard', () => {
     expect(screen.getAllByRole('link', { name: 'Demo Story' })[0]).toHaveAttribute('href', '/story/7-demo-story');
     expect(screen.getByText('Fantasy')).toBeInTheDocument();
     expect(screen.getByText('Action')).toBeInTheDocument();
+    expect(screen.getByText('Test Author')).toBeInTheDocument();
     expect(screen.getByText(/12 chương/i)).toBeInTheDocument();
     expect(screen.getByText(/4 theo dõi/i)).toBeInTheDocument();
   });

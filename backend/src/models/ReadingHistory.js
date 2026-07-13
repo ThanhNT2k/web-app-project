@@ -72,6 +72,7 @@ async function getReadingHistory(userId) {
         s.category,
         s.total_chapters,
         s.author_id,
+        s.author_name,
         c.chapter_number AS last_chapter_number,  -- Số thứ tự chương đọc cuối (để hiển thị "Đang ở chương X")
         c.title AS last_chapter_title
       FROM reading_history rh

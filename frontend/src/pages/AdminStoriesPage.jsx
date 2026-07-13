@@ -30,7 +30,7 @@ function AdminStoriesPage() {
 
   const filteredStories = useMemo(() => stories.filter((story) => {
     const keyword = search.toLowerCase().trim();
-    const matchesSearch = !keyword || [story.title, story.author_username, story.author_full_name].some((value) => value?.toLowerCase().includes(keyword));
+    const matchesSearch = !keyword || [story.title, story.author_name, story.author_username, story.author_full_name].some((value) => value?.toLowerCase().includes(keyword));
     const matchesVisibility = visibility === 'ALL' || (visibility === 'PUBLISHED' ? story.is_published : !story.is_published);
     return matchesSearch && matchesVisibility;
   }), [stories, search, visibility]);
@@ -81,19 +81,20 @@ function AdminStoriesPage() {
         {loading ? <div className="management-loading">Đang tải danh sách truyện...</div> : (
           <div className="management-table-wrap">
             <table className="management-table stories-table">
-              <thead><tr><th>Truyện</th><th>Tác giả</th><th>Chương</th><th>Phát hành</th><th>Hiển thị</th><th>Hành động</th></tr></thead>
+              <thead><tr><th>Truyện</th><th>Tác giả</th><th>Người đăng</th><th>Chương</th><th>Phát hành</th><th>Hiển thị</th><th>Hành động</th></tr></thead>
               <tbody>
                 {filteredStories.map((story) => (
                   <tr key={story.id}>
                     <td><div className="management-story"><div className="management-story-cover">{story.cover_image_url ? <img src={story.cover_image_url} alt="" /> : <span>{story.title.charAt(0)}</span>}</div><div><Link to={`/story/${story.id}-${story.slug}`}>{story.title}</Link><small>#{story.id} · {story.category || 'Chưa phân loại'}</small></div></div></td>
-                    <td>{story.author_full_name || story.author_username || 'Ẩn danh'}</td>
+                    <td>{story.author_name || 'Không rõ tác giả'}</td>
+                    <td>{story.author_full_name || (story.author_username ? `@${story.author_username}` : 'Ẩn danh')}</td>
                     <td>{story.chapter_count || story.total_chapters || 0}</td>
                     <td>{story.status || 'Ongoing'}</td>
                     <td><span className={`management-badge ${story.is_published ? 'success' : 'danger'}`}>{story.is_published ? 'Đang hiển thị' : story.hidden_by_admin ? 'Admin đã ẩn' : 'Chưa hiển thị'}</span></td>
                     <td><button type="button" className={story.is_published ? 'danger-outline' : 'primary-action'} disabled={processingId === story.id} onClick={() => handleToggleVisibility(story)}>{processingId === story.id ? 'Đang cập nhật...' : story.is_published ? 'Ẩn truyện' : 'Hiện truyện'}</button></td>
                   </tr>
                 ))}
-                {!filteredStories.length ? <tr><td colSpan="6" className="management-empty-cell">Không tìm thấy truyện phù hợp.</td></tr> : null}
+                {!filteredStories.length ? <tr><td colSpan="7" className="management-empty-cell">Không tìm thấy truyện phù hợp.</td></tr> : null}
               </tbody>
             </table>
           </div>

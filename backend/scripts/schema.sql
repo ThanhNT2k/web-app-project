@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS stories (
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255),
     author_id INTEGER REFERENCES users(id),
+    author_name VARCHAR(255) NOT NULL,
     description TEXT,
     cover_image_url VARCHAR(500),
     category VARCHAR(100),

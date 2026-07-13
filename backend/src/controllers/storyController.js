@@ -1,9 +1,7 @@
 const Joi = require('joi');
 
 const { Story, User, StoryCollaborator, StoryRating } = require('../models');
-const Chapter = require('../models/Chapter');
 const Tag = require('../models/Tag');
-const { parseStoryUploadFile, parseStoryTextToChapters } = require('../services/storyFileImportService');
 
 // Schema validate dữ liệu khi TẠO MỚI truyện
 // - title, slug, description: bắt buộc
@@ -11,23 +9,12 @@ const { parseStoryUploadFile, parseStoryTextToChapters } = require('../services/
 // - tags: mảng tối đa 20 tag, mỗi tag tối đa 100 ký tự
 const createStorySchema = Joi.object({
   title: Joi.string().trim().max(255).required(),
+  author_name: Joi.string().trim().max(255).required(),
   slug: Joi.string().trim().max(255).required(),
   description: Joi.string().trim().required(),
   cover_image_url: Joi.string().trim().max(500).allow('', null),
   category: Joi.string().trim().max(100).allow('', null),
   tags: Joi.array().items(Joi.string().trim().max(100)).max(20),
-});
-
-const createStoryFromFileSchema = Joi.object({
-  title: Joi.string().trim().max(255).required(),
-  slug: Joi.string().trim().max(255).required(),
-  description: Joi.string().trim().required(),
-  cover_image_url: Joi.string().trim().max(500).allow('', null),
-  category: Joi.string().trim().max(100).allow('', null),
-  tags: Joi.array().items(Joi.string().trim().max(100)).max(20),
-  split_chapters: Joi.boolean().optional(),
-  first_chapter_title: Joi.string().trim().max(255).allow('', null).optional(),
-  raw_text_override: Joi.string().trim().allow('', null).optional(),
 });
 
 // Schema validate dữ liệu khi CẬP NHẬT truyện
@@ -35,6 +22,7 @@ const createStoryFromFileSchema = Joi.object({
 // - status: cho phép thay đổi trạng thái (Ongoing / Completed / Hiatus)
 const updateStorySchema = Joi.object({
   title: Joi.string().trim().max(255).optional(),
+  author_name: Joi.string().trim().max(255).optional(),
   description: Joi.string().trim().optional(),
   cover_image_url: Joi.string().trim().max(500).allow('', null).optional(),
   category: Joi.string().trim().max(100).allow('', null).optional(),
@@ -187,7 +175,8 @@ async function createStory(req, res) {
     const storyData = {
       title: value.title,
       slug: value.slug,
-      author_id: req.user.id,  // Tác giả chính là người đang đăng nhập
+      author_id: req.user.id,
+      author_name: value.author_name,
       description: value.description,
       cover_image_url: value.cover_image_url || null,
       category: value.category || null,
@@ -228,65 +217,9 @@ async function createStoryFromFile(req, res) {
       });
     }
 
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vui lòng tải lên tệp .txt hoặc .md hợp lệ',
-      });
-    }
-
-    const { error, value } = createStoryFromFileSchema.validate(req.body || {}, {
-      abortEarly: false,
-      stripUnknown: true,
-    });
-
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: error.details.map((detail) => detail.message),
-      });
-    }
-
-    const storyData = {
-      title: value.title,
-      slug: value.slug,
-      author_id: req.user.id,
-      description: value.description,
-      cover_image_url: value.cover_image_url || null,
-      category: value.category || null,
-    };
-
-    const createdStory = await Story.createStory(storyData);
-
-    const hasRawOverride = Boolean(value.raw_text_override && value.raw_text_override.trim());
-    const parsedChapters = hasRawOverride
-      ? parseStoryTextToChapters(value.raw_text_override, {
-        splitChapters: value.split_chapters,
-        singleTitle: value.first_chapter_title,
-      })
-      : parseStoryUploadFile(req.file, {
-        splitChapters: value.split_chapters,
-        singleTitle: value.first_chapter_title,
-      });
-
-    const createdChapters = await Chapter.createChaptersBatch(createdStory.id, parsedChapters, {
-      startChapterNumber: 1,
-    });
-
-    let tags = [];
-    if (value.tags?.length) {
-      tags = await Tag.setStoryTags(createdStory.id, value.tags);
-    } else if (value.category) {
-      tags = await Tag.setStoryTags(createdStory.id, [value.category]);
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: 'Tạo truyện và import nội dung từ file thành công',
-      story: { ...createdStory, tags, total_chapters: createdChapters.length },
-      imported_count: createdChapters.length,
-      chapters: createdChapters,
+    return res.status(409).json({
+      success: false,
+      message: 'Hãy tạo thông tin truyện và chờ Moderator duyệt trước khi import nội dung chương',
     });
   } catch (error) {
     console.error('[storyController.createStoryFromFile]', error);
@@ -494,6 +427,13 @@ async function toggleStoryVisibility(req, res) {
   try {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Uploader không thể tự thay đổi hiển thị. Truyện phải được Moderator duyệt.',
+      });
     }
 
     const { id } = req.params;

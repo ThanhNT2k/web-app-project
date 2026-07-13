@@ -51,6 +51,16 @@ if (process.env.NODE_ENV !== 'test') {
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS weekly_views INTEGER NOT NULL DEFAULT 0');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS monthly_views INTEGER NOT NULL DEFAULT 0');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS total_views INTEGER NOT NULL DEFAULT 0');
+        await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS author_name VARCHAR(255)');
+        await pool.query(`
+          UPDATE stories s
+          SET author_name = COALESCE(NULLIF(TRIM(u.full_name), ''), u.username, 'Không rõ tác giả')
+          FROM users u
+          WHERE s.author_id = u.id
+            AND (s.author_name IS NULL OR TRIM(s.author_name) = '')
+        `);
+        await pool.query("UPDATE stories SET author_name = 'Không rõ tác giả' WHERE author_name IS NULL OR TRIM(author_name) = ''");
+        await pool.query('ALTER TABLE stories ALTER COLUMN author_name SET NOT NULL');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS moderation_status VARCHAR(30)');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS moderation_note TEXT');
         await pool.query('ALTER TABLE stories ADD COLUMN IF NOT EXISTS reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL');

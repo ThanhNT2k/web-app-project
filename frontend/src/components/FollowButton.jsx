@@ -4,7 +4,7 @@ import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { FontAwesomeIcon, faBookmark, faCheck } from '../lib/icons';
 
-function FollowButton({ storyId }) {
+function FollowButton({ storyId, iconOnly = false, responsiveIconOnly = false }) {
   const { isAuthenticated } = useAuth();
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,8 +61,14 @@ function FollowButton({ storyId }) {
   // Don't render while checking follow status for the first time (avoids flicker)
   if (isAuthenticated && !checked) {
     return (
-      <button type="button" className="btn-cmc btn-cmc-outline" disabled>
-        ...
+      <button
+        type="button"
+        className={`btn-cmc btn-cmc-outline${iconOnly || responsiveIconOnly ? ' storyqq-icon-action' : ''}`}
+        aria-label="Đang kiểm tra trạng thái theo dõi"
+        disabled
+      >
+        <FontAwesomeIcon icon={faBookmark} />
+        {!iconOnly ? <span className={responsiveIconOnly ? 'storyqq-action-text' : ''}>Đang tải</span> : null}
       </button>
     );
   }
@@ -70,15 +76,27 @@ function FollowButton({ storyId }) {
   return (
     <button
       type="button"
-      className={`btn-cmc ${following ? 'btn-cmc-outline' : 'btn-cmc-primary'}`}
+      className={`btn-cmc ${following ? 'btn-cmc-outline' : 'btn-cmc-primary'}${iconOnly || responsiveIconOnly ? ' storyqq-icon-action' : ''}`}
       onClick={toggle}
       disabled={loading}
+      aria-label={following ? 'Bỏ theo dõi truyện' : 'Theo dõi truyện'}
+      title={following ? 'Bỏ theo dõi truyện' : 'Theo dõi truyện'}
+      data-tooltip={following ? 'Bỏ theo dõi' : 'Theo dõi'}
     >
       {/* eslint-disable-next-line no-nested-ternary */}
-      {loading ? '...' : (
+      {loading ? (
         <>
           <FontAwesomeIcon icon={following ? faCheck : faBookmark} />
-          {following ? 'Đang theo dõi' : 'Theo dõi'}
+          {!iconOnly ? <span className={responsiveIconOnly ? 'storyqq-action-text' : ''}>Đang xử lý</span> : null}
+        </>
+      ) : (
+        <>
+          <FontAwesomeIcon icon={following ? faCheck : faBookmark} />
+          {!iconOnly ? (
+            <span className={responsiveIconOnly ? 'storyqq-action-text' : ''}>
+              {following ? 'Đang theo dõi' : 'Theo dõi'}
+            </span>
+          ) : null}
         </>
       )}
     </button>

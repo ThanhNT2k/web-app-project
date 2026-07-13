@@ -195,6 +195,19 @@ const API = {
     getById: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'GET' }),
     getBySlugAndNumber: (storySlug, chapterNumber) => request(`/stories/by-slug/${storySlug}/chapters/${chapterNumber}`, { method: 'GET' }),
     create: (storyId, data) => request(`/stories/${storyId}/chapters`, { method: 'POST', data }),
+    previewFile: async (storyId, payload, file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      Object.entries(payload || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        formData.append(key, String(value));
+      });
+
+      const response = await apiClient.post(`/stories/${storyId}/chapters/preview-file`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
     importFromFile: async (storyId, payload, file) => {
       const formData = new FormData();
       formData.append('file', file);

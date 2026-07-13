@@ -162,7 +162,7 @@ function RankingsPage() {
                   </Link>
 
                   <p className="ranking-meta">
-                    <FontAwesomeIcon icon={faFeatherPointed} /> {story.author_full_name || story.author_username || 'CMC'}
+                    <FontAwesomeIcon icon={faFeatherPointed} /> {story.author_name || 'Không rõ tác giả'}
                   </p>
 
                   <div className="ranking-metrics">

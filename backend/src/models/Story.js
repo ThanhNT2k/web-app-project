@@ -86,6 +86,7 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
         s.title,
         s.slug,
         s.author_id,
+        s.author_name,
         s.description,
         s.cover_image_url,
         s.category,
@@ -146,6 +147,7 @@ async function getStoryById(id) {
           s.title,
           s.slug,
           s.author_id,
+          s.author_name,
           s.description,
           s.cover_image_url,
           s.category,
@@ -156,6 +158,9 @@ async function getStoryById(id) {
           s.updated_at,
           s.is_published,
           s.hidden_by_admin,
+          s.moderation_status,
+          s.moderation_note,
+          s.reviewed_at,
           COALESCE(s.total_rating_count, 0)::int AS rating_count,
           COALESCE(s.average_rating, 0)::float8 AS average_rating,
           COALESCE(s.total_chapters, 0)::int AS chapter_count,
@@ -207,7 +212,7 @@ async function getStoryById(id) {
  * Cover image và category cho phép null (truyện mới tạo có thể chưa có ảnh bìa).
  */
 async function createStory(storyData) {
-  const { title, slug, author_id, description, cover_image_url, category } = storyData;
+  const { title, slug, author_id, author_name, description, cover_image_url, category } = storyData;
 
   try {
     const result = await db.query(
@@ -216,16 +221,20 @@ async function createStory(storyData) {
           title,
           slug,
           author_id,
+          author_name,
           description,
           cover_image_url,
-          category
+          category,
+          is_published,
+          moderation_status
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, false, 'pending')
         RETURNING
           id,
           title,
           slug,
           author_id,
+          author_name,
           description,
           cover_image_url,
           category,
@@ -234,9 +243,12 @@ async function createStory(storyData) {
           created_at,
           updated_at,
           is_published,
-          hidden_by_admin
+          hidden_by_admin,
+          moderation_status,
+          moderation_note,
+          reviewed_at
       `,
-      [title, slug, author_id, description || null, cover_image_url || null, category || null]
+      [title, slug, author_id, author_name, description || null, cover_image_url || null, category || null]
     );
 
     return result.rows[0];
@@ -251,7 +263,7 @@ async function createStory(storyData) {
  * Đây là cách thực hiện partial update trong SQL không cần dynamic query.
  */
 async function updateStory(id, storyData) {
-  const { title, description, cover_image_url, category, status } = storyData;
+  const { title, author_name, description, cover_image_url, category, status } = storyData;
 
   try {
     const result = await db.query(
@@ -259,17 +271,35 @@ async function updateStory(id, storyData) {
         UPDATE stories
         SET
           title = COALESCE($1, title),
-          description = COALESCE($2, description),
-          cover_image_url = COALESCE($3, cover_image_url),
-          category = COALESCE($4, category),
-          status = COALESCE($5, status),
+          author_name = COALESCE($2, author_name),
+          description = COALESCE($3, description),
+          cover_image_url = COALESCE($4, cover_image_url),
+          category = COALESCE($5, category),
+          status = COALESCE($6, status),
+          moderation_status = CASE
+            WHEN moderation_status IN ('changes_requested', 'rejected') THEN 'pending'
+            ELSE moderation_status
+          END,
+          moderation_note = CASE
+            WHEN moderation_status IN ('changes_requested', 'rejected') THEN NULL
+            ELSE moderation_note
+          END,
+          reviewed_by = CASE
+            WHEN moderation_status IN ('changes_requested', 'rejected') THEN NULL
+            ELSE reviewed_by
+          END,
+          reviewed_at = CASE
+            WHEN moderation_status IN ('changes_requested', 'rejected') THEN NULL
+            ELSE reviewed_at
+          END,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = $6
+        WHERE id = $7
         RETURNING
           id,
           title,
           slug,
           author_id,
+          author_name,
           description,
           cover_image_url,
           category,
@@ -278,9 +308,12 @@ async function updateStory(id, storyData) {
           created_at,
           updated_at,
           is_published,
-          hidden_by_admin
+          hidden_by_admin,
+          moderation_status,
+          moderation_note,
+          reviewed_at
       `,
-      [title || null, description || null, cover_image_url || null, category || null, status || null, id]
+      [title || null, author_name || null, description || null, cover_image_url || null, category || null, status || null, id]
     );
 
     return result.rows[0] || null;
@@ -361,6 +394,7 @@ async function searchStories(query, category = null, tag = null, page = 1, limit
           s.title,
           s.slug,
           s.author_id,
+          s.author_name,
           s.description,
           s.cover_image_url,
           s.category,
@@ -384,6 +418,7 @@ async function searchStories(query, category = null, tag = null, page = 1, limit
           AND (
             $1::text IS NULL                -- Nếu không có từ khóa, bỏ qua điều kiện tìm kiếm
             OR s.title ILIKE $1             -- Tìm trong title (không phân biệt hoa/thường)
+            OR s.author_name ILIKE $1       -- Tìm theo tên tác giả của tác phẩm
             OR s.description ILIKE $1       -- Tìm trong description
           )
           AND ($2::text IS NULL OR s.category = $2)   -- Lọc theo thể loại (exact match)
@@ -547,6 +582,7 @@ async function getStoryBySlug(slug) {
           s.title,
           s.slug,
           s.author_id,
+          s.author_name,
           s.description,
           s.cover_image_url,
           s.category,
@@ -582,6 +618,7 @@ async function getStoryBySlug(slug) {
           s.title,
           s.slug,
           s.author_id,
+          s.author_name,
           s.description,
           s.cover_image_url,
           s.category,

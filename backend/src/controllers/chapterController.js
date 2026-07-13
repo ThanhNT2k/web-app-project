@@ -28,6 +28,11 @@ const importChapterFileSchema = Joi.object({
   raw_text_override: Joi.string().trim().allow('', null).optional(),
 }).required();
 
+const previewChapterFileSchema = Joi.object({
+  split_chapters: Joi.boolean().optional(),
+  title: Joi.string().trim().max(255).allow('', null).optional(),
+}).required();
+
 /**
  * Kiểm tra quyền thao tác với chương (thêm/sửa/xóa).
  * Logic giống storyController: chỉ tác giả hoặc Admin được phép.
@@ -48,6 +53,11 @@ async function isStoryCollaboratorOrOwnerOrAdmin(user, story) {
   if (user.role === 'Admin') return true;
   if (Number(user.id) === Number(story.author_id)) return true;
   return await StoryCollaborator.isCollaborator(story.id, user.id);
+}
+
+function canAddChapterAfterModeration(user, story) {
+  if (user?.role === 'Admin') return true;
+  return story?.moderation_status === 'approved' && story?.is_published && !story?.hidden_by_admin;
 }
 
 async function enqueueNewChapterNotification(chapter, story) {
@@ -202,6 +212,13 @@ async function createChapter(req, res) {
       });
     }
 
+    if (!canAddChapterAfterModeration(req.user, story)) {
+      return res.status(409).json({
+        success: false,
+        message: 'Truyện phải được Moderator duyệt trước khi có thể thêm chương',
+      });
+    }
+
     const { error, value } = createChapterSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
 
     if (error) {
@@ -269,10 +286,17 @@ async function importChapterFile(req, res) {
       });
     }
 
+    if (!canAddChapterAfterModeration(req.user, story)) {
+      return res.status(409).json({
+        success: false,
+        message: 'Truyện phải được Moderator duyệt trước khi có thể import chương',
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng tải lên tệp .txt hoặc .md hợp lệ',
+        message: 'Vui lòng tải lên tệp .txt, .md hoặc .epub hợp lệ',
       });
     }
 
@@ -295,7 +319,7 @@ async function importChapterFile(req, res) {
         splitChapters: value.split_chapters,
         singleTitle: value.title,
       })
-      : parseStoryUploadFile(req.file, {
+      : await parseStoryUploadFile(req.file, {
         splitChapters: value.split_chapters,
         singleTitle: value.title,
       });
@@ -327,6 +351,74 @@ async function importChapterFile(req, res) {
     return res.status(500).json({
       success: false,
       message: error.message || 'Internal server error',
+    });
+  }
+}
+
+async function previewChapterFile(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const story = await Story.getStoryById(req.params.storyId);
+    if (!story) {
+      return res.status(404).json({ success: false, message: 'Story not found' });
+    }
+
+    const hasPermission = await isStoryCollaboratorOrOwnerOrAdmin(req.user, story);
+    if (!hasPermission) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    if (!canAddChapterAfterModeration(req.user, story)) {
+      return res.status(409).json({
+        success: false,
+        message: 'Truyện phải được Moderator duyệt trước khi có thể xem trước file chương',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng tải lên tệp .txt, .md hoặc .epub hợp lệ',
+      });
+    }
+
+    const { error, value } = previewChapterFileSchema.validate(req.body || {}, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: error.details.map((detail) => detail.message),
+      });
+    }
+
+    const chapters = await parseStoryUploadFile(req.file, {
+      splitChapters: value.split_chapters,
+      singleTitle: value.title,
+    });
+
+    return res.status(200).json({
+      success: true,
+      file_name: req.file.originalname,
+      chapter_count: chapters.length,
+      chapters: chapters.slice(0, 50).map((chapter, index) => ({
+        index: index + 1,
+        title: chapter.title,
+        content_preview: chapter.content.slice(0, 800),
+        character_count: chapter.content.length,
+      })),
+      preview_truncated: chapters.length > 50,
+    });
+  } catch (error) {
+    console.error('[chapterController.previewChapterFile]', error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Không thể đọc nội dung file',
     });
   }
 }
@@ -501,6 +593,7 @@ module.exports = {
   getChapters,
   getChapterById,
   createChapter,
+  previewChapterFile,
   importChapterFile,
   updateChapter,
   deleteChapter,

@@ -31,6 +31,7 @@ router.get('/:storyId/chapters', optionalAuth, chapterController.getChapters);
 router.get('/:storyId/chapters/:chapterId', optionalAuth, chapterController.getChapterById);
 router.get('/by-slug/:storySlug/chapters/:chapterNumber', optionalAuth, chapterController.getChapterBySlugAndNumber);
 router.post('/:storyId/chapters', authenticateToken, authorizeRole('Uploader'), chapterController.createChapter);
+router.post('/:storyId/chapters/preview-file', authenticateToken, authorizeRole('Uploader'), uploadStoryFile.single('file'), chapterController.previewChapterFile);
 router.post('/:storyId/chapters/import-file', authenticateToken, authorizeRole('Uploader'), uploadStoryFile.single('file'), chapterController.importChapterFile);
 router.put('/:storyId/chapters/:chapterId', authenticateToken, authorizeRole('Uploader', 'Admin'), chapterController.updateChapter);
 router.delete('/:storyId/chapters/:chapterId', authenticateToken, authorizeRole('Uploader', 'Admin'), chapterController.deleteChapter);

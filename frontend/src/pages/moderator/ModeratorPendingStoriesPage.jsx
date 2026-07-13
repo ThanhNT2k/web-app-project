@@ -99,8 +99,8 @@ function ModeratorPendingStoriesPage() {
               <div className="pending-story-body">
                 <div className="pending-story-heading"><span className="management-badge warning">Chờ xử lý</span><small>#{story.id}</small></div>
                 <h3>{story.title}</h3>
-                <p>{story.description || 'Tác giả chưa cung cấp mô tả cho truyện này.'}</p>
-                <dl><div><dt>Người đăng</dt><dd>{story.author_full_name || `@${story.author_username}`}</dd></div><div><dt>Thể loại</dt><dd>{story.category || 'Chưa phân loại'}</dd></div><div><dt>Số chương</dt><dd>{story.total_chapters || 0}</dd></div><div><dt>Ngày gửi</dt><dd>{new Date(story.created_at).toLocaleDateString('vi-VN')}</dd></div></dl>
+                <p>{story.description || 'Người đăng chưa cung cấp mô tả cho truyện này.'}</p>
+                <dl><div><dt>Tác giả</dt><dd>{story.author_name || 'Không rõ tác giả'}</dd></div><div><dt>Người đăng</dt><dd>{story.author_full_name || (story.author_username ? `@${story.author_username}` : 'Không rõ')}</dd></div><div><dt>Thể loại</dt><dd>{story.category || 'Chưa phân loại'}</dd></div><div><dt>Số chương</dt><dd>{story.total_chapters || 0}</dd></div><div><dt>Ngày gửi</dt><dd>{new Date(story.created_at).toLocaleDateString('vi-VN')}</dd></div></dl>
                 <div className="pending-story-actions">
                   <Link to={`/story/${story.id}-${story.slug}`} target="_blank" rel="noreferrer">Xem trang truyện</Link>
                   <button type="button" onClick={() => openProcessPanel(story)} disabled={processingId === story.id}>
@@ -138,7 +138,8 @@ function ModeratorPendingStoriesPage() {
               {selectedStory.cover_image_url ? <img src={selectedStory.cover_image_url} alt="" /> : null}
               <div>
                 <strong>{selectedStory.title}</strong>
-                <span>{selectedStory.author_full_name || `@${selectedStory.author_username}`}</span>
+                <span>Tác giả: {selectedStory.author_name || 'Không rõ tác giả'}</span>
+                <span>Người đăng: {selectedStory.author_full_name || (selectedStory.author_username ? `@${selectedStory.author_username}` : 'Không rõ')}</span>
               </div>
             </div>
 

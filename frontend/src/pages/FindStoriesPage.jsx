@@ -70,13 +70,13 @@ function FindStoriesPage() {
         <IconBadge icon={faMagnifyingGlass} size="md" tone="primary" />
         Tìm truyện
       </h1>
-      <p className="text-muted mb-4">Tìm theo tên truyện hoặc chọn thẻ (tag) bên dưới.</p>
+      <p className="text-muted mb-4">Tìm theo tên truyện, tên tác giả hoặc chọn thẻ (tag) bên dưới.</p>
 
       <section className="panel-card mb-4">
         <form onSubmit={applySearch} className="find-form">
           <input
             className="form-control-cmc"
-            placeholder="Nhập tên truyện, mô tả..."
+            placeholder="Nhập tên truyện, tên tác giả hoặc mô tả..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

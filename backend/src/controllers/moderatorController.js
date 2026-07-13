@@ -39,6 +39,7 @@ async function getPendingStories(req, res) {
         s.title,
         s.slug,
         s.author_id,
+        s.author_name,
         s.description,
         s.cover_image_url,
         s.category,

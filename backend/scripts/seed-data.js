@@ -204,14 +204,15 @@ async function seed() {
     for (const story of storiesSeedData) {
       const result = await client.query(
         `
-          INSERT INTO stories (title, slug, author_id, description, cover_image_url, category, status, total_chapters, is_published)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          INSERT INTO stories (title, slug, author_id, author_name, description, cover_image_url, category, status, total_chapters, is_published)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           RETURNING id
         `,
         [
           story.title,
           slugify(story.title),
           userIds[story.authorIndex],
+          story.authorName || 'Tác giả CMC',
           story.description,
           story.coverImageUrl,
           story.category,

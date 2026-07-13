@@ -10,6 +10,13 @@ import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { mockStories } from '../data/mockStories';
 import { slugify } from '../utils/slugify';
+import {
+  FontAwesomeIcon,
+  faBookOpen,
+  faFlag,
+  faForwardStep,
+  faStar,
+} from '../lib/icons';
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80';
@@ -58,12 +65,14 @@ function StoryDetailPage() {
   const [chapterSearch, setChapterSearch] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showRatingPanel, setShowRatingPanel] = useState(false);
+  const [introExpanded, setIntroExpanded] = useState(false);
 
   // Load story info once
   useEffect(() => {
     const fetchStory = async () => {
       try {
         setLoading(true);
+        setIntroExpanded(false);
         const storyResponse = await API.stories.getBySlug(slug);
         setStory(storyResponse.story || storyResponse);
         setError('');
@@ -199,6 +208,8 @@ function StoryDetailPage() {
   const followCount = story.follow_count ?? story.follower_count ?? 0;
   const totalViews = story.total_views ?? story.view_count ?? story.views ?? story.views_metric ?? 0;
   const averageRating = story.average_rating ?? 0;
+  const description = story.description || 'Chưa có mô tả cho truyện này.';
+  const hasLongDescription = description.length > 320;
 
   const storyMetaItems = [
     { label: 'Số chương', value: formatWholeNumber(totalChapters) },
@@ -243,7 +254,11 @@ function StoryDetailPage() {
           <h1 className="storyqq-title">{story.title}</h1>
 
           <p className="storyqq-author">
-            Tác giả: {story.author_full_name || story.author_username || 'CMC'}
+            <span>Tác giả: {story.author_name || 'Không rõ tác giả'}</span>
+            <span className="text-muted">
+              {' · Người đăng: '}
+              {story.author_full_name || (story.author_username ? `@${story.author_username}` : 'Không rõ')}
+            </span>
             {story.collaborators?.length > 0 && (
               <>
                 {' · Đồng đăng: '}
@@ -256,25 +271,38 @@ function StoryDetailPage() {
 
           <div className="storyqq-intro-block">
             <p className="storyqq-intro-label">Giới thiệu truyện</p>
-            <p className="storyqq-intro-note">Phần giới thiệu nội dung truyện:</p>
-            <p className="storyqq-desc">{story.description || 'Chưa có mô tả cho truyện này.'}</p>
+            <p className={`storyqq-desc${!introExpanded && hasLongDescription ? ' is-collapsed' : ''}`}>
+              {description}
+            </p>
+            {hasLongDescription ? (
+              <button
+                type="button"
+                className="storyqq-intro-toggle"
+                onClick={() => setIntroExpanded((current) => !current)}
+                aria-expanded={introExpanded}
+              >
+                {introExpanded ? 'Thu gọn' : 'Đọc thêm'}
+              </button>
+            ) : null}
           </div>
 
-          {story.tags?.length > 0 ? (
-            <div className="story-tags-row mb-3">
-              {story.tags.map((tag) => (
-                <Link key={tag.id} to={`/tim-truyen?tag=${tag.slug}`} className="story-tag-chip">
-                  {tag.name}
+          <div className="storyqq-tags-footer">
+            {story.tags?.length > 0 ? (
+              <div className="story-tags-row">
+                {story.tags.map((tag) => (
+                  <Link key={tag.id} to={`/tim-truyen?tag=${tag.slug}`} className="story-tag-chip">
+                    {tag.name}
+                  </Link>
+                ))}
+              </div>
+            ) : story.category ? (
+              <div className="story-tags-row">
+                <Link to={`/tim-truyen?tag=${slugify(story.category)}`} className="story-tag-chip">
+                  {story.category}
                 </Link>
-              ))}
-            </div>
-          ) : story.category ? (
-            <div className="mb-3">
-              <Link to={`/tim-truyen?tag=${slugify(story.category)}`} className="story-tag-chip">
-                {story.category}
-              </Link>
-            </div>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
 
         </div>
 
@@ -301,37 +329,53 @@ function StoryDetailPage() {
           {continueChapterNumber ? (
             <Link
               to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
-              className="btn-cmc btn-cmc-primary"
+              className="btn-cmc btn-cmc-primary storyqq-icon-action"
+              aria-label={storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
+              title={storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
+              data-tooltip={storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
             >
-              {storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
+              <FontAwesomeIcon icon={faBookOpen} />
+              <span className="storyqq-action-text">{storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}</span>
             </Link>
           ) : null}
 
           {latestChapter ? (
             <Link
               to={`/${story.id}-${story.slug}/${latestChapter.chapter_number}`}
-              className="btn-cmc btn-cmc-outline"
+              className="btn-cmc btn-cmc-outline storyqq-icon-action"
+              aria-label="Đọc chương mới nhất"
+              title="Đọc chương mới nhất"
+              data-tooltip="Chương mới nhất"
             >
-              Đọc chương mới nhất
+              <FontAwesomeIcon icon={faForwardStep} />
+              <span className="storyqq-action-text">Chương mới nhất</span>
             </Link>
           ) : null}
 
-          <FollowButton storyId={story.id} />
+          <FollowButton storyId={story.id} responsiveIconOnly />
 
           <button
             type="button"
-            className="btn-cmc btn-cmc-outline"
+            className="btn-cmc btn-cmc-outline storyqq-icon-action"
             onClick={() => setIsReportModalOpen(true)}
+            aria-label="Báo cáo truyện"
+            title="Báo cáo truyện"
+            data-tooltip="Báo cáo"
           >
-            Báo cáo
+            <FontAwesomeIcon icon={faFlag} />
+            <span className="storyqq-action-text">Báo cáo</span>
           </button>
 
           <button
             type="button"
-            className="btn-cmc btn-cmc-outline"
+            className={`btn-cmc btn-cmc-outline storyqq-icon-action${showRatingPanel ? ' is-active' : ''}`}
             onClick={() => setShowRatingPanel((prev) => !prev)}
+            aria-label={showRatingPanel ? 'Ẩn đánh giá truyện' : 'Đánh giá truyện'}
+            title={showRatingPanel ? 'Ẩn đánh giá truyện' : 'Đánh giá truyện'}
+            data-tooltip={showRatingPanel ? 'Ẩn đánh giá' : 'Đánh giá'}
           >
-            {showRatingPanel ? 'Ẩn đánh giá truyện' : 'Đánh giá truyện'}
+            <FontAwesomeIcon icon={faStar} />
+            <span className="storyqq-action-text">{showRatingPanel ? 'Ẩn đánh giá' : 'Đánh giá'}</span>
           </button>
         </div>
       </section>

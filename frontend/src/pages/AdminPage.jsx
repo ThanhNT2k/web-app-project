@@ -108,7 +108,10 @@ function AdminPage() {
                 {stories.map((story) => (
                   <tr key={story.id}>
                     <td><Link to={`/story/${story.id}-${story.slug}`}>{story.title}</Link><small>#{story.id} · {story.category || 'Chưa phân loại'}</small></td>
-                    <td>{story.author_full_name || story.author_username || 'Ẩn danh'}</td>
+                    <td>
+                      {story.author_name || 'Không rõ tác giả'}
+                      <small>Người đăng: {story.author_full_name || (story.author_username ? `@${story.author_username}` : 'Ẩn danh')}</small>
+                    </td>
                     <td>{story.chapter_count || story.total_chapters || 0}</td>
                     <td>{story.follow_count || story.followers || 0}</td>
                     <td><span className={`management-badge ${story.is_published ? 'success' : 'danger'}`}>{story.is_published ? 'Đang hiển thị' : 'Đã ẩn'}</span></td>

@@ -4,6 +4,7 @@ import {
   FontAwesomeIcon,
   faBookOpen,
   faEye,
+  faFeatherPointed,
   faLayerGroup,
   faStar,
   faUsers,
@@ -64,6 +65,7 @@ function StoryHoverPreview({ story, placement, style, onMouseEnter, onMouseLeave
       </div>
 
       <div className="story-hover-preview-meta">
+        <span><FontAwesomeIcon icon={faFeatherPointed} /> {story.author_name || 'Không rõ tác giả'}</span>
         <span><FontAwesomeIcon icon={faBookOpen} /> {formatCount(chapterCount)} chương</span>
         <span><FontAwesomeIcon icon={faUsers} /> {formatCount(followCount)} theo dõi</span>
         {viewCount != null ? (
