@@ -4711,6 +4711,152 @@ body {
   gap: 0.35rem;
 }
 
+/* ===== Notifications: follow the app's data-theme tokens ===== */
+.notification-dropdown {
+  overflow: hidden;
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-lg);
+}
+
+.notification-dropdown-header,
+.notification-dropdown-footer {
+  border-color: var(--border) !important;
+  background: var(--surface);
+}
+
+.notification-dropdown-header h3,
+.notification-dropdown-message {
+  margin: 0;
+  color: var(--text);
+}
+
+.notification-dropdown-list {
+  border-color: var(--border);
+}
+
+.notification-dropdown-list > * + * {
+  border-top-color: var(--border);
+}
+
+.notification-dropdown-item {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.notification-dropdown-item.is-unread {
+  background: color-mix(in srgb, var(--primary-color) 11%, var(--surface));
+}
+
+.notification-dropdown-item:hover {
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--surface-elevated));
+}
+
+.notification-dropdown-message:hover,
+.notification-dropdown-link {
+  color: var(--primary-color);
+}
+
+.notification-dropdown-date,
+.notification-dropdown-empty {
+  color: var(--text-muted);
+}
+
+.notification-dropdown-icon-action {
+  border: 0;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.notification-dropdown-icon-action:hover {
+  color: var(--text);
+}
+
+.notification-dropdown-icon-action.is-delete:hover {
+  color: var(--danger-color);
+}
+
+.notifications-page {
+  color: var(--text);
+  background: var(--bg);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.notifications-page .page-title-with-icon,
+.notification-page-message {
+  color: var(--text) !important;
+}
+
+.notifications-page-subtitle {
+  color: var(--text-muted) !important;
+}
+
+.notifications-summary,
+.notifications-filter-panel,
+.notifications-empty,
+.notification-page-item {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+.notification-page-item.is-unread {
+  border-left-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--surface));
+}
+
+.notification-page-item.is-read {
+  border-left-color: var(--border);
+}
+
+.notifications-filter-button,
+.notifications-page-number,
+.notifications-pagination > .notifications-page-action {
+  border: 1px solid var(--border);
+  color: var(--text) !important;
+  background: var(--surface-elevated) !important;
+  cursor: pointer;
+}
+
+.notifications-filter-button:hover,
+.notifications-page-number:hover,
+.notifications-pagination > .notifications-page-action:hover {
+  border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border));
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--surface)) !important;
+}
+
+.notifications-filter-button.is-active,
+.notifications-page-number.is-active {
+  border-color: var(--primary-color);
+  color: #fff !important;
+  background: var(--primary-color) !important;
+}
+
+.notifications-type-badge {
+  color: var(--text) !important;
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 520px) {
+  .notification-dropdown {
+    position: fixed !important;
+    top: 64px;
+    right: 0.75rem !important;
+    left: 0.75rem !important;
+    width: auto !important;
+  }
+
+  .notifications-summary,
+  .notifications-filter-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 [data-theme='dark'] .logo-symbol {
   filter: drop-shadow(0 12px 22px rgba(20, 184, 166, 0.12));
 }

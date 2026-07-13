@@ -107,7 +107,7 @@ function NotificationsPage() {
   const pages = Math.ceil(total / limit);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <main className="notifications-page min-h-screen py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -115,16 +115,16 @@ function NotificationsPage() {
             <IconBadge icon={faBell} size="md" tone="primary" />
             Thông báo
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="notifications-page-subtitle">
             Quản lý và xem toàn bộ thông báo của bạn
           </p>
         </div>
 
         {/* Stats */}
         {total > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 flex justify-between items-center">
+          <div className="notifications-summary rounded-lg p-4 mb-6 flex justify-between items-center">
             <div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="notifications-page-subtitle">
                 Tổng thông báo: <span className="font-bold">{total}</span>
               </p>
               {unreadCount > 0 && (
@@ -157,16 +157,16 @@ function NotificationsPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 flex gap-4">
+        <div className="notifications-filter-panel rounded-lg p-4 mb-6 flex gap-4">
           <button
             onClick={() => {
               setFilter('all');
               setPage(1);
             }}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`notifications-filter-button px-4 py-2 rounded-lg transition-colors ${
               filter === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'is-active'
+                : ''
             }`}
           >
             Tất cả
@@ -176,10 +176,10 @@ function NotificationsPage() {
               setFilter('unread');
               setPage(1);
             }}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`notifications-filter-button px-4 py-2 rounded-lg transition-colors ${
               filter === 'unread'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'is-active'
+                : ''
             }`}
           >
             Chưa đọc
@@ -189,10 +189,10 @@ function NotificationsPage() {
               setFilter('read');
               setPage(1);
             }}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`notifications-filter-button px-4 py-2 rounded-lg transition-colors ${
               filter === 'read'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'is-active'
+                : ''
             }`}
           >
             Đã đọc
@@ -202,11 +202,11 @@ function NotificationsPage() {
         {/* Notifications list */}
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400">Đang tải thông báo...</p>
+            <p className="notifications-page-subtitle">Đang tải thông báo...</p>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
+          <div className="notifications-empty text-center py-12 rounded-lg">
+            <p className="notifications-page-subtitle text-lg">
               {filter === 'all'
                 ? 'Chưa có thông báo nào'
                 : filter === 'unread'
@@ -219,10 +219,10 @@ function NotificationsPage() {
             {notifications.map((notif) => (
               <div
                 key={notif.id}
-                className={`p-4 rounded-lg border-l-4 transition-all ${
+                className={`notification-page-item p-4 rounded-lg border-l-4 transition-all ${
                   notif.is_read
-                    ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700'
-                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                    ? 'is-read'
+                    : 'is-unread'
                 }`}
               >
                 <div className="flex justify-between items-start gap-4">
@@ -232,16 +232,16 @@ function NotificationsPage() {
                         to={notif.link}
                         className="text-blue-600 dark:text-blue-400 hover:underline block mb-2"
                       >
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <h3 className="notification-page-message font-semibold">
                           {notif.message}
                         </h3>
                       </Link>
                     ) : (
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      <h3 className="notification-page-message font-semibold mb-2">
                         {notif.message}
                       </h3>
                     )}
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="notifications-page-subtitle text-sm">
                       {formatDate(notif.created_at)}
                     </p>
                     {notif.type && (
@@ -290,7 +290,7 @@ function NotificationsPage() {
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="mt-8 flex justify-center gap-2">
+          <div className="notifications-pagination mt-8 flex justify-center gap-2">
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
@@ -304,10 +304,10 @@ function NotificationsPage() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`notifications-page-number px-4 py-2 rounded-lg transition-colors ${
                   p === page
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
+                    ? 'is-active'
+                    : ''
                 }`}
               >
                 {p}
@@ -336,7 +336,7 @@ function NotificationsPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

@@ -85,16 +85,16 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700">
+    <div className="notification-dropdown absolute right-0 mt-2 w-80 rounded-lg shadow-xl z-50 border">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="notification-dropdown-header p-4 border-b flex justify-between items-center">
+        <h3 className="text-lg font-semibold">
           Thông báo
         </h3>
         {total > 0 && (
           <button
             onClick={handleMarkAllAsRead}
-            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            className="notification-dropdown-link text-sm"
           >
             Đánh dấu tất cả
           </button>
@@ -102,21 +102,21 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
       </div>
 
       {/* Notifications list */}
-      <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
+      <div className="notification-dropdown-list divide-y max-h-96 overflow-y-auto">
         {loading ? (
-          <div className="p-4 text-center text-gray-500">
+          <div className="notification-dropdown-empty p-4 text-center">
             <span className="text-sm">Đang tải...</span>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+          <div className="notification-dropdown-empty p-4 text-center">
             <span className="text-sm">Chưa có thông báo nào</span>
           </div>
         ) : (
           notifications.map((notif) => (
             <div
               key={notif.id}
-              className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-                !notif.is_read ? 'bg-blue-50 dark:bg-gray-700/50' : ''
+              className={`notification-dropdown-item p-3 transition-colors cursor-pointer ${
+                !notif.is_read ? 'is-unread' : 'is-read'
               }`}
             >
               <div className="flex justify-between items-start gap-2">
@@ -125,16 +125,16 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
                     <Link
                       to={notif.link}
                       onClick={onClose}
-                      className="text-sm text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 break-words"
+                      className="notification-dropdown-message text-sm break-words"
                     >
                       {notif.message}
                     </Link>
                   ) : (
-                    <p className="text-sm text-gray-900 dark:text-white break-words">
+                    <p className="notification-dropdown-message text-sm break-words">
                       {notif.message}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="notification-dropdown-date text-xs mt-1">
                     {formatDate(notif.created_at)}
                   </p>
                 </div>
@@ -144,7 +144,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
                   {!notif.is_read && (
                     <button
                       onClick={() => handleMarkAsRead(notif.id)}
-                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      className="notification-dropdown-icon-action p-1"
                       title="Mark as read"
                     >
                       <FontAwesomeIcon className="w-4 h-4" icon={faCheck} />
@@ -152,7 +152,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
                   )}
                   <button
                     onClick={() => handleDelete(notif.id)}
-                    className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                    className="notification-dropdown-icon-action is-delete p-1"
                     title="Delete"
                   >
                     <FontAwesomeIcon className="w-4 h-4" icon={faXmark} />
@@ -166,11 +166,11 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
 
       {/* Footer with pagination */}
       {total > 0 && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-center">
+        <div className="notification-dropdown-footer p-4 border-t text-center">
           <Link
             to="/notifications"
             onClick={onClose}
-            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+            className="notification-dropdown-link text-sm font-medium"
           >
             Xem tất cả thông báo ({total})
           </Link>
