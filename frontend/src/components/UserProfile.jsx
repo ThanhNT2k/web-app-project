@@ -34,15 +34,17 @@ function UserProfile({ user, onEditClick }) {
             <span className="badge text-bg-primary" style={{ fontSize: '0.75rem', textTransform: 'uppercase', padding: '0.35em 0.65em' }}>
               {user.role}
             </span>
-            <button
-              type="button"
-              className="btn btn-cmc btn-cmc-outline btn-sm ms-md-auto"
-              style={{ fontSize: '0.8rem', borderRadius: '8px', padding: '0.35rem 0.85rem' }}
-              onClick={onEditClick}
-            >
-              <FontAwesomeIcon icon={faPenNib} />
-              Chỉnh sửa hồ sơ
-            </button>
+            {onEditClick ? (
+              <button
+                type="button"
+                className="btn btn-cmc btn-cmc-outline btn-sm ms-md-auto"
+                style={{ fontSize: '0.8rem', borderRadius: '8px', padding: '0.35rem 0.85rem' }}
+                onClick={onEditClick}
+              >
+                <FontAwesomeIcon icon={faPenNib} />
+                Chỉnh sửa hồ sơ
+              </button>
+            ) : null}
           </div>
         </div>
       </div>

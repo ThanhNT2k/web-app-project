@@ -10,6 +10,7 @@ import {
   FontAwesomeIcon,
   faBookOpen,
   faChevronDown,
+  faClockRotateLeft,
   faGear,
   faHouse,
   faLightbulb,
@@ -123,16 +124,25 @@ function Navbar() {
                     </div>
 
                     <Link
-                      to="/profile"
+                      to="/account/following"
                       className="dropdown-item-cmc"
                       onClick={() => setDropdownOpen(false)}
                     >
                       <FontAwesomeIcon icon={faBookOpen} />
-                      <span>Tủ sách & Hồ sơ</span>
+                      <span>Truyện đang theo dõi</span>
                     </Link>
 
                     <Link
-                      to="/account"
+                      to="/account/history"
+                      className="dropdown-item-cmc"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <FontAwesomeIcon icon={faClockRotateLeft} />
+                      <span>Lịch sử đọc</span>
+                    </Link>
+
+                    <Link
+                      to="/account/settings"
                       className="dropdown-item-cmc"
                       onClick={() => setDropdownOpen(false)}
                     >

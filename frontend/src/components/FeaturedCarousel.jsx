@@ -75,7 +75,7 @@ function FeaturedCarousel({ stories = [] }) {
       </Link>
 
       <div className="featured-carousel-content">
-        <Link to={storyPath} className="featured-carousel-title">
+        <Link to={storyPath} className="featured-carousel-title" title={activeStory.title}>
           {activeStory.title}
         </Link>
 

@@ -26,10 +26,11 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import GoogleRegisterCompletePage from './pages/GoogleRegisterCompletePage';
 import StoryDetailPage from './pages/StoryDetailPage';
 import ChapterReaderPage from './pages/ChapterReaderPage';
-import UserProfilePage from './pages/UserProfilePage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
-import AccountPage from './pages/AccountPage';
+import AccountSettingsPage from './pages/AccountSettingsPage';
+import FollowingStoriesPage from './pages/FollowingStoriesPage';
+import ReadingHistoryPage from './pages/ReadingHistoryPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 import { AuthProvider } from './contexts/AuthContext';
@@ -69,7 +70,32 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/auth/google/complete" element={<GoogleRegisterCompletePage />} />
-              <Route path="/account" element={<AccountPage />} />
+              <Route path="/account" element={<Navigate to="/account/following" replace />} />
+
+              <Route
+                path="/account/following"
+                element={
+                  <ProtectedRoute>
+                    <FollowingStoriesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/account/history"
+                element={
+                  <ProtectedRoute>
+                    <ReadingHistoryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/account/settings"
+                element={
+                  <ProtectedRoute>
+                    <AccountSettingsPage />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route path="/story/:slug" element={<StoryDetailPage />} />
               <Route
@@ -81,7 +107,7 @@ function App() {
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <UserProfilePage />
+                    <Navigate to="/account/settings" replace />
                   </ProtectedRoute>
                 }
               />
