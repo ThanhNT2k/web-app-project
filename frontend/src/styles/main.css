@@ -674,7 +674,7 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
-  background: var(--background);
+  background: var(--input-bg);
   outline: none;
 }
 
@@ -917,7 +917,7 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
   overflow: hidden;
   border: 1px dashed var(--border);
   border-radius: 11px;
-  background: var(--background);
+  background: var(--input-bg);
 }
 
 .story-cover-preview img {
@@ -1006,6 +1006,40 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 .dashboard-chapter-locked.danger {
   color: #b91c1c;
   background: color-mix(in srgb, #ef4444 10%, var(--surface));
+}
+
+.dashboard-chapter-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-chapter-search > svg {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.dashboard-chapter-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--input-bg);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.dashboard-chapter-search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 13%, transparent);
+}
+
+.dashboard-collaborator-item {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--surface-elevated);
 }
 
 @media (max-width: 720px) {
@@ -2427,7 +2461,8 @@ kbd {
   border: none;
   outline: none;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-muted);
+  background: transparent;
   width: 100%;
   margin-bottom: 10px;
 }
@@ -2437,10 +2472,11 @@ kbd {
   outline: none;
   font-size: 28px; /* Chữ to như Wattpad */
   font-weight: 700;
-  color: #111827;
+  color: var(--text);
+  background: transparent;
   width: 100%;
   padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb; /* Đường gạch mờ dứoi tiêu đề */
+  border-bottom: 1px solid var(--border);
   margin-bottom: 20px;
 }
 
@@ -2449,7 +2485,8 @@ kbd {
   outline: none;
   font-size: 18px;
   line-height: 1.8;
-  color: #374151;
+  color: var(--text);
+  background: transparent;
   width: 100%;
   min-height: 50vh; /* Chiều cao tối thiểu chiếm nửa màn hình */
   resize: none; /* Khóa kéo giãn để nhìn gọn gàng */
