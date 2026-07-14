@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
 import NotificationBell from './NotificationBell';
@@ -25,11 +25,22 @@ import {
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [authOpen, setAuthOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 30);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -46,9 +57,16 @@ function Navbar() {
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
 
+  const isHome = location.pathname === '/';
+  const headerClass = [
+    'cmc-site-header',
+    isHome ? 'is-on-home' : '',
+    isScrolled ? 'is-scrolled' : 'is-at-top',
+  ].filter(Boolean).join(' ');
+
   return (
     <>
-      <header className="cmc-site-header">
+      <header className={headerClass}>
         <div className="cmc-navbar-inner">
 
           <Link to="/" className="cmc-logo">

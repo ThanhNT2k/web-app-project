@@ -76,83 +76,85 @@ function FeaturedCarousel({ stories = [] }) {
       <div className="featured-carousel-bg" style={{ backgroundImage: `url(${cover})` }} aria-hidden="true" />
       <div className="featured-carousel-overlay" aria-hidden="true" />
 
-      <p className="featured-carousel-label">Truyện nổi bật</p>
+      <div className="featured-carousel-inner">
+        <h2 className="featured-carousel-label">Truyện nổi bật</h2>
 
-      <Link to={storyPath} className="featured-carousel-poster" aria-label={`Xem chi tiết ${activeStory.title}`}>
-        <img
-          src={cover}
-          alt={activeStory.title}
-          onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
-        />
-      </Link>
-
-      <div className="featured-carousel-content">
-        <Link to={storyPath} className="featured-carousel-title" title={activeStory.title}>
-          {activeStory.title}
+        <Link to={storyPath} className="featured-carousel-poster" aria-label={`Xem chi tiết ${activeStory.title}`}>
+          <img
+            src={cover}
+            alt={activeStory.title}
+            onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
+          />
         </Link>
 
-        {tags.length > 0 ? (
-          <div className="featured-carousel-tags" aria-label="Thể loại">
-            {tags.map((tag) => (
-              <span key={tag} className="featured-carousel-tag">
-                <FontAwesomeIcon icon={faLayerGroup} />
-                {tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <p className="featured-carousel-desc">{description}</p>
-
-        <div className="featured-carousel-meta">
-          {authorName ? (
-            <span>
-              <FontAwesomeIcon icon={faUser} />
-              {authorName}
-            </span>
-          ) : null}
-          <Link to={storyPath} className="featured-carousel-cta">
-            Xem chi tiết
-            <FontAwesomeIcon icon={faArrowRight} />
+        <div className="featured-carousel-content">
+          <Link to={storyPath} className="featured-carousel-title" title={activeStory.title}>
+            {activeStory.title}
           </Link>
-        </div>
-      </div>
 
-      {slides.length > 1 ? (
-        <>
-          <div className="featured-carousel-controls" role="group" aria-label="Điều hướng truyện nổi bật">
-            <span className="featured-carousel-rank">NO. {currentRank}</span>
-            <button
-              type="button"
-              className="featured-carousel-arrow featured-carousel-arrow-prev"
-              onClick={goPrevious}
-              aria-label="Truyện trước"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-            </button>
-            <button
-              type="button"
-              className="featured-carousel-arrow featured-carousel-arrow-next"
-              onClick={goNext}
-              aria-label="Truyện tiếp theo"
-            >
+          {tags.length > 0 ? (
+            <div className="featured-carousel-tags" aria-label="Thể loại">
+              {tags.map((tag) => (
+                <span key={tag} className="featured-carousel-tag">
+                  <FontAwesomeIcon icon={faLayerGroup} />
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <p className="featured-carousel-desc">{description}</p>
+
+          <div className="featured-carousel-meta">
+            {authorName ? (
+              <span>
+                <FontAwesomeIcon icon={faUser} />
+                {authorName}
+              </span>
+            ) : null}
+            <Link to={storyPath} className="featured-carousel-cta">
+              Xem chi tiết
               <FontAwesomeIcon icon={faArrowRight} />
-            </button>
+            </Link>
           </div>
-          <div className="featured-carousel-dots" aria-label="Vị trí truyện nổi bật">
-            {slides.map((story, index) => (
+        </div>
+
+        {slides.length > 1 ? (
+          <>
+            <div className="featured-carousel-controls" role="group" aria-label="Điều hướng truyện nổi bật">
+              <span className="featured-carousel-rank">NO. {currentRank}</span>
               <button
-                key={`${story.id}-${index}`}
                 type="button"
-                className={`featured-carousel-dot ${index === activeIndex ? 'is-active' : ''}`}
-                onClick={() => setActiveIndex(index)}
-                aria-label={`Xem truyện nổi bật ${index + 1}`}
-                aria-current={index === activeIndex ? 'true' : undefined}
-              />
-            ))}
-          </div>
-        </>
-      ) : null}
+                className="featured-carousel-arrow featured-carousel-arrow-prev"
+                onClick={goPrevious}
+                aria-label="Truyện trước"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </button>
+              <button
+                type="button"
+                className="featured-carousel-arrow featured-carousel-arrow-next"
+                onClick={goNext}
+                aria-label="Truyện tiếp theo"
+              >
+                <FontAwesomeIcon icon={faArrowRight} />
+              </button>
+            </div>
+            <div className="featured-carousel-dots" aria-label="Vị trí truyện nổi bật">
+              {slides.map((story, index) => (
+                <button
+                  key={`${story.id}-${index}`}
+                  type="button"
+                  className={`featured-carousel-dot ${index === activeIndex ? 'is-active' : ''}`}
+                  onClick={() => setActiveIndex(index)}
+                  aria-label={`Xem truyện nổi bật ${index + 1}`}
+                  aria-current={index === activeIndex ? 'true' : undefined}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
     </section>
   );
 }

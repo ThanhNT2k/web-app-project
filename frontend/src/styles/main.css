@@ -5344,6 +5344,10 @@ body {
 
 /* --- Label (Truyện nổi bật) --- */
 .featured-carousel-label {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  align-self: end;
+  justify-self: start;
   margin: 0 0 1.25rem 0; /* Push the poster/content down to prevent overlap */
   font-size: clamp(1.3rem, 2.5vw, 2.2rem); /* Smaller and bold */
   font-weight: 800; /* Make it bold again */
