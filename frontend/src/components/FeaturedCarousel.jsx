@@ -76,7 +76,7 @@ function FeaturedCarousel({ stories = [] }) {
       <div className="featured-carousel-bg" style={{ backgroundImage: `url(${cover})` }} aria-hidden="true" />
       <div className="featured-carousel-overlay" aria-hidden="true" />
 
-      <p className="featured-carousel-label">Truyện nổi bật</p>
+      <h2 className="featured-carousel-label">Truyện nổi bật</h2>
 
       <Link to={storyPath} className="featured-carousel-poster" aria-label={`Xem chi tiết ${activeStory.title}`}>
         <img
