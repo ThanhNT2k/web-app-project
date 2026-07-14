@@ -457,6 +457,15 @@ async function updateChapter(req, res) {
       });
     }
 
+    // Kiểm tra xem chương có thực sự thuộc về story này không (prevent bypass với chapterId từ story khác)
+    const chapter = await Chapter.getChapterById(chapterId);
+    if (!chapter || Number(chapter.story_id) !== Number(storyId)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chapter not found or does not belong to this story',
+      });
+    }
+
     const { error, value } = updateChapterSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
 
     if (error) {
@@ -518,6 +527,15 @@ async function deleteChapter(req, res) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
+      });
+    }
+
+    // Kiểm tra xem chương có thực sự thuộc về story này không (prevent bypass với chapterId từ story khác)
+    const chapter = await Chapter.getChapterById(chapterId);
+    if (!chapter || Number(chapter.story_id) !== Number(storyId)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chapter not found or does not belong to this story',
       });
     }
 

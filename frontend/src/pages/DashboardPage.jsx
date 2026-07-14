@@ -65,6 +65,7 @@ function DashboardPage() {
   const [expandedStory, setExpandedStory] = useState(null);
   const [storyChapters, setStoryChapters] = useState({}); // { storyId: chapter[] }
   const [chaptersLoading, setChaptersLoading] = useState(false);
+  const [chapterSearch, setChapterSearch] = useState({}); // { storyId: searchText }
 
   const [message, setMessage] = useState('');
 
@@ -590,8 +591,33 @@ function DashboardPage() {
                     ) : (storyChapters[story.id] || []).length === 0 ? (
                       <p className="small text-muted">Chưa có chương nào.</p>
                     ) : (
-                      <ul className="chapter-list chapter-list-compact">
-                        {(storyChapters[story.id] || []).map((ch) => (
+                      <>
+                        <div className="mb-2 dashboard-chapter-search" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                          <FontAwesomeIcon icon={faMagnifyingGlass} style={{fontSize: '0.875rem', color: '#999'}} />
+                          <input
+                            type="search"
+                            placeholder="Tìm chương..."
+                            value={chapterSearch[story.id] || ''}
+                            onChange={(e) => setChapterSearch({...chapterSearch, [story.id]: e.target.value})}
+                            style={{
+                              padding: '0.35rem 0.5rem',
+                              borderRadius: '4px',
+                              border: '1px solid #ddd',
+                              fontSize: '0.875rem',
+                              flex: 1,
+                              minWidth: '0'
+                            }}
+                          />
+                        </div>
+                        <ul className="chapter-list chapter-list-compact" style={{maxHeight: '300px', overflowY: 'auto'}}>
+                          {(storyChapters[story.id] || [])
+                            .filter((ch) => {
+                              const search = (chapterSearch[story.id] || '').toLowerCase().trim();
+                              if (!search) return true;
+                              return ch.chapter_number.toString().includes(search) || 
+                                     (ch.title && ch.title.toLowerCase().includes(search));
+                            })
+                            .map((ch) => (
                           <li key={ch.id} className="d-flex justify-content-between align-items-center py-1">
                             <span className="small">
                               Ch.{ch.chapter_number}: {ch.title}
@@ -616,7 +642,8 @@ function DashboardPage() {
                             </div>
                           </li>
                         ))}
-                      </ul>
+                        </ul>
+                      </>
                     )}
                   </div>
                 )}

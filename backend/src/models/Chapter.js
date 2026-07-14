@@ -22,6 +22,7 @@ async function getChaptersByStory(storyId, page = 1, limit = 10, sort = 'asc') {
           story_id,
           chapter_number,
           title,
+          content,
           created_at,
           updated_at,
           is_published,
