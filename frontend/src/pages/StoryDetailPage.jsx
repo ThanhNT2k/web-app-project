@@ -210,6 +210,9 @@ function StoryDetailPage() {
   const averageRating = story.average_rating ?? 0;
   const description = story.description || 'Chưa có mô tả cho truyện này.';
   const hasLongDescription = description.length > 320;
+  const detailBackdropStyle = {
+    '--storyqq-backdrop-image': `url('${story.cover_image_url || FALLBACK_COVER}')`,
+  };
 
   const storyMetaItems = [
     { label: 'Số chương', value: formatWholeNumber(totalChapters) },
@@ -220,7 +223,7 @@ function StoryDetailPage() {
   ];
 
   return (
-    <main className="cmc-main">
+    <main className="cmc-main storyqq-page" style={detailBackdropStyle}>
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
       {isAuthenticated && storyProgress ? (
@@ -228,7 +231,8 @@ function StoryDetailPage() {
         null
       ) : null}
 
-      <section className="storyqq-header panel-card">
+      <div className="storyqq-page-shell">
+        <section className="storyqq-header panel-card storyqq-panel">
         <div className="storyqq-cover-column">
           <div className="storyqq-cover-wrap">
             <img
@@ -378,9 +382,9 @@ function StoryDetailPage() {
             <span className="storyqq-action-text">{showRatingPanel ? 'Ẩn đánh giá' : 'Đánh giá'}</span>
           </button>
         </div>
-      </section>
+        </section>
 
-      <section className="panel-card mt-4">
+        <section className="panel-card mt-4 storyqq-panel">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <h4 className="panel-title mb-0">
             Danh sách chương ({chapterPagination.totalItems || 0})
@@ -442,11 +446,12 @@ function StoryDetailPage() {
               ) : null}
             </ul>
         )}
-      </section>
+        </section>
 
-      <section className="mt-4">
-        <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
-      </section>
+        <section className="mt-4 storyqq-panel-stack">
+          <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
+        </section>
+      </div>
       {isReportModalOpen && (
         <ReportModal 
           storyId={story.id}

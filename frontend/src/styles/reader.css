@@ -228,6 +228,27 @@
 }
 
 @media (max-width: 576px) {
+  .reader-shell {
+    width: calc(100vw - 12px);
+    max-width: none !important;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .reader-content-card {
+    margin-bottom: 4rem !important;
+  }
+
+  .reader-content-body {
+    padding: 0.95rem !important;
+  }
+
+  .reader-content {
+    font-size: clamp(18px, 5.1vw, 21px);
+  }
+
   .story-reader {
     border-radius: 10px;
   }

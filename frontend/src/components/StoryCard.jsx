@@ -3,10 +3,9 @@ import { Link } from 'react-router-dom';
 import {
   FontAwesomeIcon,
   faBookOpen,
-  faEye,
+  faClockRotateLeft,
   faFeatherPointed,
   faLayerGroup,
-  faUsers,
 } from '../lib/icons';
 import StoryHoverPreview from './StoryHoverPreview';
 
@@ -30,6 +29,54 @@ function getTagList(story) {
     .slice(0, 2);
 }
 
+function formatCount(value) {
+  return Number(value || 0).toLocaleString('vi-VN');
+}
+
+function getLatestChapterNumber(story) {
+  return story.latest_chapter_number
+    || story.last_chapter_number
+    || story.chapter_number
+    || story.chapter_count
+    || story.total_chapters
+    || null;
+}
+
+function getUpdatedAtValue(story) {
+  return story.latest_chapter_updated_at
+    || story.last_chapter_updated_at
+    || story.updated_at
+    || story.published_at
+    || story.created_at
+    || '';
+}
+
+function formatRelativeTime(dateValue) {
+  if (!dateValue) return 'Vừa cập nhật';
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return 'Vừa cập nhật';
+
+  const diffMs = date.getTime() - Date.now();
+  const diffMinutes = Math.round(diffMs / 60000);
+  const absMinutes = Math.abs(diffMinutes);
+  const rtf = new Intl.RelativeTimeFormat('vi', { numeric: 'auto' });
+
+  if (absMinutes < 60) return rtf.format(diffMinutes, 'minute');
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (Math.abs(diffHours) < 24) return rtf.format(diffHours, 'hour');
+
+  const diffDays = Math.round(diffHours / 24);
+  if (Math.abs(diffDays) < 7) return rtf.format(diffDays, 'day');
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+}
+
 function StoryCard({ story, compact = false, horizontal = false }) {
   const cardRef = useRef(null);
   const hideTimerRef = useRef(null);
@@ -37,12 +84,10 @@ function StoryCard({ story, compact = false, horizontal = false }) {
 
   const storyPath = `/story/${story.id}-${story.slug}`;
   const chapterCount = story.chapter_count || story.total_chapters || 0;
-  const followCount = story.follow_count || 0;
-  const viewCount = story.view_count ?? story.views ?? story.total_views ?? story.views_metric ?? null;
   const authorName = story.author_name || 'Không rõ tác giả';
   const tags = getTagList(story);
-
-  const formatCount = (value) => Number(value || 0).toLocaleString('vi-VN');
+  const latestChapterNumber = getLatestChapterNumber(story);
+  const updatedAtLabel = formatRelativeTime(getUpdatedAtValue(story));
 
   const clearHideTimer = () => {
     if (hideTimerRef.current) {
@@ -103,7 +148,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
 
   if (horizontal) {
     return (
-      <article className="story-card-horizontal">
+      <article className="story-card-horizontal story-card-horizontal-recent">
         <Link to={storyPath} className="story-image-horizontal">
           <img
             src={story.cover_image_url || FALLBACK_COVER}
@@ -111,21 +156,23 @@ function StoryCard({ story, compact = false, horizontal = false }) {
             onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
           />
         </Link>
-        <div className="story-info-horizontal">
+        <div className="story-info-horizontal story-info-horizontal-recent">
           <Link to={storyPath} className="story-title">
             {story.title}
           </Link>
+
           <p className="story-card-author" title={authorName}>
             <FontAwesomeIcon icon={faFeatherPointed} /> {authorName}
           </p>
 
-          <div className="story-card-footer">
-            <span className="story-card-metrics">
-              <span><FontAwesomeIcon icon={faBookOpen} /> {formatCount(chapterCount)} chương</span>
-              <span><FontAwesomeIcon icon={faUsers} /> {formatCount(followCount)} theo dõi</span>
-              {viewCount != null ? (
-                <span><FontAwesomeIcon icon={faEye} /> {formatCount(viewCount)} lượt xem</span>
-              ) : null}
+          <div className="story-recent-update">
+            <span className="story-recent-update-line story-recent-update-chip">
+              <FontAwesomeIcon icon={faBookOpen} />
+              {latestChapterNumber ? `Chương ${formatCount(latestChapterNumber)}` : `${formatCount(chapterCount)} chương`}
+            </span>
+            <span className="story-recent-update-line story-recent-update-time">
+              <FontAwesomeIcon icon={faClockRotateLeft} />
+              {updatedAtLabel}
             </span>
           </div>
         </div>
@@ -150,7 +197,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
             onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
           />
         </Link>
-        <div className="story-info">
+        <div className="story-info story-info-poster-first">
           {tags.length > 0 ? (
             <div className="story-card-tags">
               {tags.map((tag) => (
@@ -165,18 +212,6 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           <Link to={storyPath} className="story-title">
             {story.title}
           </Link>
-
-          <p className="story-card-author" title={authorName}>
-            <FontAwesomeIcon icon={faFeatherPointed} /> {authorName}
-          </p>
-
-          <div className="story-card-metrics">
-            <span><FontAwesomeIcon icon={faBookOpen} /> {formatCount(chapterCount)} chương</span>
-            <span><FontAwesomeIcon icon={faUsers} /> {formatCount(followCount)} theo dõi</span>
-            {viewCount != null ? (
-              <span><FontAwesomeIcon icon={faEye} /> {formatCount(viewCount)} lượt xem</span>
-            ) : null}
-          </div>
         </div>
       </article>
       {previewPosition ? (

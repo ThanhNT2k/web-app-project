@@ -58,9 +58,11 @@ function Navbar() {
   }, []);
 
   const isHome = location.pathname === '/';
+  const isStoryDetail = location.pathname.startsWith('/story/');
   const headerClass = [
     'cmc-site-header',
     isHome ? 'is-on-home' : '',
+    isStoryDetail ? 'is-on-story' : '',
     isScrolled ? 'is-scrolled' : 'is-at-top',
   ].filter(Boolean).join(' ');
 
