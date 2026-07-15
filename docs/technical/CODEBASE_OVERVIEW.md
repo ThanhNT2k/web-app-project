@@ -15,7 +15,11 @@
 - User/public: trang chủ, tìm truyện, bảng xếp hạng, chi tiết, đọc chương và tài khoản.
 - Admin: dashboard, users, stories, reports, bad words, comments, profiles và logs.
 - Moderator: dashboard, hàng chờ truyện, reports, comments, profiles và logs.
+Các thư mục frontend chi tiết:
 
+- `src/data/` – Mock data (danh sách tags, categories) và hằng số UI (số item trên trang, delay auto-scroll).
+- `src/lib/` – Tiện ích: `formatDate()`, `formatReadingTime()`, `truncate()` và các helpers khác.
+- `src/utils/` – Validation, parsing query params và các hàm phụ trợ khác.
 Các module đáng chú ý:
 
 | Module | Vai trò |
@@ -23,16 +27,30 @@ Các module đáng chú ý:
 | `services/api.js` | Axios client, base URL, JWT và toàn bộ API facade |
 | `contexts/AuthContext.jsx` | Phiên đăng nhập và user state |
 | `contexts/ThemeContext.jsx` | Theme state |
-| `StoryDetailPage.jsx` | Chi tiết, chapter metadata, progress và cộng đồng |
-| `ChapterReaderPage.jsx` | Đọc chương và lưu tiến độ |
-| `DashboardPage.jsx` | Quản lý truyện/chương/cộng tác viên |
-| `FollowButton.jsx` | Follow optimistic update có rollback |
-| `StoryRating.jsx` | Rating optimistic update có rollback |
-| `CommentSection.jsx` | Comment tree, reply và vote optimistic |
+| `pages/StoryDetailPage.jsx` | Chi tiết, chapter metadata, progress và cộng đồng |
+| `pages/ChapterReaderPage.jsx` | Đọc chương và lưu tiến độ |
+| `pages/DashboardPage.jsx` | Quản lý truyện/chương/cộng tác viên |
+| `components/FollowButton.jsx` | Follow optimistic update có rollback |
+| `components/StoryRating.jsx` | Rating optimistic update có rollback |
+| `components/CommentSection.jsx` | Comment tree, reply và vote optimistic |
 
 Skeleton dùng class `.skeleton-box` và các loading class dùng chung trong `main.css`. Hai danh sách “Được quan tâm” và “Cập nhật gần đây” chỉ cuộn thủ công; hero carousel đổi slide mỗi 8 giây.
 
 ## Backend
+
+### Cấu trúc và quy ước
+
+**Backend phân lớp theo tầng:**
+- `src/constants/` – Enum, constants (vai trò, trạng thái workflow, loại notification).
+- `src/config/` – Database pool, Redis, Supabase, external services.
+- `src/middleware/` – Authentication, RBAC, audit logging, file upload, rate limiting.
+- `src/models/` – SQL queries và Sequelize models (một số model hoặc thuần `pg`).
+- `src/services/` – Business logic: AI integration, queue/job management, email, notification, moderation.
+- `src/controllers/` – Request validation, service orchestration, HTTP response.
+- `src/routes/` – Route definition, middleware mounting, authentication/authorization.
+- `src/workers/` – BullMQ job consumers cho moderation queue và notification queue.
+
+**Kiểm thử:** Tests nằm co-located cùng source files (e.g., `authMiddleware.test.js` cạnh `authMiddleware.js`), không trong `__tests__/` riêng. Chạy bằng `npm test` hoặc `npm run test:backend`.
 
 Router được mount trong `app.js`:
 
@@ -67,14 +85,16 @@ Router được mount trong `app.js`:
 ## Kiểm thử
 
 ```bash
-npm test                         # backend baseline + frontend
+npm test                         # Backend baseline test (health, middleware, service)
+npm run test:baseline            # Chạy baseline tests (không full coverage)
+npm run test:coverage            # Full test coverage
 npm run test:backend
 npm run test:frontend
 npm run test:e2e
 npm run test:all
 ```
 
-Backend dùng Jest/Supertest; frontend dùng Vitest/Testing Library; E2E dùng Playwright.
+Backend dùng Jest/Supertest; frontend dùng Vitest/Testing Library; E2E dùng Playwright. Để tìm test, tìm file `.test.js` hoặc `.test.ts` co-located cùng source.
 
 ## Khi thêm tính năng
 

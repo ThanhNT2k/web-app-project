@@ -11,6 +11,25 @@ Content-Type: application/json
 
 Quy ước quyền: **Public** không cần token; **Optional** công khai nhưng dùng thêm user context nếu token hợp lệ; **Auth** yêu cầu đăng nhập.
 
+## Database Migrations
+
+Schema cơ sở nằm tại `backend/scripts/schema.sql`. Khi thay đổi schema, tạo migration file:
+
+```bash
+cd backend
+# Tạo file: backend/src/scripts/migrations/YYYYMMDD_HH_description.sql
+# Ví dụ: 20260715_10_add_new_column.sql
+npm run db:migrate
+```
+
+Migration chạy theo thứ tự tên file (alphabetical). Mỗi migration phải idempotent (có thể chạy lại nhiều lần).
+
+Quy ước migration:
+- Tên file: `YYYYMMDD_HH_<description>.sql`
+- Luôn viết idempotent: `CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+- Không rollback; nếu sai, tạo migration khác để fix
+- Test migration trước: `npm run db:migrate`, kiểm tra data
+
 ## Health
 
 | Method | Path | Quyền | Mô tả |

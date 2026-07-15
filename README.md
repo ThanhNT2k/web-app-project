@@ -66,7 +66,9 @@ frontend/
   public/pages/               Redirect tương thích URL cũ
   src/components/             Component dùng chung
   src/contexts/               Auth và theme state
+  src/data/                   Mock data và hằng số giao diện
   src/layouts/                User/Admin/Moderator layouts
+  src/lib/                    Tiện ích, helpers và format dữ liệu
   src/pages/                  Các trang React
   src/services/               Axios API client
   src/styles/                 CSS giao diện và responsive
