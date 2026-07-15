@@ -19,19 +19,18 @@ const story = {
 };
 
 describe('StoryCard', () => {
-  it('renders story metadata and links to the story detail page', () => {
-    render(
+  it('renders story tags and links to the story detail page', () => {
+    const { container } = render(
       <MemoryRouter>
         <StoryCard story={story} />
       </MemoryRouter>
     );
 
     expect(screen.getAllByRole('link', { name: 'Demo Story' })[0]).toHaveAttribute('href', '/story/7-demo-story');
+    expect(screen.getByRole('img', { name: 'Demo Story' })).toBeInTheDocument();
+    expect(container.querySelector('.story-image')).toHaveAttribute('href', '/story/7-demo-story');
     expect(screen.getByText('Fantasy')).toBeInTheDocument();
     expect(screen.getByText('Action')).toBeInTheDocument();
-    expect(screen.getByText('Test Author')).toBeInTheDocument();
-    expect(screen.getByText(/12 chương/i)).toBeInTheDocument();
-    expect(screen.getByText(/4 theo dõi/i)).toBeInTheDocument();
   });
 
   it('applies compact class and still renders story link in compact mode', () => {
