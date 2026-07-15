@@ -2839,19 +2839,59 @@ kbd {
 
 /* ===== Google Button Wrapper ===== */
 .google-btn-wrapper {
+  position: relative;
   width: 100%;
+  min-height: 44px;
+}
+
+.google-btn-shell {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid #dadce0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1;
+  user-select: none;
+}
+
+.google-btn-shell__icon {
+  color: #4285f4;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-btn-shell__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .google-btn-container {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  min-height: 44px;
   display: flex;
   justify-content: center;
+  overflow: hidden;
+  opacity: 0.01;
+  z-index: 2;
 }
 
 /* Ensure Google button fills container */
 .google-btn-container > div,
 .google-btn-container iframe {
   width: 100% !important;
+  min-height: 44px !important;
 }
 
 /* ===== Forgot Password — Step Indicator ===== */

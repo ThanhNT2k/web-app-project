@@ -1,30 +1,33 @@
 import { useEffect, useRef } from 'react';
 
-/**
- * GoogleLoginButton — Nút "Tiếp tục với Google" dùng Google Identity Services (GSI).
- * Load Google script một lần, render nút qua Google renderButton API để đúng chuẩn branding.
- *
- * @param {function} onSuccess - Callback khi Google trả về credential thành công
- * @param {function} onError - Callback khi xảy ra lỗi
- * @param {string} text - Text hiển thị: 'signin_with' | 'signup_with' | 'continue_with'
- */
+import { FontAwesomeIcon, faGoogle } from '../lib/icons';
+
 function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
   const containerRef = useRef(null);
+
+  const buttonLabelMap = {
+    signin_with: 'Dang nhap voi Google',
+    signup_with: 'Dang ky voi Google',
+    continue_with: 'Tiep tuc voi Google',
+    signin: 'Dang nhap',
+  };
+
+  const visibleLabel = buttonLabelMap[text] || buttonLabelMap.continue_with;
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) {
-      console.warn('[GoogleLoginButton] VITE_GOOGLE_CLIENT_ID chưa được cấu hình.');
+      console.warn('[GoogleLoginButton] VITE_GOOGLE_CLIENT_ID chua duoc cau hinh.');
       return;
     }
 
-    // Load Google Identity Services script nếu chưa có
-    const loadGoogleScript = () => {
-      return new Promise((resolve) => {
+    const loadGoogleScript = () =>
+      new Promise((resolve) => {
         if (window.google?.accounts) {
           resolve();
           return;
         }
+
         const script = document.createElement('script');
         script.src = 'https://accounts.google.com/gsi/client';
         script.async = true;
@@ -32,10 +35,11 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
         script.onload = resolve;
         document.head.appendChild(script);
       });
-    };
 
     loadGoogleScript().then(() => {
-      if (!window.google?.accounts || !containerRef.current) return;
+      if (!window.google?.accounts || !containerRef.current) {
+        return;
+      }
 
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -43,31 +47,36 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
           if (response.credential) {
             onSuccess(response.credential);
           } else {
-            onError?.(new Error('Google không trả về credential.'));
+            onError?.(new Error('Google khong tra ve credential.'));
           }
         },
       });
 
-      // Render nút theo đúng Google branding guidelines
       window.google.accounts.id.renderButton(containerRef.current, {
         type: 'standard',
         shape: 'rectangular',
         theme: 'outline',
-        text,
-        size: 'large',
+        text: 'signin_with',
+        size: 'medium',
         width: containerRef.current.offsetWidth || 400,
         logo_alignment: 'left',
+        locale: 'vi',
       });
     });
 
     return () => {
-      // Cleanup khi component unmount
       window.google?.accounts?.id?.cancel?.();
     };
-  }, [onSuccess, onError, text]);
+  }, [onSuccess, onError]);
 
   return (
     <div className="google-btn-wrapper">
+      <div className="google-btn-shell" aria-hidden="true">
+        <span className="google-btn-shell__icon">
+          <FontAwesomeIcon icon={faGoogle} />
+        </span>
+        <span className="google-btn-shell__label">{visibleLabel}</span>
+      </div>
       <div ref={containerRef} className="google-btn-container" />
     </div>
   );
