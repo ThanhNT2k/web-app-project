@@ -49,9 +49,10 @@ async function saveReadingProgress(userId, storyId, chapterId, readPosition, rea
 
 /**
  * Lấy toàn bộ lịch sử đọc của một user.
- * JOIN stories: Lấy thông tin truyện (title, cover, category)
+ * JOIN stories: Lấy thông tin truyện (title, cover, category, description, status)
  * LEFT JOIN chapters: Lấy số thứ tự và tên chương cuối đọc (LEFT vì chapter có thể đã bị xóa)
  * Sắp xếp theo last_read_at DESC: Truyện đọc gần nhất hiển thị trước
+ * Thêm tags từ bảng story_tags và follow_count để hover preview hiển thị đúng thông tin
  */
 async function getReadingHistory(userId) {
   const result = await db.query(
@@ -66,15 +67,25 @@ async function getReadingHistory(userId) {
         rh.completion_rate,
         rh.last_read_at,
         rh.created_at,
+        s.id,
         s.title,
         s.slug,
         s.cover_image_url,
+        s.description,
         s.category,
+        s.status,
         s.total_chapters,
+        s.total_chapters AS chapter_count,
         s.author_id,
         s.author_name,
-        c.chapter_number AS last_chapter_number,  -- Số thứ tự chương đọc cuối (để hiển thị "Đang ở chương X")
-        c.title AS last_chapter_title
+        s.average_rating,
+        s.total_rating_count AS rating_count,
+        COALESCE(s.total_views, 0)::float8 AS view_count,
+        get_follower_count(s.id) AS follow_count,
+        c.chapter_number AS last_chapter_number,
+        c.title AS last_chapter_title,
+        COALESCE((SELECT jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name, 'slug', t.slug) ORDER BY t.name)
+          FROM story_tags st INNER JOIN tags t ON t.id = st.tag_id WHERE st.story_id = s.id), '[]'::jsonb) AS tags
       FROM reading_history rh
       INNER JOIN stories s ON s.id = rh.story_id
       LEFT JOIN chapters c ON c.id = rh.last_chapter_read
