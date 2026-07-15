@@ -54,7 +54,7 @@ function ReadingHistoryPage() {
           </div>
         ) : null}
         {!loading && !error && history.length > 0 ? (
-          <div className="stories-grid account-following-grid account-history-grid">
+          <div className="stories-grid account-history-grid">
             {history.map((item) => (
               <article key={item.id || item.story_id} className="account-history-story">
                 <StoryCard

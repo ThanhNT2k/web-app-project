@@ -57,6 +57,7 @@ function FeaturedCarousel({ stories = [] }) {
   const authorName = activeStory.author_name || 'Không rõ tác giả';
   const description = activeStory.description || 'Một tựa truyện đang được nhiều độc giả CMC Truyện quan tâm hôm nay.';
   const currentRank = activeIndex + 1;
+  const slideKey = `${activeStory.id}-${activeIndex}`;
 
   const goPrevious = () => {
     setActiveIndex((current) => (current === 0 ? slides.length - 1 : current - 1));
@@ -73,13 +74,23 @@ function FeaturedCarousel({ stories = [] }) {
 
   return (
     <section className="cmc-hero featured-carousel" aria-label="Truyện nổi bật" onClick={openActiveStory}>
-      <div className="featured-carousel-bg" style={{ backgroundImage: `url(${cover})` }} aria-hidden="true" />
+      <div
+        key={`bg-${slideKey}`}
+        className="featured-carousel-bg"
+        style={{ backgroundImage: `url(${cover})` }}
+        aria-hidden="true"
+      />
       <div className="featured-carousel-overlay" aria-hidden="true" />
 
       <div className="featured-carousel-inner">
         <h2 className="featured-carousel-label">Truyện nổi bật</h2>
 
-        <Link to={storyPath} className="featured-carousel-poster" aria-label={`Xem chi tiết ${activeStory.title}`}>
+        <Link
+          key={`poster-${slideKey}`}
+          to={storyPath}
+          className="featured-carousel-poster"
+          aria-label={`Xem chi tiết ${activeStory.title}`}
+        >
           <img
             src={cover}
             alt={activeStory.title}
@@ -87,7 +98,7 @@ function FeaturedCarousel({ stories = [] }) {
           />
         </Link>
 
-        <div className="featured-carousel-content">
+        <div key={`content-${slideKey}`} className="featured-carousel-content">
           <Link to={storyPath} className="featured-carousel-title" title={activeStory.title}>
             {activeStory.title}
           </Link>

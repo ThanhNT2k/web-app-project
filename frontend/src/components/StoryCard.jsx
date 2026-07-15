@@ -43,7 +43,10 @@ function getLatestChapterNumber(story) {
 }
 
 function getUpdatedAtValue(story) {
-  return story.latest_chapter_updated_at
+  return story.latest_chapter_updated_at_epoch
+    || story.last_chapter_updated_at_epoch
+    || story.updated_at_epoch
+    || story.latest_chapter_updated_at
     || story.last_chapter_updated_at
     || story.updated_at
     || story.published_at
@@ -54,30 +57,34 @@ function getUpdatedAtValue(story) {
 function formatRelativeTime(dateValue) {
   if (!dateValue) return 'Vừa cập nhật';
 
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return 'Vừa cập nhật';
+  const numericValue = Number(dateValue);
+  const timestampMs = Number.isFinite(numericValue) && numericValue > 0
+    ? numericValue * 1000
+    : new Date(dateValue).getTime();
 
-  const diffMs = date.getTime() - Date.now();
-  const diffMinutes = Math.round(diffMs / 60000);
-  const absMinutes = Math.abs(diffMinutes);
-  const rtf = new Intl.RelativeTimeFormat('vi', { numeric: 'auto' });
+  if (!Number.isFinite(timestampMs)) return 'Vừa cập nhật';
 
-  if (absMinutes < 60) return rtf.format(diffMinutes, 'minute');
+  const diffMs = Date.now() - timestampMs;
+  if (diffMs <= 0) return 'Vừa cập nhật';
 
-  const diffHours = Math.round(diffMinutes / 60);
-  if (Math.abs(diffHours) < 24) return rtf.format(diffHours, 'hour');
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes < 1) return 'Vừa cập nhật';
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
 
-  const diffDays = Math.round(diffHours / 24);
-  if (Math.abs(diffDays) < 7) return rtf.format(diffDays, 'day');
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} giờ trước`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays} ngày trước`;
 
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  }).format(date);
+  }).format(new Date(timestampMs));
 }
 
-function StoryCard({ story, compact = false, horizontal = false }) {
+function StoryCard({ story, compact = false, horizontal = false, showPreview = true }) {
   const cardRef = useRef(null);
   const hideTimerRef = useRef(null);
   const [previewPosition, setPreviewPosition] = useState(null);
@@ -97,14 +104,16 @@ function StoryCard({ story, compact = false, horizontal = false }) {
   };
 
   const hidePreview = () => {
+    if (!showPreview) return;
     clearHideTimer();
     hideTimerRef.current = window.setTimeout(() => {
       setPreviewPosition(null);
     }, 120);
   };
 
-  const showPreview = () => {
-    if (horizontal || typeof window === 'undefined' || !cardRef.current) return;
+  const openPreview = () => {
+    if (!showPreview) return;
+    if (typeof window === 'undefined' || !cardRef.current) return;
     if (!window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 768px)').matches) return;
 
     clearHideTimer();
@@ -146,49 +155,67 @@ function StoryCard({ story, compact = false, horizontal = false }) {
     };
   }, [previewPosition]);
 
+  const articleProps = {
+    ref: cardRef,
+    onMouseEnter: showPreview ? openPreview : undefined,
+    onMouseLeave: showPreview ? hidePreview : undefined,
+    onFocus: showPreview ? openPreview : undefined,
+    onBlur: showPreview ? hidePreview : undefined,
+  };
+
   if (horizontal) {
     return (
-      <article className="story-card-horizontal story-card-horizontal-recent">
-        <Link to={storyPath} className="story-image-horizontal">
-          <img
-            src={story.cover_image_url || FALLBACK_COVER}
-            alt={story.title}
-            onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
-          />
-        </Link>
-        <div className="story-info-horizontal story-info-horizontal-recent">
-          <Link to={storyPath} className="story-title">
-            {story.title}
+      <>
+        <article
+          {...articleProps}
+          className="story-card-horizontal story-card-horizontal-recent"
+        >
+          <Link to={storyPath} className="story-image-horizontal">
+            <img
+              src={story.cover_image_url || FALLBACK_COVER}
+              alt={story.title}
+              onError={(event) => { event.currentTarget.src = FALLBACK_COVER; }}
+            />
           </Link>
+          <div className="story-info-horizontal story-info-horizontal-recent">
+            <Link to={storyPath} className="story-title">
+              {story.title}
+            </Link>
 
-          <p className="story-card-author" title={authorName}>
-            <FontAwesomeIcon icon={faFeatherPointed} /> {authorName}
-          </p>
+            <p className="story-card-author" title={authorName}>
+              <FontAwesomeIcon icon={faFeatherPointed} /> {authorName}
+            </p>
 
-          <div className="story-recent-update">
-            <span className="story-recent-update-line story-recent-update-chip">
-              <FontAwesomeIcon icon={faBookOpen} />
-              {latestChapterNumber ? `Chương ${formatCount(latestChapterNumber)}` : `${formatCount(chapterCount)} chương`}
-            </span>
-            <span className="story-recent-update-line story-recent-update-time">
-              <FontAwesomeIcon icon={faClockRotateLeft} />
-              {updatedAtLabel}
-            </span>
+            <div className="story-recent-update">
+              <span className="story-recent-update-line story-recent-update-chip">
+                <FontAwesomeIcon icon={faBookOpen} />
+                {latestChapterNumber ? `Chương ${formatCount(latestChapterNumber)}` : `${formatCount(chapterCount)} chương`}
+              </span>
+              <span className="story-recent-update-line story-recent-update-time">
+                <FontAwesomeIcon icon={faClockRotateLeft} />
+                {updatedAtLabel}
+              </span>
+            </div>
           </div>
-        </div>
-      </article>
+        </article>
+        {showPreview && previewPosition ? (
+          <StoryHoverPreview
+            story={story}
+            placement={previewPosition.placement}
+            style={previewPosition.style}
+            onMouseEnter={clearHideTimer}
+            onMouseLeave={hidePreview}
+          />
+        ) : null}
+      </>
     );
   }
 
   return (
     <>
       <article
-        ref={cardRef}
+        {...articleProps}
         className={`story-card-v2 ${compact ? 'story-card-compact' : ''}`}
-        onMouseEnter={showPreview}
-        onMouseLeave={hidePreview}
-        onFocus={showPreview}
-        onBlur={hidePreview}
       >
         <Link to={storyPath} className="story-image" aria-label={`Xem chi tiết ${story.title}`}>
           <img
@@ -214,7 +241,7 @@ function StoryCard({ story, compact = false, horizontal = false }) {
           </Link>
         </div>
       </article>
-      {previewPosition ? (
+      {showPreview && previewPosition ? (
         <StoryHoverPreview
           story={story}
           placement={previewPosition.placement}

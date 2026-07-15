@@ -1,15 +1,14 @@
-import os
+with open(r"c:\Users\ku060\Downloads\cmc-truyen-temp\frontend\src\styles\main.css", "r", encoding="utf-8") as f:
+    lines = f.readlines()
 
-styles_dir = r"c:\Users\ku060\Downloads\cmc-truyen-temp\frontend\src"
-
-for root, dirs, files in os.walk(styles_dir):
-    for file in files:
-        if file.endswith((".css", ".scss", ".jsx", ".js")):
-            path = os.path.join(root, file)
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    for i, line in enumerate(f, 1):
-                        if "featured-carousel-label" in line:
-                            print(f"{path}:{i}: {line.strip()}")
-            except Exception as e:
-                pass
+found = False
+count = 0
+for i, line in enumerate(lines, 1):
+    if "storyqq-meta-grid" in line or "storyqq-stat-card" in line:
+        found = True
+        count = 0
+    if found:
+        print(f"{i}: {line}", end="")
+        count += 1
+        if count > 80:  # print up to 80 lines after a match
+            found = False
