@@ -1,137 +1,292 @@
-# CMC Truyện — Nền Tảng Đọc Truyện Chữ Trực Tuyến
+# CMC Truyện
 
-CMC Truyện là một nền tảng đọc truyện chữ trực tuyến hiện đại dành cho độc giả Việt Nam. Dự án tập trung vào **trải nghiệm đọc sạch, nhanh, không quảng cáo**, kết hợp với **trí tuệ nhân tạo (AI)** để tóm tắt chương và gợi ý truyện cá nhân hóa cho từng người dùng.
+CMC Truyện là nền tảng đọc và quản lý truyện chữ trực tuyến dành cho người dùng Việt Nam. Hệ thống gồm giao diện React, REST API Express, PostgreSQL và Redis/BullMQ cho các tác vụ nền. Dự án hỗ trợ đọc truyện, theo dõi tiến độ, đánh giá, bình luận, thông báo, kiểm duyệt nội dung và các tính năng AI.
 
----
+## Tính năng chính
 
-## 🏗️ Kiến Trúc Hệ Thống
+### Dành cho độc giả
 
-Hệ thống được thiết kế theo mô hình **Decoupled Architecture (Kiến trúc tách rời)** gồm hai thư mục chính:
+- Khám phá, tìm kiếm, lọc theo tag và xem bảng xếp hạng truyện.
+- Đọc chương theo URL thân thiện, lưu lịch sử và tiến độ đọc.
+- Theo dõi truyện, nhận thông báo chương mới và quản lý tủ sách.
+- Đánh giá sao, bình luận, trả lời và bình chọn bình luận.
+- Giao diện sáng/tối và tùy chỉnh trải nghiệm đọc.
+- Skeleton screen cho trạng thái tải và Optimistic UI cho các tương tác phù hợp.
 
-*   **`frontend/` (Vite + React 18):** Giao diện hiển thị, điều chỉnh cỡ chữ, dark mode, auto-bookmark, và tương tác của người dùng.
-*   **`backend/` (Node.js + Express.js):** Xử lý nghiệp vụ, quản lý cơ sở dữ liệu PostgreSQL (Supabase), quản lý phiên làm việc bằng JWT, và tích hợp AI.
+### Dành cho uploader
 
----
+- Tạo và chỉnh sửa truyện, quản lý tag và cộng tác viên.
+- Import/preview nội dung chương từ tệp văn bản hoặc EPUB.
+- Quản lý chương sau khi truyện được Moderator duyệt.
+- Theo dõi trạng thái kiểm duyệt và yêu cầu chỉnh sửa.
 
-## 🛠️ Công Nghệ Sử Dụng (Tech Stack)
+### Dành cho Moderator và Admin
 
-### 💻 Frontend
-*   **Framework:** React 18 với React Router v6.
-*   **Styling:** Tailwind CSS và Bootstrap (Responsive mượt mà trên Mobile, Tablet, Desktop).
-*   **API Client:** Axios để kết nối và gọi API từ Backend.
-*   **Đọc truyện cá nhân hóa:** Lưu trữ bookmark tự động, thay đổi font chữ, độ giãn dòng và Dark Mode.
+- Duyệt truyện, avatar, bình luận và báo cáo vi phạm.
+- Quản lý người dùng, vai trò, trạng thái tài khoản và truyện.
+- Quản lý bộ từ khóa kiểm duyệt theo tier.
+- Xem dashboard và nhật ký audit.
 
-### ⚙️ Backend
-*   **Runtime:** Node.js 18+.
-*   **Framework:** Express.js (MVC Pattern) kết hợp BullMQ + Redis cho hàng đợi xử lý nền.
-*   **Database:** PostgreSQL (Hosting trên Supabase), truy vấn trực tiếp qua connection pool (không dùng ORM).
-*   **Authentication:** JSON Web Token (JWT) kết hợp băm mật khẩu bằng `bcryptjs`.
-*   **AI Integration:** Gọi API trực tiếp qua Axios tới Groq API (mô hình `llama-3.1-8b-instant` ưu tiên) và Google Gemini API (`gemini-1.5-flash` dự phòng).
+### AI và xử lý nền
 
----
+- Tóm tắt chương bằng Groq, fallback sang Google Gemini.
+- Gợi ý truyện cá nhân hóa.
+- Cache kết quả AI để hạn chế request trùng lặp.
+- BullMQ và Redis phục vụ notification/moderation worker.
 
-## 📁 Cấu Trúc Dự Án Hiện Tại
+## Kiến trúc
 
-```
-web-app-project/
-├── backend/                  # Mã nguồn server Node.js/Express
-│   ├── src/
-│   │   ├── config/          # Cấu hình database, biến môi trường
-│   │   ├── controllers/     # Controller điều hướng xử lý nghiệp vụ (Auth, Story, Chapter...)
-│   │   ├── models/          # Các query database tương tác PostgreSQL
-│   │   ├── routes/          # Các tuyến đường API của hệ thống
-│   │   ├── middleware/      # Middleware xác thực JWT & phân quyền người dùng
-│   │   ├── services/        # Service tích hợp AI (Google Gemini API)
-│   │   ├── app.js           # Khởi tạo Express & Middleware chung
-│   │   └── server.js        # Entry point khởi chạy server
-│   ├── scripts/             # File schema SQL và seeding database
-│   └── package.json
-│
-├── frontend/                 # Mã nguồn giao diện React
-│   ├── src/
-│   │   ├── components/      # Các thành phần tái sử dụng (Navbar, StoryCard, AIChapterSummary...)
-│   │   ├── pages/           # Các trang giao diện (HomePage, StoryDetailPage, ChapterReaderPage...)
-│   │   ├── services/        # Lớp giao tiếp API (`api.js`, `authService.js`)
-│   │   ├── styles/          # Styling & cấu hình Dark Mode
-│   │   ├── App.jsx          # Cấu hình Router chính của ứng dụng
-│   │   └── main.jsx         # Điểm khởi chạy của ứng dụng React
-│   └── package.json
-│
-├── docs/                     # Tài liệu thiết kế và đặc tả dự án
-│   ├── product/             # Tài liệu phân tích nghiệp vụ & yêu cầu (MVP, Backlog)
-│   └── technical/           # Tài liệu kiến trúc hệ thống, API và AI Personalization
-│
-├── AGENT_GUIDE.md            # Tài liệu phát triển cho AI agent
-├── package.json
-└── README.md                 # File hướng dẫn tổng quan này
+```text
+Browser
+  └─ React 18 + Vite + React Router + Axios
+       └─ REST API /api
+            └─ Node.js + Express
+                 ├─ PostgreSQL (pg pool và một số Sequelize model)
+                 ├─ Redis + BullMQ workers
+                 ├─ Supabase Storage
+                 ├─ Groq / Gemini
+                 └─ Resend email
 ```
 
----
+Các thư mục quan trọng:
 
-## 🔐 Phân Quyền Người Dùng (Role-Based Access Control)
+```text
+backend/
+  scripts/                    Schema, seed và tiện ích dữ liệu
+  src/config/                 Environment, PostgreSQL, Redis, Supabase
+  src/controllers/            Xử lý request/response
+  src/middleware/             JWT, RBAC, audit, upload, rate limit
+  src/models/                 Truy vấn và model dữ liệu
+  src/routes/                 REST API routes
+  src/scripts/migrations/     SQL migration tăng dần
+  src/services/               AI, queue, email, notification, moderation
+  src/workers/                Background workers
 
-Hệ thống chia làm 5 nhóm quyền chính:
+frontend/
+  public/pages/               Redirect tương thích URL cũ
+  src/components/             Component dùng chung
+  src/contexts/               Auth và theme state
+  src/layouts/                User/Admin/Moderator layouts
+  src/pages/                  Các trang React
+  src/services/               Axios API client
+  src/styles/                 CSS giao diện và responsive
 
-| Vai Trò | Quyền Hạn |
-|---------|-----------|
-| **Admin** | Toàn quyền kiểm soát hệ thống — quản lý người dùng (khoá/mở khoá), truyện, chương, bình luận, từ khóa nhạy cảm và xem báo cáo vi phạm. |
-| **Moderator** | Duyệt báo cáo vi phạm (Reports), xử lý ẩn/flag các bình luận và nội dung không phù hợp. |
-| **Uploader** | Đăng truyện mới, quản lý & cập nhật nội dung truyện/chương do mình đăng, cộng với tất cả quyền của User. |
-| **User** | Đọc truyện, theo dõi truyện, lưu lịch sử, báo cáo vi phạm, viết bình luận, nhận gợi ý truyện cá nhân hóa từ AI. |
-| **Guest** | Xem danh sách truyện công khai, tìm kiếm và đọc chương. |
+docs/                         Tài liệu sản phẩm và kỹ thuật
+tests/e2e/                    Playwright end-to-end tests
+```
 
----
+## Công nghệ
 
-## 🤖 Tính Năng Trí Tuệ Nhân Tạo (AI Features)
+| Thành phần | Công nghệ |
+|---|---|
+| Frontend | React 18, Vite 5, React Router 6, Axios, Bootstrap, Tailwind CSS, Font Awesome |
+| Backend | Node.js, Express 4, Joi/Zod, JWT, bcryptjs |
+| Database | PostgreSQL 15, `pg`, Sequelize |
+| Queue | Redis 7, BullMQ |
+| Storage | Supabase Storage |
+| AI | Groq và Google Gemini |
+| Email/OAuth | Resend, Google Auth Library |
+| Test | Jest, Supertest, Vitest, Testing Library, Playwright |
+| Deploy | Render (backend/worker), Vercel (frontend) |
 
-1.  **Tóm Tắt Chương (AI Chapter Summary):** Người dùng khi đọc chương có thể nhấn nút "Tóm tắt" để gửi nội dung chương sang Gemini API nhằm nhận về nội dung tóm tắt ngắn gọn khoảng 3-4 câu.
-2.  **Gợi Ý Cá Nhân Hóa (AI Personalization):** Backend tự động thu thập hành vi người dùng (dwell time, tỷ lệ hoàn thành truyện, truyện theo dõi) và sử dụng Gemini API để phân tích gu đọc truyện, gợi ý ra danh sách 5 truyện tương thích nhất.
+## Vai trò và phân quyền
 
----
+| Vai trò | Khả năng chính |
+|---|---|
+| Guest | Xem, tìm kiếm và đọc truyện công khai |
+| User | Guest + lịch sử đọc, follow, rating, bình luận, báo cáo và tùy chỉnh |
+| Uploader | User + tạo truyện, import và quản lý nội dung được cấp quyền |
+| Moderator | Duyệt truyện/nội dung, xử lý báo cáo và xem audit thuộc phạm vi Moderator |
+| Admin | Quản trị toàn hệ thống |
 
-## 🚀 Hướng Dẫn Khởi Chạy Dự Án
+## Yêu cầu môi trường
 
-### 1. Chuẩn bị biến môi trường
-Tạo các file `.env` tại thư mục `/backend` và `/frontend` tương tự cấu hình sau:
+- Node.js 18 trở lên.
+- npm.
+- PostgreSQL 15 và Redis 7, hoặc Docker Desktop.
 
-**Backend (`backend/.env`):**
+## Cấu hình biến môi trường
+
+Tạo `backend/.env`:
+
 ```env
 NODE_ENV=development
 PORT=5000
-DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<db_name>
-JWT_SECRET=your_jwt_secret_key
-GEMINI_API_KEY=your_google_gemini_api_key
+API_URL=http://localhost:5000
 FRONTEND_URL=http://localhost:3000
+
+# Có thể dùng DATABASE_URL hoặc nhóm DB_* bên dưới
+DATABASE_URL=postgresql://your_user:your_password@localhost:5432/cmc_truyen
+# DB_HOST=localhost
+# DB_PORT=5432
+# DB_NAME=cmc_truyen
+# DB_USER=your_user
+# DB_PASSWORD=your_password
+
+JWT_SECRET=replace_with_a_long_random_secret
+JWT_EXPIRE=7d
+REDIS_URL=redis://localhost:6379
+
+# Tùy chọn theo tính năng
+GROQ_API_KEY=
+GEMINI_API_KEY=
+SUPABASE_URL=
+SUPABASE_SERVICE_KEY=
+GOOGLE_CLIENT_ID=
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=CMC Truyện <no-reply@example.com>
 ```
 
-**Frontend (`frontend/.env`):**
+Tạo `frontend/.env`:
+
 ```env
-REACT_APP_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5000/api
+VITE_GOOGLE_CLIENT_ID=
 ```
 
-### 2. Cài đặt & Khởi chạy Backend
+Không commit `.env` hoặc service-role key lên Git.
+
+## Chạy dự án trên máy local
+
+### 1. Cài dependencies
+
+```bash
+npm install
+npm install --prefix backend
+npm install --prefix frontend
+```
+
+### 2. Khởi động PostgreSQL và Redis
+
 ```bash
 cd backend
-npm install
-npm run db:init      # Khởi tạo bảng dữ liệu
-npm run db:seed      # Thêm dữ liệu mẫu (seeding)
-npm run dev          # Chạy server ở chế độ watch mode
+npm run infra:up
 ```
 
-### 3. Cài đặt & Khởi chạy Frontend
-Mở một terminal mới:
+Docker Compose tạo `cmc_postgres` tại cổng `5432` và `cmc_redis` tại cổng `6379`. Nếu các container này đã tồn tại, dùng `docker start cmc_postgres cmc_redis` thay vì tạo một Compose project thứ hai.
+
+### 3. Khởi tạo database
+
+Với database mới:
+
+```bash
+cd backend
+npm run db:init
+npm run db:migrate
+npm run db:seed       # tùy chọn
+```
+
+Với database đã có schema, chỉ cần:
+
+```bash
+cd backend
+npm run db:migrate
+```
+
+`db:migrate` chỉ chạy migration; lệnh này không tự khởi động Docker.
+
+### 4. Chạy backend, worker và frontend
+
+Mở các terminal riêng:
+
+```bash
+cd backend
+npm run dev
+```
+
+```bash
+cd backend
+node src/startWorker.js
+```
+
 ```bash
 cd frontend
-npm install
-npm run dev          # Khởi chạy giao diện React (mặc định tại http://localhost:3000)
+npm run dev -- --port 3000
 ```
 
----
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:5000`
+- Health check: `http://localhost:5000/health`
 
-## 📚 Tài Liệu Hướng Dẫn Kèm Theo
+Worker chỉ bắt buộc khi kiểm thử các luồng queue/notification/moderation.
 
-*   [`ARCHITECTURE.md`](./docs/technical/ARCHITECTURE.md) — Kiến trúc chi tiết, sơ đồ dữ liệu và điều hướng URL cũ sang React.
-*   [`API_REFERENCE.md`](./docs/technical/API_REFERENCE.md) — Danh sách đặc tả 34 API Endpoint và cách dùng.
-*   [`AI_PERSONALIZATION.md`](./docs/technical/AI_PERSONALIZATION.md) — Cơ chế thu thập dữ liệu hành vi (Telemetry) và tích hợp AI Gemini.
-*   [`REQUIREMENTS.md`](./docs/product/REQUIREMENTS.md) — Đặc tả yêu cầu phần mềm, Persona, User Story và Backlog.
-*   [`UX_PROTOTYPE.md`](./docs/technical/UX_PROTOTYPE.md) — Hướng dẫn giao diện mẫu tĩnh và Mock Data.
+## Scripts thường dùng
+
+### Tại thư mục gốc
+
+```bash
+npm test              # backend baseline + frontend tests
+npm run test:backend
+npm run test:frontend
+npm run test:e2e
+npm run test:all
+```
+
+### Backend
+
+```bash
+npm run dev
+npm start
+npm test
+npm run test:baseline
+npm run test:coverage
+npm run db:init
+npm run db:migrate
+npm run db:seed
+npm run db:sync-tags
+npm run infra:up
+npm run infra:down
+```
+
+### Frontend
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm test
+npm run test:watch
+npm run test:coverage
+```
+
+## Route giao diện chính
+
+| Route | Mô tả |
+|---|---|
+| `/` | Trang chủ và carousel truyện nổi bật |
+| `/tim-truyen`, `/browse` | Tìm và lọc truyện |
+| `/bang-xep-hang` | Bảng xếp hạng |
+| `/story/:slug` | Chi tiết truyện |
+| `/:storySlug/:chapterNumber` | Đọc chương |
+| `/account/*` | Tủ sách, lịch sử và cài đặt |
+| `/dashboard` | Quản lý nội dung của Uploader/Admin |
+| `/moderator/*` | Không gian Moderator |
+| `/admin/*` | Không gian Admin |
+
+API dùng prefix `/api`. Danh sách endpoint chi tiết nằm tại [API_REFERENCE.md](docs/technical/API_REFERENCE.md).
+
+## Hiệu năng và trải nghiệm
+
+- PostgreSQL connection pool và index cho các truy vấn story/chapter/comment phổ biến.
+- API danh sách chương không trả nội dung chương, giảm kích thước response.
+- Giới hạn kích thước trang API để tránh request quá lớn.
+- Skeleton screen dùng chung giúp giảm cảm giác chờ và hạn chế layout shift.
+- Optimistic UI có rollback cho follow, rating, vote bình luận và thông báo.
+- Hai danh sách “Được quan tâm” và “Cập nhật gần đây” cuộn thủ công; carousel hero tự chuyển mỗi 8 giây.
+
+## Tài liệu liên quan
+
+- [Kiến trúc hệ thống](docs/technical/ARCHITECTURE.md)
+- [Tham chiếu API](docs/technical/API_REFERENCE.md)
+- [Chính sách sử dụng AI](docs/technical/AI_USAGE_POLICY.md)
+- [AI personalization](docs/technical/AI_PERSONALIZATION.md)
+- [Yêu cầu sản phẩm](docs/product/REQUIREMENTS.md)
+- [Định hướng sản phẩm](docs/product/PRODUCT_DIRECTION.md)
+- [Changelog](docs/CHANGELOG.md)
+
+## Lưu ý đóng góp
+
+- Không commit secret, token, `.env`, file upload hoặc dữ liệu production.
+- Chạy test phù hợp và `npm run build --prefix frontend` trước khi tạo pull request.
+- Migration mới phải có thể chạy lặp lại an toàn khi có thể (`IF NOT EXISTS`, kiểm tra dữ liệu trước khi thay đổi constraint).
+- Giữ tương thích với các redirect cũ trong `frontend/public/pages/`.
