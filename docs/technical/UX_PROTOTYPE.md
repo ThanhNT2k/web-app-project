@@ -19,9 +19,12 @@
 Mục tiêu ban đầu của bản UX Prototype là kiểm thử nhanh giao diện người dùng và hành trình đọc giả/admin mà không bị phụ thuộc vào sự sẵn sàng của Backend.
 
 **Trạng thái tích hợp hiện tại:**
-*   Toàn bộ giao diện mẫu đã được kết nối hoàn chỉnh với **Node.js Express Backend** và **Supabase PostgreSQL Database**.
-*   Các tương tác của người dùng (như theo dõi truyện, bình luận, thay đổi tuỳ chọn đọc, tiến độ đọc và tóm tắt AI) hiện không còn chạy trên mock data tĩnh mà được lưu trữ và đồng bộ thời gian thực qua API.
-*   Dữ liệu mẫu (`frontend/src/data/`) vẫn được giữ lại để phục vụ cho các trường hợp kiểm thử cục bộ hoặc fallback.
+*   Toàn bộ giao diện mẫu đã được kết nối hoàn chỉnh với **Node.js Express Backend** và **PostgreSQL Database**.
+*   Tất cả dữ liệu chính (truyện, chương, bình luận, tiến độ đọc, tóm tắt AI) được lưu trữ trong Database qua API REST.
+*   User đăng nhập: Tự động lưu và khôi phục lịch sử đọc qua Database (`reading_history` table).
+*   Guest (không đăng nhập): Chỉ có session cục bộ browser, mỗi lần vào là mới.
+*   LocalStorage dùng cho dữ liệu cá nhân cục bộ (user preferences: font, cỡ chữ, theme), không phải dữ liệu chính.
+*   Dữ liệu mẫu (`frontend/src/data/`) vẫn được giữ lại cho unit tests hoặc fallback khi API không hoạt động.
 
 ---
 
@@ -59,11 +62,20 @@ export const MOCK_STORIES = [
 ];
 ```
 
-### B. Cơ chế lưu trữ trạng thái giả lập (Simulated State via LocalStorage)
-Các tương tác thay đổi trạng thái như bookmark chương đang đọc, thêm vào danh sách yêu thích, hoặc lưu cấu hình cỡ chữ đọc truyện được lưu trữ trực tiếp tại `localStorage` để khi refresh trang không bị mất dữ liệu:
-*   `cmc_favorites` -> Lưu danh sách ID các truyện đã bấm Yêu thích.
-*   `cmc_reading_history` -> Lưu lịch sử đọc: `{ storyId: "1", lastChapterId: "102", scrollPercent: 45 }`.
-*   `cmc_reader_preferences` -> Lưu cỡ chữ và độ giãn dòng của độc giả.
+### B. Cơ chế lưu trữ dữ liệu (Database-first with LocalStorage for Preferences)
+
+**Dữ liệu lưu trong Database (qua API):**
+*   `reading_history` -> Lịch sử đọc: user_id, story_id, last_chapter_read, completion_rate, last_read_at
+*   `user_follows` -> Danh sách truyện yêu thích/theo dõi của user
+*   `comments` -> Bình luận, reply, vote từ user
+*   `ratings` -> Đánh giá sao từ user
+*   `ai_summaries` -> Cache tóm tắt AI các chương
+
+**Dữ liệu lưu trong LocalStorage (cục bộ browser):**
+*   `cmc_reader_preferences` -> Cỡ chữ, loại font, theme (sáng/tối/sepia)
+*   `cmc_theme_mode` -> Dark mode state hiện tại
+
+**Lưu ý:** Reading history NOT dùng localStorage - toàn bộ lưu Database để đồng bộ giữa các thiết bị của cùng user.
 
 ---
 
