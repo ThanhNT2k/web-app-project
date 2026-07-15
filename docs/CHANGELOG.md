@@ -8,6 +8,14 @@ Tất cả thay đổi đáng kể của dự án **CMC Truyện** được ghi 
 
 ## [Unreleased]
 
+### Changed
+
+- Đồng bộ README và tài liệu backend với Express 4, PostgreSQL pool/Sequelize, Redis/BullMQ worker và migration hiện tại.
+- Viết lại kiến trúc, codebase overview và API reference theo route thực tế.
+- Cập nhật tài liệu AI theo luồng Groq ưu tiên, Gemini fallback, cache RAM/PostgreSQL và recommendation hiện có.
+- Ghi nhận tối ưu API chi tiết truyện/chapter list, skeleton screen và Optimistic UI có rollback.
+- Ghi nhận hành vi carousel trang chủ: hero 8 giây; “Được quan tâm” và “Cập nhật gần đây” cuộn thủ công.
+
 ---
 
 ## [1.2.0] — 2026-06-15

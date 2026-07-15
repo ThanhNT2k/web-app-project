@@ -1,81 +1,86 @@
-# Tổng Quan Mã Nguồn Dự Án — CMC Truyện (CODEBASE_OVERVIEW.md)
+# Tổng quan codebase CMC Truyện
 
----
+## Entry points
 
-## 👥 THÔNG TIN NHÓM THỰC HIỆN
-*   **Nhóm:** Nhóm 3 (Nguyễn Thị Thùy, Trần Thị Kim Uyên, Nguyễn Hải Dương, Nguyễn Tuấn Thành, Vũ Viết Trí)
+- Frontend: `frontend/src/main.jsx` → `App.jsx`.
+- Backend API: `backend/src/server.js` → `app.js`.
+- Background worker: `backend/src/startWorker.js`.
+- Database schema: `backend/scripts/schema.sql`.
+- Migration runner: `backend/src/scripts/migrate.js`.
 
----
+## Frontend
 
-## 🗺️ 1. Bản Đồ Liên Kết Nghiệp Vụ & Mã Nguồn (Business-to-Code Mapping)
+`App.jsx` chia route thành ba layout:
 
-Dưới đây là sơ đồ liên kết giữa các tính năng nghiệp vụ và các file mã nguồn tương ứng trong hệ thống hiện tại:
+- User/public: trang chủ, tìm truyện, bảng xếp hạng, chi tiết, đọc chương và tài khoản.
+- Admin: dashboard, users, stories, reports, bad words, comments, profiles và logs.
+- Moderator: dashboard, hàng chờ truyện, reports, comments, profiles và logs.
 
-### 🔐 Epic 1: Authentication & User Profile
-*   **Frontend UI & Context:** [`RegisterPage.jsx`](../../frontend/src/pages/RegisterPage.jsx), [`LoginPage.jsx`](../../frontend/src/pages/LoginPage.jsx), [`AccountPage.jsx`](../../frontend/src/pages/AccountPage.jsx), [`AuthContext.jsx`](../../frontend/src/contexts/AuthContext.jsx).
-*   **Backend Services & Controllers:** `authRoutes.js`, `authController.js`, [`authMiddleware.js`](../../backend/src/middleware/authMiddleware.js), `user.js` model.
-*   **Tính năng bổ sung:** Ràng buộc username duy nhất khi đăng ký, tự động khóa tài khoản (`is_active = false`), tự động đăng xuất tài khoản bị khóa qua response interceptor.
+Các module đáng chú ý:
 
-### 🔍 Epic 2: Story Discovery & Search
-*   **Frontend UI:** [`Navbar.jsx`](../../frontend/src/components/Navbar.jsx), [`FindStoriesPage.jsx`](../../frontend/src/pages/FindStoriesPage.jsx).
-*   **Backend Logic:** `storyRoutes.js`, `storyController.js`, `Story.js` (hàm `searchStories`).
-*   **Tính năng bổ sung:** Slug SEO-friendly cho truyện và chương, tìm kiếm full-text kết hợp lọc theo thể loại (`category`) và thẻ (`tags` / `story_tags`).
+| Module | Vai trò |
+|---|---|
+| `services/api.js` | Axios client, base URL, JWT và toàn bộ API facade |
+| `contexts/AuthContext.jsx` | Phiên đăng nhập và user state |
+| `contexts/ThemeContext.jsx` | Theme state |
+| `StoryDetailPage.jsx` | Chi tiết, chapter metadata, progress và cộng đồng |
+| `ChapterReaderPage.jsx` | Đọc chương và lưu tiến độ |
+| `DashboardPage.jsx` | Quản lý truyện/chương/cộng tác viên |
+| `FollowButton.jsx` | Follow optimistic update có rollback |
+| `StoryRating.jsx` | Rating optimistic update có rollback |
+| `CommentSection.jsx` | Comment tree, reply và vote optimistic |
 
-### 📖 Epic 3: Reading Experience
-*   **Frontend UI:** [`StoryDetailPage.jsx`](../../frontend/src/pages/StoryDetailPage.jsx), [`ChapterReaderPage.jsx`](../../frontend/src/pages/ChapterReaderPage.jsx).
-*   **Backend Logic:** `chapterRoutes.js` (dành cho summary), `storyRoutes.js` (đọc thông tin chương theo slug/số thứ tự).
+Skeleton dùng class `.skeleton-box` và các loading class dùng chung trong `main.css`. Hai danh sách “Được quan tâm” và “Cập nhật gần đây” chỉ cuộn thủ công; hero carousel đổi slide mỗi 8 giây.
 
-### 💬 Epic 4: Content & Engagement
-*   **Frontend UI:** `FollowButton.jsx`, `CommentSection.jsx`, `ReadingProgress.jsx`.
-*   **Backend Logic:** `followRoutes.js`, `followController.js`, `commentRoutes.js`, `commentController.js`, `readingHistoryRoutes.js`, `readingHistoryController.js`.
-*   **Dữ liệu:** `UserFollow.js`, `Comment.js`, `ReadingHistory.js`.
+## Backend
 
-### 🛠️ Epic 5: Content & User Management (Admin & Moderator Layouts)
-*   **Giao diện quản lý:** [`AdminPage.jsx`](../../frontend/src/pages/AdminPage.jsx), [`AdminUsersPage.jsx`](../../frontend/src/pages/AdminUsersPage.jsx), [`AdminStoriesPage.jsx`](../../frontend/src/pages/AdminStoriesPage.jsx), [`DashboardPage.jsx`](../../frontend/src/pages/DashboardPage.jsx).
-*   **Moderator Layout:** [`ModeratorLayout.jsx`](../../frontend/src/layouts/ModeratorLayout.jsx) phân quyền dành riêng cho Moderator và Admin.
-*   **Backend Logic:** `adminRoutes.js`, `adminController.js`.
-*   **Tính năng bổ sung:** Khóa/mở khóa tài khoản user, thay đổi vai trò (role), ẩn/hiện truyện nâng cao (`hidden_by_admin` chặn Uploader tự ý hiển thị lại).
+Router được mount trong `app.js`:
 
-### 🤖 Epic 6: Cá Nhân Hóa & Tóm Tắt AI
-*   **Tóm tắt & Gợi ý:** `aiRoutes.js`, `aiService.js` (gọi trực tiếp Groq API hoặc Gemini API qua Axios, cache 2 tầng RAM + Database trong `AISummary.js`).
-
-### 🛡️ Epic 7: Kiểm Duyệt Bình Luận & Quản Lý Báo Cáo (Mới)
-*   **Hàng đợi kiểm duyệt:** `moderationService.js`, `moderationWorker.js` sử dụng **BullMQ + Redis** để phân loại bình luận theo các cấp độ tier (rejected, masked, flagged) từ danh sách từ khóa nhạy cảm.
-*   **Quản lý từ khóa:** `badWordRoutes.js`, `badWordController.js`, `BadWord.js` model, [`ManageBadWords.jsx`](../../frontend/src/pages/admin/ManageBadWords.jsx).
-*   **Báo cáo vi phạm:** `reportRoutes.js`, `reportController.js`, `Report.js` model, [`AdminReportsPage.jsx`](../../frontend/src/pages/AdminReportsPage.jsx).
-
----
-
-## 🧬 2. Chi Tiết Các File Code Quan Trọng (Core Code Highlights)
-
-### A. Kết Nối Database (Không Dùng ORM)
-Hệ thống sử dụng trực tiếp Connection Pool của `pg` thư viện để thực hiện truy vấn SQL trực tiếp, giúp tối ưu hóa hiệu năng và kiểm soát query tốt nhất:
-```javascript
-// backend/src/config/database.js
-const { Pool } = require('pg');
-const pool = new Pool(poolConfig);
-module.exports = pool;
+```text
+/api/auth              Authentication, profile, Google OAuth, OTP
+/api/stories           Story, rating, collaborator và nested chapter APIs
+/api/reading-history   Progress và read chapters
+/api/chapters          AI chapter summary
+/api/ai                Recommendations
+/api/comments          Comment và vote
+/api/follows           Follow state
+/api/notifications     Notification và notification preferences
+/api/preferences       Reader preferences
+/api/upload            Cover/avatar upload
+/api/admin             Admin management
+/api/moderator         Moderation workflow
+/api/tags              Story tags
+/api/reports           Reports workflow
+/api/rankings          Rankings
+/api/audit-logs        Audit query
 ```
 
-### B. Middleware Phân Quyền Vai Trò
-Hệ thống thực hiện phân quyền tập trung dựa trên vai trò qua middleware:
-```javascript
-// backend/src/middleware/roleMiddleware.js
-function authorizeRole(...roles) {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-    next();
-  };
-}
+### Quy ước backend
+
+- Controller validate input và trả HTTP response.
+- Model/service thực hiện truy vấn hoặc tích hợp bên ngoài.
+- Route chịu trách nhiệm authentication/authorization.
+- Public resource có thể dùng `optionalAuth` để kiểm tra quyền xem draft.
+- Mutation quản trị quan trọng phải qua `auditAction`.
+- Transaction phải dùng cùng một client từ `db.connect()` đến `COMMIT/ROLLBACK`.
+
+## Kiểm thử
+
+```bash
+npm test                         # backend baseline + frontend
+npm run test:backend
+npm run test:frontend
+npm run test:e2e
+npm run test:all
 ```
 
-### C. Dispatch Job Kiểm Duyệt Chạy Ngầm
-Bình luận sau khi được tạo sẽ ngay lập tức được gửi vào hàng đợi xử lý nền thay vì kiểm duyệt đồng bộ gây trễ request:
-```javascript
-// backend/src/controllers/commentController.js (tóm tắt logic)
-const moderationQueue = new Queue('moderationQueue', { connection: redisConfig });
-// Khi tạo comment mới:
-await moderationQueue.add('moderate-comment', { content: comment.content, commentId: comment.id });
-```
+Backend dùng Jest/Supertest; frontend dùng Vitest/Testing Library; E2E dùng Playwright.
+
+## Khi thêm tính năng
+
+1. Thêm migration idempotent nếu thay đổi schema.
+2. Cập nhật model/service trước controller và route.
+3. Bổ sung facade tương ứng trong `frontend/src/services/api.js`.
+4. Dùng skeleton cho read/loading state.
+5. Chỉ dùng Optimistic UI khi có snapshot và rollback rõ ràng.
+6. Cập nhật `API_REFERENCE.md`, test và README nếu hành vi public thay đổi.

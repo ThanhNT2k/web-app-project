@@ -81,7 +81,7 @@ Các tương tác thay đổi trạng thái như bookmark chương đang đọc,
     *   Tăng/giảm cỡ chữ từ `16px` đến `32px`.
     *   Thay đổi phông chữ (Serif / Sans-serif).
     *   Chuyển chương nhanh (Chương trước / Chương sau).
-*   **AI Summary Card:** Hộp thoại tóm tắt chương nằm ở đầu trang. Khi bấm nút "🤖 Tóm tắt nhanh", một hiệu ứng loading lấp lánh xuất hiện trong 1.5 giây (mô phỏng gọi API Gemini), sau đó hiển thị tóm tắt chương rút gọn khoảng 3 câu.
+*   **AI Summary Card:** Hộp tóm tắt chương gọi backend thật. Backend ưu tiên cache, sau đó gọi Groq và fallback sang Gemini; giao diện hiển thị skeleton trong lúc chờ và thông báo lỗi có thể thử lại.
 
 ### Màn hình 3: Dashboard Quản Trị Viên (Admin Dashboard)
 *   **Thẻ thống kê nhanh:** Hiển thị 3 chỉ số chính bằng đồ họa CSS đẹp mắt:
