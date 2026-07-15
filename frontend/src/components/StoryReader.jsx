@@ -144,9 +144,14 @@ function StoryReader({
         {chapters.length > 0 && onChapterSelect ? (
           <select
             className="form-select form-select-sm reader-select reader-chapter-select"
-            value={chapter.id}
+            value={chapter.id || ''}
             onChange={(e) => onChapterSelect(e.target.value)}
           >
+            {chapter.id && !chapters.find(c => Number(c.id) === Number(chapter.id)) && (
+              <option key={chapter.id} value={chapter.id}>
+                Ch. {chapter.chapter_number}: {chapter.title}
+              </option>
+            )}
             {chapters.map((item) => (
               <option key={item.id} value={item.id}>
                 Ch. {item.chapter_number}: {item.title}
@@ -217,9 +222,14 @@ function StoryReader({
 
         <select
           className="form-select reader-floating-select"
-          value={chapter.id}
+          value={chapter.id || ''}
           onChange={(e) => onChapterSelect(e.target.value)}
         >
+          {chapter.id && !chapters.find(c => Number(c.id) === Number(chapter.id)) && (
+            <option key={chapter.id} value={chapter.id}>
+              Chương {chapter.chapter_number}
+            </option>
+          )}
           {chapters.map((item) => (
             <option key={item.id} value={item.id}>
               Chương {item.chapter_number}
