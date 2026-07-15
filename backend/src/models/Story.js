@@ -75,7 +75,7 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
   if (sortBy === 'popular') {
     orderBy = 'follow_count DESC, s.created_at DESC'; // Nhiều follow nhất trước, cùng follow thì mới nhất trước
   } else if (sortBy === 'updated') {
-    orderBy = 's.updated_at DESC';  // Truyện có chapter mới nhất trước
+    orderBy = 'COALESCE(lc.updated_at, s.updated_at) DESC, s.id DESC';  // Truyện có chapter mới nhất trước
   }
 
   try {
@@ -95,10 +95,15 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
         s.total_views,
         s.created_at,
         s.updated_at,
+        EXTRACT(EPOCH FROM s.created_at)::bigint AS created_at_epoch,
+        EXTRACT(EPOCH FROM s.updated_at)::bigint AS updated_at_epoch,
         s.is_published,
         s.hidden_by_admin,
         COALESCE(s.total_rating_count, 0)::int AS rating_count,
         COALESCE(s.average_rating, 0)::float8 AS average_rating,
+        lc.chapter_number AS latest_chapter_number,
+        lc.updated_at AS latest_chapter_updated_at,
+        EXTRACT(EPOCH FROM lc.updated_at)::bigint AS latest_chapter_updated_at_epoch,
         COUNT(*) OVER() AS total_count,      -- Window function: tổng số record không bị ảnh hưởng bởi LIMIT/OFFSET
         u.username AS author_username,
         u.full_name AS author_full_name,
@@ -106,6 +111,16 @@ async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnp
       FROM stories s
       LEFT JOIN users u ON u.id = s.author_id
       LEFT JOIN follow_stats fs ON fs.story_id = s.id
+      LEFT JOIN LATERAL (
+        SELECT
+          c.chapter_number,
+          c.updated_at
+        FROM chapters c
+        WHERE c.story_id = s.id
+          AND c.is_published = true
+        ORDER BY c.updated_at DESC, c.chapter_number DESC
+        LIMIT 1
+      ) lc ON true
       ${includeUnpublished ? '' : 'WHERE s.is_published = true'}  -- Admin xem được truyện chưa publish
       ORDER BY ${orderBy}
       LIMIT $1 OFFSET $2
