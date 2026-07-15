@@ -60,6 +60,34 @@ describe('story moderation workflow', () => {
     expect(Chapter.createChapter).not.toHaveBeenCalled();
   });
 
+  it('returns a conflict instead of a server error for a duplicate chapter number', async () => {
+    Story.getStoryById.mockResolvedValueOnce({
+      id: 20,
+      author_id: 7,
+      is_published: true,
+      hidden_by_admin: false,
+      moderation_status: 'approved',
+    });
+    Chapter.createChapter.mockRejectedValueOnce({
+      code: '23505',
+      constraint: 'chapters_story_id_chapter_number_key',
+    });
+    const req = {
+      params: { storyId: '20' },
+      user: { id: 7, role: 'Uploader' },
+      body: { chapter_number: 51, title: 'Chương mới', content: 'Nội dung' },
+    };
+    const res = createResponse();
+
+    await chapterController.createChapter(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      code: 'CHAPTER_NUMBER_EXISTS',
+    }));
+  });
+
   it('prevents an uploader from publishing a story through visibility toggle', async () => {
     const req = {
       params: { id: '20' },

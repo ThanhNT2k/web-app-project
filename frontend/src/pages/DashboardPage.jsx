@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import TagInput from '../components/TagInput';
 import { slugify } from '../utils/slugify';
+import { getNextChapterNumber } from '../utils/chapterNumber';
 import { FontAwesomeIcon, faBan, faBookOpen, faMagnifyingGlass, faPenNib } from '../lib/icons';
 
 const EMPTY_STORY = {
@@ -59,6 +60,9 @@ function DashboardPage() {
   const [chapterFilePreview, setChapterFilePreview] = useState(null);
   const [chapterPreviewLoading, setChapterPreviewLoading] = useState(false);
   const [chapterPreviewError, setChapterPreviewError] = useState('');
+  const [chapterNumberLoading, setChapterNumberLoading] = useState(false);
+  const [savingChapter, setSavingChapter] = useState(false);
+  const chapterEditorSessionRef = useRef(0);
   const chapterUploadIsEpub = chapterUploadFile?.name?.toLowerCase().endsWith('.epub') || false;
 
   // Expanded chapter list per story
@@ -284,13 +288,24 @@ function DashboardPage() {
 
   // ── Chapter CRUD ──────────────────────────────────────────────────────────
 
-  const openAddChapter = (story) => {
+  const closeChapterEditor = () => {
+    if (savingChapter) return;
+    chapterEditorSessionRef.current += 1;
+    setChapterNumberLoading(false);
+    setChapterModal(null);
+  };
+
+  const openAddChapter = async (story) => {
+    const editorSession = chapterEditorSessionRef.current + 1;
+    chapterEditorSessionRef.current = editorSession;
+    const cachedChapters = storyChapters[story.id] || [];
+    const fallbackChapterNumber = getNextChapterNumber(cachedChapters, story.total_chapters);
+
     setChapterModal({ story, chapter: null });
-    const currentChapters = storyChapters[story.id] || [];
     setChapterForm({
       title: '',
       content: '',
-      chapter_number: (story.total_chapters || currentChapters.length || 0) + 1,
+      chapter_number: fallbackChapterNumber,
     });
     setChapterUploadFile(null);
     setSplitChapterFile(true);
@@ -298,9 +313,29 @@ function DashboardPage() {
     setChapterFilePreview(null);
     setChapterPreviewError('');
     setChapterPreviewLoading(false);
+    setSavingChapter(false);
+
+    try {
+      setChapterNumberLoading(true);
+      const response = await API.chapters.getByStory(story.id, 1, 1, 'desc');
+      if (chapterEditorSessionRef.current !== editorSession) return;
+      setChapterForm((currentForm) => ({
+        ...currentForm,
+        chapter_number: getNextChapterNumber(response.chapters || [], story.total_chapters),
+      }));
+    } catch (error) {
+      if (chapterEditorSessionRef.current === editorSession) {
+        showMessage(error?.response?.data?.message || 'Không thể xác định số chương tiếp theo. Vui lòng kiểm tra lại số chương trước khi đăng tải.');
+      }
+    } finally {
+      if (chapterEditorSessionRef.current === editorSession) {
+        setChapterNumberLoading(false);
+      }
+    }
   };
 
   const openEditChapter = (story, chapter) => {
+    chapterEditorSessionRef.current += 1;
     setChapterModal({ story, chapter });
     setChapterForm({
       title: chapter.title || '',
@@ -313,12 +348,18 @@ function DashboardPage() {
     setChapterFilePreview(null);
     setChapterPreviewError('');
     setChapterPreviewLoading(false);
+    setChapterNumberLoading(false);
+    setSavingChapter(false);
   };
 
   const saveChapter = async (event) => {
     event.preventDefault();
+    if (savingChapter || chapterNumberLoading) return;
+
     const { story, chapter } = chapterModal;
+    const editorSession = chapterEditorSessionRef.current;
     try {
+      setSavingChapter(true);
       if (chapter) {
         await API.chapters.update(story.id, chapter.id, {
           title: chapterForm.title,
@@ -352,10 +393,20 @@ function DashboardPage() {
         }
         loadStories();
       }
-      setChapterModal(null);
+      if (chapterEditorSessionRef.current === editorSession) {
+        chapterEditorSessionRef.current += 1;
+        setChapterModal(null);
+        setSavingChapter(false);
+      }
       loadChaptersForStory(story.id); 
     } catch (err) {
-      showMessage(err?.response?.data?.message || 'Thao tác chương thất bại');
+      if (chapterEditorSessionRef.current === editorSession) {
+        showMessage(err?.response?.data?.message || 'Thao tác chương thất bại');
+      }
+    } finally {
+      if (chapterEditorSessionRef.current === editorSession) {
+        setSavingChapter(false);
+      }
     }
   };
 
@@ -791,15 +842,28 @@ function DashboardPage() {
             {/* Thanh Navbar trên cùng giống hệt Wattpad */}
             <div className="chapter-editor-topbar">
               <div className="d-flex align-items-center gap-3">
-                <button type="button" className="chapter-editor-backbtn" onClick={() => setChapterModal(null)}>
+                <button
+                  type="button"
+                  className="chapter-editor-backbtn"
+                  onClick={closeChapterEditor}
+                  disabled={savingChapter}
+                >
                   ←
                 </button>
                 <div className="text-muted chapter-editor-title">
                   {chapterModal.chapter ? `Sửa chương` : `Thêm chương mới`} — {chapterModal.story.title}
                 </div>
               </div>
-              <button type="submit" className="btn-cmc btn-cmc-primary chapter-editor-submit" disabled={chapterPreviewLoading}>
-                {chapterModal.chapter ? 'Lưu' : 'Đăng tải'}
+              <button
+                type="submit"
+                className="btn-cmc btn-cmc-primary chapter-editor-submit"
+                disabled={chapterPreviewLoading || chapterNumberLoading || savingChapter}
+              >
+                {savingChapter
+                  ? 'Đang lưu...'
+                  : chapterNumberLoading
+                    ? 'Đang kiểm tra...'
+                    : chapterModal.chapter ? 'Lưu' : 'Đăng tải'}
               </button>
             </div>
 
@@ -845,6 +909,7 @@ function DashboardPage() {
                       ...chapterForm,
                       chapter_number: e.target.value,
                     })}
+                    disabled={chapterNumberLoading || savingChapter}
                     required
                   />
                   <p className="small text-muted mb-0 mt-1">

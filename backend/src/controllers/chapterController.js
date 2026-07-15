@@ -7,6 +7,13 @@ const redisConfig = require('../config/redisConfig');
 
 const notificationQueue = new Queue('notificationQueue', { connection: redisConfig });
 
+function isDuplicateChapterNumberError(error) {
+  return error?.code === '23505' && (
+    error?.constraint === 'chapters_story_id_chapter_number_key'
+    || String(error?.detail || '').includes('(story_id, chapter_number)')
+  );
+}
+
 // Schema validate khi TẠO chương mới
 // chapter_number: số thứ tự chương, phải là số nguyên dương (bắt đầu từ 1)
 const createChapterSchema = Joi.object({
@@ -237,7 +244,19 @@ async function createChapter(req, res) {
       content: value.content,
     };
 
-    const createdChapter = await Chapter.createChapter(chapterData);
+    let createdChapter;
+    try {
+      createdChapter = await Chapter.createChapter(chapterData);
+    } catch (error) {
+      if (isDuplicateChapterNumberError(error)) {
+        return res.status(409).json({
+          success: false,
+          code: 'CHAPTER_NUMBER_EXISTS',
+          message: `Chương ${value.chapter_number} đã tồn tại. Vui lòng chọn số chương khác.`,
+        });
+      }
+      throw error;
+    }
 
     try {
       await enqueueNewChapterNotification(createdChapter, story);
@@ -348,6 +367,13 @@ async function importChapterFile(req, res) {
     });
   } catch (error) {
     console.error('[chapterController.importChapterFile]', error);
+    if (isDuplicateChapterNumberError(error)) {
+      return res.status(409).json({
+        success: false,
+        code: 'CHAPTER_NUMBER_EXISTS',
+        message: 'Một hoặc nhiều số chương trong tệp đã tồn tại. Vui lòng chọn số chương bắt đầu khác.',
+      });
+    }
     return res.status(500).json({
       success: false,
       message: error.message || 'Internal server error',
