@@ -172,7 +172,7 @@ const processReport = async (req, res) => {
        FROM reports r
        LEFT JOIN comments c ON c.id = r.comment_id
        WHERE r.id = $1
-       FOR UPDATE`,
+       FOR UPDATE OF r`,
       [reportId]
     );
     const report = reportResult.rows[0];
