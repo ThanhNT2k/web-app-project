@@ -6,6 +6,8 @@ import ReadingPreferencesPanel from '../components/ReadingPreferencesPanel';
 import UserProfile from '../components/UserProfile';
 import { useAuth } from '../contexts/AuthContext';
 import API from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
+import { isStrongPassword, passwordsMatch } from '../utils/passwordValidation';
 
 function AccountSettingsPage() {
   const { user, refreshCurrentUser } = useAuth();
@@ -22,11 +24,8 @@ function AccountSettingsPage() {
     });
   }, [user]);
 
-  const passwordValid =
-    pwForm.newPassword.length >= 8 &&
-    /[A-Z]/.test(pwForm.newPassword) &&
-    /[0-9]/.test(pwForm.newPassword) &&
-    /[!@#$%^&*(),.?":{}|<>]/.test(pwForm.newPassword);
+  const passwordValid = isStrongPassword(pwForm.newPassword);
+  const passwordConfirmed = passwordsMatch(pwForm.newPassword, pwForm.confirmPassword);
 
   const handleAvatarUpload = async (event) => {
     const file = event.target.files?.[0];
@@ -63,7 +62,7 @@ function AccountSettingsPage() {
       setPasswordState({ loading: false, error: 'Mật khẩu mới chưa đáp ứng đủ các tiêu chí.', success: '' });
       return;
     }
-    if (pwForm.newPassword !== pwForm.confirmPassword) {
+    if (!passwordConfirmed) {
       setPasswordState({ loading: false, error: 'Xác nhận mật khẩu không khớp.', success: '' });
       return;
     }
@@ -76,7 +75,7 @@ function AccountSettingsPage() {
     } catch (error) {
       setPasswordState({
         loading: false,
-        error: error?.response?.data?.message || 'Không thể đổi mật khẩu.',
+        error: getApiErrorMessage(error, 'Không thể đổi mật khẩu.'),
         success: '',
       });
     }
@@ -188,7 +187,7 @@ function AccountSettingsPage() {
                 <span>Xác nhận mật khẩu mới</span>
                 <input type="password" className="form-control-cmc" autoComplete="new-password" value={pwForm.confirmPassword} onChange={(event) => setPwForm({ ...pwForm, confirmPassword: event.target.value })} required />
               </label>
-              <button type="submit" className="btn-cmc btn-cmc-outline account-form-submit" disabled={passwordState.loading || !passwordValid}>
+              <button type="submit" className="btn-cmc btn-cmc-outline account-form-submit" disabled={passwordState.loading || !passwordValid || !passwordConfirmed}>
                 {passwordState.loading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
               </button>
             </form>
