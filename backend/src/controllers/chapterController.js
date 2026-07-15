@@ -102,7 +102,7 @@ async function getChapters(req, res) {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
     const sort = req.query.sort || 'asc';  // Mặc định sắp xếp từ chương đầu tiên
-    const story = await Story.getStoryById(storyId);
+    const story = await Story.getStoryAccessById(storyId);
     if (!story) {
       return res.status(404).json({ success: false, message: 'Story not found' });
     }

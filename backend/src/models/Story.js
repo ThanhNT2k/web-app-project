@@ -67,7 +67,7 @@ async function attachTagsToStories(stories) {
 async function getAllStories(page = 1, limit = 10, sortBy = 'newest', includeUnpublished = false) {
   // Đảm bảo page và limit là số nguyên dương hợp lệ
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
-  const safeLimit = Math.max(parseInt(limit, 10) || 10, 1);
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
   const offset = (safePage - 1) * safeLimit;
 
   let orderBy = 's.created_at DESC'; // Mặc định: mới nhất trước
@@ -172,7 +172,31 @@ async function getStoryById(id) {
           u.id AS author_user_id,
           u.username AS author_username,
           u.full_name AS author_full_name,
-          u.avatar_url AS author_avatar_url
+          u.avatar_url AS author_avatar_url,
+          COALESCE((
+            SELECT jsonb_agg(
+              jsonb_build_object('id', t.id, 'name', t.name, 'slug', t.slug)
+              ORDER BY t.name
+            )
+            FROM story_tags st
+            INNER JOIN tags t ON t.id = st.tag_id
+            WHERE st.story_id = s.id
+          ), '[]'::jsonb) AS tags,
+          COALESCE((
+            SELECT jsonb_agg(
+              jsonb_build_object(
+                'id', cu.id,
+                'username', cu.username,
+                'email', cu.email,
+                'full_name', cu.full_name,
+                'avatar_url', cu.avatar_url,
+                'created_at', sc.created_at
+              ) ORDER BY sc.created_at
+            )
+            FROM story_collaborators sc
+            INNER JOIN users cu ON cu.id = sc.user_id
+            WHERE sc.story_id = s.id
+          ), '[]'::jsonb) AS collaborators
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
         WHERE s.id = $1
@@ -185,25 +209,25 @@ async function getStoryById(id) {
     if (!story) return null;
 
     // Fetch tags riêng vì không thể aggregate mảng tags trong cùng GROUP BY query
-    const tags = await Tag.getTagsForStory(story.id);
-
-    // Lấy danh sách cộng tác viên
-    const collaboratorsResult = await db.query(
-      `
-        SELECT u.id, u.username, u.email, u.full_name, u.avatar_url, sc.created_at
-        FROM story_collaborators sc
-        INNER JOIN users u ON u.id = sc.user_id
-        WHERE sc.story_id = $1
-        ORDER BY sc.created_at ASC
-      `,
-      [story.id]
-    );
-    const collaborators = collaboratorsResult.rows;
-
-    return { ...story, tags, collaborators };
+    return story;
   } catch (error) {
     throw error;
   }
+}
+
+/**
+ * Fetch only fields required to authorize access to story-related resources.
+ * Avoids loading tags, collaborators and public statistics for chapter lists.
+ */
+async function getStoryAccessById(id) {
+  const result = await db.query(
+    `SELECT id, author_id, is_published, hidden_by_admin
+     FROM stories
+     WHERE id = $1
+     LIMIT 1`,
+    [id]
+  );
+  return result.rows[0] || null;
 }
 
 /**
@@ -374,7 +398,7 @@ async function deleteStory(id) {
  */
 async function searchStories(query, category = null, tag = null, page = 1, limit = 10) {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
-  const safeLimit = Math.max(parseInt(limit, 10) || 10, 1);
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
   const offset = (safePage - 1) * safeLimit;
   const q = (query || '').trim();
 
@@ -460,7 +484,7 @@ async function searchStories(query, category = null, tag = null, page = 1, limit
  */
 async function getStoriesByAuthor(authorId, page = 1, limit = 20) {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
-  const safeLimit = Math.max(parseInt(limit, 10) || 20, 1);
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
   const offset = (safePage - 1) * safeLimit;
 
   const result = await db.query(
@@ -604,7 +628,12 @@ async function getStoryBySlug(slug) {
           u.id AS author_user_id,
           u.username AS author_username,
           u.full_name AS author_full_name,
-          u.avatar_url AS author_avatar_url
+          u.avatar_url AS author_avatar_url,
+          COALESCE((SELECT jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name, 'slug', t.slug) ORDER BY t.name)
+            FROM story_tags st INNER JOIN tags t ON t.id = st.tag_id WHERE st.story_id = s.id), '[]'::jsonb) AS tags,
+          COALESCE((SELECT jsonb_agg(jsonb_build_object('id', cu.id, 'username', cu.username, 'email', cu.email,
+            'full_name', cu.full_name, 'avatar_url', cu.avatar_url, 'created_at', sc.created_at) ORDER BY sc.created_at)
+            FROM story_collaborators sc INNER JOIN users cu ON cu.id = sc.user_id WHERE sc.story_id = s.id), '[]'::jsonb) AS collaborators
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
         WHERE s.id = $1
@@ -640,7 +669,12 @@ async function getStoryBySlug(slug) {
           u.id AS author_user_id,
           u.username AS author_username,
           u.full_name AS author_full_name,
-          u.avatar_url AS author_avatar_url
+          u.avatar_url AS author_avatar_url,
+          COALESCE((SELECT jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name, 'slug', t.slug) ORDER BY t.name)
+            FROM story_tags st INNER JOIN tags t ON t.id = st.tag_id WHERE st.story_id = s.id), '[]'::jsonb) AS tags,
+          COALESCE((SELECT jsonb_agg(jsonb_build_object('id', cu.id, 'username', cu.username, 'email', cu.email,
+            'full_name', cu.full_name, 'avatar_url', cu.avatar_url, 'created_at', sc.created_at) ORDER BY sc.created_at)
+            FROM story_collaborators sc INNER JOIN users cu ON cu.id = sc.user_id WHERE sc.story_id = s.id), '[]'::jsonb) AS collaborators
         FROM stories s
         LEFT JOIN users u ON u.id = s.author_id
         WHERE s.slug = $1
@@ -654,22 +688,7 @@ async function getStoryBySlug(slug) {
     const story = result.rows[0] || null;
     if (!story) return null;
 
-    const tags = await Tag.getTagsForStory(story.id);
-
-    // Lấy danh sách cộng tác viên
-    const collaboratorsResult = await db.query(
-      `
-        SELECT u.id, u.username, u.email, u.full_name, u.avatar_url, sc.created_at
-        FROM story_collaborators sc
-        INNER JOIN users u ON u.id = sc.user_id
-        WHERE sc.story_id = $1
-        ORDER BY sc.created_at ASC
-      `,
-      [story.id]
-    );
-    const collaborators = collaboratorsResult.rows;
-
-    return { ...story, tags, collaborators };
+    return story;
   } catch (error) {
     throw error;
   }
@@ -678,6 +697,7 @@ async function getStoryBySlug(slug) {
 module.exports = {
   getAllStories,
   getStoryById,
+  getStoryAccessById,
   createStory,
   updateStory,
   deleteStory,
