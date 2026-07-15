@@ -2,6 +2,7 @@ const Joi = require('joi');
 
 const { Story, User, StoryCollaborator, StoryRating } = require('../models');
 const Tag = require('../models/Tag');
+const { deleteStorageObjectByUrl } = require('../services/storageService');
 
 // Schema validate dữ liệu khi TẠO MỚI truyện
 // - title, slug, description: bắt buộc
@@ -290,6 +291,17 @@ async function updateStory(req, res) {
     let tags = await Tag.getTagsForStory(id);
     if (value.tags) {
       tags = await Tag.setStoryTags(id, value.tags); // Thay thế toàn bộ tags cũ
+    }
+
+    const previousCoverUrl = existingStory.cover_image_url || null;
+    const nextCoverUrl = updatedStory.cover_image_url || null;
+
+    if (previousCoverUrl && previousCoverUrl !== nextCoverUrl) {
+      try {
+        await deleteStorageObjectByUrl(previousCoverUrl);
+      } catch (storageError) {
+        console.error('[storyController.updateStory] Failed to delete previous cover:', storageError);
+      }
     }
 
     return res.status(200).json({

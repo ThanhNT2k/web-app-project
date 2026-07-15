@@ -9,6 +9,7 @@ const { User } = require('../models');
 const { verifyGoogleToken, generateUniqueUsername } = require('../services/googleAuthService');
 const { generateAndStoreOtp, verifyOtp: checkOtp, isVerified, clearOtpKeys } = require('../services/otpService');
 const { sendOtpEmail } = require('../services/emailService');
+const { deleteStorageObjectByUrl } = require('../services/storageService');
 
 // Schema validate dữ liệu đăng ký tài khoản
 // - username: bắt đầu bằng chữ cái, 3-100 ký tự, bắt buộc, không chứa ký tự đặc biệt ngoài _ và -
@@ -299,9 +300,25 @@ async function updateProfile(req, res) {
 
   try {
     // Gọi model để cập nhật profile, chỉ cập nhật các trường được gửi lên (COALESCE trong SQL)
+    const existingUser = await User.findById(req.user.id);
+    if (!existingUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     const updatedUser = await User.updateProfile(req.user.id, value);
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const previousAvatarUrl = existingUser.avatar_url || null;
+    const nextAvatarUrl = updatedUser.avatar_url || null;
+
+    if (previousAvatarUrl && previousAvatarUrl !== nextAvatarUrl) {
+      try {
+        await deleteStorageObjectByUrl(previousAvatarUrl);
+      } catch (storageError) {
+        console.error('[authController.updateProfile] Failed to delete previous avatar:', storageError);
+      }
     }
 
     return res.status(200).json({
