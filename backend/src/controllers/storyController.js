@@ -185,13 +185,14 @@ async function createStory(req, res) {
     const createdStory = await Story.createStory(storyData);
 
     // Xử lý tags: ưu tiên tags được gửi lên, fallback về category nếu không có tags
+    // Tags được đánh dấu là 'pending' để chờ kiểm duyệt cùng lúc với truyện
     let tags = [];
     if (value.tags?.length) {
-      // Client gửi tags rõ ràng => dùng tags đó
-      tags = await Tag.setStoryTags(createdStory.id, value.tags);
+      // Client gửi tags rõ ràng => dùng tags đó (mark as pending)
+      tags = await Tag.setStoryTags(createdStory.id, value.tags, true);
     } else if (value.category) {
-      // Không có tags => tự động tạo tag từ category
-      tags = await Tag.setStoryTags(createdStory.id, [value.category]);
+      // Không có tags => tự động tạo tag từ category (mark as pending)
+      tags = await Tag.setStoryTags(createdStory.id, [value.category], true);
     }
 
     return res.status(201).json({

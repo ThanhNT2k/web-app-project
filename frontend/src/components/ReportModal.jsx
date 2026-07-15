@@ -20,8 +20,15 @@ const ReportModal = ({ chapterId, storyId, commentId, reportedUserId, targetLabe
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    
+    // Validate: if reason is 'OTHER', description is required
+    if (formData.reason === 'OTHER' && !formData.description.trim()) {
+      setError('Khi chọn "Lý do khác", vui lòng cung cấp mô tả chi tiết về vấn đề.');
+      return;
+    }
+    
+    setLoading(true);
     const numericChapterId = chapterId ? parseInt(chapterId, 10) : null;
     const numericStoryId = storyId ? parseInt(storyId, 10) : null;
     const numericCommentId = commentId ? parseInt(commentId, 10) : null;
@@ -75,10 +82,13 @@ const ReportModal = ({ chapterId, storyId, commentId, reportedUserId, targetLabe
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Chi tiết vấn đề</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Chi tiết vấn đề
+              {formData.reason === 'OTHER' && <span className="text-red-500"> *</span>}
+            </label>
             <textarea 
               className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
-              placeholder="Hãy cho chúng tôi biết rõ hơn về vấn đề này..." 
+              placeholder={formData.reason === 'OTHER' ? "Vui lòng cung cấp mô tả chi tiết..." : "Hãy cho chúng tôi biết rõ hơn về vấn đề này..."} 
               maxLength={500}
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
