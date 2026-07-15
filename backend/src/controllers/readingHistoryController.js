@@ -265,21 +265,34 @@ async function getRecommendations(req, res) {
     }
 
     const recommendationLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 20);
+    console.log('[readingHistoryController.getRecommendations] Requested limit:', recommendationLimit);
 
     // Lấy lịch sử đọc để phân tích sở thích của user
     const history = await ReadingHistory.getReadingHistory(req.user.id);
+    console.log('[readingHistoryController] User has', history.length, 'stories in reading history');
+    if (history.length > 0) {
+      console.log('[readingHistoryController] First story sample:', {
+        id: history[0].story_id,
+        title: history[0].title,
+        tags: history[0].tags,
+        category: history[0].category
+      });
+    }
 
     let storyIds = [];
 
     if (history.length > 0) {
       // User đã có lịch sử đọc => dùng AI gợi ý dựa trên sở thích
       storyIds = await aiService.generatePersonalRecommendations(history);
+      console.log('[readingHistoryController] AI service returned', storyIds.length, 'story IDs');
     }
 
     if (storyIds.length === 0) {
       // User chưa đọc truyện nào => lấy các truyện phổ biến nhất theo giới hạn yêu cầu
+      console.log('[readingHistoryController] Using fallback popular stories');
       const popular = await Story.getAllStories(1, recommendationLimit, 'popular');
       storyIds = popular.stories.map((s) => s.id);
+      console.log('[readingHistoryController] Popular fallback returned', storyIds.length, 'stories');
     } else {
       // Trường hợp 2: AI đã gợi ý nhưng cần validate và lọc
       const allStories = await Story.getAllStories(1, 50);
@@ -294,6 +307,7 @@ async function getRecommendations(req, res) {
       // - User chưa đọc (không có trong readIds)
       // - Chỉ lấy tối đa số lượng gợi ý được yêu cầu
       storyIds = storyIds.filter((id) => validIds.has(id) && !readIds.has(id)).slice(0, recommendationLimit);
+      console.log('[readingHistoryController] After filtering:', storyIds.length, 'stories');
 
       // Nếu AI không đủ gợi ý, bổ sung thêm truyện chưa đọc từ danh sách phổ biến
       if (storyIds.length < recommendationLimit) {
@@ -301,9 +315,12 @@ async function getRecommendations(req, res) {
           .filter((s) => !readIds.has(s.id) && !storyIds.includes(s.id)) // Chưa đọc và chưa có trong list gợi ý
           .slice(0, recommendationLimit - storyIds.length) // Chỉ lấy đủ số còn thiếu
           .map((s) => s.id);
+        console.log('[readingHistoryController] Added', extras.length, 'stories from fallback');
         storyIds = [...storyIds, ...extras];
       }
     }
+
+    console.log('[readingHistoryController] Final storyIds to fetch:', storyIds.length);
 
     // Fetch đầy đủ thông tin của từng truyện được gợi ý (sequential để đảm bảo thứ tự)
     const stories = [];
@@ -313,6 +330,8 @@ async function getRecommendations(req, res) {
         stories.push(story);
       }
     }
+
+    console.log('[readingHistoryController] Returning', stories.length, 'full story objects');
 
     return res.status(200).json({
       success: true,

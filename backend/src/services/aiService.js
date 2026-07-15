@@ -219,43 +219,61 @@ async function generatePersonalRecommendations(userReadingHistory) {
   const key = cacheKey('recs', JSON.stringify(history.map((h) => h.story_id)));
   const cached = getFromMemoryCache(key);
   if (cached) {
-    return cached;
+    console.log('[aiService] Cache hit for recommendations:', cached.length, 'stories, bypassing for debug...');
+    // Temporarily disable cache for debugging - force fresh query
+    // return cached;
   }
 
   // Nếu người dùng chưa đọc truyện nào, trả về mảng rỗng để luồng ngoài tự áp dụng gợi ý truyện phổ biến
   if (history.length === 0) {
+    console.log('[aiService] Empty history, returning empty recommendations');
     return [];
   }
 
-  // Trích xuất danh sách các thể loại truyện (category) và ID tác giả từ lịch sử đọc (loại bỏ giá trị trùng lặp và rỗng)
-  const categories = [...new Set(history.map((h) => h.category).filter(Boolean))];
-  const authors = [...new Set(history.map((h) => h.author_id).filter(Boolean))];
-
-  // Xây dựng prompt gửi lịch sử đọc cho AI phân tích sở thích và chọn ra 5 ID truyện phù hợp
-  // LƯU Ý Hạn Chế Logic: Prompt hiện tại yêu cầu AI chọn ID trực tiếp TRONG danh sách lịch sử đọc đã gửi lên.
-  // Điều này dẫn đến việc các ID gợi ý trả về đều nằm trong danh sách đã đọc, và sau đó sẽ bị controller lọc bỏ (vì đã đọc).
-  const prompt = `Dựa trên lịch sử đọc (thể loại: ${categories.join(', ') || 'nhiều thể loại'}, tác giả yêu thích: ${authors.join(', ') || 'đa dạng'}), hãy trả về CHÍNH XÁC 5 số nguyên là ID truyện được đề xuất từ danh sách sau (chỉ trả về JSON array, ví dụ [1,2,3,4,5]):\n${JSON.stringify(
-    history.map((h) => ({ id: h.story_id, title: h.title, category: h.category }))
-  )}`;
-
   try {
-    const text = await callAI(prompt);
-    // Dùng biểu thức chính quy (Regex) để trích xuất mảng JSON dạng [1,2,3...] trả về từ văn bản của AI
-    const match = text.match(/\[[\d,\s]+\]/);
-    if (match) {
-      const ids = JSON.parse(match[0]).filter((id) => Number.isInteger(id)).slice(0, 5);
-      setMemoryCache(key, ids);
-      return ids;
+    // Import Story model để query recommendations từ database
+    const Story = require('../models/Story');
+
+    // Lấy danh sách story IDs đã đọc để loại bỏ khỏi gợi ý
+    const readStoryIds = history.map((h) => h.story_id);
+    console.log('[aiService] Reading history has', readStoryIds.length, 'stories to exclude');
+    console.log('[aiService] History sample (first 2):', history.slice(0, 2).map(h => ({
+      id: h.story_id,
+      title: h.title,
+      tags: h.tags ? (Array.isArray(h.tags) ? h.tags.length : typeof h.tags) : 'undefined',
+      category: h.category
+    })));
+
+    // Query database để tìm stories có cùng tags/preferences, loại bỏ những đã đọc
+    // Logic: phân tích tags từ reading history, tìm stories khác có cùng tags, sắp xếp theo rating cao
+    const recommendedStories = await Story.getStoriesForRecommendations(
+      history,      // Reading history with tags info
+      readStoryIds, // Exclude already read stories
+      10            // Limit to 10 recommendations (display more)
+    );
+
+    console.log('[aiService] DB returned', recommendedStories.length, 'recommendations');
+    if (recommendedStories.length > 0) {
+      console.log('[aiService] First 3:', recommendedStories.slice(0, 3).map(s => `${s.id}:${s.title}`));
     }
+
+    // Extract story IDs từ recommended stories
+    const storyIds = recommendedStories.map((s) => s.id);
+    
+    // Lưu vào cache để tránh query lại nếu lịch sử không đổi
+    setMemoryCache(key, storyIds);
+    console.log('[aiService] Cached', storyIds.length, 'story IDs with key:', key.substring(0, 20) + '...');
+    return storyIds;
   } catch (error) {
     console.error('[aiService.generatePersonalRecommendations]', error.message);
   }
 
-  // Khôi phục dự phòng (Fallback): Lấy related_story_id hoặc chính story_id từ lịch sử làm gợi ý nếu AI lỗi
+  // Khôi phục dự phòng (Fallback): Lấy related_story_id hoặc chính story_id từ lịch sử làm gợi ý nếu query lỗi
   const fallback = history
     .map((h) => h.related_story_id || h.story_id)
     .filter((id, index, arr) => id && arr.indexOf(id) === index)
-    .slice(0, 5);
+    .slice(0, 10);
+  console.log('[aiService] Using fallback:', fallback.length, 'stories');
   setMemoryCache(key, fallback);
   return fallback;
 }

@@ -44,6 +44,9 @@ function ChapterReaderPage() {
       if (prefs.fontFamily) setFontFamily(prefs.fontFamily);
     }
     hasInitialSavedRef.current = false;
+    
+    // Reset scroll position for new chapter
+    window.scrollTo(0, 0);
   }, [chapterNumber]);
 
   useEffect(() => {
@@ -55,7 +58,10 @@ function ChapterReaderPage() {
         const resolvedChapter = chapterResponse.chapter || chapterResponse;
         setChapter(resolvedChapter);
 
-        const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, 100);
+        // Fetch all chapters for the dropdown (use story_total_chapters or a large limit)
+        const totalChapters = resolvedChapter.story_total_chapters || 100;
+        const limit = Math.max(totalChapters, 10); // At least 10, up to total
+        const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, limit);
         setChapters(chaptersResponse.chapters || []);
       } catch (err) {
         setChapter(mockChapter);
@@ -85,21 +91,89 @@ function ChapterReaderPage() {
   useEffect(() => {
     if (!isAuthenticated || !chapter?.story_id) return;
 
-    API.preferences.get()
-      .then((res) => {
+    // Load API preferences first for authenticated users (takes precedence)
+    const loadPreferences = async () => {
+      try {
+        const res = await API.preferences.get();
         const p = res.preferences;
-        if (!p) return;
-        setAutoBookmark(p.auto_bookmark !== false);
-        if (p.font_size) setFontSize(p.font_size);
-        if (p.line_spacing) setLineSpacing(Number(p.line_spacing));
-        if (p.font_family) setFontFamily(p.font_family);
-      })
-      .catch(() => {});
+        if (p) {
+          setAutoBookmark(p.auto_bookmark !== false);
+          if (p.font_size) setFontSize(p.font_size);
+          if (p.line_spacing) setLineSpacing(Number(p.line_spacing));
+          if (p.font_family) setFontFamily(p.font_family);
+        }
+      } catch (err) {
+        console.debug('Failed to load preferences from API', err);
+        // Fall back to localStorage if API fails
+        const prefs = loadReaderPrefs();
+        if (prefs) {
+          if (prefs.fontSize) setFontSize(prefs.fontSize);
+          if (prefs.lineSpacing) setLineSpacing(prefs.lineSpacing);
+          if (prefs.fontFamily) setFontFamily(prefs.fontFamily);
+        }
+      }
+    };
 
-    API.readingHistory.getStoryProgress(chapter.story_id)
-      .then((res) => setStoryProgress(res.progress || null))
-      .catch(() => setStoryProgress(null));
+    // Load story progress for scroll restoration
+    const loadProgress = async () => {
+      try {
+        const res = await API.readingHistory.getStoryProgress(chapter.story_id);
+        let progress = res.progress || null;
+        
+        // Check localStorage as fallback if progress just wasn't synced to DB yet
+        if (!progress && chapter?.id) {
+          const cachedScroll = localStorage.getItem(
+            `chapter_scroll_${chapter.story_id}_${chapter.id}`
+          );
+          if (cachedScroll) {
+            progress = {
+              read_position: Number(cachedScroll),
+              id: null, // temporary
+            };
+          }
+        }
+        
+        setStoryProgress(progress);
+      } catch (err) {
+        console.debug('Failed to load story progress', err);
+        
+        // Try localStorage as fallback on API error
+        if (chapter?.id) {
+          const cachedScroll = localStorage.getItem(
+            `chapter_scroll_${chapter.story_id}_${chapter.id}`
+          );
+          if (cachedScroll) {
+            setStoryProgress({
+              read_position: Number(cachedScroll),
+              id: null,
+            });
+          }
+        }
+      }
+    };
+
+    // Execute both in parallel
+    Promise.all([loadPreferences(), loadProgress()]);
   }, [isAuthenticated, chapter?.story_id]);
+
+  // Restore scroll position when chapter loads
+  useEffect(() => {
+    if (!storyProgress) return;
+    
+    // Reset to top initially, then restore saved position after a small delay
+    // to ensure DOM is fully rendered
+    window.scrollTo(0, 0);
+    
+    const timer = setTimeout(() => {
+      const savedPosition = storyProgress.read_position || 0;
+      if (savedPosition > 0) {
+        window.scrollTo(0, savedPosition);
+        scrollRef.current = savedPosition;
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [storyProgress, chapterNumber]);
 
   const saveProgress = useCallback(async () => {
     if (!isAuthenticated || !chapter) return;
@@ -156,6 +230,60 @@ function ChapterReaderPage() {
       saveProgress();
     };
   }, [isAuthenticated, saveProgress]);
+
+  // Save scroll position immediately when page is about to unload (F5, close tab, etc.)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isAuthenticated && chapter) {
+        const data = {
+          story_id: Number(chapter.story_id),
+          chapter_id: Number(chapter.id),
+          read_position: Math.round(scrollRef.current),
+          read_time: Math.round(readTimeRef.current),
+        };
+        
+        // Use fetch with keepalive to save during unload
+        try {
+          const token = localStorage.getItem('token');
+          fetch(
+            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/reading-history`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` }),
+              },
+              body: JSON.stringify(data),
+              keepalive: true, // Keeps request alive during page unload
+            }
+          ).catch(() => {
+            // Fallback to localStorage if API fails
+            try {
+              localStorage.setItem(
+                `chapter_scroll_${chapter.story_id}_${chapter.id}`,
+                String(scrollRef.current)
+              );
+            } catch {
+              // silent
+            }
+          });
+        } catch (err) {
+          // Fallback to localStorage
+          try {
+            localStorage.setItem(
+              `chapter_scroll_${chapter.story_id}_${chapter.id}`,
+              String(scrollRef.current)
+            );
+          } catch {
+            // silent
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isAuthenticated, chapter]);
 
   const chapterIndex = useMemo(
     () => chapters.findIndex((c) => String(c.id) === String(chapter?.id)),

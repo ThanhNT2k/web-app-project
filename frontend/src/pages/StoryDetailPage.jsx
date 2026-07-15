@@ -23,6 +23,35 @@ const FALLBACK_COVER =
 
 const CHAPTERS_SCROLL_LIMIT = 1000;
 
+function StoryDetailSkeleton() {
+  return (
+    <main className="cmc-main storyqq-page story-detail-skeleton" aria-busy="true">
+      <div className="storyqq-page-shell">
+        <section className="storyqq-header panel-card storyqq-panel">
+          <div className="storyqq-cover-column">
+            <div className="skeleton-box story-detail-skeleton-cover" />
+            <div className="skeleton-box story-detail-skeleton-meta" />
+          </div>
+          <div className="storyqq-header-content story-detail-skeleton-content">
+            <div className="skeleton-box story-detail-skeleton-title" />
+            <div className="skeleton-box story-detail-skeleton-author" />
+            <div className="skeleton-box story-detail-skeleton-line" />
+            <div className="skeleton-box story-detail-skeleton-line" />
+            <div className="skeleton-box story-detail-skeleton-line is-short" />
+            <div className="story-detail-skeleton-actions">
+              {[1, 2, 3].map((item) => <div key={item} className="skeleton-box" />)}
+            </div>
+          </div>
+        </section>
+        <section className="panel-card mt-4 storyqq-panel story-detail-skeleton-chapters">
+          <div className="skeleton-box story-detail-skeleton-heading" />
+          {[1, 2, 3, 4, 5].map((item) => <div key={item} className="skeleton-box story-detail-skeleton-chapter" />)}
+        </section>
+      </div>
+    </main>
+  );
+}
+
 function formatChapterUploadDate(createdAt) {
   if (!createdAt) return '--/--/----';
   const parsed = new Date(createdAt);
@@ -47,6 +76,17 @@ function formatAverageRating(value) {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   })}/5`;
+}
+
+function formatRatingWithCount(averageValue, countValue) {
+  const rating = Number(averageValue || 0);
+  const count = Number(countValue || 0);
+  const ratingStr = rating.toLocaleString('vi-VN', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  const countStr = count.toLocaleString('vi-VN');
+  return `${ratingStr}/5 (${countStr} lượt)`;
 }
 
 function StoryDetailPage() {
@@ -181,7 +221,7 @@ function StoryDetailPage() {
   }, [chapters, chapterSearch]);
 
   if (loading) {
-    return <main className="cmc-main"><p className="loading-text">Đang tải...</p></main>;
+    return <StoryDetailSkeleton />;
   }
 
   if (!story) {
@@ -208,19 +248,23 @@ function StoryDetailPage() {
   const followCount = story.follow_count ?? story.follower_count ?? 0;
   const totalViews = story.total_views ?? story.view_count ?? story.views ?? story.views_metric ?? 0;
   const averageRating = story.average_rating ?? 0;
+  const ratingCount = story.rating_count ?? story.total_rating_count ?? 0;
   const description = story.description || 'Chưa có mô tả cho truyện này.';
   const hasLongDescription = description.length > 320;
+  const detailBackdropStyle = {
+    '--storyqq-backdrop-image': `url('${story.cover_image_url || FALLBACK_COVER}')`,
+  };
 
   const storyMetaItems = [
     { label: 'Số chương', value: formatWholeNumber(totalChapters) },
     { label: 'Người theo dõi', value: formatWholeNumber(followCount) },
     { label: 'Tổng lượt đọc', value: formatWholeNumber(totalViews) },
-    { label: 'Đánh giá', value: formatAverageRating(averageRating) },
+    { label: 'Đánh giá', value: formatRatingWithCount(averageRating, ratingCount) },
     { label: 'Ngày đăng', value: storyCreatedDate },
   ];
 
   return (
-    <main className="cmc-main">
+    <main className="cmc-main storyqq-page" style={detailBackdropStyle}>
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
       {isAuthenticated && storyProgress ? (
@@ -228,7 +272,8 @@ function StoryDetailPage() {
         null
       ) : null}
 
-      <section className="storyqq-header panel-card">
+      <div className="storyqq-page-shell">
+        <section className="storyqq-header panel-card storyqq-panel">
         <div className="storyqq-cover-column">
           <div className="storyqq-cover-wrap">
             <img
@@ -378,9 +423,9 @@ function StoryDetailPage() {
             <span className="storyqq-action-text">{showRatingPanel ? 'Ẩn đánh giá' : 'Đánh giá'}</span>
           </button>
         </div>
-      </section>
+        </section>
 
-      <section className="panel-card mt-4">
+        <section className="panel-card mt-4 storyqq-panel">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <h4 className="panel-title mb-0">
             Danh sách chương ({chapterPagination.totalItems || 0})
@@ -412,7 +457,7 @@ function StoryDetailPage() {
         </div>
 
         {chapterLoading ? (
-          <p className="loading-text">Đang tải danh sách chương...</p>
+          <div className="loading-text" aria-label="Đang tải danh sách chương" />
         ) : (
           <ul className="chapter-list storyqq-chapter-list">
               {filteredChapters.map((chapter) => {
@@ -442,11 +487,12 @@ function StoryDetailPage() {
               ) : null}
             </ul>
         )}
-      </section>
+        </section>
 
-      <section className="mt-4">
-        <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
-      </section>
+        <section className="mt-4 storyqq-panel-stack">
+          <CommentSection key={`story-comments-${story.id}`} storyId={story.id} mode="story" />
+        </section>
+      </div>
       {isReportModalOpen && (
         <ReportModal 
           storyId={story.id}

@@ -76,19 +76,22 @@ async function findOrCreate(name) {
 /**
  * Lấy danh sách tags của một truyện cụ thể.
  * INNER JOIN story_tags: Bảng quan hệ nhiều-nhiều giữa stories và tags.
+ * @param {number} storyId - Story ID
+ * @param {boolean} includePending - Include tags pending moderation (default: true for display)
  */
-async function getTagsForStory(storyId) {
+async function getTagsForStory(storyId, includePending = false) {
   const result = await db.query(
     `
-      SELECT t.id, t.name, t.slug
+      SELECT t.id, t.name, t.slug, st.moderation_status
       FROM tags t
       INNER JOIN story_tags st ON st.tag_id = t.id
       WHERE st.story_id = $1
+        ${includePending ? '' : 'AND st.moderation_status = \'approved\''}
       ORDER BY t.name ASC
     `,
     [storyId]
   );
-  return result.rows;
+  return result.rows.map(({ moderation_status, ...tag }) => tag);
 }
 
 /**
@@ -99,10 +102,14 @@ async function getTagsForStory(storyId) {
  * 3. GÁN các tag đó cho truyện
  * Nếu bất kỳ bước nào thất bại → ROLLBACK tất cả.
  *
+ * @param {number} storyId - Story ID
+ * @param {Array} tagNames - Array of tag names
+ * @param {boolean} isPending - If true, tags are marked as 'pending' for moderation (default: false)
+ *
  * ON CONFLICT DO NOTHING trong INSERT story_tags:
  * Tránh lỗi khi cùng một tag được gắn hai lần (trùng lặp trong mảng tagNames).
  */
-async function setStoryTags(storyId, tagNames = []) {
+async function setStoryTags(storyId, tagNames = [], isPending = false) {
   const client = await db.connect();
   try {
     await client.query('BEGIN');
@@ -113,27 +120,68 @@ async function setStoryTags(storyId, tagNames = []) {
     // Bước 2: Chuẩn hóa danh sách tag: trim, loại bỏ rỗng, loại bỏ trùng lặp
     const uniqueNames = [...new Set(tagNames.map((n) => String(n).trim()).filter(Boolean))];
 
+    const moderationStatus = isPending ? 'pending' : 'approved';
+
     for (const name of uniqueNames) {
       // Bước 3a: Tìm hoặc tạo tag (đảm bảo tag tồn tại trong bảng tags)
       const tag = await findOrCreate(name);
 
-      // Bước 3b: Gán tag cho truyện (bỏ qua nếu đã gán - idempotent)
+      // Bước 3b: Gán tag cho truyện với moderation status (bỏ qua nếu đã gán - idempotent)
       await client.query(
-        'INSERT INTO story_tags (story_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-        [storyId, tag.id]
+        'INSERT INTO story_tags (story_id, tag_id, moderation_status) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+        [storyId, tag.id, moderationStatus]
       );
     }
 
     await client.query('COMMIT');
 
-    // Trả về danh sách tags mới của truyện sau khi cập nhật
-    return getTagsForStory(storyId);
+    // Trả về danh sách tags mới của truyện sau khi cập nhật (include pending)
+    return getTagsForStory(storyId, true);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
   } finally {
     client.release();
   }
+}
+
+/**
+ * Update moderation status for all tags of a story.
+ * Called when moderator approves/rejects/requests changes to a story.
+ * @param {number} storyId - Story ID
+ * @param {string} newStatus - New moderation status ('approved', 'pending', 'changes_requested', 'rejected')
+ */
+async function updateStoryTagsModeration(storyId, newStatus) {
+  const validStatuses = ['pending', 'approved', 'changes_requested', 'rejected'];
+  if (!validStatuses.includes(newStatus)) {
+    throw new Error(`Invalid moderation status: ${newStatus}`);
+  }
+
+  const result = await db.query(
+    'UPDATE story_tags SET moderation_status = $1 WHERE story_id = $2 RETURNING story_id',
+    [newStatus, storyId]
+  );
+
+  return result.rowCount > 0;
+}
+
+/**
+ * Get tags for a story that are pending moderation.
+ * @param {number} storyId - Story ID
+ */
+async function getPendingTagsForStory(storyId) {
+  const result = await db.query(
+    `
+      SELECT t.id, t.name, t.slug, st.moderation_status
+      FROM tags t
+      INNER JOIN story_tags st ON st.tag_id = t.id
+      WHERE st.story_id = $1
+        AND st.moderation_status IN ('pending', 'changes_requested')
+      ORDER BY t.name ASC
+    `,
+    [storyId]
+  );
+  return result.rows;
 }
 
 module.exports = {
@@ -143,5 +191,7 @@ module.exports = {
   findOrCreate,
   getTagsForStory,
   setStoryTags,
+  updateStoryTagsModeration,
+  getPendingTagsForStory,
   slugify,
 };

@@ -59,7 +59,7 @@ function StoryHoverPreview({ story, placement, style, onMouseEnter, onMouseLeave
         {ratingCount > 0 ? (
           <span className="story-hover-preview-rating">
             <FontAwesomeIcon icon={faStar} />
-            {averageRating.toFixed(1)}
+            {averageRating.toFixed(1)} ({formatCount(ratingCount)})
           </span>
         ) : null}
       </div>

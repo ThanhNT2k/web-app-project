@@ -518,3 +518,257 @@
   .pending-story-body dl { grid-template-columns: 1fr; }
   .pending-story-actions { flex-direction: column; }
 }
+
+/* ===== Management theme integration =====
+   Management screens were originally light-only while newer modules consume
+   the global theme tokens. Keep the intentional dark sidebar, but make every
+   content surface follow the active application theme. */
+[data-theme='dark'] .admin-layout {
+  background: var(--bg);
+  color: var(--text);
+}
+
+[data-theme='dark'] .admin-topbar {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+[data-theme='dark'] .admin-topbar-title small { color: var(--text-muted); }
+[data-theme='dark'] .admin-topbar-title strong { color: var(--text); }
+[data-theme='dark'] .admin-mobile-menu { color: var(--text); background: var(--surface-elevated); }
+
+[data-theme='dark'] :is(.reports-page-header, .comments-page-header, .management-page-header) {
+  border-color: var(--border);
+  background: linear-gradient(
+    120deg,
+    var(--surface),
+    color-mix(in srgb, var(--surface) 88%, var(--admin-accent) 12%)
+  );
+  box-shadow: var(--shadow);
+}
+
+[data-theme='dark'] :is(
+  .reports-filter-bar,
+  .report-card,
+  .reports-empty-state,
+  .report-process-dialog,
+  .comment-stat-card,
+  .comments-toolbar,
+  .moderation-comment-card,
+  .profiles-filter-row,
+  .profile-moderation-card,
+  .comments-empty-state,
+  .management-stat,
+  .management-quick-card,
+  .management-data-panel,
+  .management-loading.panel-like,
+  .moderation-priority-card,
+  .pending-story-card
+) {
+  border-color: var(--border);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+[data-theme='dark'] :is(
+  .report-target-badge,
+  .reports-filter-bar strong,
+  .report-process-context,
+  .report-process-actions button:first-child,
+  .comments-status-filters button,
+  .comments-status-filters strong,
+  .profiles-status-filters button,
+  .moderation-comment-content,
+  .moderation-guidelines li,
+  .bad-word-create-form,
+  .bad-word-filters button,
+  .bad-word-filters strong
+) {
+  color: var(--text);
+  background: var(--surface-elevated);
+}
+
+[data-theme='dark'] :is(
+  .report-process-dialog select,
+  .report-process-dialog textarea,
+  .comments-search-field input,
+  .profiles-filter-row select,
+  .profile-moderation-controls select,
+  .profile-moderation-controls textarea,
+  .moderation-comment-actions select,
+  .comments-pagination button,
+  .management-panel-heading select,
+  .management-toolbar > select,
+  .management-table select,
+  .management-search-form input,
+  .bad-word-create-form input,
+  .bad-word-create-form select,
+  .bad-word-card select
+) {
+  border-color: var(--border);
+  color: var(--text);
+  background: var(--input-bg);
+}
+
+[data-theme='dark'] :is(
+  .reports-page-header h2,
+  .comments-page-header h2,
+  .management-page-header h2,
+  .report-card h3,
+  .reports-empty-state strong,
+  .report-process-heading h3,
+  .comment-stat-card strong,
+  .profile-moderation-summary h3,
+  .moderation-comment-user strong,
+  .comments-empty-state strong,
+  .management-stat strong,
+  .management-quick-card strong,
+  .management-panel-heading h3,
+  .management-table td > a,
+  .management-story a,
+  .management-person strong,
+  .moderation-priority-card strong,
+  .moderation-guidelines li strong,
+  .bad-word-card strong,
+  .pending-story-body h3
+) {
+  color: var(--text);
+}
+
+[data-theme='dark'] :is(
+  .reports-page-header p:not(.reports-eyebrow),
+  .comments-page-header p:not(.comments-eyebrow),
+  .management-page-header p:not(.management-eyebrow),
+  .reports-filter-bar button,
+  .report-description,
+  .report-details dt,
+  .report-process-heading span,
+  .report-process-context span,
+  .report-process-dialog small,
+  .comment-stat-card span,
+  .comments-search-field,
+  .profiles-filter-row > span,
+  .profile-moderation-controls label,
+  .profile-moderation-summary p,
+  .moderation-comment-user small,
+  .moderation-comment-context dt,
+  .moderation-comment-actions label,
+  .comments-pagination,
+  .management-stat span,
+  .management-stat small,
+  .management-quick-card span,
+  .management-panel-heading p,
+  .management-loading,
+  .management-table td > small,
+  .management-story small,
+  .management-empty-cell,
+  .management-muted,
+  .management-person small,
+  .moderation-priority-card > span,
+  .moderation-priority-card p,
+  .moderation-guidelines li span,
+  .bad-word-create-form label,
+  .bad-word-card small,
+  .pending-story-heading small,
+  .pending-story-body > p,
+  .pending-story-body dt
+) {
+  color: var(--text-muted);
+}
+
+[data-theme='dark'] :is(
+  .report-details dd,
+  .report-process-context,
+  .report-process-dialog label,
+  .moderation-comment-context dd,
+  .management-table,
+  .pending-story-body dd
+) {
+  color: color-mix(in srgb, var(--text) 82%, var(--text-muted));
+}
+
+[data-theme='dark'] .management-table th {
+  border-color: var(--border);
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+}
+
+[data-theme='dark'] .management-table td,
+[data-theme='dark'] .moderation-comment-actions,
+[data-theme='dark'] .pending-story-actions {
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .management-table tbody tr:hover {
+  background: color-mix(in srgb, var(--primary-color) 7%, var(--surface));
+}
+
+[data-theme='dark'] :is(
+  .management-search-form button.secondary,
+  .management-table button.danger-outline,
+  .bad-word-card button,
+  .pending-story-actions a
+) {
+  border-color: var(--border);
+  background: var(--surface-elevated);
+}
+
+[data-theme='dark'] .pending-summary-bar {
+  border-color: color-mix(in srgb, #f59e0b 45%, var(--border));
+  background: color-mix(in srgb, #f59e0b 10%, var(--surface));
+}
+
+[data-theme='dark'] .pending-summary-bar span,
+[data-theme='dark'] .pending-summary-bar strong,
+[data-theme='dark'] .pending-summary-bar p { color: #fbbf24; }
+
+[data-theme='dark'] .pending-review-guidance {
+  color: #6ee7b7;
+  background: color-mix(in srgb, #10b981 10%, var(--surface));
+}
+
+[data-theme='dark'] .pending-review-guidance.request_changes {
+  color: #fbbf24;
+  background: color-mix(in srgb, #f59e0b 10%, var(--surface));
+}
+
+[data-theme='dark'] .pending-review-guidance.reject {
+  color: #fca5a5;
+  background: color-mix(in srgb, #ef4444 10%, var(--surface));
+}
+
+[data-theme='dark'] .report-resolution-summary {
+  color: #6ee7b7;
+  background: color-mix(in srgb, #10b981 10%, var(--surface));
+}
+
+[data-theme='dark'] :is(.report-status-badge.status-new, .management-badge.info) {
+  color: #93c5fd;
+  background: color-mix(in srgb, #3b82f6 16%, var(--surface));
+}
+
+[data-theme='dark'] :is(.report-status-badge.status-in_progress, .management-badge.warning, .moderation-status.status-masked) {
+  color: #fcd34d;
+  background: color-mix(in srgb, #f59e0b 14%, var(--surface));
+}
+
+[data-theme='dark'] :is(.report-status-badge.status-resolved, .management-badge.success, .moderation-status.status-approved) {
+  color: #6ee7b7;
+  background: color-mix(in srgb, #10b981 14%, var(--surface));
+}
+
+[data-theme='dark'] :is(.report-status-badge.status-dismissed, .report-target-badge) {
+  color: #cbd5e1;
+  background: var(--surface-elevated);
+}
+
+[data-theme='dark'] :is(.management-badge.danger, .moderation-status.status-rejected) {
+  color: #fca5a5;
+  background: color-mix(in srgb, #ef4444 14%, var(--surface));
+}
+
+[data-theme='dark'] .moderation-status.status-flagged {
+  color: #fdba74;
+  background: color-mix(in srgb, #f97316 14%, var(--surface));
+}

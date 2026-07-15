@@ -41,16 +41,17 @@ function FollowButton({ storyId, iconOnly = false, responsiveIconOnly = false })
       alert('Vui lòng đăng nhập để theo dõi truyện.');
       return;
     }
+    const previousFollowing = following;
+    setFollowing(!previousFollowing);
+    setLoading(true);
     try {
-      setLoading(true);
-      if (following) {
+      if (previousFollowing) {
         await API.follows.unfollow(storyId);
-        setFollowing(false);
       } else {
         await API.follows.follow(storyId);
-        setFollowing(true);
       }
     } catch (err) {
+      setFollowing(previousFollowing);
       const msg = err?.response?.data?.message || 'Không thực hiện được. Thử lại sau.';
       alert(msg);
     } finally {

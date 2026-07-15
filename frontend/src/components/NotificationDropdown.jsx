@@ -28,42 +28,49 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
   };
 
   const handleMarkAsRead = async (id) => {
+    const previous = notifications;
+    const unreadDelta = notifications.some((item) => item.id === id && !item.is_read) ? 1 : 0;
+    setNotifications((items) => items.map((item) => item.id === id ? { ...item, is_read: true } : item));
     try {
       await API.notifications.markAsRead(id);
-      // Update local state
-      setNotifications(
-        notifications.map((notif) =>
-          notif.id === id ? { ...notif, is_read: true } : notif
-        )
-      );
-      // Refresh unread count
       const res = await API.notifications.getUnreadCount();
       onUnreadCountChange(res.data?.unread_count || 0);
     } catch (error) {
+      setNotifications(previous);
+      if (unreadDelta) {
+        API.notifications.getUnreadCount()
+          .then((res) => onUnreadCountChange(res.data?.unread_count || 0))
+          .catch(() => {});
+      }
       console.error('Error marking notification as read:', error);
     }
   };
 
   const handleMarkAllAsRead = async () => {
+    const previous = notifications;
+    setNotifications((items) => items.map((item) => ({ ...item, is_read: true })));
+    onUnreadCountChange(0);
     try {
       await API.notifications.markAllAsRead();
-      // Refresh all notifications and count
-      await fetchNotifications();
-      const res = await API.notifications.getUnreadCount();
-      onUnreadCountChange(res.data?.unread_count || 0);
     } catch (error) {
+      setNotifications(previous);
       console.error('Error marking all as read:', error);
     }
   };
 
   const handleDelete = async (id) => {
+    const previous = notifications;
+    const previousTotal = total;
+    setNotifications((items) => items.filter((item) => item.id !== id));
+    setTotal((value) => Math.max(0, value - 1));
     try {
       await API.notifications.delete(id);
-      setNotifications(notifications.filter((n) => n.id !== id));
       // Refresh unread count
       const res = await API.notifications.getUnreadCount();
       onUnreadCountChange(res.data?.unread_count || 0);
     } catch (error) {
+      setNotifications(previous);
+      setTotal(previousTotal);
       console.error('Error deleting notification:', error);
     }
   };
@@ -104,7 +111,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
       {/* Notifications list */}
       <div className="notification-dropdown-list divide-y max-h-96 overflow-y-auto">
         {loading ? (
-          <div className="notification-dropdown-empty p-4 text-center">
+          <div className="notification-dropdown-empty loading-text p-4 text-center">
             <span className="text-sm">Đang tải...</span>
           </div>
         ) : notifications.length === 0 ? (

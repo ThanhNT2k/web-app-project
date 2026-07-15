@@ -168,7 +168,7 @@ function RankingsPage() {
                   <div className="ranking-metrics">
                     <span><FontAwesomeIcon icon={faBookOpen} /> {formatWholeNumber(story.total_chapters)} chương</span>
                     <span><FontAwesomeIcon icon={faEye} /> {formatWholeNumber(story.views_metric)} lượt đọc</span>
-                    <span><FontAwesomeIcon icon={faStar} /> {Number(story.rating_avg_metric || story.average_rating || 0).toFixed(1)}</span>
+                    <span><FontAwesomeIcon icon={faStar} /> {Number(story.rating_avg_metric || story.average_rating || 0).toFixed(1)} ({formatWholeNumber(story.rating_count_metric || story.total_rating_count || 0)} lượt)</span>
                     <span><FontAwesomeIcon icon={faUsers} /> {formatWholeNumber(story.total_followers)} theo dõi</span>
                   </div>
                 </div>

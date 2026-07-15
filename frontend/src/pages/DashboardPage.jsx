@@ -450,7 +450,7 @@ function DashboardPage() {
       </div>
 
       {message ? <div className="alert-cmc mb-3">{message}</div> : null}
-      {loading ? <p className="text-muted">Đang tải...</p> : null}
+      {loading ? <div className="loading-text" aria-label="Đang tải dữ liệu" /> : null}
 
       {user?.role !== 'Admin' && stories.length > 0 ? (
         <section className="dashboard-story-toolbar" aria-label="Tìm kiếm và lọc truyện">
@@ -587,26 +587,19 @@ function DashboardPage() {
                 {expandedStory === story.id && (
                   <div className="mt-3">
                     {chaptersLoading ? (
-                      <p className="small text-muted">Đang tải...</p>
+                      <div className="loading-text" aria-label="Đang tải danh sách chương" />
                     ) : (storyChapters[story.id] || []).length === 0 ? (
                       <p className="small text-muted">Chưa có chương nào.</p>
                     ) : (
                       <>
-                        <div className="mb-2 dashboard-chapter-search" style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                          <FontAwesomeIcon icon={faMagnifyingGlass} style={{fontSize: '0.875rem', color: '#999'}} />
+                        <div className="mb-2 dashboard-chapter-search">
+                          <FontAwesomeIcon icon={faMagnifyingGlass} />
                           <input
                             type="search"
                             placeholder="Tìm chương..."
                             value={chapterSearch[story.id] || ''}
                             onChange={(e) => setChapterSearch({...chapterSearch, [story.id]: e.target.value})}
-                            style={{
-                              padding: '0.35rem 0.5rem',
-                              borderRadius: '4px',
-                              border: '1px solid #ddd',
-                              fontSize: '0.875rem',
-                              flex: 1,
-                              minWidth: '0'
-                            }}
+                            className="dashboard-chapter-search-input"
                           />
                         </div>
                         <ul className="chapter-list chapter-list-compact" style={{maxHeight: '300px', overflowY: 'auto'}}>
@@ -964,13 +957,13 @@ function DashboardPage() {
             <div className="mt-3">
               <h5 className="mb-2">Danh sách thành viên</h5>
               {collabLoading && collabList.length === 0 ? (
-                <p className="small text-muted">Đang tải...</p>
+                <div className="loading-text" aria-label="Đang tải cộng tác viên" />
               ) : collabList.length === 0 ? (
                 <p className="small text-muted">Chưa có cộng tác viên nào. Nhập email phía trên để thêm.</p>
               ) : (
                 <ul className="list-unstyled d-grid gap-2" style={{ padding: 0 }}>
                   {collabList.map((collab) => (
-                    <li key={collab.id} className="d-flex align-items-center justify-content-between p-2 rounded" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <li key={collab.id} className="d-flex align-items-center justify-content-between p-2 rounded dashboard-collaborator-item">
                       <div className="d-flex align-items-center gap-2">
                         {collab.avatar_url ? (
                           <img src={collab.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />

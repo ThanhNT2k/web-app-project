@@ -4,7 +4,14 @@ import { FontAwesomeIcon, faArrowLeft, faArrowRight } from '../lib/icons';
 
 const AUTO_SLIDE_DELAY = 4000;
 
-function AutoSlidingStoryRow({ children, className = '', label = 'Danh sách truyện', variant = 'standard' }) {
+function AutoSlidingStoryRow({
+  children,
+  className = '',
+  label = 'Danh sách truyện',
+  variant = 'standard',
+  autoSlide = true,
+}) {
+  const shellRef = useRef(null);
   const trackRef = useRef(null);
   const [navigation, setNavigation] = useState({ canScroll: false, atStart: true, atEnd: false });
   const [autoResetKey, setAutoResetKey] = useState(0);
@@ -49,6 +56,61 @@ function AutoSlidingStoryRow({ children, className = '', label = 'Danh sách tru
     if (manual) setAutoResetKey((value) => value + 1);
   };
 
+  const handleWheel = useCallback((event) => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('.auto-sliding-story-controls button, button, input, textarea, select')) {
+      return;
+    }
+
+    const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+    if (maxScroll <= 1) return;
+
+    const dominantDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    if (Math.abs(dominantDelta) < 1) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    track.scrollBy({ left: dominantDelta, behavior: 'auto' });
+    updateNavigation();
+    setAutoResetKey((value) => value + 1);
+  }, [updateNavigation]);
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    const track = trackRef.current;
+    if (!shell || !track) return undefined;
+
+    const nativeWheelHandler = (event) => {
+      const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+      if (maxScroll <= 1) return;
+
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest('.auto-sliding-story-controls button, button, input, textarea, select')) {
+        return;
+      }
+
+      const dominantDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (Math.abs(dominantDelta) < 1) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      track.scrollBy({ left: dominantDelta, behavior: 'auto' });
+      updateNavigation();
+      setAutoResetKey((value) => value + 1);
+    };
+
+    shell.addEventListener('wheel', nativeWheelHandler, { passive: false });
+    track.addEventListener('wheel', nativeWheelHandler, { passive: false });
+
+    return () => {
+      shell.removeEventListener('wheel', nativeWheelHandler);
+      track.removeEventListener('wheel', nativeWheelHandler);
+    };
+  }, [updateNavigation]);
+
   useEffect(() => {
     const frame = window.requestAnimationFrame(updateNavigation);
     window.addEventListener('resize', updateNavigation);
@@ -59,23 +121,24 @@ function AutoSlidingStoryRow({ children, className = '', label = 'Danh sách tru
   }, [itemCount, updateNavigation]);
 
   useEffect(() => {
-    if (itemCount <= 1) return undefined;
+    if (!autoSlide || itemCount <= 1) return undefined;
 
     const timer = window.setInterval(() => {
       move(1);
     }, AUTO_SLIDE_DELAY);
 
     return () => window.clearInterval(timer);
-  }, [autoResetKey, itemCount]);
+  }, [autoResetKey, autoSlide, itemCount]);
 
   return (
-    <div className="auto-sliding-story-shell">
+    <div ref={shellRef} className="auto-sliding-story-shell" onWheel={handleWheel}>
       <div
         ref={trackRef}
         className={`${className} auto-sliding-story-row auto-sliding-story-row-${variant}`.trim()}
         role="region"
         aria-label={label}
         tabIndex={0}
+        onWheel={handleWheel}
         onScroll={updateNavigation}
       >
         {children}

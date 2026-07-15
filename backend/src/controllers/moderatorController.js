@@ -70,7 +70,7 @@ async function getPendingStories(req, res) {
     const storiesWithTags = await Promise.all(
       stories.map(async (story) => ({
         ...story,
-        tags: await Tag.getTagsForStory(story.id),
+        tags: await Tag.getTagsForStory(story.id, true), // Include pending tags for moderator review
       }))
     );
 
@@ -113,6 +113,10 @@ async function approvePendingStory(req, res) {
     if (!result.rows[0]) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy truyện đang chờ duyệt' });
     }
+
+    // Also approve all pending tags for this story
+    await Tag.updateStoryTagsModeration(storyId, 'approved');
+
     return res.status(200).json({ success: true, message: 'Đã duyệt và hiển thị truyện', story: result.rows[0] });
   } catch (error) {
     console.error('[moderatorController.approvePendingStory]', error);
@@ -178,6 +182,9 @@ async function processPendingStory(req, res) {
     if (!story) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy truyện đang chờ duyệt' });
     }
+
+    // Update tag moderation status to match story status
+    await Tag.updateStoryTagsModeration(storyId, option.status);
 
     if (story.author_id) {
       const detail = note ? ` Lý do: ${note}` : '';

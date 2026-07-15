@@ -123,7 +123,7 @@ function UserProfilePage() {
         <div className="col-lg-7">
           <section className="panel-card">
             <h5 className="panel-title">Lịch sử đọc</h5>
-            {loading ? <p className="text-muted small">Đang tải...</p> : null}
+            {loading ? <div className="loading-text" aria-label="Đang tải hồ sơ" /> : null}
             {!loading && history.length === 0 ? (
               <p className="text-muted mb-0">Bạn chưa đọc truyện nào.</p>
             ) : null}
