@@ -287,3 +287,13 @@
     min-width: 0;
   }
 }
+
+
+.reader-range-setting input[type="range"] {
+  width: 120px;
+}
+
+.reader-range-value {
+  min-width: 42px;
+  text-align: right;
+}

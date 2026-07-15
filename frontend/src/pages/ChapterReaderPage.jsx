@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import AIChapterSummary from '../components/AIChapterSummary';
 import ReadingScrollProgress from '../components/ReadingScrollProgress';
 import CommentSection from '../components/CommentSection';
-import StoryReader, { loadReaderPrefs } from '../components/StoryReader';
+import StoryReader, { loadReaderPrefs, saveReaderPrefs } from '../components/StoryReader';
 import ReportModal from '../components/ReportModal';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,10 +34,12 @@ function ChapterReaderPage() {
   const scrollRef = useRef(0);
   const hasInitialSavedRef = useRef(false);
   const hasInitialRestoreRef = useRef(false);
+  const preferencesReadyRef = useRef(false);
 
   const chapterNumericId = useMemo(() => chapter?.id || null, [chapter]);
 
   useEffect(() => {
+    preferencesReadyRef.current = false;
     const prefs = loadReaderPrefs();
     if (prefs) {
       if (prefs.fontSize) setFontSize(prefs.fontSize);
@@ -45,8 +47,7 @@ function ChapterReaderPage() {
       if (prefs.fontFamily) setFontFamily(prefs.fontFamily);
     }
     hasInitialSavedRef.current = false;
-    hasInitialRestoreRef.current = false;
-    
+    hasInitialRestoreRef.current = false;    
     // Reset scroll position for new chapter
     window.scrollTo(0, 0);
   }, [chapterNumber]);
@@ -89,6 +90,24 @@ function ChapterReaderPage() {
       }
     }
   }, [chapter, storySlug, chapterNumber, navigate]);
+
+  useEffect(() => {
+    saveReaderPrefs({ fontSize, lineSpacing, fontFamily });
+
+    if (!isAuthenticated || !preferencesReadyRef.current) return undefined;
+
+    const timer = window.setTimeout(() => {
+      API.preferences.update({
+        font_size: fontSize,
+        line_spacing: lineSpacing,
+        font_family: fontFamily,
+      }).catch((err) => {
+        console.debug('Failed to sync reader preferences', err);
+      });
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [fontSize, lineSpacing, fontFamily, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated || !chapter?.story_id) return;
@@ -156,6 +175,11 @@ function ChapterReaderPage() {
 
     // Execute both in parallel
     Promise.all([loadPreferences(), loadProgress()]);
+    // Execute both in parallel. Chỉ bật đồng bộ sau khi cài đặt từ server đã tải xong,
+    // tránh ghi đè server bằng giá trị mặc định lúc trang vừa mở.
+    Promise.all([loadPreferences(), loadProgress()]).finally(() => {
+      preferencesReadyRef.current = true;
+    });
   }, [isAuthenticated, chapter?.story_id]);
 
   // Restore scroll position when chapter loads
@@ -163,8 +187,7 @@ function ChapterReaderPage() {
     if (!storyProgress) return;
     if (hasInitialRestoreRef.current) return; // Only restore once per chapter
     
-    hasInitialRestoreRef.current = true;
-    
+    hasInitialRestoreRef.current = true;    
     // Reset to top initially, then restore saved position after a small delay
     // to ensure DOM is fully rendered
     window.scrollTo(0, 0);

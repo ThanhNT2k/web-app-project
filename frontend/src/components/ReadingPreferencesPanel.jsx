@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { saveReaderPrefs } from './StoryReader';
 
 function ReadingPreferencesPanel({ onPrefsChange }) {
   const { isAuthenticated } = useAuth();
@@ -38,6 +39,11 @@ function ReadingPreferencesPanel({ onPrefsChange }) {
           };
           setPrefs(loaded);
           prefsRef.current = loaded;
+          saveReaderPrefs({
+            fontSize: loaded.font_size,
+            lineSpacing: loaded.line_spacing,
+            fontFamily: loaded.font_family,
+          });
           onPrefsChange?.(p);
         }
       } catch {
@@ -71,6 +77,11 @@ function ReadingPreferencesPanel({ onPrefsChange }) {
     setPrefs(next);
     prefsRef.current = next;
     onPrefsChange?.(next);
+    saveReaderPrefs({
+      fontSize: next.font_size,
+      lineSpacing: next.line_spacing,
+      fontFamily: next.font_family,
+    });
 
     if (!isAuthenticated) return;
 

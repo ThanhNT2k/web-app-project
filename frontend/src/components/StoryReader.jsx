@@ -58,21 +58,6 @@ function StoryReader({
     return idx >= 0 && idx < chapters.length - 1;
   }, [chapter, chapters]);
 
-  useEffect(() => {
-    const prefs = loadReaderPrefs();
-    if (!prefs) {
-      return;
-    }
-    if (prefs.fontSize && setFontSize) {
-      setFontSize(prefs.fontSize);
-    }
-    if (prefs.lineSpacing && setLineSpacing) {
-      setLineSpacing(prefs.lineSpacing);
-    }
-    if (prefs.fontFamily && setFontFamily) {
-      setFontFamily(prefs.fontFamily);
-    }
-  }, [setFontSize, setLineSpacing, setFontFamily]);
 
   useEffect(() => {
     if (fontSize == null) {
@@ -160,23 +145,30 @@ function StoryReader({
           </select>
         ) : null}
 
-        <div className="d-flex align-items-center gap-2 small mb-0">
+        <label className="d-flex align-items-center gap-2 small mb-0 reader-range-setting">
           <span className="reader-toolbar-label fw-medium">Cỡ chữ</span>
-          <div className="btn-group btn-group-sm reader-stepper">
-            <button className="btn reader-step-button px-2" onClick={() => setFontSize(Math.max(14, fontSize - 1))} disabled={fontSize <= 14}>-</button>
-            <span className="reader-step-value px-3">{fontSize}</span>
-            <button className="btn reader-step-button px-2" onClick={() => setFontSize(Math.min(28, fontSize + 1))} disabled={fontSize >= 28}>+</button>
-          </div>
-        </div>
+          <input
+            type="range"
+            min="14"
+            max="28"
+            value={fontSize}
+            onChange={(e) => setFontSize(Number(e.target.value))}
+          />
+          <span className="reader-range-value">{fontSize}px</span>
+        </label>
 
-        <div className="d-flex align-items-center gap-2 small mb-0">
+        <label className="d-flex align-items-center gap-2 small mb-0 reader-range-setting">
           <span className="reader-toolbar-label fw-medium">Giãn dòng</span>
-          <div className="btn-group btn-group-sm reader-stepper">
-            <button className="btn reader-step-button px-2" onClick={() => setLineSpacing(Math.max(1.2, parseFloat((lineSpacing - 0.1).toFixed(1))))} disabled={lineSpacing <= 1.2}>-</button>
-            <span className="reader-step-value reader-step-value-wide px-3">{lineSpacing.toFixed(1)}</span>
-            <button className="btn reader-step-button px-2" onClick={() => setLineSpacing(Math.min(2.4, parseFloat((lineSpacing + 0.1).toFixed(1))))} disabled={lineSpacing >= 2.4}>+</button>
-          </div>
-        </div>
+          <input
+            type="range"
+            min="1.2"
+            max="2.4"
+            step="0.1"
+            value={lineSpacing}
+            onChange={(e) => setLineSpacing(Number(e.target.value))}
+          />
+          <span className="reader-range-value">{lineSpacing.toFixed(1)}</span>
+        </label>
 
         <select
           className="form-select form-select-sm reader-select reader-font-select"
