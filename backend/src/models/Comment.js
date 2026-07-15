@@ -30,7 +30,9 @@ function addDisplayContent(comment) {
 }
 
 /**
- * Lấy danh sách bình luận của một truyện (kèm thông tin người dùng).
+ * Lấy danh sách bình luận của trang giới thiệu truyện (kèm thông tin người dùng).
+ * Chỉ lấy comment có chapter_id IS NULL (comment ở trang giới thiệu).
+ * Comment của các chương riêng được lấy qua getByChapter().
  */
 async function getByStory(storyId, limit = 50, userId = null) {
   const id = parseInt(storyId, 10);
@@ -70,7 +72,7 @@ async function getByStory(storyId, limit = 50, userId = null) {
         GROUP BY comment_id
       ) vs ON vs.comment_id = c.id
       LEFT JOIN comment_votes uv ON uv.comment_id = c.id AND uv.user_id = $3
-      WHERE c.story_id = $1 AND c.status != 'rejected'
+      WHERE c.story_id = $1 AND c.chapter_id IS NULL AND c.status != 'rejected'
       ORDER BY c.created_at DESC
       LIMIT $2
     `,
