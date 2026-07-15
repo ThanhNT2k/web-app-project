@@ -78,6 +78,17 @@ function formatAverageRating(value) {
   })}/5`;
 }
 
+function formatRatingWithCount(averageValue, countValue) {
+  const rating = Number(averageValue || 0);
+  const count = Number(countValue || 0);
+  const ratingStr = rating.toLocaleString('vi-VN', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  const countStr = count.toLocaleString('vi-VN');
+  return `${ratingStr}/5 (${countStr} lượt)`;
+}
+
 function StoryDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -237,6 +248,7 @@ function StoryDetailPage() {
   const followCount = story.follow_count ?? story.follower_count ?? 0;
   const totalViews = story.total_views ?? story.view_count ?? story.views ?? story.views_metric ?? 0;
   const averageRating = story.average_rating ?? 0;
+  const ratingCount = story.rating_count ?? story.total_rating_count ?? 0;
   const description = story.description || 'Chưa có mô tả cho truyện này.';
   const hasLongDescription = description.length > 320;
   const detailBackdropStyle = {
@@ -247,7 +259,7 @@ function StoryDetailPage() {
     { label: 'Số chương', value: formatWholeNumber(totalChapters) },
     { label: 'Người theo dõi', value: formatWholeNumber(followCount) },
     { label: 'Tổng lượt đọc', value: formatWholeNumber(totalViews) },
-    { label: 'Đánh giá', value: formatAverageRating(averageRating) },
+    { label: 'Đánh giá', value: formatRatingWithCount(averageRating, ratingCount) },
     { label: 'Ngày đăng', value: storyCreatedDate },
   ];
 

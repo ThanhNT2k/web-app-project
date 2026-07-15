@@ -709,6 +709,240 @@ async function getStoryBySlug(slug) {
   }
 }
 
+/**
+ * Lấy danh sách truyện được gợi ý dựa trên sở thích của người dùng.
+ * 
+ * Logic:
+ * 1. Phân tích tags yêu thích từ reading history
+ * 2. Tìm những stories có cùng tags nhưng chưa đọc
+ * 3. Sắp xếp theo: rating cao → trending → mới nhất
+ * 4. Loại bỏ những stories hidden, không published, hoặc đã đọc
+ * 
+ * @param {Array} readingHistory - Array of story objects từ ReadingHistory.getReadingHistory()
+ * @param {Array} excludeStoryIds - Array of story IDs cần loại bỏ (những cái đã đọc)
+ * @param {number} limit - Số lượng gợi ý tối đa
+ * @returns {Promise<Array>} Array of recommended story objects
+ */
+async function getStoriesForRecommendations(readingHistory = [], excludeStoryIds = [], limit = 10) {
+  try {
+    // Nếu user chưa đọc truyện nào, trả về mảng rỗng để fallback về trending
+    if (!readingHistory || readingHistory.length === 0) {
+      console.log('[Story.getStoriesForRecommendations] Empty reading history');
+      return [];
+    }
+
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
+    const excludeSet = new Set(excludeStoryIds || []);
+
+    console.log('[Story.getStoriesForRecommendations] START: reading history=', readingHistory.length, 'exclude=', excludeStoryIds.length, 'limit=', safeLimit);
+
+    // Collect tất cả tag IDs từ reading history
+    const preferredTagIds = [];
+    const preferredCategories = new Set();
+    for (const item of readingHistory) {
+      if (item.tags && Array.isArray(item.tags)) {
+        for (const tag of item.tags) {
+          if (tag.id && !preferredTagIds.includes(tag.id)) {
+            preferredTagIds.push(tag.id);
+          }
+        }
+      }
+      if (item.category) {
+        preferredCategories.add(item.category);
+      }
+    }
+
+    console.log('[Story.getStoriesForRecommendations] Extracted', preferredTagIds.length, 'tag IDs:', preferredTagIds);
+    console.log('[Story.getStoriesForRecommendations] Extracted', preferredCategories.size, 'categories:', Array.from(preferredCategories));
+
+    // Phase 1: Tìm stories có cùng tags (cao nhất)
+    let recommendations = [];
+    
+    if (preferredTagIds.length > 0) {
+      console.log('[Story.getStoriesForRecommendations] Phase 1: Querying with', preferredTagIds.length, 'tag IDs');
+      const tagQuery = `
+        SELECT
+          s.id,
+          s.title,
+          s.slug,
+          s.author_id,
+          s.author_name,
+          s.description,
+          s.cover_image_url,
+          s.category,
+          s.status,
+          s.total_chapters,
+          s.total_views,
+          s.created_at,
+          s.average_rating,
+          s.total_rating_count,
+          (
+            SELECT COUNT(*)
+            FROM user_follows
+            WHERE story_id = s.id
+          )::int AS follow_count,
+          COUNT(DISTINCT st.tag_id) AS matching_tag_count
+        FROM stories s
+        LEFT JOIN story_tags st ON st.story_id = s.id AND st.tag_id = ANY($1::int[])
+        WHERE
+          s.id IN (
+            SELECT DISTINCT st.story_id
+            FROM story_tags st
+            WHERE st.tag_id = ANY($1::int[])
+          )
+          AND s.is_published = true
+          AND s.hidden_by_admin = false
+          AND s.id != ALL($2::int[])
+        GROUP BY s.id, s.title, s.slug, s.author_id, s.author_name, s.description, s.cover_image_url, s.category, s.status, s.total_chapters, s.total_views, s.created_at, s.average_rating, s.total_rating_count
+        ORDER BY 
+          COUNT(DISTINCT st.tag_id) DESC,
+          s.average_rating DESC,
+          (SELECT COUNT(*) FROM user_follows WHERE story_id = s.id) DESC,
+          s.created_at DESC
+        LIMIT $3
+      `;
+      
+      try {
+        const tagResult = await db.query(tagQuery, [preferredTagIds, Array.from(excludeSet), safeLimit]);
+        console.log('[Story.getStoriesForRecommendations] Phase 1 executed, rows:', tagResult.rows.length);
+        if (tagResult.rows.length > 0) {
+          console.log('[Story.getStoriesForRecommendations] Phase 1 results:', tagResult.rows.map(r => `${r.id}:${r.title}(${r.matching_tag_count} tags)`));
+        }
+        recommendations = tagResult.rows;
+        console.log('[Story.getStoriesForRecommendations] Phase 1 (tags):', recommendations.length, 'stories');
+      } catch (tagErr) {
+        console.error('[Story.getStoriesForRecommendations] Phase 1 error:', tagErr.message);
+      }
+    } else {
+      console.log('[Story.getStoriesForRecommendations] Phase 1 skipped: no tag IDs');
+    }
+
+    // Phase 2: Nếu chưa đủ gợi ý, bổ sung stories từ cùng thể loại
+    // Không loại trừ reading history ở Phase 2 để có thể recommend lại stories họ đã đọc (nhưng sắp xếp theo rating/follows)
+    if (recommendations.length < safeLimit && preferredCategories.size > 0) {
+      console.log('[Story.getStoriesForRecommendations] Phase 2: Current', recommendations.length, '/', safeLimit, ', need', safeLimit - recommendations.length, 'more from categories:', Array.from(preferredCategories));
+      const excludedIds = recommendations.map(r => r.id); // Chỉ loại trừ Phase 1 results, cho phép reading history
+      const categoryQuery = `
+        SELECT
+          s.id,
+          s.title,
+          s.slug,
+          s.author_id,
+          s.author_name,
+          s.description,
+          s.cover_image_url,
+          s.category,
+          s.status,
+          s.total_chapters,
+          s.total_views,
+          s.created_at,
+          s.average_rating,
+          s.total_rating_count,
+          (SELECT COUNT(*) FROM user_follows WHERE story_id = s.id)::int AS follow_count
+        FROM stories s
+        WHERE
+          s.category = ANY($1::text[])
+          AND s.is_published = true
+          AND s.hidden_by_admin = false
+          AND s.id != ALL($2::int[])
+        ORDER BY s.average_rating DESC, (SELECT COUNT(*) FROM user_follows WHERE story_id = s.id) DESC, s.created_at DESC
+        LIMIT $3
+      `;
+
+      try {
+        const categoryResult = await db.query(categoryQuery, [
+          Array.from(preferredCategories),
+          excludedIds,
+          safeLimit - recommendations.length
+        ]);
+        const categoryAdded = categoryResult.rows.length;
+        console.log('[Story.getStoriesForRecommendations] Phase 2 returned:', categoryAdded, 'stories');
+        if (categoryResult.rows.length > 0) {
+          console.log('[Story.getStoriesForRecommendations] Phase 2 results:', categoryResult.rows.map(r => `${r.id}:${r.title}`));
+        }
+        recommendations = recommendations.concat(categoryResult.rows);
+        console.log('[Story.getStoriesForRecommendations] Phase 2 (category):', categoryAdded, 'added, total:', recommendations.length);
+      } catch (catErr) {
+        console.error('[Story.getStoriesForRecommendations] Phase 2 error:', catErr.message);
+      }
+    } else if (preferredCategories.size === 0) {
+      console.log('[Story.getStoriesForRecommendations] Phase 2 skipped: no categories');
+    } else {
+      console.log('[Story.getStoriesForRecommendations] Phase 2 skipped: already have enough (', recommendations.length, '/', safeLimit, ')');
+    }
+
+    // Phase 3: Nếu vẫn chưa đủ, bổ sung những stories được đánh giá cao gần đây
+    // Không loại trừ reading history ở Phase 3 để có thể recommend lại stories họ đã đọc (nhưng sắp xếp theo trending/rating)
+    if (recommendations.length < safeLimit) {
+      console.log('[Story.getStoriesForRecommendations] Phase 3: Current', recommendations.length, '/', safeLimit, ', need', safeLimit - recommendations.length, 'more trending');
+      const excludedIds = recommendations.map(r => r.id); // Chỉ loại trừ Phase 1+2 results
+      const trendingQuery = `
+        SELECT
+          s.id,
+          s.title,
+          s.slug,
+          s.author_id,
+          s.author_name,
+          s.description,
+          s.cover_image_url,
+          s.category,
+          s.status,
+          s.total_chapters,
+          s.total_views,
+          s.created_at,
+          s.average_rating,
+          s.total_rating_count,
+          (SELECT COUNT(*) FROM user_follows WHERE story_id = s.id)::int AS follow_count
+        FROM stories s
+        WHERE
+          s.is_published = true
+          AND s.hidden_by_admin = false
+          AND s.id != ALL($1::int[])
+        ORDER BY s.average_rating DESC, (SELECT COUNT(*) FROM user_follows WHERE story_id = s.id) DESC, s.created_at DESC
+        LIMIT $2
+      `;
+
+      try {
+        const trendingResult = await db.query(trendingQuery, [excludedIds, safeLimit - recommendations.length]);
+        const trendingAdded = trendingResult.rows.length;
+        console.log('[Story.getStoriesForRecommendations] Phase 3 returned:', trendingAdded, 'stories');
+        if (trendingResult.rows.length > 0) {
+          console.log('[Story.getStoriesForRecommendations] Phase 3 results:', trendingResult.rows.map(r => `${r.id}:${r.title}`));
+        }
+        recommendations = recommendations.concat(trendingResult.rows);
+        console.log('[Story.getStoriesForRecommendations] Phase 3 (trending):', trendingAdded, 'added, total:', recommendations.length);
+      } catch (trendErr) {
+        console.error('[Story.getStoriesForRecommendations] Phase 3 error:', trendErr.message);
+      }
+    } else {
+      console.log('[Story.getStoriesForRecommendations] Phase 3 skipped: already have enough (', recommendations.length, '/', safeLimit, ')');
+    }
+
+    // Loại bỏ duplicates
+    const seen = new Set();
+    const final = [];
+    for (const story of recommendations) {
+      if (!seen.has(story.id)) {
+        final.push(story);
+        seen.add(story.id);
+        if (final.length >= safeLimit) break;
+      }
+    }
+
+    console.log('[Story.getStoriesForRecommendations] Deduplication: input', recommendations.length, 'items → output', final.length, 'unique items');
+    if (final.length > 0) {
+      console.log('[Story.getStoriesForRecommendations] Final IDs:', final.map(s => s.id).join(','));
+    }
+    console.log('[Story.getStoriesForRecommendations] Final result:', final.length, 'stories');
+
+    // Attach tags vào từng story object
+    return await attachTagsToStories(final);
+  } catch (error) {
+    console.error('[Story.getStoriesForRecommendations]', error);
+    return [];  // Fallback: trả về mảng rỗng để controller dùng trending
+  }
+}
+
 module.exports = {
   getAllStories,
   getStoryById,
@@ -720,4 +954,5 @@ module.exports = {
   getStoriesByAuthor,
   toggleVisibility,
   getStoryBySlug,
+  getStoriesForRecommendations,
 };

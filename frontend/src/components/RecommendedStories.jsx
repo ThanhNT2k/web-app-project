@@ -5,7 +5,7 @@ import AutoSlidingStoryRow from './AutoSlidingStoryRow';
 import IconBadge from './IconBadge';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { FontAwesomeIcon, faRobot, faRotateRight, faWandMagicSparkles } from '../lib/icons';
+import { FontAwesomeIcon, faRotateRight, faHeart } from '../lib/icons';
 
 function RecommendedStories() {
   const { isAuthenticated } = useAuth();
@@ -18,9 +18,15 @@ function RecommendedStories() {
       setLoading(true);
       setError('');
       const response = await API.ai.getRecommendations();
+      console.log('[RecommendedStories] API response:', {
+        success: response.success,
+        storyCount: response.stories?.length || 0,
+        storyIds: response.storyIds,
+      });
       setStories(response.stories || []);
-    } catch {
-      setError('Chưa thể tải gợi ý cá nhân hóa lúc này.');
+    } catch (err) {
+      console.error('[RecommendedStories] Error fetching:', err);
+      setError('Không thể tải gợi ý lúc này.');
       setStories([]);
     } finally {
       setLoading(false);
@@ -48,24 +54,20 @@ function RecommendedStories() {
     <section className="home-section recommended-section">
       <div className="section-heading">
         <div>
-          <p className="section-eyebrow">Cá nhân hóa</p>
+          <p className="section-eyebrow">Dành cho bạn</p>
           <h2 className="section-title">
-            <IconBadge icon={faWandMagicSparkles} size="sm" tone="aqua" />
-            Gợi ý cho bạn
+            <IconBadge icon={faHeart} size="sm" tone="pink" />
+            Gợi ý truyện yêu thích
           </h2>
         </div>
-        <span className="ai-pill">
-          <FontAwesomeIcon icon={faRobot} />
-          AI
-        </span>
       </div>
 
       {error ? (
         <div className="empty-state-card">
-          <IconBadge icon={faWandMagicSparkles} size="lg" tone="aqua" />
+          <IconBadge icon={faHeart} size="lg" tone="pink" />
           <div>
-            <h3>Gợi ý đang tạm nghỉ</h3>
-            <p>{error} Bạn vẫn có thể khám phá danh sách truyện nổi bật bên dưới.</p>
+            <h3>Gợi ý đang tạm không khả dụng</h3>
+            <p>Chúng tôi không thể tải danh sách gợi ý lúc này. Vui lòng thử lại sau.</p>
           </div>
           <button type="button" className="btn-cmc btn-cmc-outline" onClick={fetchRecommendations}>
             <FontAwesomeIcon icon={faRotateRight} />
@@ -74,7 +76,7 @@ function RecommendedStories() {
         </div>
       ) : null}
 
-      {loading ? <div className="recommended-loading">Đang chọn vài bộ hợp gu đọc của bạn...</div> : null}
+      {loading ? <div className="recommended-loading">Đang chuẩn bị danh sách gợi ý cho bạn...</div> : null}
 
       <AutoSlidingStoryRow className="stories-grid stories-grid-recommended" label="Gợi ý truyện cho bạn" variant="recommended">
         {stories.map((story) => (
