@@ -51,6 +51,8 @@ async function isFollowing(userId, storyId) {
  * Lấy danh sách truyện mà user đang theo dõi (kèm thông tin truyện).
  * INNER JOIN stories: Chỉ lấy truyện còn tồn tại trong hệ thống.
  * Sắp xếp theo followed_at DESC: Truyện mới follow gần nhất hiển thị trước.
+ * Thêm tags từ bảng story_tags để hover preview hiển thị đúng thông tin thể loại.
+ * Bao gồm tất cả trường cần thiết để hiển thị thông tin khi hover.
  */
 async function getFollowedStories(userId) {
   const result = await db.query(
@@ -68,10 +70,13 @@ async function getFollowedStories(userId) {
         s.total_chapters AS chapter_count,
         s.average_rating,
         s.total_rating_count AS rating_count,
+        COALESCE(s.total_views, 0)::float8 AS view_count,
         get_follower_count(s.id) AS follow_count,
         u.username AS author_username,
         u.full_name AS author_full_name,
-        uf.followed_at    -- Thời điểm user bắt đầu follow truyện này
+        uf.followed_at,
+        COALESCE((SELECT jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name, 'slug', t.slug) ORDER BY t.name)
+          FROM story_tags st INNER JOIN tags t ON t.id = st.tag_id WHERE st.story_id = s.id), '[]'::jsonb) AS tags
       FROM user_follows uf
       INNER JOIN stories s ON s.id = uf.story_id
       LEFT JOIN users u ON u.id = s.author_id

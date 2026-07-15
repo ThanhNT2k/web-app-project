@@ -55,7 +55,10 @@ function ChapterReaderPage() {
         const resolvedChapter = chapterResponse.chapter || chapterResponse;
         setChapter(resolvedChapter);
 
-        const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, 100);
+        // Fetch all chapters for the dropdown (use story_total_chapters or a large limit)
+        const totalChapters = resolvedChapter.story_total_chapters || 100;
+        const limit = Math.max(totalChapters, 10); // At least 10, up to total
+        const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, limit);
         setChapters(chaptersResponse.chapters || []);
       } catch (err) {
         setChapter(mockChapter);
