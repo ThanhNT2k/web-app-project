@@ -6277,7 +6277,11 @@ body {
 }
 
 /* Auto-sliding story sections */
-.auto-sliding-story-shell { position: relative; min-width: 0; }
+.auto-sliding-story-shell {
+  position: relative;
+  min-width: 0;
+  padding-block: 0.7rem 0.95rem;
+}
 .auto-sliding-story-row {
   --visible-story-cards: 2;
   --story-carousel-gap: 0.85rem;
@@ -6292,6 +6296,7 @@ body {
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   outline: none;
+  padding: 0.35rem 0.2rem 0.6rem;
 }
 
 .auto-sliding-story-row::-webkit-scrollbar { display: none; }
