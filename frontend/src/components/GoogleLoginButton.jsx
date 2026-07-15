@@ -65,9 +65,10 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
           shape: 'rectangular',
           theme: 'outline',
           text,
-          size: 'large',
+          size: 'medium',
           width,
           logo_alignment: 'left',
+          locale: 'vi',
         });
       };
 
