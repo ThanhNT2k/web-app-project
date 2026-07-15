@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
 import NotificationBell from './NotificationBell';
@@ -76,20 +76,20 @@ function Navbar() {
           </Link>
 
           <nav className="cmc-nav-links" aria-label="Điều hướng chính">
-            <Link to="/" className="cmc-nav-link">
+            <NavLink to="/" end className={({ isActive }) => `cmc-nav-link${isActive ? ' is-active' : ''}`}>
               <FontAwesomeIcon className="nav-icon" icon={faHouse} />
               <span className="nav-text">Trang chủ</span>
-            </Link>
+            </NavLink>
 
-            <Link to="/tim-truyen" className="cmc-nav-link">
+            <NavLink to="/tim-truyen" className={({ isActive }) => `cmc-nav-link${isActive ? ' is-active' : ''}`}>
               <FontAwesomeIcon className="nav-icon" icon={faMagnifyingGlass} />
               <span className="nav-text">Tìm truyện</span>
-            </Link>
+            </NavLink>
 
-            <Link to="/bang-xep-hang" className="cmc-nav-link">
+            <NavLink to="/bang-xep-hang" className={({ isActive }) => `cmc-nav-link${isActive ? ' is-active' : ''}`}>
               <FontAwesomeIcon className="nav-icon" icon={faRankingStar} />
               <span className="nav-text">Bảng xếp hạng</span>
-            </Link>
+            </NavLink>
           </nav>
 
           <div className="cmc-nav-actions">

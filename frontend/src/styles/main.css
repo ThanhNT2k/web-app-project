@@ -3114,18 +3114,23 @@ kbd {
 /* ===== Google Button Wrapper ===== */
 .google-btn-wrapper {
   width: 100%;
+  min-height: 44px;
 }
 
 .google-btn-container {
   width: 100%;
+  min-height: 44px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 /* Ensure Google button fills container */
 .google-btn-container > div,
 .google-btn-container iframe {
   width: 100% !important;
+  min-height: 44px !important;
 }
 
 /* ===== Forgot Password — Step Indicator ===== */
@@ -3428,6 +3433,12 @@ body {
   background: color-mix(in srgb, var(--primary-color) 10%, transparent);
   color: var(--primary-color);
   text-decoration: none;
+}
+
+.cmc-nav-link.is-active {
+  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--primary-color);
+  font-weight: 700;
 }
 
 .cmc-nav-actions {

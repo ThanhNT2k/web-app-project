@@ -10,6 +10,7 @@ import { useEffect, useRef } from 'react';
  */
 function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
   const containerRef = useRef(null);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -34,33 +35,54 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
       });
     };
 
+    let resizeObserver;
+
     loadGoogleScript().then(() => {
       if (!window.google?.accounts || !containerRef.current) return;
 
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response) => {
-          if (response.credential) {
-            onSuccess(response.credential);
-          } else {
-            onError?.(new Error('Google không trả về credential.'));
-          }
-        },
-      });
+      if (!initializedRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => {
+            if (response.credential) {
+              onSuccess(response.credential);
+            } else {
+              onError?.(new Error('Google không trả về credential.'));
+            }
+          },
+        });
+        initializedRef.current = true;
+      }
 
-      // Render nút theo đúng Google branding guidelines
-      window.google.accounts.id.renderButton(containerRef.current, {
-        type: 'standard',
-        shape: 'rectangular',
-        theme: 'outline',
-        text,
-        size: 'large',
-        width: containerRef.current.offsetWidth || 400,
-        logo_alignment: 'left',
-      });
+      const renderGoogleButton = () => {
+        if (!containerRef.current) return;
+
+        const width = Math.max(Math.round(containerRef.current.offsetWidth || 0), 240);
+        containerRef.current.replaceChildren();
+
+        window.google.accounts.id.renderButton(containerRef.current, {
+          type: 'standard',
+          shape: 'rectangular',
+          theme: 'outline',
+          text,
+          size: 'large',
+          width,
+          logo_alignment: 'left',
+        });
+      };
+
+      renderGoogleButton();
+
+      if (window.ResizeObserver) {
+        resizeObserver = new window.ResizeObserver(() => {
+          renderGoogleButton();
+        });
+        resizeObserver.observe(containerRef.current);
+      }
     });
 
     return () => {
+      resizeObserver?.disconnect();
       // Cleanup khi component unmount
       window.google?.accounts?.id?.cancel?.();
     };
