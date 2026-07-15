@@ -10,6 +10,7 @@ jest.mock('../models', () => ({
 
 jest.mock('../models/Tag', () => ({
   getTagsForStory: jest.fn(),
+  updateStoryTagsModeration: jest.fn(),
 }));
 
 jest.mock('../models/Notification', () => ({
@@ -17,6 +18,7 @@ jest.mock('../models/Notification', () => ({
 }));
 
 const db = require('../config/database');
+const Tag = require('../models/Tag');
 const Notification = require('../models/Notification');
 const {
   approvePendingStory,
@@ -91,6 +93,7 @@ describe('moderatorController.approvePendingStory', () => {
       expect.stringContaining('hidden_by_admin = false'),
       [11, null]
     );
+    expect(Tag.updateStoryTagsModeration).toHaveBeenCalledWith(11, 'approved');
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });
@@ -126,6 +129,7 @@ describe('moderatorController.processPendingStory', () => {
       expect.stringContaining("COALESCE(moderation_status, 'pending') = 'pending'"),
       [12, false, 'changes_requested', 'Bổ sung mô tả', 3]
     );
+    expect(Tag.updateStoryTagsModeration).toHaveBeenCalledWith(12, 'changes_requested');
     expect(Notification.create).toHaveBeenCalledWith(
       8,
       12,
