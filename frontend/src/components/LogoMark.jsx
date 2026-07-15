@@ -17,12 +17,9 @@ function LogoSymbol({ className = '', title = 'CMC Truyện' }) {
           <stop stopColor="#FFFFFF" />
           <stop offset="1" stopColor="#CFFAFE" />
         </linearGradient>
-        <filter id="cmcLogoShadow" x="-20%" y="-20%" width="140%" height="150%" colorInterpolationFilters="sRGB">
-          <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#0F172A" floodOpacity="0.22" />
-        </filter>
       </defs>
 
-      <rect x="5" y="5" width="54" height="54" rx="18" fill="url(#cmcLogoBg)" filter="url(#cmcLogoShadow)" />
+      <rect x="5" y="5" width="54" height="54" rx="18" fill="url(#cmcLogoBg)" />
       <path
         d="M16.5 22.5C20.9 20 25.7 20.1 31.1 23.1V46.2C25.7 43.2 20.8 43.1 16.5 45.7V22.5Z"
         fill="url(#cmcLogoPage)"

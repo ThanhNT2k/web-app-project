@@ -169,136 +169,137 @@ function HomePage() {
   };
 
   return (
-    <main className="cmc-main cmc-home-page">
+    <div className="cmc-home-page-wrapper">
       <FeaturedCarousel stories={heroStories} />
-
-      {error ? (
-        <div className="home-service-note">
-          <IconBadge icon={faTriangleExclamation} size="md" tone="warning" />
-          <div>
-            <strong>Đang dùng dữ liệu dự phòng.</strong>
-            <span>{error}</span>
-          </div>
-        </div>
-      ) : null}
-
-      {!isSearching && <RecommendedStories />}
-
-      {/* Featured Stories */}
-      {!isSearching && (
-        <section className="home-section">
-          <SectionHeading
-            eyebrow="Được quan tâm"
-            title="Truyện nổi bật"
-            icon={faBookOpen}
-            action={<Link to="/tim-truyen" className="section-action-link">Xem thêm</Link>}
-          />
-          {loadingFeatured ? (
-            <div className="stories-grid stories-grid-featured">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <StoryCardSkeleton key={`skeleton-feat-${i}`} compact />
-              ))}
-            </div>
-          ) : featuredStories.length > 0 ? (
-            <AutoSlidingStoryRow className="stories-grid stories-grid-featured" label="Truyện nổi bật">
-              {featuredStories.slice(0, 10).map((story) => (
-                <StoryCard key={`feat-${story.id}`} story={story} compact />
-              ))}
-            </AutoSlidingStoryRow>
-          ) : (
-            <div className="empty-state-card">
-              <IconBadge icon={faBookOpen} size="lg" tone="primary" />
-              <div>
-                <h3>Chưa có truyện nổi bật</h3>
-                <p>Danh sách sẽ được cập nhật khi có thêm dữ liệu đọc và theo dõi.</p>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Recent Updates */}
-      {!isSearching && (
-        <section className="home-section">
-          <SectionHeading eyebrow="Vừa lên chương" title="Cập nhật gần đây" icon={faClockRotateLeft} />
-          {loadingRecent ? (
-            <div className="stories-grid-horizontal">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <RecentStorySkeleton key={`skeleton-recent-${i}`} />
-              ))}
-            </div>
-          ) : recentStories.length > 0 ? (
-            <AutoSlidingStoryRow className="stories-grid-horizontal" label="Truyện cập nhật gần đây" variant="horizontal">
-              {recentStories.map((story) => (
-                <StoryCard key={`recent-${story.id}`} story={story} horizontal={true} />
-              ))}
-            </AutoSlidingStoryRow>
-          ) : (
-            <div className="empty-state-card compact">
-              <IconBadge icon={faRotateRight} size="lg" tone="aqua" />
-              <div>
-                <h3>Chưa có cập nhật mới</h3>
-                <p>Quay lại sau để xem các chương vừa được đăng.</p>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Main browse list */}
-      <section id="browse" className="home-section">
-        <SectionHeading
-          eyebrow={isSearching ? 'Đang lọc' : 'Thư viện'}
-          title={isSearching ? 'Kết quả tìm kiếm' : 'Tất cả truyện'}
-          icon={isSearching ? faMagnifyingGlass : faBookOpen}
-        />
-        {loading ? (
-          <div className="stories-grid">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <StoryCardSkeleton key={`skeleton-all-${i}`} />
-            ))}
-          </div>
-        ) : stories.length > 0 ? (
-          <div className="stories-grid">
-            {stories.map((story) => (
-              <StoryCard key={`all-${story.id}`} story={story} />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state-card">
-            <IconBadge icon={faMagnifyingGlass} size="lg" tone="primary" />
+      <main className="cmc-main cmc-home-page">
+        {error ? (
+          <div className="home-service-note">
+            <IconBadge icon={faTriangleExclamation} size="md" tone="warning" />
             <div>
-              <h3>Không tìm thấy truyện phù hợp</h3>
-              <p>Thử đổi từ khóa hoặc chọn một thể loại khác để khám phá thêm.</p>
+              <strong>Đang dùng dữ liệu dự phòng.</strong>
+              <span>{error}</span>
             </div>
-          </div>
-        )}
-
-        {!loading && pagination.totalPages > 1 ? (
-          <div className="home-pagination">
-            <button
-              type="button"
-              className="btn-cmc btn-cmc-outline"
-              disabled={page <= 1}
-              onClick={() => goToPage(page - 1)}
-            >
-              Trước
-            </button>
-            <span>
-              Trang {pagination.page}/{pagination.totalPages}
-            </span>
-            <button
-              type="button"
-              className="btn-cmc btn-cmc-outline"
-              disabled={page >= pagination.totalPages}
-              onClick={() => goToPage(page + 1)}
-            >
-              Sau
-            </button>
           </div>
         ) : null}
-      </section>
-    </main>
+
+        {!isSearching && <RecommendedStories />}
+
+        {/* Featured Stories */}
+        {!isSearching && (
+          <section className="home-section">
+            <SectionHeading
+              eyebrow="Được quan tâm"
+              title="Truyện nổi bật"
+              icon={faBookOpen}
+              action={<Link to="/tim-truyen" className="section-action-link">Xem thêm</Link>}
+            />
+            {loadingFeatured ? (
+              <div className="stories-grid stories-grid-featured">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <StoryCardSkeleton key={`skeleton-feat-${i}`} compact />
+                ))}
+              </div>
+            ) : featuredStories.length > 0 ? (
+              <AutoSlidingStoryRow className="stories-grid stories-grid-featured" label="Truyện nổi bật" autoSlide={false}>
+                {featuredStories.slice(0, 10).map((story) => (
+                  <StoryCard key={`feat-${story.id}`} story={story} compact />
+                ))}
+              </AutoSlidingStoryRow>
+            ) : (
+              <div className="empty-state-card">
+                <IconBadge icon={faBookOpen} size="lg" tone="primary" />
+                <div>
+                  <h3>Chưa có truyện nổi bật</h3>
+                  <p>Danh sách sẽ được cập nhật khi có thêm dữ liệu đọc và theo dõi.</p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Recent Updates */}
+        {!isSearching && (
+          <section className="home-section">
+            <SectionHeading eyebrow="Vừa lên chương" title="Cập nhật gần đây" icon={faClockRotateLeft} />
+            {loadingRecent ? (
+              <div className="stories-grid-horizontal">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <RecentStorySkeleton key={`skeleton-recent-${i}`} />
+                ))}
+              </div>
+            ) : recentStories.length > 0 ? (
+              <AutoSlidingStoryRow className="stories-grid-horizontal" label="Truyện cập nhật gần đây" variant="horizontal" autoSlide={false}>
+                {recentStories.map((story) => (
+                  <StoryCard key={`recent-${story.id}`} story={story} horizontal={true} />
+                ))}
+              </AutoSlidingStoryRow>
+            ) : (
+              <div className="empty-state-card compact">
+                <IconBadge icon={faRotateRight} size="lg" tone="aqua" />
+                <div>
+                  <h3>Chưa có cập nhật mới</h3>
+                  <p>Quay lại sau để xem các chương vừa được đăng.</p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Main browse list */}
+        <section id="browse" className="home-section">
+          <SectionHeading
+            eyebrow={isSearching ? 'Đang lọc' : 'Thư viện'}
+            title={isSearching ? 'Kết quả tìm kiếm' : 'Tất cả truyện'}
+            icon={isSearching ? faMagnifyingGlass : faBookOpen}
+          />
+          {loading ? (
+            <div className="stories-grid">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <StoryCardSkeleton key={`skeleton-all-${i}`} />
+              ))}
+            </div>
+          ) : stories.length > 0 ? (
+            <div className="stories-grid">
+              {stories.map((story) => (
+                <StoryCard key={`all-${story.id}`} story={story} />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state-card">
+              <IconBadge icon={faMagnifyingGlass} size="lg" tone="primary" />
+              <div>
+                <h3>Không tìm thấy truyện phù hợp</h3>
+                <p>Thử đổi từ khóa hoặc chọn một thể loại khác để khám phá thêm.</p>
+              </div>
+            </div>
+          )}
+
+          {!loading && pagination.totalPages > 1 ? (
+            <div className="home-pagination">
+              <button
+                type="button"
+                className="btn-cmc btn-cmc-outline"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+              >
+                Trước
+              </button>
+              <span>
+                Trang {pagination.page}/{pagination.totalPages}
+              </span>
+              <button
+                type="button"
+                className="btn-cmc btn-cmc-outline"
+                disabled={page >= pagination.totalPages}
+                onClick={() => goToPage(page + 1)}
+              >
+                Sau
+              </button>
+            </div>
+          ) : null}
+        </section>
+      </main>
+    </div>
   );
 }
 

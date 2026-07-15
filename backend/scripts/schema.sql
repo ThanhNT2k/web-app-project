@@ -254,7 +254,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -- Indexes
 -- -----------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_stories_author_id ON stories(author_id);
+CREATE INDEX IF NOT EXISTS idx_stories_slug ON stories(slug) WHERE slug IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_stories_published_created ON stories(created_at DESC) WHERE is_published = true;
+CREATE INDEX IF NOT EXISTS idx_stories_published_updated ON stories(updated_at DESC) WHERE is_published = true;
+CREATE INDEX IF NOT EXISTS idx_stories_category_published_created ON stories(category, created_at DESC) WHERE is_published = true;
 CREATE INDEX IF NOT EXISTS idx_chapters_story_id ON chapters(story_id);
+CREATE INDEX IF NOT EXISTS idx_chapters_story_published_number ON chapters(story_id, chapter_number) WHERE is_published = true;
 CREATE INDEX IF NOT EXISTS idx_reading_history_user_id ON reading_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_reading_history_story_id ON reading_history(story_id);
 CREATE INDEX IF NOT EXISTS idx_reading_history_story_last_read_at ON reading_history(story_id, last_read_at);
@@ -264,6 +269,7 @@ CREATE INDEX IF NOT EXISTS idx_user_follows_user_id ON user_follows(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_follows_story_id ON user_follows(story_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_story_id ON comments(story_id);
+CREATE INDEX IF NOT EXISTS idx_comments_story_status_created ON comments(story_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ratings_story_id ON ratings(story_id);
 CREATE INDEX IF NOT EXISTS idx_ratings_user_id ON ratings(user_id);
 CREATE INDEX IF NOT EXISTS idx_story_collaborators_story_id ON story_collaborators(story_id);

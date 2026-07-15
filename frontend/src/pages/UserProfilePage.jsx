@@ -7,6 +7,8 @@ import StoryCard from '../components/StoryCard';
 import UserProfile from '../components/UserProfile';
 import { useAuth } from '../contexts/AuthContext';
 import API from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
+import { isStrongPassword, passwordsMatch } from '../utils/passwordValidation';
 
 function UserProfilePage() {
   const { user, refreshCurrentUser } = useAuth();
@@ -27,11 +29,8 @@ function UserProfilePage() {
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
 
-  const passwordValid =
-    pwForm.newPassword.length >= 8 &&
-    /[A-Z]/.test(pwForm.newPassword) &&
-    /[0-9]/.test(pwForm.newPassword) &&
-    /[!@#$%^&*(),.?":{}|<>]/.test(pwForm.newPassword);
+  const passwordValid = isStrongPassword(pwForm.newPassword);
+  const passwordConfirmed = passwordsMatch(pwForm.newPassword, pwForm.confirmPassword);
 
   useEffect(() => {
     const load = async () => {
@@ -99,7 +98,7 @@ function UserProfilePage() {
       setPwError('Mật khẩu mới chưa đáp ứng đủ các tiêu chí.');
       return;
     }
-    if (pwForm.newPassword !== pwForm.confirmPassword) {
+    if (!passwordConfirmed) {
       setPwError('Xác nhận mật khẩu không khớp.');
       return;
     }
@@ -109,7 +108,7 @@ function UserProfilePage() {
       setPwSuccess('Mật khẩu đã được cập nhật thành công.');
       setPwForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
-      setPwError(err?.response?.data?.message || 'Không thể đổi mật khẩu.');
+      setPwError(getApiErrorMessage(err, 'Không thể đổi mật khẩu.'));
     } finally {
       setPwLoading(false);
     }
@@ -123,7 +122,7 @@ function UserProfilePage() {
         <div className="col-lg-7">
           <section className="panel-card">
             <h5 className="panel-title">Lịch sử đọc</h5>
-            {loading ? <p className="text-muted small">Đang tải...</p> : null}
+            {loading ? <div className="loading-text" aria-label="Đang tải hồ sơ" /> : null}
             {!loading && history.length === 0 ? (
               <p className="text-muted mb-0">Bạn chưa đọc truyện nào.</p>
             ) : null}
@@ -315,7 +314,7 @@ function UserProfilePage() {
                 <button
                   type="submit"
                   className="btn-cmc btn-cmc-primary w-100 mt-2"
-                  disabled={pwLoading || !passwordValid}
+                  disabled={pwLoading || !passwordValid || !passwordConfirmed}
                 >
                   {pwLoading ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
                 </button>

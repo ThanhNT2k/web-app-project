@@ -74,7 +74,7 @@
 
 **Hậu quả:** Tốn thời gian tìm lại, gây friction, giảm tần suất quay lại đọc.
 
-**Giải pháp của CMC Truyện:** Auto-save vị trí chương sau mỗi lần chuyển trang. Đồng bộ qua tài khoản (nếu đăng nhập) hoặc localStorage (nếu dùng ẩn danh).
+**Giải pháp của CMC Truyện:** Auto-save vị trí chương khi user đăng nhập. Reading history được lưu trong Database; mỗi lần quay lại, hệ thống khôi phục đúng chương dở dang. Guest (không đăng nhập) không có auto-save, chỉ session cục bộ browser tạm thời.
 
 ---
 

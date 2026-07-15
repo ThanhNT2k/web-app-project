@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import {
   faBan,
   faBars,
@@ -21,6 +22,7 @@ import {
   faEnvelopeOpenText,
   faGaugeHigh,
   faGear,
+  faHeart,
   faHouse,
   faLayerGroup,
   faLightbulb,
@@ -48,6 +50,7 @@ import {
 
 export {
   FontAwesomeIcon,
+  faGoogle,
   faBan,
   faBars,
   faArrowLeft,
@@ -69,6 +72,7 @@ export {
   faEnvelopeOpenText,
   faGaugeHigh,
   faGear,
+  faHeart,
   faHouse,
   faLayerGroup,
   faLightbulb,

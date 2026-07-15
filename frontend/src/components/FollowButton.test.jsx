@@ -60,4 +60,21 @@ describe('FollowButton', () => {
 
     await waitFor(() => expect(API.follows.follow).toHaveBeenCalledWith(7));
   });
+
+  it('updates immediately and rolls back when the request fails', async () => {
+    useAuth.mockReturnValue({ isAuthenticated: true });
+    API.follows.check.mockResolvedValue({ following: false });
+    API.follows.follow.mockRejectedValue(new Error('network error'));
+
+    render(<FollowButton storyId={7} />);
+    await waitFor(() => expect(API.follows.check).toHaveBeenCalledWith(7));
+    await screen.findByTitle('Theo dõi truyện');
+
+    fireEvent.click(screen.getByRole('button'));
+    expect(screen.getByTitle('Bỏ theo dõi truyện')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTitle('Theo dõi truyện')).toBeInTheDocument();
+    });
+  });
 });

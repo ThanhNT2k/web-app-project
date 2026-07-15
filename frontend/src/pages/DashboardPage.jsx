@@ -501,7 +501,7 @@ function DashboardPage() {
       </div>
 
       {message ? <div className="alert-cmc mb-3">{message}</div> : null}
-      {loading ? <p className="text-muted">Đang tải...</p> : null}
+      {loading ? <div className="loading-text" aria-label="Đang tải dữ liệu" /> : null}
 
       {user?.role !== 'Admin' && stories.length > 0 ? (
         <section className="dashboard-story-toolbar" aria-label="Tìm kiếm và lọc truyện">
@@ -638,7 +638,7 @@ function DashboardPage() {
                 {expandedStory === story.id && (
                   <div className="mt-3">
                     {chaptersLoading ? (
-                      <p className="small text-muted">Đang tải...</p>
+                      <div className="loading-text" aria-label="Đang tải danh sách chương" />
                     ) : (storyChapters[story.id] || []).length === 0 ? (
                       <p className="small text-muted">Chưa có chương nào.</p>
                     ) : (
@@ -1022,7 +1022,7 @@ function DashboardPage() {
             <div className="mt-3">
               <h5 className="mb-2">Danh sách thành viên</h5>
               {collabLoading && collabList.length === 0 ? (
-                <p className="small text-muted">Đang tải...</p>
+                <div className="loading-text" aria-label="Đang tải cộng tác viên" />
               ) : collabList.length === 0 ? (
                 <p className="small text-muted">Chưa có cộng tác viên nào. Nhập email phía trên để thêm.</p>
               ) : (

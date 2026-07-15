@@ -94,7 +94,7 @@ function StoryReader({
   });
 
   return (
-    <section className="story-reader mx-auto px-3 px-md-5 py-4" style={{ maxWidth: '1000px' }}>
+    <section className="story-reader reader-shell mx-auto px-2 px-sm-3 px-md-5 py-4" style={{ maxWidth: '1000px' }}>
       
       <div className="mb-4">
         <div className="reader-breadcrumb mb-3">
@@ -144,9 +144,14 @@ function StoryReader({
         {chapters.length > 0 && onChapterSelect ? (
           <select
             className="form-select form-select-sm reader-select reader-chapter-select"
-            value={chapter.id}
+            value={chapter.id || ''}
             onChange={(e) => onChapterSelect(e.target.value)}
           >
+            {chapter.id && !chapters.find(c => Number(c.id) === Number(chapter.id)) && (
+              <option key={chapter.id} value={chapter.id}>
+                Ch. {chapter.chapter_number}: {chapter.title}
+              </option>
+            )}
             {chapters.map((item) => (
               <option key={item.id} value={item.id}>
                 Ch. {item.chapter_number}: {item.title}
@@ -185,7 +190,7 @@ function StoryReader({
       </div>
 
       <div className="reader-content-card panel-card mb-5">
-        <div className="reader-content-body p-4 p-lg-5">
+        <div className="reader-content-body p-3 p-sm-4 p-lg-5">
           <div
             className="chapter-content reader-content"
             style={{
@@ -217,9 +222,14 @@ function StoryReader({
 
         <select
           className="form-select reader-floating-select"
-          value={chapter.id}
+          value={chapter.id || ''}
           onChange={(e) => onChapterSelect(e.target.value)}
         >
+          {chapter.id && !chapters.find(c => Number(c.id) === Number(chapter.id)) && (
+            <option key={chapter.id} value={chapter.id}>
+              Chương {chapter.chapter_number}
+            </option>
+          )}
           {chapters.map((item) => (
             <option key={item.id} value={item.id}>
               Chương {item.chapter_number}

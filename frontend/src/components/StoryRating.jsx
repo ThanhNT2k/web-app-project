@@ -72,6 +72,22 @@ function StoryRating({
       return;
     }
 
+    const snapshot = { averageRating, ratingCount, distribution, userRating };
+    const previousValue = Number(userRating) || 0;
+    const nextCount = previousValue ? ratingCount : ratingCount + 1;
+    const nextAverage = nextCount > 0
+      ? ((averageRating * ratingCount) - previousValue + value) / nextCount
+      : value;
+    const nextDistribution = distribution.map((item) => ({
+      ...item,
+      count: Math.max(0, item.count - (item.rating === previousValue ? 1 : 0) + (item.rating === value ? 1 : 0)),
+    }));
+    setAverageRating(nextAverage);
+    setRatingCount(nextCount);
+    setDistribution(nextDistribution);
+    setUserRating(value);
+    if (onRatingChange) onRatingChange({ average_rating: nextAverage, rating_count: nextCount, user_rating: value });
+
     try {
       setSubmitting(true);
       setError('');
@@ -82,6 +98,15 @@ function StoryRating({
         onRatingChange(nextRating);
       }
     } catch (err) {
+      setAverageRating(snapshot.averageRating);
+      setRatingCount(snapshot.ratingCount);
+      setDistribution(snapshot.distribution);
+      setUserRating(snapshot.userRating);
+      if (onRatingChange) onRatingChange({
+        average_rating: snapshot.averageRating,
+        rating_count: snapshot.ratingCount,
+        user_rating: snapshot.userRating,
+      });
       setError(err?.response?.data?.message || 'Không gửi được đánh giá.');
     } finally {
       setSubmitting(false);
@@ -90,6 +115,19 @@ function StoryRating({
 
   const handleDelete = async () => {
     if (!isAuthenticated || !userRating) return;
+
+    const snapshot = { averageRating, ratingCount, distribution, userRating };
+    const removedValue = Number(userRating);
+    const nextCount = Math.max(0, ratingCount - 1);
+    const nextAverage = nextCount > 0 ? ((averageRating * ratingCount) - removedValue) / nextCount : 0;
+    setAverageRating(nextAverage);
+    setRatingCount(nextCount);
+    setDistribution((items) => items.map((item) => ({
+      ...item,
+      count: Math.max(0, item.count - (item.rating === removedValue ? 1 : 0)),
+    })));
+    setUserRating(null);
+    if (onRatingChange) onRatingChange({ average_rating: nextAverage, rating_count: nextCount, user_rating: null });
 
     try {
       setSubmitting(true);
@@ -101,6 +139,15 @@ function StoryRating({
         onRatingChange(nextRating);
       }
     } catch (err) {
+      setAverageRating(snapshot.averageRating);
+      setRatingCount(snapshot.ratingCount);
+      setDistribution(snapshot.distribution);
+      setUserRating(snapshot.userRating);
+      if (onRatingChange) onRatingChange({
+        average_rating: snapshot.averageRating,
+        rating_count: snapshot.ratingCount,
+        user_rating: snapshot.userRating,
+      });
       setError(err?.response?.data?.message || 'Không xóa được đánh giá.');
     } finally {
       setSubmitting(false);

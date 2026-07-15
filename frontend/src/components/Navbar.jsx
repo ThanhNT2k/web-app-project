@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
 import NotificationBell from './NotificationBell';
@@ -25,11 +25,22 @@ import {
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [authOpen, setAuthOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 30);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -46,9 +57,18 @@ function Navbar() {
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
 
+  const isHome = location.pathname === '/';
+  const isStoryDetail = location.pathname.startsWith('/story/');
+  const headerClass = [
+    'cmc-site-header',
+    isHome ? 'is-on-home' : '',
+    isStoryDetail ? 'is-on-story' : '',
+    isScrolled ? 'is-scrolled' : 'is-at-top',
+  ].filter(Boolean).join(' ');
+
   return (
     <>
-      <header className="cmc-site-header">
+      <header className={headerClass}>
         <div className="cmc-navbar-inner">
 
           <Link to="/" className="cmc-logo">
@@ -56,20 +76,20 @@ function Navbar() {
           </Link>
 
           <nav className="cmc-nav-links" aria-label="Điều hướng chính">
-            <Link to="/" className="cmc-nav-link">
+            <NavLink to="/" end className={({ isActive }) => `cmc-nav-link${isActive ? ' is-active' : ''}`}>
               <FontAwesomeIcon className="nav-icon" icon={faHouse} />
               <span className="nav-text">Trang chủ</span>
-            </Link>
+            </NavLink>
 
-            <Link to="/tim-truyen" className="cmc-nav-link">
+            <NavLink to="/tim-truyen" className={({ isActive }) => `cmc-nav-link${isActive ? ' is-active' : ''}`}>
               <FontAwesomeIcon className="nav-icon" icon={faMagnifyingGlass} />
               <span className="nav-text">Tìm truyện</span>
-            </Link>
+            </NavLink>
 
-            <Link to="/bang-xep-hang" className="cmc-nav-link">
+            <NavLink to="/bang-xep-hang" className={({ isActive }) => `cmc-nav-link${isActive ? ' is-active' : ''}`}>
               <FontAwesomeIcon className="nav-icon" icon={faRankingStar} />
               <span className="nav-text">Bảng xếp hạng</span>
-            </Link>
+            </NavLink>
           </nav>
 
           <div className="cmc-nav-actions">

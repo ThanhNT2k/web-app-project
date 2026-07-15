@@ -1,98 +1,120 @@
-# Tài Liệu Kiến Trúc CMC Truyện (ARCHITECTURE.md)
+# Kiến trúc hệ thống CMC Truyện
 
-Tài liệu này đặc tả chi tiết kiến trúc hệ thống, thiết kế cơ sở dữ liệu và cơ chế định tuyến (bao gồm việc chuyển hướng từ phiên bản trang cũ sang React).
+> Tài liệu hiện hành, đồng bộ với code trong `backend/src` và `frontend/src`.
 
----
+## Tổng quan
 
-## 🗺️ 1. Tổng Quan Kiến Trúc (System Architecture)
-
-CMC Truyện được xây dựng theo mô hình **Tách biệt hoàn toàn (Decoupled Frontend-Backend)**. Giao tiếp giữa hai đầu thông qua giao thức **RESTful API** sử dụng định dạng dữ liệu **JSON**.
+CMC Truyện sử dụng kiến trúc frontend/backend tách rời. React gọi REST API Express bằng JSON; JWT được gửi qua header `Authorization`. Backend kết nối PostgreSQL qua connection pool, Redis/BullMQ cho tác vụ nền và các dịch vụ bên ngoài cho AI, storage, OAuth và email.
 
 ```mermaid
-graph TD
-    Client[React Frontend / Browser] <-->|HTTPS / JSON / JWT| API[Node.js Express Server]
-    API <-->|SQL Queries| DB[(PostgreSQL / Supabase)]
-    API <-->|Vercel AI SDK| Gemini[Google Gemini API]
+flowchart LR
+  UI[React + Vite] -->|HTTPS / JSON / JWT| API[Express API]
+  API --> PG[(PostgreSQL)]
+  API --> REDIS[(Redis / BullMQ)]
+  WORKER[Moderation + Notification workers] --> REDIS
+  WORKER --> PG
+  API --> AI[Groq / Gemini]
+  API --> STORAGE[Supabase Storage]
+  API --> MAIL[Resend]
+  API --> GOOGLE[Google OAuth]
 ```
 
----
+## Backend
 
-## 🗄️ 2. Thiết Kế Cơ Sở Dữ Liệu (Database Schema)
+`backend/src/app.js` cấu hình security middleware, CORS, JSON parser, static uploads, health check và mount toàn bộ router dưới `/api`.
 
-Cơ sở dữ liệu của hệ thống gồm **11 bảng** quan hệ chặt chẽ với nhau, được host trên Supabase (PostgreSQL):
+| Lớp | Trách nhiệm |
+|---|---|
+| `config/` | Environment, PostgreSQL pool, Redis, queue và Supabase |
+| `routes/` | Định tuyến REST, authentication, authorization và upload middleware |
+| `controllers/` | Validation, orchestration và HTTP response |
+| `models/` | SQL query và một số Sequelize model |
+| `services/` | AI, queue, email, OTP, moderation, notification và import file |
+| `workers/` | Consumer BullMQ cho moderation và notification |
+| `scripts/migrations/` | Migration SQL chạy theo thứ tự tên file |
+
+Backend dùng Express 4, không phải Express 5. Truy vấn chính sử dụng `pg`; một số khu vực vẫn sử dụng Sequelize nên không nên mô tả dự án là “không dùng ORM”.
+
+## Dữ liệu
+
+Các nhóm bảng chính:
+
+- Nội dung: `stories`, `chapters`, `tags`, `story_tags`, `story_collaborators`.
+- Người dùng: `users`, `user_preferences`, `notification_preferences`.
+- Tương tác: `reading_history`, `user_chapter_reads`, `user_follows`, `ratings`.
+- Cộng đồng: `comments`, `comment_votes`, `reports`.
+- Vận hành: `notifications`, `audit_logs`, `bad_words`, `ai_summaries`.
 
 ```mermaid
 erDiagram
-    users ||--o{ stories : "uploader"
-    users ||--o{ reading_history : "tracks"
-    users ||--o{ user_follows : "follows"
-    users ||--o{ comments : "writes"
-    users ||--o{ user_preferences : "customizes"
-    users ||--o{ reports : "creates"
-    stories ||--o{ chapters : "contains"
-    stories ||--o{ reading_history : "referenced_in"
-    stories ||--o{ user_follows : "referenced_in"
-    stories ||--o{ comments : "commented_on"
-    stories ||--o{ story_tags : "has_tags"
-    tags ||--o{ story_tags : "classified_by"
-    chapters ||--o{ comments : "commented_on"
-    chapters ||--o| ai_summaries : "summarized_by"
-    chapters ||--o{ reports : "reported_chapter"
+  users ||--o{ stories : uploads
+  users ||--o{ user_follows : follows
+  users ||--o{ reading_history : reads
+  users ||--o{ comments : writes
+  stories ||--o{ chapters : contains
+  stories ||--o{ story_tags : classified
+  tags ||--o{ story_tags : assigned
+  stories ||--o{ story_collaborators : shared_with
+  stories ||--o{ ratings : rated
+  stories ||--o{ reports : reported
+  chapters ||--o| ai_summaries : summarized
+  comments ||--o{ comment_votes : receives
+  users ||--o{ notifications : receives
 ```
 
-### Các bảng chi tiết:
-1.  **`users`**: Thông tin tài khoản người dùng và vai trò phân quyền (`role`: Admin, Moderator, Uploader, User, Guest), trạng thái kích hoạt (`is_active`).
-2.  **`stories`**: Thông tin các bộ truyện (tên, tác giả, uploader, mô tả, thể loại, trạng thái, ẩn bởi admin `hidden_by_admin`).
-3.  **`chapters`**: Các chương truyện thuộc bộ truyện tương ứng.
-4.  **`reading_history`**: Lịch sử đọc của người dùng, gồm chương đọc cuối cùng, thời gian đọc và tỷ lệ hoàn thành.
-5.  **`user_follows`**: Danh sách các bộ truyện đang theo dõi.
-6.  **`comments`**: Bình luận của người dùng trên truyện/chương (chứa trạng thái kiểm duyệt `status`).
-7.  **`user_preferences`**: Tùy chỉnh cá nhân (cỡ chữ, giãn dòng, giao diện dark mode).
-8.  **`ai_summaries`**: Cache tóm tắt của chương truyện do AI sinh ra.
-9.  **`reports`**: Báo cáo vi phạm nội dung chương truyện gửi lên Admin/Moderator.
-10. **`tags`**: Thẻ từ khóa phân loại truyện.
-11. **`story_tags`**: Liên kết N-N giữa truyện và thẻ từ khóa.
-12. **`bad_words`**: Danh sách từ khóa nhạy cảm bị cấm/lọc tự động (mức độ tier 1, 2, 3).
+Schema cơ sở nằm tại `backend/scripts/schema.sql`. Migration tăng dần nằm tại `backend/src/scripts/migrations/` và chạy bằng `npm run db:migrate`.
 
----
+## Authentication và RBAC
 
-## 🔀 3. Định Tuyến & Điều Hướng (Routing & Legacy URL Migration)
+- JWT được xác thực bởi `authMiddleware.js`.
+- `optionalAuth` cho phép endpoint công khai nhận thêm context người dùng nếu có token.
+- `roleMiddleware.js` bảo vệ route theo `Admin`, `Moderator`, `Uploader`, `User`.
+- Guest không phải giá trị role lưu trong database; đó là request không có phiên đăng nhập.
+- Audit middleware ghi lại các mutation quản trị quan trọng và loại bỏ dữ liệu nhạy cảm.
 
-Để đảm bảo các liên kết cũ từ trang HTML tĩnh cũ không bị lỗi (404) khi nâng cấp lên React, hệ thống triển khai cơ chế điều hướng 2 lớp:
+Luồng xuất bản truyện:
 
-### Lớp 1: File HTML Redirect Tĩnh (`frontend/public/pages/*.html`)
-Khi deploy cùng một domain, các file HTML cũ tại thư mục `pages/` trước đây được giả lập bằng các file redirect tĩnh nằm trong thư mục `public/pages/` của React. Các file này chứa script để đọc tham số URL và chuyển hướng sang Router của React.
+```mermaid
+stateDiagram-v2
+  [*] --> pending: Uploader tạo truyện
+  pending --> approved: Moderator duyệt
+  pending --> changes_requested: Yêu cầu chỉnh sửa
+  pending --> rejected: Từ chối
+  changes_requested --> pending: Uploader cập nhật
+  approved --> hidden: Admin ẩn
+```
 
-### Lớp 2: Thành phần `LegacyRedirect.jsx` trong React Router
-Thành phần này đón nhận các yêu cầu truy cập từ URL cũ và thực hiện ánh xạ sang URL mới.
+Uploader chỉ được thêm/import chương khi truyện đáp ứng điều kiện workflow kiểm duyệt.
 
-#### Bảng ánh xạ URL cũ sang URL mới:
+## Queue và worker
 
-| URL Cũ (Legacy HTML) | URL Mới (React Router) |
-|---|---|
-| `/pages/story.html` | `/browse` |
-| `/pages/story.html?genre=...` | `/browse?category=...` |
-| `/pages/reader.html?storyId=1&chapterId=2` | `/story/1/chapter/2` |
-| `/pages/profile.html` | `/profile` |
-| `/pages/account.html` | `/account` |
-| `/pages/admin.html` | `/admin` |
+`backend/src/startWorker.js` khởi động đồng thời:
 
----
+- `moderationWorker`: xử lý từ khóa và trạng thái nội dung theo tier.
+- `notificationWorker`: tạo/gửi notification liên quan.
 
-## 🛡️ 4. Xác Thực & Phân Quyền (Authentication & Middleware)
+API và worker dùng chung Redis qua `REDIS_URL`. Khi phát triển tính năng queue, cần chạy worker riêng ngoài Express server.
 
-*   **Xác thực (Authentication):** Sử dụng token JWT (được lưu tại `localStorage` phía Client). Khi client thực hiện API request, token được tự động đính kèm vào header `Authorization: Bearer <token>`.
-*   **Tầng Middleware ở Backend:**
-    *   `authMiddleware.js`: Giải mã JWT token để xác nhận danh tính người dùng. Nếu token không hợp lệ hoặc hết hạn, trả về mã lỗi `401 Unauthorized`.
-    *   `roleMiddleware.js`: Kiểm tra vai trò của người dùng (`role`) đối với các endpoint bảo mật. Ví dụ: Endpoint thêm truyện mới (`POST /api/stories`) chỉ cho phép role là `Uploader` hoặc `Admin` truy cập.
+## AI
 
----
+`aiService.js` gọi Groq (`llama-3.1-8b-instant`) trước; nếu không cấu hình hoặc thất bại thì fallback sang Gemini. Request có timeout 30 giây và kết quả được cache trong RAM; tóm tắt chương còn được lưu tại `ai_summaries`.
 
-## 📬 5. Xử Lý Hàng Đợi Nền & Kiểm Duyệt Bình Luận (BullMQ + Redis)
+API key chỉ tồn tại ở backend. Frontend không gọi trực tiếp nhà cung cấp AI.
 
-Hệ thống triển khai hàng đợi kiểm duyệt tự động để đảm bảo môi trường thảo luận sạch:
-*   **Hàng đợi (`moderationQueue`):** Khi người dùng gửi bình luận mới, nội dung được chuyển tiếp vào hàng đợi BullMQ chạy ngầm trên nền Redis.
-*   **Worker (`moderationWorker`):** Nhận job từ hàng đợi và tự động kiểm duyệt theo mức độ nghiêm trọng (tier) của từ khóa nhạy cảm trong bảng `bad_words`:
-    *   **Tier 1:** Từ chối hiển thị bình luận (`status: rejected`).
-    *   **Tier 2:** Ẩn bớt bằng ký tự sao (`status: masked`).
-    *   **Tier 3:** Đánh dấu là spam và gắn cờ cảnh báo vi phạm (`status: flagged`).
+## Hiệu năng
+
+- PostgreSQL pool tái sử dụng connection.
+- Index tập trung vào slug, story published, chapter number, comment status và các foreign key.
+- API chi tiết truyện gom tags/collaborators trong cùng query.
+- API danh sách chương không trả `content`; nội dung chỉ có ở endpoint chi tiết chương.
+- Pagination được giới hạn để tránh response quá lớn.
+- Frontend dùng skeleton screen và Optimistic UI có rollback.
+
+## Triển khai
+
+- Frontend: Vercel hoặc static hosting tương thích SPA.
+- Backend API và worker: hai process Render riêng.
+- PostgreSQL/Redis có thể chạy managed service hoặc Docker local.
+- `render.yaml` hiện khai báo web service và worker; database/Redis được cấu hình qua environment.
+
+Xem hướng dẫn chạy local trong [README](../../README.md) và endpoint trong [API_REFERENCE](API_REFERENCE.md).

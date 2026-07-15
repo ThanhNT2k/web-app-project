@@ -42,7 +42,7 @@ function ModeratorReportsPage() {
         <button className="btn btn-primary" onClick={load}>Lọc</button>
       </div>
 
-      {loading && <div>Đang tải...</div>}
+      {loading && <div className="management-loading" aria-label="Đang tải báo cáo" />}
 
       <div className="list-group">
         {reports.map((r) => (

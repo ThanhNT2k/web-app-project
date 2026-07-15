@@ -3,6 +3,7 @@ import ModeratorLayout from './layouts/ModeratorLayout';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LegacyRedirect from './components/LegacyRedirect';
+import ScrollToTop from './components/ScrollToTop';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
@@ -53,6 +54,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <LegacyRedirect />
 
           <Routes>

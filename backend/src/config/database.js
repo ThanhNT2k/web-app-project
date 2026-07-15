@@ -172,6 +172,15 @@ if (process.env.NODE_ENV !== 'test') {
       } catch (err) {
         console.error('[Database] Failed to verify/create ratings or user_chapter_reads table:', err.message);
       }
+
+      try {
+        // Add moderation_status column to story_tags for tracking tag moderation
+        await pool.query('ALTER TABLE story_tags ADD COLUMN IF NOT EXISTS moderation_status VARCHAR(30) NOT NULL DEFAULT \'approved\'');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_story_tags_moderation_status ON story_tags(story_id, moderation_status) WHERE moderation_status != \'approved\'');
+        console.log('[Database] Verified story_tags has moderation_status column');
+      } catch (err) {
+        console.error('[Database] Failed to verify/add moderation_status to story_tags:', err.message);
+      }
     })
     .catch((err) => console.error('[Database] Connection failed:', err.message));
 }

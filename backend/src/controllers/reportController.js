@@ -11,6 +11,15 @@ const reportSchema = z.object({
 }).refine(
   (data) => data.story_id || data.chapter_id || data.comment_id,
   { message: 'Báo cáo phải gắn với truyện, chương hoặc bình luận.' }
+).refine(
+  (data) => {
+    // If reason is 'OTHER', description must be non-empty
+    if (data.reason === 'OTHER') {
+      return data.description && data.description.trim().length > 0;
+    }
+    return true;
+  },
+  { message: 'Khi chọn "Khác", vui lòng cung cấp mô tả chi tiết về vấn đề.' }
 );
 
 const REPORT_STATUSES = ['NEW', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED'];
@@ -172,7 +181,7 @@ const processReport = async (req, res) => {
        FROM reports r
        LEFT JOIN comments c ON c.id = r.comment_id
        WHERE r.id = $1
-       FOR UPDATE`,
+       FOR UPDATE OF r`,
       [reportId]
     );
     const report = reportResult.rows[0];

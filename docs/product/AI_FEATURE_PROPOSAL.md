@@ -1,126 +1,95 @@
-# AI_FEATURE_PROPOSAL.md — CMC Truyện
+# Tính năng AI của CMC Truyện
 
-> **Tính năng AI:** Tóm Tắt Chương/Truyện (AI Chapter & Story Summary)
+> Trạng thái: đã triển khai nền tảng. Tài liệu này mô tả phạm vi hiện tại và hướng phát triển tiếp theo.
 
----
+## Mục tiêu
 
-## 1. Tổng Quan
+AI trong CMC Truyện hỗ trợ độc giả hiểu và khám phá nội dung nhanh hơn, không thay thế tác giả, Moderator hoặc quyết định quản trị.
 
-| | Chi tiết |
-|----------|----------|
-| **Tên tính năng** | **AI Summary** — Tóm tắt chương hoặc cả bộ truyện |
-| **Người dùng** | Người đọc muốn nhớ lại cốt truyện hoặc bắt kịp nhanh chóng |
-| **Cách sử dụng** | Bấm nút "🤖 Tóm tắt" trên màn hình đọc → AI tạo summary 150-200 từ |
+## Tính năng hiện có
 
----
+### Tóm tắt chương
 
-## 2. Giá Trị Cho Người Dùng
+- Đầu vào: nội dung chương đã lưu trên backend.
+- Đầu ra: tóm tắt ngắn bằng tiếng Việt.
+- API: `GET /api/chapters/:id/summary`.
+- Cache: RAM theo nội dung và bảng `ai_summaries` theo chapter.
+- UI: `AIChapterSummary.jsx` có skeleton, copy và regenerate khi được phép.
 
-**Kịch bản thực tế:**
+### Gợi ý truyện cá nhân hóa
 
-> Minh (sinh viên) đọc "Đỉnh Phong" tới chương 245 rồi bận thi 1 tuần. Khi quay lại, anh không nhớ cốt truyện. Thay vì đọc lại chương 244 (dài 3000 chữ), anh bấm "Tóm tắt chương" — đọc 150 chữ trong 20 giây — rồi tiếp tục chương 245.
+- API: `GET /api/ai/recommendations`.
+- Tín hiệu: lịch sử đọc, thời gian đọc, completion, follow và metadata/tag truyện.
+- Kết quả được đối chiếu với dữ liệu truyện hiện có trước khi trả frontend.
+- Không áp dụng cho Guest vì không có user history đáng tin cậy.
 
-**Giá trị:**
-- ⏱️ Tiết kiệm 5-10 phút mỗi lần quay lại đọc
-- 📖 Giúp bắt kịp cốt truyện dễ dàng
-- 🔄 Khuyến khích người dùng quay lại đọc thường xuyên hơn
+## Nhà cung cấp và fallback
 
----
-
----
-
-## 3. Thiết Kế Tính Năng
-
-### 3.1 Đầu Vào (Input)
-
-```
-Người dùng bấm nút "🤖 Tóm tắt" → Backend lấy:
-- Nội dung chương hiện tại (max 5000 ký tự)
-- Gửi lên Gemini API với system prompt:
-  "Bạn là trợ lý tóm tắt truyện. Hãy tóm tắt chương sau 
-   trong 150-200 từ bằng Tiếng Việt. Chỉ nêu sự kiện chính."
+```text
+Request backend
+  ├─ Groq / llama-3.1-8b-instant (ưu tiên)
+  ├─ Google Gemini (fallback)
+  └─ lỗi có kiểm soát nếu không nhà cung cấp nào khả dụng
 ```
 
-**Không gửi:**
-- Thông tin người dùng (email, SĐT)
-- Dữ liệu lịch sử đọc cá nhân
-- Bất kỳ dữ liệu nhạy cảm nào
+- Timeout request AI: 30 giây.
+- API key chỉ đặt trong `backend/.env`.
+- Frontend không được gọi trực tiếp Groq/Gemini.
+- Không ghi prompt chứa secret, token hoặc dữ liệu cá nhân vào log.
 
-### 3.2 Đầu Ra (Output)
+## Nguyên tắc sản phẩm
 
-**Tóm tắt từ AI (150-200 từ):**
-```
-Ví dụ output:
-"Trong chương này, Lý Tiêu Dao đối mặt với Ma Tôn tại đỉnh Thái Hư. 
-Sau trận chiến kéo dài, anh phát hiện bí mật về nguồn gốc của mình..."
-```
+1. Người dùng chủ động yêu cầu tóm tắt; không gửi toàn bộ thư viện sang AI nền.
+2. Hiển thị rõ nội dung do AI tạo và có thể sai.
+3. Không dùng AI để tự động khóa tài khoản hoặc duyệt/từ chối truyện mà không có rule/human review.
+4. Ưu tiên cache để giảm latency, chi phí và dữ liệu gửi ra ngoài.
+5. Khi AI lỗi, trải nghiệm đọc truyện chính vẫn hoạt động.
 
-**Hiển thị trên UI:**
-```
-┌─────────────────────────────────┐
-│ 🤖 Tóm tắt Chương 244 (do AI)  │
-│                                 │
-│ Trong chương này, Lý Tiêu Dao... │
-│                                 │
-│ ⚠️ Nội dung do AI tạo, có thể   │
-│    không 100% chính xác         │
-│                                 │
-│ [✓ Tốt] [✗ Bỏ qua]            │
-└─────────────────────────────────┘
-```
+## Luồng tóm tắt
 
----
-
----
-
-## 4. Kiểm Soát Con Người
-
-- Tóm tắt **không tự động hiển thị** — chỉ kích hoạt khi người dùng bấm nút
-- Rõ ràng ghi **"Do AI tạo"** → người dùng biết đây là AI output
-- Cảnh báo: **"Có thể không 100% chính xác"** → người dùng không tin tưởng mù quáng
-- Nút [✗ Bỏ qua] → dễ dàng tắt đi nếu không cần
-
----
-
-## 5. Rủi Ro & Cách Phòng Tránh
-
-| Rủi Ro | Mức Độ | Cách Xử Lý |
-|--------|--------|-----------|
-| **AI Bịa Đặt** — Tóm tắt sai nội dung chương | Trung bình | Gửi **toàn bộ nội dung** vào AI (không tóm tắt trước) |
-| **Spoiler** — Vô tình tiết lộ twist | Thấp | Thêm system prompt: "Nếu có cliffhanger, hãy dừng trước" |
-| **Chi Phí API Cao** — Nhiều người bấm cùng lúc | Trung bình | **Cache** tóm tắt mỗi chương (TTL 7 ngày) — cùng chương gọi API 1 lần |
-| **Timeout** — API quá chậm | Thấp | Hiển thị "Tóm tắt không khả dụng, thử lại sau" |
-
----
-
-## 6. Tech Stack
-
-```
-Frontend:   Vite + React 18
-            → Nút "Tóm tắt" trên Chapter Reader
-
-Backend:    Node.js + Express
-            → GET /api/chapters/:id/summary
-            → Kiểm tra cache (RAM & DB) -> gọi AI API nếu trống -> trả về kết quả
-
-AI Model:   Llama 3.1 8B qua Groq API (Ưu tiên) / Gemini 1.5 Flash (Dự phòng)
-            - Tốc độ phản hồi nhanh (<2 giây)
-            - Tối ưu hóa chi phí API
-
-Cache:      In-memory RAM (1 giờ) + Database Cache (Lâu dài)
-Database:   PostgreSQL (Bảng ai_summaries)
+```mermaid
+sequenceDiagram
+  participant UI as React UI
+  participant API as Express API
+  participant DB as PostgreSQL
+  participant AI as Groq/Gemini
+  UI->>API: GET chapter summary
+  API->>DB: Tìm cached summary
+  alt Cache hit
+    DB-->>API: Summary
+  else Cache miss
+    API->>AI: Prompt + chapter content
+    AI-->>API: Summary
+    API->>DB: Lưu ai_summaries
+  end
+  API-->>UI: JSON summary
 ```
 
----
+## Chỉ số đánh giá
 
-## 7. Timeline
+- P50/P95 latency cho cache hit và cache miss.
+- Tỷ lệ cache hit.
+- Tỷ lệ request AI lỗi/timeout/fallback.
+- Tỷ lệ người dùng mở tóm tắt và tiếp tục đọc.
+- CTR và completion rate của truyện được gợi ý.
+- Chi phí AI trên mỗi người dùng hoạt động.
 
-| Giai Đoạn | Công Việc | Thời Gian |
-|-----------|-----------|----------|
-| **MVP** | Button + API endpoint + caching | 1 tuần |
-| **V1.1** | User feedback (good/bad) | Tuần 2 |
-| **V1.2** | Tóm tắt toàn bộ truyện (multi-chapter) | Tuần 3+ |
+## Hướng phát triển
 
----
+| Ưu tiên | Hạng mục | Điều kiện |
+|---|---|---|
+| P0 | Quan sát latency, error và fallback | Không log nội dung nhạy cảm |
+| P0 | Rate limit riêng cho AI | Theo user và endpoint |
+| P1 | Cache Redis dùng chung nhiều instance | Có TTL và version prompt |
+| P1 | Feedback “hữu ích/không hữu ích” | Dùng để đánh giá, không tự fine-tune |
+| P2 | Tóm tắt theo mạch nhiều chương | Phải giới hạn context và chi phí |
+| P2 | Giải thích lý do đề xuất | Không tiết lộ dữ liệu người dùng khác |
 
-*Tài liệu này được cập nhật theo hướng tóm tắt AI — CMC Truyện Team*
+## Ngoài phạm vi hiện tại
+
+- Sinh hoặc viết lại chương thay tác giả.
+- Huấn luyện model bằng nội dung người dùng tải lên.
+- Auto moderation hoàn toàn dựa trên LLM.
+- Gửi password, token, email hoặc dữ liệu private vào prompt.
+
+Chi tiết kỹ thuật nằm tại [AI_PERSONALIZATION](../technical/AI_PERSONALIZATION.md) và quy tắc sử dụng tại [AI_USAGE_POLICY](../technical/AI_USAGE_POLICY.md).

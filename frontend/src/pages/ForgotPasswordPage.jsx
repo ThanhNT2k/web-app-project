@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import PasswordChecklist from '../components/PasswordChecklist';
 import API from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
+import { isStrongPassword, passwordsMatch } from '../utils/passwordValidation';
 
 /**
  * ForgotPasswordPage — 3 bước trong 1 trang:
@@ -21,23 +23,21 @@ function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const passwordValid =
-    newPassword.length >= 8 &&
-    /[A-Z]/.test(newPassword) &&
-    /[0-9]/.test(newPassword) &&
-    /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+  const passwordValid = isStrongPassword(newPassword);
+  const passwordConfirmed = passwordsMatch(newPassword, confirmPassword);
 
   // Step 1: Gửi OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     try {
       setLoading(true);
       await API.auth.forgotPassword(email.trim().toLowerCase());
       setSuccessMessage('Nếu email tồn tại, mã OTP đã được gửi. Vui lòng kiểm tra hộp thư (kể cả thư mục Spam).');
       setStep(2);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+      setError(getApiErrorMessage(err, 'Có lỗi xảy ra, vui lòng thử lại.'));
     } finally {
       setLoading(false);
     }
@@ -47,6 +47,7 @@ function ForgotPasswordPage() {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     if (otp.trim().length !== 6) {
       setError('Mã OTP gồm 6 chữ số.');
       return;
@@ -54,10 +55,10 @@ function ForgotPasswordPage() {
     try {
       setLoading(true);
       await API.auth.verifyOtp(email.trim().toLowerCase(), otp.trim());
-      setSuccessMessage('');
+      setSuccessMessage('Xác thực OTP thành công. Bạn có thể đặt mật khẩu mới.');
       setStep(3);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+      setError(getApiErrorMessage(err, 'Mã OTP không đúng hoặc đã hết hạn.'));
     } finally {
       setLoading(false);
     }
@@ -67,11 +68,12 @@ function ForgotPasswordPage() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     if (!passwordValid) {
       setError('Mật khẩu chưa đáp ứng đủ các tiêu chí bảo mật.');
       return;
     }
-    if (newPassword !== confirmPassword) {
+    if (!passwordConfirmed) {
       setError('Xác nhận mật khẩu không khớp.');
       return;
     }
@@ -85,7 +87,7 @@ function ForgotPasswordPage() {
       // Thành công → chuyển về trang login
       navigate('/login', { state: { message: 'Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập.' } });
     } catch (err) {
-      setError(err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+      setError(getApiErrorMessage(err, 'Có lỗi xảy ra, vui lòng thử lại.'));
     } finally {
       setLoading(false);
     }
@@ -203,7 +205,7 @@ function ForgotPasswordPage() {
                   <button
                     className="btn-cmc btn-cmc-primary w-100"
                     type="submit"
-                    disabled={loading || !passwordValid}
+                    disabled={loading || !passwordValid || !passwordConfirmed}
                   >
                     {loading ? 'Đang lưu...' : 'Đặt mật khẩu mới'}
                   </button>

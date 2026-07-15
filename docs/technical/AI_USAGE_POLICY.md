@@ -110,7 +110,7 @@ Khi cần AI giúp debug hoặc phân tích lỗi liên quan đến dữ liệu 
 Mỗi prompt chỉ nên giải quyết **1 vấn đề cụ thể**. Tránh prompt quá rộng:
 ```
 ❌ SAI: "Viết toàn bộ backend cho web truyện"
-✅ ĐÚNG: "Viết API endpoint GET /api/stories/:id trả về thông tin truyện và danh sách chương, dùng Express.js và Prisma ORM"
+✅ ĐÚNG: "Tối ưu endpoint GET /api/stories/:id bằng Express.js và PostgreSQL, giữ nguyên response contract và bổ sung test"
 ```
 
 ---

@@ -100,29 +100,47 @@ Truy cập website ──> Tìm kiếm truyện ──> Xem thông tin truyện 
     4.  Hệ thống hiển thị thông báo thành công và cập nhật nút trạng thái thành "Đang theo dõi".
 *   **Kết quả:** Bộ truyện được hiển thị trong danh sách yêu thích tại trang cá nhân của người dùng.
 
-### Kịch bản 3: Admin/Uploader thêm truyện mới
-*   **Tác nhân:** Quản trị viên (`Admin`) hoặc Người đăng truyện (`Uploader`).
-*   **Tiền điều kiện:** Đăng nhập thành công với quyền hợp lệ.
+### Kịch bản 3: Uploader thêm truyện mới (tạo và chờ duyệt)
+*   **Tác nhân:** Người đăng truyện (`Uploader`).
+*   **Tiền điều kiện:** Đăng nhập thành công với quyền Uploader.
 *   **Luồng chính:**
     1.  Người dùng truy cập vào trang Dashboard quản trị.
     2.  Chọn chức năng "Đăng truyện mới" (Add Story).
     3.  Nhập đầy đủ thông tin truyện (tên truyện, tác giả, mô tả, ảnh bìa, thể loại).
     4.  Nhấn nút "Tạo truyện".
-    5.  Hệ thống kiểm tra tính hợp lệ của dữ liệu và lưu vào cơ sở dữ liệu.
-*   **Kết quả:** Truyện mới được đăng thành công và hiển thị công khai trên hệ thống.
+    5.  Hệ thống lưu truyện vào cơ sở dữ liệu với trạng thái `moderation_status = 'pending'`.
+    6.  Admin/Moderator duyệt: Nếu duyệt ✓, truyện chuyển `approved` và hiển thị công khai; Nếu cần sửa, đánh dấu `changes_requested`.
+*   **Kết quả:** Truyện được đăng thành công, chờ duyệt từ Admin/Moderator.
+
+### Kịch bản 3.5: Admin duyệt truyện của Uploader
+*   **Tác nhân:** Quản trị viên (`Admin`) hoặc Moderator (`Moderator`).
+*   **Tiền điều kiện:** Truyện trong hàng chờ duyệt (trạng thái `pending`).
+*   **Luồng chính:**
+    1.  Admin truy cập Dashboard hoặc Moderator vào khu vực "Hàng chờ truyện".
+    2.  Xem chi tiết truyện: tiêu đề, tác giả, mô tả, 3-5 chương đầu.
+    3.  Quyết định: Duyệt ✓, Yêu cầu sửa, hoặc Từ chối.
+    4.  Nếu duyệt: truyện chuyển `approved` → hiển thị công khai.
+    5.  Ghi log audit: ai duyệt, lúc nào, quyết định gì.
+*   **Kết quả:** Truyện được phê duyệt hoặc yêu cầu chỉnh sửa, uploader nhận thông báo.
 
 ---
 
-## 🗃️ 5. Nhóm Yêu Cầu Lớn (Epics)
+## 🗃️ 5. Nhóm Yêu Cầu Lớn (Epics) & Phân Quyền
 
-1.  **Epic 1 - Authentication (Xác thực):** Đăng ký tài khoản, đăng nhập JWT, đăng xuất.
-2.  **Epic 2 - Story Discovery (Khám phá):** Xem danh sách truyện, tìm kiếm truyện theo từ khóa, lọc theo thể loại.
-3.  **Epic 3 - Reading Experience (Trải nghiệm đọc):** Xem trang chi tiết truyện, đọc chương truyện, điều chỉnh giao diện đọc (Dark Mode, cỡ chữ), chuyển chương nhanh.
-4.  **Epic 4 - User Engagement (Tương tác độc giả):** Viết bình luận, quản lý danh sách truyện yêu thích, lưu tự động lịch sử đọc.
-5.  **Epic 5 - User Profile (Thông tin cá nhân):** Xem thông tin cá nhân, cập nhật tài khoản (mật khẩu, avatar).
-6.  **Epic 6 - Content Management (Quản lý nội dung):** Thêm, sửa, xóa truyện và đăng chương mới (dành cho Admin/Uploader).
-7.  **Epic 7 - User Management (Quản lý người dùng):** Xem danh sách người dùng, thay đổi quyền hạn tài khoản (dành cho Admin).
-8.  **Epic 8 - Reporting & Analytics (Thống kê báo cáo):** Dashboard trực quan hóa số lượng truyện, lượt đọc và người dùng đăng ký.
+| Epic | Mô tả | Uploader | Admin | Moderator | User | Guest |
+|------|-------|----------|-------|-----------|------|-------|
+| **Epic 1** | Authentication (Xác thực): Đăng ký, đăng nhập JWT, đăng xuất | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Epic 2** | Story Discovery: Tìm, lọc, xem danh sách truyện | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Epic 3** | Reading Experience: Đọc, điều chỉnh giao diện, auto-save progress | ✓ | ✓ | ✓ | ✓ | ~ |
+| **Epic 4** | User Engagement: Bình luận, follow, lịch sử đọc | ✓ | ✓ | ✓ | ✓ | ✗ |
+| **Epic 5** | User Profile: Thông tin cá nhân, avatar | ✓ | ✓ | ✓ | ✓ | ✗ |
+| **Epic 6a** | **Content Creation**: Tạo truyện (chờ duyệt) | ✓ | ✗ | ✗ | ✗ | ✗ |
+| **Epic 6b** | **Content Approval**: Duyệt/từ chối truyện chờ | ✗ | ✓ | ✓ | ✗ | ✗ |
+| **Epic 6c** | **Content Management**: Sửa/xóa/ẩn truyện | ~ | ✓ | ✓ | ✗ | ✗ |
+| **Epic 7** | User Management: Khóa tài khoản, phân quyền | ✗ | ✓ | ✗ | ✗ | ✗ |
+| **Epic 8** | Reporting & Analytics: Dashboard thống kê | ✗ | ✓ | ~ | ✗ | ✗ |
+
+**Ký hiệu:** ✓ = Có quyền | ~ = Quyền hạn chế | ✗ = Không có quyền
 
 ---
 
@@ -136,8 +154,9 @@ Truy cập website ──> Tìm kiếm truyện ──> Xem thông tin truyện 
 | **US04** | Là một thành viên đã đăng ký, tôi muốn lưu truyện yêu thích, để dễ dàng đọc lại sau này. | Epic 4 |
 | **US05** | Là một thành viên đã đăng ký, tôi muốn bình luận truyện, để thảo luận với các độc giả khác. | Epic 4 |
 | **US06** | Là một thành viên đã đăng ký, tôi muốn lưu lại lịch sử đọc truyện, để có thể đọc tiếp từ vị trí tạm dừng trước đó. | Epic 4 |
-| **US07** | Là một uploader/admin, tôi muốn đăng tải truyện mới, để độc giả có thể tiếp cận nội dung mới. | Epic 6 |
-| **US08** | Là một admin, tôi muốn xóa truyện, để loại bỏ các nội dung không phù hợp hoặc vi phạm chính sách. | Epic 6 |
+| **US07** | Là một uploader, tôi muốn đăng tải truyện mới, để độc giả có thể tiếp cận nội dung mới sau khi duyệt. | Epic 6 |
+| **US07B** | Là một admin/moderator, tôi muốn duyệt truyện chờ, để kiểm chứng nội dung trước khi công khai. | Epic 6 |
+| **US08** | Là một admin, tôi muốn xóa/ẩn truyện, để loại bỏ các nội dung không phù hợp hoặc vi phạm chính sách. | Epic 6 |
 | **US09** | Là một admin, tôi muốn quản lý người dùng (khoá/phân quyền), để đảm bảo hệ thống an toàn. | Epic 7 |
 | **US10** | Là một admin, tôi muốn xem thống kê hệ thống, để theo dõi hiệu suất. | Epic 8 |
 | **US11** | Là một độc giả, tôi muốn báo cáo vi phạm chương truyện, để hệ thống luôn sạch và lành mạnh. | Epic 4 |
@@ -156,8 +175,9 @@ Dưới đây là bảng trạng thái danh sách công việc ưu tiên thực 
 |---|---|---|---|---|
 | **PB01** | View Story Details | Core (Xương sống) | **HIGH** | ☑ Completed |
 | **PB02** | Read Chapters | Core (Xương sống) | **HIGH** | ☑ Completed |
-| **PB03** | Add Story (uploader/admin) | Core (Xương sống) | **HIGH** | ☑ Completed |
-| **PB04** | Manage Stories | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB03** | Add Story (uploader only, pending approval) | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB03B** | Approve Stories (admin/moderator moderation) | Core (Xương sống) | **HIGH** | ☑ Completed |
+| **PB04** | Manage Stories (edit/delete/hide) | Core (Xương sống) | **HIGH** | ☑ Completed |
 | **PB05** | Admin Dashboard (basic) | Core (Xương sống) | **HIGH** | ☑ Completed |
 | **PB06** | Search Stories | Expansion (Mở rộng) | **HIGH** | ☑ Completed |
 | **PB07** | User Registration | Expansion (Mở rộng) | **HIGH** | ☑ Completed |

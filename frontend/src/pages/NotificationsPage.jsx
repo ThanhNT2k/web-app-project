@@ -51,44 +51,52 @@ function NotificationsPage() {
   };
 
   const handleMarkAsRead = async (id) => {
+    const previous = notifications;
+    setNotifications((items) => items.map((item) => item.id === id ? { ...item, is_read: true } : item));
     try {
       await API.notifications.markAsRead(id);
-      setNotifications(
-        notifications.map((n) =>
-          n.id === id ? { ...n, is_read: true } : n
-        )
-      );
     } catch (error) {
+      setNotifications(previous);
       console.error('Error marking as read:', error);
     }
   };
 
   const handleMarkAllAsRead = async () => {
+    const previous = notifications;
+    setNotifications((items) => items.map((item) => ({ ...item, is_read: true })));
     try {
       await API.notifications.markAllAsRead();
-      await fetchNotifications();
     } catch (error) {
+      setNotifications(previous);
       console.error('Error marking all as read:', error);
     }
   };
 
   const handleDelete = async (id) => {
+    const previous = notifications;
+    const previousTotal = total;
+    setNotifications((items) => items.filter((item) => item.id !== id));
+    setTotal((value) => Math.max(0, value - 1));
     try {
       await API.notifications.delete(id);
-      setNotifications(notifications.filter((n) => n.id !== id));
-      setTotal(Math.max(0, total - 1));
     } catch (error) {
+      setNotifications(previous);
+      setTotal(previousTotal);
       console.error('Error deleting notification:', error);
     }
   };
 
   const handleDeleteAll = async () => {
     if (!window.confirm('Bạn có chắc muốn xóa tất cả thông báo?')) return;
+    const previous = notifications;
+    const previousTotal = total;
+    setNotifications([]);
+    setTotal(0);
     try {
       await API.notifications.deleteAll();
-      setNotifications([]);
-      setTotal(0);
     } catch (error) {
+      setNotifications(previous);
+      setTotal(previousTotal);
       console.error('Error deleting all notifications:', error);
     }
   };
@@ -201,7 +209,7 @@ function NotificationsPage() {
 
         {/* Notifications list */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="loading-text text-center py-12">
             <p className="notifications-page-subtitle">Đang tải thông báo...</p>
           </div>
         ) : notifications.length === 0 ? (
