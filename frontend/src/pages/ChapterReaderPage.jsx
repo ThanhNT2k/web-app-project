@@ -33,6 +33,7 @@ function ChapterReaderPage() {
   const readTimeRef = useRef(0);
   const scrollRef = useRef(0);
   const hasInitialSavedRef = useRef(false);
+  const hasInitialRestoreRef = useRef(false);
 
   const chapterNumericId = useMemo(() => chapter?.id || null, [chapter]);
 
@@ -44,6 +45,7 @@ function ChapterReaderPage() {
       if (prefs.fontFamily) setFontFamily(prefs.fontFamily);
     }
     hasInitialSavedRef.current = false;
+    hasInitialRestoreRef.current = false;
     
     // Reset scroll position for new chapter
     window.scrollTo(0, 0);
@@ -159,6 +161,9 @@ function ChapterReaderPage() {
   // Restore scroll position when chapter loads
   useEffect(() => {
     if (!storyProgress) return;
+    if (hasInitialRestoreRef.current) return; // Only restore once per chapter
+    
+    hasInitialRestoreRef.current = true;
     
     // Reset to top initially, then restore saved position after a small delay
     // to ensure DOM is fully rendered
