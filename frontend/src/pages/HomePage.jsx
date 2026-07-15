@@ -200,7 +200,7 @@ function HomePage() {
                 ))}
               </div>
             ) : featuredStories.length > 0 ? (
-              <AutoSlidingStoryRow className="stories-grid stories-grid-featured" label="Truyện nổi bật">
+              <AutoSlidingStoryRow className="stories-grid stories-grid-featured" label="Truyện nổi bật" autoSlide={false}>
                 {featuredStories.slice(0, 10).map((story) => (
                   <StoryCard key={`feat-${story.id}`} story={story} compact />
                 ))}
@@ -228,7 +228,7 @@ function HomePage() {
                 ))}
               </div>
             ) : recentStories.length > 0 ? (
-              <AutoSlidingStoryRow className="stories-grid-horizontal" label="Truyện cập nhật gần đây" variant="horizontal">
+              <AutoSlidingStoryRow className="stories-grid-horizontal" label="Truyện cập nhật gần đây" variant="horizontal" autoSlide={false}>
                 {recentStories.map((story) => (
                   <StoryCard key={`recent-${story.id}`} story={story} horizontal={true} />
                 ))}

@@ -11,7 +11,7 @@ import {
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=80';
 const MAX_FEATURED_STORIES = 10;
-const AUTO_SLIDE_DELAY = 4000;
+const AUTO_SLIDE_DELAY = 8000;
 
 function getStoryPath(story) {
   return `/story/${story.id}-${story.slug}`;

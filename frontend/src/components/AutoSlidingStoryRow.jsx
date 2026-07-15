@@ -4,7 +4,13 @@ import { FontAwesomeIcon, faArrowLeft, faArrowRight } from '../lib/icons';
 
 const AUTO_SLIDE_DELAY = 4000;
 
-function AutoSlidingStoryRow({ children, className = '', label = 'Danh sách truyện', variant = 'standard' }) {
+function AutoSlidingStoryRow({
+  children,
+  className = '',
+  label = 'Danh sách truyện',
+  variant = 'standard',
+  autoSlide = true,
+}) {
   const trackRef = useRef(null);
   const [navigation, setNavigation] = useState({ canScroll: false, atStart: true, atEnd: false });
   const [autoResetKey, setAutoResetKey] = useState(0);
@@ -59,14 +65,14 @@ function AutoSlidingStoryRow({ children, className = '', label = 'Danh sách tru
   }, [itemCount, updateNavigation]);
 
   useEffect(() => {
-    if (itemCount <= 1) return undefined;
+    if (!autoSlide || itemCount <= 1) return undefined;
 
     const timer = window.setInterval(() => {
       move(1);
     }, AUTO_SLIDE_DELAY);
 
     return () => window.clearInterval(timer);
-  }, [autoResetKey, itemCount]);
+  }, [autoResetKey, autoSlide, itemCount]);
 
   return (
     <div className="auto-sliding-story-shell">
