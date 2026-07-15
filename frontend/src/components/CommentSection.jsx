@@ -117,12 +117,29 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
       return;
     }
 
+    const previousComments = comments;
+    setComments((items) => items.map((comment) => {
+      if (comment.id !== id) return comment;
+      const previousVote = Number(comment.my_vote) || 0;
+      const nextVote = Number(voteValue) || 0;
+      const upvoteCount = Number(comment.upvote_count) || 0;
+      const downvoteCount = Number(comment.downvote_count) || 0;
+      return {
+        ...comment,
+        my_vote: nextVote || null,
+        upvote_count: Math.max(0, upvoteCount - (previousVote === 1 ? 1 : 0) + (nextVote === 1 ? 1 : 0)),
+        downvote_count: Math.max(0, downvoteCount - (previousVote === -1 ? 1 : 0) + (nextVote === -1 ? 1 : 0)),
+        vote_score: (Number(comment.vote_score) || 0) - previousVote + nextVote,
+      };
+    }));
+
     try {
       setVoteSubmittingMap((prev) => ({ ...prev, [id]: true }));
       setError('');
       await API.comments.vote(id, voteValue);
       await loadComments();
     } catch (err) {
+      setComments(previousComments);
       setError(err?.response?.data?.message || 'Không thể bình chọn lúc này.');
     } finally {
       setVoteSubmittingMap((prev) => ({ ...prev, [id]: false }));
@@ -330,7 +347,7 @@ function CommentSection({ storyId, chapterId = null, mode = 'story' }) {
         {title} ({comments.length})
       </h4>
 
-      {loading ? <p className="text-muted small">Đang tải...</p> : null}
+      {loading ? <div className="loading-text" aria-label="Đang tải bình luận" /> : null}
 
       {error ? <p className="text-danger small mb-2">{error}</p> : null}
 

@@ -23,6 +23,35 @@ const FALLBACK_COVER =
 
 const CHAPTERS_SCROLL_LIMIT = 1000;
 
+function StoryDetailSkeleton() {
+  return (
+    <main className="cmc-main storyqq-page story-detail-skeleton" aria-busy="true">
+      <div className="storyqq-page-shell">
+        <section className="storyqq-header panel-card storyqq-panel">
+          <div className="storyqq-cover-column">
+            <div className="skeleton-box story-detail-skeleton-cover" />
+            <div className="skeleton-box story-detail-skeleton-meta" />
+          </div>
+          <div className="storyqq-header-content story-detail-skeleton-content">
+            <div className="skeleton-box story-detail-skeleton-title" />
+            <div className="skeleton-box story-detail-skeleton-author" />
+            <div className="skeleton-box story-detail-skeleton-line" />
+            <div className="skeleton-box story-detail-skeleton-line" />
+            <div className="skeleton-box story-detail-skeleton-line is-short" />
+            <div className="story-detail-skeleton-actions">
+              {[1, 2, 3].map((item) => <div key={item} className="skeleton-box" />)}
+            </div>
+          </div>
+        </section>
+        <section className="panel-card mt-4 storyqq-panel story-detail-skeleton-chapters">
+          <div className="skeleton-box story-detail-skeleton-heading" />
+          {[1, 2, 3, 4, 5].map((item) => <div key={item} className="skeleton-box story-detail-skeleton-chapter" />)}
+        </section>
+      </div>
+    </main>
+  );
+}
+
 function formatChapterUploadDate(createdAt) {
   if (!createdAt) return '--/--/----';
   const parsed = new Date(createdAt);
@@ -181,7 +210,7 @@ function StoryDetailPage() {
   }, [chapters, chapterSearch]);
 
   if (loading) {
-    return <main className="cmc-main"><p className="loading-text">Đang tải...</p></main>;
+    return <StoryDetailSkeleton />;
   }
 
   if (!story) {
@@ -416,7 +445,7 @@ function StoryDetailPage() {
         </div>
 
         {chapterLoading ? (
-          <p className="loading-text">Đang tải danh sách chương...</p>
+          <div className="loading-text" aria-label="Đang tải danh sách chương" />
         ) : (
           <ul className="chapter-list storyqq-chapter-list">
               {filteredChapters.map((chapter) => {

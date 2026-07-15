@@ -2525,6 +2525,62 @@ kbd {
 }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 
+/* Turn shared loading placeholders into skeleton screens across the application. */
+.loading-text,
+.management-loading,
+.account-state,
+.recommended-loading {
+  position: relative;
+  min-height: 96px;
+  overflow: hidden;
+  border-radius: 10px;
+  color: transparent !important;
+  background:
+    linear-gradient(var(--border), var(--border)) 1rem 1rem / 42% 18px no-repeat,
+    linear-gradient(var(--border), var(--border)) 1rem 3rem / calc(100% - 2rem) 14px no-repeat,
+    linear-gradient(var(--border), var(--border)) 1rem 4.5rem / 72% 14px no-repeat,
+    color-mix(in srgb, var(--surface) 94%, var(--border) 6%);
+}
+
+.loading-text::after,
+.management-loading::after,
+.account-state::after,
+.recommended-loading::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-box::after,
+  .loading-text::after,
+  .management-loading::after,
+  .account-state::after,
+  .recommended-loading::after { animation: none; }
+}
+
+.story-detail-skeleton .skeleton-box { border-radius: 8px; }
+.story-detail-skeleton-cover { width: 100%; aspect-ratio: 2 / 3; border-radius: 12px !important; }
+.story-detail-skeleton-meta { width: 100%; height: 152px; }
+.story-detail-skeleton-content { gap: 0.85rem; }
+.story-detail-skeleton-title { width: min(70%, 520px); height: 38px; }
+.story-detail-skeleton-author { width: min(45%, 340px); height: 20px; }
+.story-detail-skeleton-line { width: 100%; height: 17px; }
+.story-detail-skeleton-line.is-short { width: 68%; }
+.story-detail-skeleton-actions { display: flex; gap: 0.75rem; margin-top: auto; }
+.story-detail-skeleton-actions .skeleton-box { width: 118px; height: 42px; }
+.story-detail-skeleton-chapters { display: grid; gap: 0.75rem; }
+.story-detail-skeleton-heading { width: 210px; height: 28px; margin-bottom: 0.5rem; }
+.story-detail-skeleton-chapter { width: 100%; height: 42px; }
+
+@media (max-width: 768px) {
+  .story-detail-skeleton-actions .skeleton-box { width: 52px; }
+  .story-detail-skeleton-meta { height: 110px; }
+}
+
 /* ===== Mobile Layout Optimizations for Story Reading ===== */
 @media (max-width: 576px) {
   .cmc-main { padding: 1rem 0.5rem 2rem !important; }
