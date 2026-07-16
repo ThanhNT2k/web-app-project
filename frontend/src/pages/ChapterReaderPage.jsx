@@ -101,9 +101,7 @@ function ChapterReaderPage() {
         font_size: fontSize,
         line_spacing: lineSpacing,
         font_family: fontFamily,
-      }).catch((err) => {
-        console.debug('Failed to sync reader preferences', err);
-      });
+      }).catch(() => {});
     }, 400);
 
     return () => window.clearTimeout(timer);
@@ -123,8 +121,7 @@ function ChapterReaderPage() {
           if (p.line_spacing) setLineSpacing(Number(p.line_spacing));
           if (p.font_family) setFontFamily(p.font_family);
         }
-      } catch (err) {
-        console.debug('Failed to load preferences from API', err);
+      } catch {
         // Fall back to localStorage if API fails
         const prefs = loadReaderPrefs();
         if (prefs) {
@@ -155,9 +152,7 @@ function ChapterReaderPage() {
         }
         
         setStoryProgress(progress);
-      } catch (err) {
-        console.debug('Failed to load story progress', err);
-        
+      } catch {
         // Try localStorage as fallback on API error
         if (chapter?.id) {
           const cachedScroll = localStorage.getItem(

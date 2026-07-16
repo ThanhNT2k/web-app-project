@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   getReportTargetType,
   REPORT_REASONS_BY_TARGET,
@@ -44,7 +44,6 @@ const ReportModal = ({ chapterId, storyId, commentId, reportedUserId, targetLabe
       alert("Cảm ơn bạn đã báo cáo!");
       onClose();
     } catch (err) {
-      console.error("Lỗi chi tiết:", err.response?.data);
       setError("Có lỗi xảy ra: " + (err.response?.data?.error ? JSON.stringify(err.response.data.error) : "Vui lòng thử lại sau"));
     } finally {
       setLoading(false);

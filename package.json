@@ -22,9 +22,6 @@
     "url": "https://github.com/ThanhNT2k/web-app-project/issues"
   },
   "homepage": "https://github.com/ThanhNT2k/web-app-project#readme",
-  "dependencies": {
-    "express": "^5.2.1"
-  },
   "devDependencies": {
     "@playwright/test": "^1.57.0"
   }

@@ -18,11 +18,6 @@ function RecommendedStories() {
       setLoading(true);
       setError('');
       const response = await API.ai.getRecommendations();
-      console.log('[RecommendedStories] API response:', {
-        success: response.success,
-        storyCount: response.stories?.length || 0,
-        storyIds: response.storyIds,
-      });
       setStories(response.stories || []);
     } catch (err) {
       console.error('[RecommendedStories] Error fetching:', err);
