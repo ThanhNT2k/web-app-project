@@ -19,7 +19,7 @@ function AdminStoriesPage() {
       const response = await API.admin.getStories(1, 100);
       setStories(response.stories || []);
     } catch (err) {
-      console.error('[AdminStoriesPage.loadStories] error', err);
+
       setError('Không thể tải danh sách truyện.');
     } finally {
       setLoading(false);

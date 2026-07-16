@@ -1,9 +1,9 @@
 const db = require('../config/database');
 
 async function saveReadingProgress(userId, storyId, chapterId, readPosition, readTime) {
-  const validUserId = Number.isInteger(Number(userId)) && Number(Number(userId)) > 0 ? Number(userId) : null;
-  const validStoryId = Number.isInteger(Number(storyId)) && Number(Number(storyId)) > 0 ? Number(storyId) : null;
-  const validChapterId = Number.isInteger(Number(chapterId)) && Number(Number(chapterId)) > 0 ? Number(chapterId) : null;
+  const validUserId = Number.isInteger(Number(userId)) && Number(userId) > 0 ? Number(userId) : null;
+  const validStoryId = Number.isInteger(Number(storyId)) && Number(storyId) > 0 ? Number(storyId) : null;
+  const validChapterId = Number.isInteger(Number(chapterId)) && Number(chapterId) > 0 ? Number(chapterId) : null;
 
   if (!validUserId || !validStoryId) {
     throw new Error('Invalid userId or storyId');
@@ -62,7 +62,6 @@ async function getReadingHistory(userId) {
         s.slug,
         s.description,
         s.cover_image_url,
-        s.description,
         s.category,
         s.status,
         s.total_chapters,

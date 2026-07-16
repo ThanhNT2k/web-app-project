@@ -23,7 +23,7 @@ function NotificationBell() {
         const res = await API.notifications.getUnreadCount();
         setUnreadCount(res.data?.unread_count || 0);
       } catch (error) {
-        console.error('Error fetching unread count:', error);
+
       }
     };
 

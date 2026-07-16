@@ -265,5 +265,4 @@ module.exports = {
   generateChapterSummary,
   generateStorySummary,
   generatePersonalRecommendations,
-  generateRecommendationPayload: generatePersonalRecommendations,
 };

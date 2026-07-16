@@ -1,8 +1,6 @@
 const Joi = require('joi');
 const Notification = require('../models/Notification');
 const NotificationPreference = require('../models/NotificationPreference');
-const UserFollow = require('../models/UserFollow');
-const { Story } = require('../models');
 
 // Validation schemas
 const notificationPreferenceSchema = Joi.object({

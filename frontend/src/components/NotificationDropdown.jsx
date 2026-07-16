@@ -21,7 +21,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
       setNotifications(res.data || []);
       setTotal(res.pagination?.total || 0);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
           .then((res) => onUnreadCountChange(res.data?.unread_count || 0))
           .catch(() => {});
       }
-      console.error('Error marking notification as read:', error);
+
     }
   };
 
@@ -54,7 +54,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
       await API.notifications.markAllAsRead();
     } catch (error) {
       setNotifications(previous);
-      console.error('Error marking all as read:', error);
+
     }
   };
 
@@ -71,7 +71,7 @@ function NotificationDropdown({ onClose, onUnreadCountChange }) {
     } catch (error) {
       setNotifications(previous);
       setTotal(previousTotal);
-      console.error('Error deleting notification:', error);
+
     }
   };
 

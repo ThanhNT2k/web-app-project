@@ -17,7 +17,7 @@ function AdminPage() {
       const response = await API.admin.getStats();
       setStats(response.stats || response);
     } catch (err) {
-      console.error('[AdminPage.loadStats] error', err);
+
       setError('Không thể tải thống kê hệ thống.');
     } finally {
       setLoading(false);
@@ -30,7 +30,7 @@ function AdminPage() {
       const response = await API.admin.getStories(1, limit);
       setStories((response.stories || []).slice(0, limit));
     } catch (err) {
-      console.error('[AdminPage.loadStories] error', err);
+
       setError('Không thể tải danh sách truyện mới.');
     } finally {
       setStoriesLoading(false);

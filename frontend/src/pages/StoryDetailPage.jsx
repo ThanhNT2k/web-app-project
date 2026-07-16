@@ -3,7 +3,6 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
-// import ReadingProgress from '../components/ReadingProgress';
 import ReportModal from '../components/ReportModal';
 import StoryRating from '../components/StoryRating';
 import API from '../services/api';
@@ -68,14 +67,6 @@ function formatDateOrFallback(dateValue) {
 
 function formatWholeNumber(value) {
   return Number(value || 0).toLocaleString('vi-VN');
-}
-
-function formatAverageRating(value) {
-  const rating = Number(value || 0);
-  return `${rating.toLocaleString('vi-VN', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })}/5`;
 }
 
 function formatRatingWithCount(averageValue, countValue) {
@@ -267,10 +258,7 @@ function StoryDetailPage() {
     <main className="cmc-main storyqq-page" style={detailBackdropStyle}>
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
 
-      {isAuthenticated && storyProgress ? (
-        // <ReadingProgress progress={storyProgress} storySlug={`${story.id}-${story.slug}`} />
-        null
-      ) : null}
+
 
       <div className="storyqq-page-shell">
         <section className="storyqq-header panel-card storyqq-panel">

@@ -21,16 +21,6 @@ function getBaseURL() {
 }
 
 /**
- * Lấy JWT token từ localStorage.
- * Bao bởi try/catch vì localStorage có thể bị chặn trong incognito mode
- * hoặc khi browser settings ngăn third-party storage.
- */
-function getToken() {
-  const token = localStorage.getItem('cmc_token');
-  return token;
-}
-
-/**
  * Xóa thông tin xác thực khỏi localStorage (dùng khi đăng xuất hoặc token hết hạn).
  */
 function clearAuthStorage() {
@@ -239,11 +229,10 @@ const API = {
     vote: (id, value) => request(`/comments/${id}/vote`, { method: 'POST', data: { value } }),
     delete: (id) => request(`/comments/${id}`, { method: 'DELETE' }),
     
-    // ĐÃ SỬA: Dùng hàm request để tự động gắn baseURL (/api) và Token
     getOriginal: (id) => request(`/comments/${id}/original`, { method: 'GET' }),
   },
 
-  // ... (giữ nguyên các phần dưới của file)
+
   ai: {
     generateSummary: (chapterId, regenerate = false) => request(`/chapters/${chapterId}/summary`, {
       method: 'GET',

@@ -24,7 +24,7 @@ function ModeratorPendingStoriesPage() {
       setStories(response.stories || []);
       setPagination(response.pagination || { page, totalPages: 1, totalItems: 0 });
     } catch (err) {
-      console.error('[ModeratorPendingStoriesPage.loadStories] error', err);
+
       setError('Không thể tải danh sách truyện chờ duyệt.');
     } finally {
       setLoading(false);

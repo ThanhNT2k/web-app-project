@@ -15,7 +15,7 @@ function ModeratorDashboardPage() {
       const response = await API.moderator.getDashboard();
       setStats(response.stats || response);
     } catch (err) {
-      console.error('[ModeratorDashboardPage.loadDashboard] error', err);
+
       setError('Không thể tải dữ liệu kiểm duyệt.');
     } finally {
       setLoading(false);

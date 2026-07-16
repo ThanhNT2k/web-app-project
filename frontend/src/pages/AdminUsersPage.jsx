@@ -22,7 +22,7 @@ function AdminUsersPage() {
       const response = await API.admin.getUsers(searchTerm.trim());
       setUsers(response.users || []);
     } catch (err) {
-      console.error('[AdminUsersPage.loadUsers] error', err);
+
       setError('Không thể tải danh sách người dùng.');
     } finally {
       setLoading(false);

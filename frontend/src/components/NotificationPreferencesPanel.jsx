@@ -24,7 +24,7 @@ function NotificationPreferencesPanel() {
       const res = await API.notifications.getPreferences();
       setPreferences(res.data || preferences);
     } catch (error) {
-      console.error('Error fetching notification preferences:', error);
+
       setMessage('Lỗi khi tải cài đặt thông báo');
     } finally {
       setLoading(false);
@@ -45,7 +45,7 @@ function NotificationPreferencesPanel() {
       setMessage('Cài đặt thông báo đã được lưu thành công');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      console.error('Error saving notification preferences:', error);
+
       setMessage('Lỗi khi lưu cài đặt thông báo');
     } finally {
       setSaving(false);

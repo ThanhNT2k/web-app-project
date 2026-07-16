@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom'; // Thêm useNavigate
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import AutoSlidingStoryRow from '../components/AutoSlidingStoryRow';
@@ -68,25 +68,49 @@ function HomePage() {
   const [stories, setStories] = useState([]);
   const [featuredStories, setFeaturedStories] = useState([]);
   const [recentStories, setRecentStories] = useState([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [error, setError] = useState('');
-  
+  const [usingFallbackStories, setUsingFallbackStories] = useState(false);
+  const [usingFallbackFeatured, setUsingFallbackFeatured] = useState(false);
+  const [usingFallbackRecent, setUsingFallbackRecent] = useState(false);
+
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
 
-  const isSearching = useMemo(() => Boolean(query.trim() || (category && category !== 'all')), [query, category]);
+  const isSearching = useMemo(
+    () => Boolean(query.trim() || (category && category !== 'all')),
+    [query, category]
+  );
+
   const heroStories = useMemo(() => {
     if (!isSearching && featuredStories.length > 0) return featuredStories;
     if (stories.length > 0) return stories;
-    return mockStories;
+    return [];
   }, [featuredStories, isSearching, stories]);
+  const loadingHero = !isSearching ? loadingFeatured : loading;
 
-  // Logic tự động điều hướng nếu là Admin hoặc Moderator
+  const hasFallbackData = usingFallbackStories || usingFallbackFeatured || usingFallbackRecent;
+
+  const serviceMessage = useMemo(() => {
+    if (!hasFallbackData) return '';
+    if (isSearching && usingFallbackStories) {
+      return 'Không thể tải dữ liệu mới từ hệ thống. Đang hiển thị dữ liệu dự phòng cho kết quả tìm kiếm.';
+    }
+
+    const fallbackSections = [
+      usingFallbackFeatured ? 'truyện nổi bật' : null,
+      usingFallbackRecent ? 'cập nhật gần đây' : null,
+      usingFallbackStories ? (isSearching ? 'kết quả tìm kiếm' : 'danh sách truyện') : null,
+    ].filter(Boolean);
+
+    return `Không thể tải dữ liệu mới từ hệ thống. Đang hiển thị dữ liệu dự phòng cho ${fallbackSections.join(', ')}.`;
+  }, [hasFallbackData, isSearching, usingFallbackFeatured, usingFallbackRecent, usingFallbackStories]);
+
   useEffect(() => {
     if (!authLoading && user) {
       const role = user.role?.toLowerCase();
@@ -98,46 +122,63 @@ function HomePage() {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch Featured Stories
   useEffect(() => {
-    if (isSearching) return;
+    if (isSearching) {
+      setFeaturedStories([]);
+      setUsingFallbackFeatured(false);
+      setLoadingFeatured(false);
+      return;
+    }
+
     const fetchFeatured = async () => {
       try {
         setLoadingFeatured(true);
+        setUsingFallbackFeatured(false);
         const response = await API.stories.getAll(1, 10, 'popular');
         setFeaturedStories(response.stories || []);
       } catch {
+        setUsingFallbackFeatured(true);
         setFeaturedStories([...mockStories].sort((a, b) => b.total_chapters - a.total_chapters).slice(0, 10));
       } finally {
         setLoadingFeatured(false);
       }
     };
+
     fetchFeatured();
   }, [isSearching]);
 
-  // Fetch Recent Updates
   useEffect(() => {
-    if (isSearching) return;
+    if (isSearching) {
+      setRecentStories([]);
+      setUsingFallbackRecent(false);
+      setLoadingRecent(false);
+      return;
+    }
+
     const fetchRecent = async () => {
       try {
         setLoadingRecent(true);
+        setUsingFallbackRecent(false);
         const response = await API.stories.getAll(1, 9, 'updated');
         setRecentStories(response.stories || []);
       } catch {
+        setUsingFallbackRecent(true);
         setRecentStories([...mockStories].slice(0, 9));
       } finally {
         setLoadingRecent(false);
       }
     };
+
     fetchRecent();
   }, [isSearching]);
 
-  // Fetch Browse / Search Stories
   useEffect(() => {
     const fetchStories = async () => {
       try {
         setLoading(true);
         setError('');
+        setUsingFallbackStories(false);
+
         const cat = category && category !== 'all' ? category : null;
         const response = isSearching
           ? await API.stories.search(query.trim(), cat, null, page, 15)
@@ -147,6 +188,7 @@ function HomePage() {
         setStories(list);
         setPagination(response.pagination || { page: 1, totalPages: 1 });
       } catch {
+        setUsingFallbackStories(true);
         setError('Không thể kết nối đến máy chủ. Hệ thống đang hoạt động ở chế độ ngoại tuyến.');
         setStories(mockStories);
         setPagination({ page: 1, totalPages: 1 });
@@ -170,21 +212,20 @@ function HomePage() {
 
   return (
     <div className="cmc-home-page-wrapper">
-      <FeaturedCarousel stories={heroStories} />
+      <FeaturedCarousel stories={heroStories} isLoading={loadingHero} />
       <main className="cmc-main cmc-home-page">
-        {error ? (
+        {hasFallbackData ? (
           <div className="home-service-note">
             <IconBadge icon={faTriangleExclamation} size="md" tone="warning" />
             <div>
               <strong>Đang dùng dữ liệu dự phòng.</strong>
-              <span>{error}</span>
+              <span>{serviceMessage || error}</span>
             </div>
           </div>
         ) : null}
 
-        {!isSearching && <RecommendedStories />}
+        {!isSearching ? <RecommendedStories /> : null}
 
-        {/* Featured Stories */}
         {!isSearching && (
           <section className="home-section">
             <SectionHeading
@@ -217,7 +258,6 @@ function HomePage() {
           </section>
         )}
 
-        {/* Recent Updates */}
         {!isSearching && (
           <section className="home-section">
             <SectionHeading eyebrow="Vừa lên chương" title="Cập nhật gần đây" icon={faClockRotateLeft} />
@@ -245,7 +285,6 @@ function HomePage() {
           </section>
         )}
 
-        {/* Main browse list */}
         <section id="browse" className="home-section">
           <SectionHeading
             eyebrow={isSearching ? 'Đang lọc' : 'Thư viện'}

@@ -168,8 +168,6 @@ function ChapterReaderPage() {
       }
     };
 
-    // Execute both in parallel
-    Promise.all([loadPreferences(), loadProgress()]);
     // Execute both in parallel. Chỉ bật đồng bộ sau khi cài đặt từ server đã tải xong,
     // tránh ghi đè server bằng giá trị mặc định lúc trang vừa mở.
     Promise.all([loadPreferences(), loadProgress()]).finally(() => {

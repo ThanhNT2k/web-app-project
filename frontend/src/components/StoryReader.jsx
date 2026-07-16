@@ -201,7 +201,7 @@ function StoryReader({
         <button className="btn reader-nav-button px-4 py-2" onClick={onNext} disabled={!hasNext}>Chap sau <FontAwesomeIcon icon={faArrowRight} /></button>
       </div>
 
-      {/* --- PHỤC HỒI THANH ĐIỀU HƯỚNG NỔI (FLOATING NAV) --- */}
+
       <div className="floating-reader-nav">
         <button
           className="btn reader-floating-button d-flex align-items-center justify-content-center"

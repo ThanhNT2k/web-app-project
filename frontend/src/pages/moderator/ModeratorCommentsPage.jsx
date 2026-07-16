@@ -49,7 +49,7 @@ function ModeratorCommentsPage() {
         ...(response.pagination || {}),
       }));
     } catch (err) {
-      console.error('[ModeratorCommentsPage.loadComments] error', err);
+
       setError('Không thể tải danh sách bình luận.');
     } finally {
       setLoading(false);

@@ -20,7 +20,7 @@ function RecommendedStories() {
       const response = await API.ai.getRecommendations();
       setStories(response.stories || []);
     } catch (err) {
-      console.error('[RecommendedStories] Error fetching:', err);
+
       setError('Không thể tải gợi ý lúc này.');
       setStories([]);
     } finally {

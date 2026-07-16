@@ -840,7 +840,6 @@ async function getStoriesForRecommendations(readingHistory = [], excludeStoryIds
           excludedIds,
           safeLimit - recommendations.length
         ]);
-        const categoryAdded = categoryResult.rows.length;
         recommendations = recommendations.concat(categoryResult.rows);
       } catch (catErr) {
         console.error('[Story.getStoriesForRecommendations] Phase 2 error:', catErr.message);
@@ -879,7 +878,6 @@ async function getStoriesForRecommendations(readingHistory = [], excludeStoryIds
 
       try {
         const trendingResult = await db.query(trendingQuery, [excludedIds, safeLimit - recommendations.length]);
-        const trendingAdded = trendingResult.rows.length;
         recommendations = recommendations.concat(trendingResult.rows);
       } catch (trendErr) {
         console.error('[Story.getStoriesForRecommendations] Phase 3 error:', trendErr.message);

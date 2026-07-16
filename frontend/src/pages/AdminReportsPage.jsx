@@ -47,7 +47,7 @@ function AdminReportsPage() {
       setReports(data.reports || []);
     } catch (err) {
       setError('Không thể tải danh sách báo cáo.');
-      console.error('[AdminReportsPage.fetchReports] error', err);
+
     } finally {
       setLoading(false);
     }

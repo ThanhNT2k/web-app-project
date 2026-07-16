@@ -26,7 +26,7 @@ function ManageBadWords() {
       const response = await API.badWords.getAll();
       setWords(response.data || []);
     } catch (err) {
-      console.error('[ManageBadWords.fetchWords] error', err);
+
       setError('Không thể tải danh sách từ khóa.');
     } finally {
       setLoading(false);

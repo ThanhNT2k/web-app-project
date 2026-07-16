@@ -13,6 +13,46 @@ const FALLBACK_COVER =
 const MAX_FEATURED_STORIES = 10;
 const AUTO_SLIDE_DELAY = 8000;
 
+function FeaturedCarouselSkeleton() {
+  return (
+    <section className="cmc-hero featured-carousel featured-carousel-skeleton" aria-label="Truyện nổi bật" aria-busy="true">
+      <div className="featured-carousel-overlay" aria-hidden="true" />
+      <div className="featured-carousel-inner">
+        <h2 className="featured-carousel-label">Truyện nổi bật</h2>
+
+        <div className="featured-carousel-poster" aria-hidden="true">
+          <div className="skeleton-box featured-carousel-skeleton-poster" />
+        </div>
+
+        <div className="featured-carousel-content">
+          <div className="skeleton-box featured-carousel-skeleton-title" />
+          <div className="featured-carousel-tags" aria-hidden="true">
+            <div className="skeleton-box featured-carousel-skeleton-tag featured-carousel-skeleton-tag-wide" />
+            <div className="skeleton-box featured-carousel-skeleton-tag featured-carousel-skeleton-tag-mid" />
+            <div className="skeleton-box featured-carousel-skeleton-tag featured-carousel-skeleton-tag-short" />
+          </div>
+          <div className="featured-carousel-skeleton-description" aria-hidden="true">
+            <div className="skeleton-box featured-carousel-skeleton-line featured-carousel-skeleton-line-full" />
+            <div className="skeleton-box featured-carousel-skeleton-line featured-carousel-skeleton-line-mid" />
+            <div className="skeleton-box featured-carousel-skeleton-line featured-carousel-skeleton-line-short" />
+          </div>
+
+          <div className="featured-carousel-meta" aria-hidden="true">
+            <div className="skeleton-box featured-carousel-skeleton-meta-text" />
+            <div className="skeleton-box featured-carousel-skeleton-cta" />
+          </div>
+        </div>
+
+        <div className="featured-carousel-controls" aria-hidden="true">
+          <div className="skeleton-box featured-carousel-skeleton-rank" />
+          <div className="skeleton-box featured-carousel-skeleton-arrow" />
+          <div className="skeleton-box featured-carousel-skeleton-arrow" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function getStoryPath(story) {
   return `/story/${story.id}-${story.slug}`;
 }
@@ -29,7 +69,7 @@ function getTagList(story) {
     .slice(0, 3);
 }
 
-function FeaturedCarousel({ stories = [] }) {
+function FeaturedCarousel({ stories = [], isLoading = false }) {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const slides = useMemo(() => stories.filter(Boolean).slice(0, MAX_FEATURED_STORIES), [stories]);
@@ -48,6 +88,10 @@ function FeaturedCarousel({ stories = [] }) {
 
     return () => window.clearTimeout(timer);
   }, [activeIndex, slides.length]);
+
+  if (isLoading) {
+    return <FeaturedCarouselSkeleton />;
+  }
 
   if (!activeStory) return null;
 
