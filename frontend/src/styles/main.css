@@ -6519,10 +6519,7 @@ body {
 .auto-sliding-story-row {
   --visible-story-cards: 2;
   --story-carousel-gap: 0.85rem;
-  display: grid;
-  grid-template-columns: none;
-  grid-auto-flow: column;
-  grid-auto-columns: calc((100% - (var(--visible-story-cards) - 1) * var(--story-carousel-gap)) / var(--visible-story-cards));
+  display: flex;
   gap: var(--story-carousel-gap);
   overflow-x: auto;
   overscroll-behavior-inline: contain;
@@ -6534,7 +6531,11 @@ body {
 }
 
 .auto-sliding-story-row::-webkit-scrollbar { display: none; }
-.auto-sliding-story-row > * { min-width: 0; scroll-snap-align: start; }
+.auto-sliding-story-row > * {
+  flex: 0 0 calc((100% - (var(--visible-story-cards) - 1) * var(--story-carousel-gap)) / var(--visible-story-cards));
+  min-width: 0;
+  scroll-snap-align: start;
+}
 .auto-sliding-story-row:focus-visible { border-radius: 10px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 18%, transparent); }
 .auto-sliding-story-row-horizontal {
   --visible-story-cards: 1.25;

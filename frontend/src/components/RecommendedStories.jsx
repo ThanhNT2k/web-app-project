@@ -7,6 +7,8 @@ import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { FontAwesomeIcon, faRotateRight, faHeart } from '../lib/icons';
 
+const RECOMMENDATION_LIMIT = 10;
+
 function RecommendedStories() {
   const { isAuthenticated } = useAuth();
   const [stories, setStories] = useState([]);
@@ -17,8 +19,8 @@ function RecommendedStories() {
     try {
       setLoading(true);
       setError('');
-      const response = await API.ai.getRecommendations();
-      setStories(response.stories || []);
+      const response = await API.ai.getRecommendations(RECOMMENDATION_LIMIT);
+      setStories((response.stories || []).slice(0, RECOMMENDATION_LIMIT));
     } catch (err) {
 
       setError('Không thể tải gợi ý lúc này.');

@@ -242,7 +242,7 @@ async function getChapterSummary(req, res) {
  * 1. Lấy lịch sử đọc của user
  * 2. Nếu có lịch sử → dùng AI gợi ý (theo thể loại và tác giả ưa thích)
  * 3. Nếu không có lịch sử hoặc AI trả về ít gợi ý → bổ sung bằng truyện phổ biến
- * 4. Lọc bỏ truyện đã đọc khỏi danh sách gợi ý
+ * 4. Ưu tiên truyện chưa đọc; nếu kho truyện không đủ thì dùng truyện công khai còn lại
  */
 async function getRecommendations(req, res) {
   try {
@@ -250,7 +250,7 @@ async function getRecommendations(req, res) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const recommendationLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 20);
+    const recommendationLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 10);
 
     // Lấy lịch sử đọc để phân tích sở thích của user
     const history = await ReadingHistory.getReadingHistory(req.user.id);
@@ -262,43 +262,56 @@ async function getRecommendations(req, res) {
       storyIds = await aiService.generatePersonalRecommendations(history);
     }
 
-    if (storyIds.length === 0) {
-      // User chưa đọc truyện nào => lấy các truyện phổ biến nhất theo giới hạn yêu cầu
-      const popular = await Story.getAllStories(1, recommendationLimit, 'popular');
-      storyIds = popular.stories.map((s) => s.id);
-    } else {
-      // Trường hợp 2: AI đã gợi ý nhưng cần validate và lọc
-      const allStories = await Story.getAllStories(1, 50);
+    const normalizeId = (value) => {
+      const id = Number(value);
+      return Number.isInteger(id) && id > 0 ? id : null;
+    };
+    const readIds = new Set(history.map((item) => normalizeId(item.story_id)).filter(Boolean));
 
-      // validIds: tập hợp ID của 50 truyện mới nhất đang available trong DB
-      const validIds = new Set(allStories.stories.map((s) => s.id));
-      // readIds: tập hợp ID của các truyện user đã đọc (để lọc ra khỏi gợi ý)
-      const readIds = new Set(history.map((h) => h.story_id));
-
-      // Giữ lại những ID do AI gợi ý mà:
-      // - Tồn tại trong hệ thống (validIds)
-      // - User chưa đọc (không có trong readIds)
-      // - Chỉ lấy tối đa số lượng gợi ý được yêu cầu
-      storyIds = storyIds.filter((id) => validIds.has(id) && !readIds.has(id)).slice(0, recommendationLimit);
-
-      // Nếu AI không đủ gợi ý, bổ sung thêm truyện chưa đọc từ danh sách phổ biến
-      if (storyIds.length < recommendationLimit) {
-        const extras = allStories.stories
-          .filter((s) => !readIds.has(s.id) && !storyIds.includes(s.id)) // Chưa đọc và chưa có trong list gợi ý
-          .slice(0, recommendationLimit - storyIds.length) // Chỉ lấy đủ số còn thiếu
-          .map((s) => s.id);
-        storyIds = [...storyIds, ...extras];
-      }
-    }
-
-    // Fetch đầy đủ thông tin của từng truyện được gợi ý (sequential để đảm bảo thứ tự)
+    // Luôn validate gợi ý AI và bù từ danh sách phổ biến. Việc chuẩn hoá
+    // ID tránh trường hợp PostgreSQL/AI trả về cùng ID dưới hai kiểu string/number.
+    const selectedIds = new Set();
     const stories = [];
-    for (const storyId of storyIds) {
-      const story = await Story.getStoryById(storyId);
-      if (story) {
-        stories.push(story);
-      }
+    const addStory = (story, allowRead = false) => {
+      const id = normalizeId(story?.id);
+      if (
+        !id || selectedIds.has(id) || (!allowRead && readIds.has(id))
+        || story.is_published !== true || story.hidden_by_admin === true
+      ) return;
+      selectedIds.add(id);
+      stories.push(story);
+    };
+
+    for (const rawId of storyIds) {
+      if (stories.length >= recommendationLimit) break;
+      const id = normalizeId(rawId);
+      if (!id || selectedIds.has(id) || readIds.has(id)) continue;
+      addStory(await Story.getStoryById(id));
     }
+
+    // Duyệt thêm các trang khi trang đầu bị chiếm bởi truyện đã đọc.
+    let page = 1;
+    let totalPages = 1;
+    const publicFallbacks = [];
+    while (stories.length < recommendationLimit && page <= totalPages) {
+      const popular = await Story.getAllStories(page, 50, 'popular');
+      totalPages = popular.pagination?.totalPages || 1;
+      for (const story of popular.stories) {
+        publicFallbacks.push(story);
+        addStory(story);
+        if (stories.length >= recommendationLimit) break;
+      }
+      page += 1;
+    }
+
+    // Với kho dữ liệu nhỏ, số truyện chưa đọc có thể không đủ 10. Khi đó
+    // bù các truyện công khai còn lại thay vì trả về một danh sách bị thiếu.
+    for (const story of publicFallbacks) {
+      if (stories.length >= recommendationLimit) break;
+      addStory(story, true);
+    }
+
+    storyIds = stories.map((story) => story.id);
 
     return res.status(200).json({
       success: true,
