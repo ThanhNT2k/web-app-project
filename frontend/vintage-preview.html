@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="vi" data-vintage-theme="blue">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMC Premium Vintage Library - Luxury Story Platform</title>
+  
+  <!-- Premium Fonts from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Free for premium vector icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
+  <style>
+    /* ===== CSS DESIGN TOKENS (VINTAGE PARCHMENT & BLUE THEME SYSTEM) ===== */
+    :root, [data-vintage-theme="blue"] {
+      /* Default: Vintage Blue Light Theme */
+      --bg-vintage: #f0f4f8; /* Soft slate/ice blue */
+      --surface-vintage: #e2eaf2; /* Muted steel blue */
+      --surface-card: #f7fafc;
+      --text-main: #1d2b3a; /* Deep navy */
+      --text-muted: #5c7085;
+      --border-vintage: #ccd8e6;
+      --primary-vintage: #9e7844; /* Bronze Gold */
+      --primary-hover: #7f5f33;
+      --accent-vintage: #b85a38; /* Terracotta Accent */
+      --shadow-vintage: 0 10px 25px -8px rgba(29, 43, 58, 0.12);
+      --font-heading: 'Playfair Display', Georgia, serif;
+      --font-body: 'Lora', Georgia, serif;
+      --font-sans: 'Outfit', sans-serif;
+      --transition-speed: 0.25s;
+    }
+
+    [data-vintage-theme="parchment"] {
+      --bg-vintage: #fbf8f3;
+      --surface-vintage: #f5eedf;
+      --surface-card: #fdfbf7;
+      --text-main: #2b241f;
+      --text-muted: #6e5e53;
+      --border-vintage: #e3d6c1;
+      --primary-vintage: #8a6534;
+      --primary-hover: #6c4e25;
+      --accent-vintage: #b85a38;
+      --shadow-vintage: 0 10px 25px -8px rgba(138, 101, 52, 0.12);
+    }
+
+    [data-vintage-theme="sepia"] {
+      --bg-vintage: #efe1cf;
+      --surface-vintage: #e2cca9;
+      --surface-card: #f4eae1;
+      --text-main: #332115;
+      --text-muted: #725845;
+      --border-vintage: #cfb38b;
+      --primary-vintage: #7c4d16;
+      --primary-hover: #5d390f;
+      --accent-vintage: #a23a1a;
+      --shadow-vintage: 0 10px 25px -8px rgba(124, 77, 22, 0.15);
+    }
+
+    [data-vintage-theme="sage"] {
+      --bg-vintage: #eef1ec;
+      --surface-vintage: #dfe4db;
+      --surface-card: #f5f7f3;
+      --text-main: #1c271e;
+      --text-muted: #536255;
+      --border-vintage: #cad1c3;
+      --primary-vintage: #3d5a42;
+      --primary-hover: #2b3f2e;
+      --accent-vintage: #9c4c34;
+      --shadow-vintage: 0 10px 25px -8px rgba(61, 90, 66, 0.08);
+    }
+
+    [data-vintage-theme="dark-blue"] {
+      --bg-vintage: #0d131f; /* Deep dark oxford blue */
+      --surface-vintage: #172030; /* Dark slate */
+      --surface-card: #1c263b;
+      --text-main: #e2ecf8; /* Muted ice blue */
+      --text-muted: #7f95b0;
+      --border-vintage: #28374f;
+      --primary-vintage: #e5c158; /* Bright Warm Gold */
+      --primary-hover: #ffd766;
+      --accent-vintage: #f07f61;
+      --shadow-vintage: 0 12px 35px rgba(0, 0, 0, 0.45);
+    }
+
+    [data-vintage-theme="dark-sepia"] {
+      --bg-vintage: #1c1815;
+      --surface-vintage: #27211d;
+      --surface-card: #2f2823;
+      --text-main: #efe5db;
+      --text-muted: #a69486;
+      --border-vintage: #423830;
+      --primary-vintage: #d1b48c;
+      --primary-hover: #e5cdad;
+      --accent-vintage: #e07a5f;
+      --shadow-vintage: 0 12px 35px rgba(0, 0, 0, 0.45);
+    }
+
+    /* ===== GENERAL RESET & BASE STYLING ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-vintage);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+      overflow-x: hidden;
+    }
+
+    /* Vintage Paper Overlay Texture Effect */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.038;
+      z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3e%3cfilter id='noiseFilter'%3e%3cturbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3e%3c/filter%3e%3crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3e%3c/svg%3e");
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+      transition: color var(--transition-speed);
+    }
+
+    h1, h2, h3, h4, h5 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    /* Icon spacing helpers */
+    .icon-left {
+      margin-right: 0.45rem;
+    }
+    
+    .icon-right {
+      margin-left: 0.45rem;
+    }
+
+    /* ===== HEADER / NAVIGATION ===== */
+    .premium-header {
+      background-color: var(--surface-vintage);
+      border-bottom: 2px solid var(--border-vintage);
+      padding: 0.85rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 15px -5px rgba(0,0,0,0.05);
+      transition: background-color var(--transition-speed), border-color var(--transition-speed);
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .header-brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-brand h1 {
+      font-size: 1.65rem;
+      color: var(--primary-vintage);
+      letter-spacing: -0.5px;
+      font-weight: 800;
+    }
+
+    .header-brand h1 span {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--text-main);
+    }
+
+    .header-brand-sub {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    /* Elegant Search Bar with Gold Glow */
+    .header-search {
+      display: flex;
+      align-items: center;
+      background-color: var(--bg-vintage);
+      border: 1px solid var(--border-vintage);
+      border-radius: 30px;
+      padding: 0.35rem 0.85rem;
+      max-width: 320px;
+      width: 100%;
+      margin: 0 auto;
+      transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+    }
+
+    .header-search:focus-within {
+      border-color: var(--primary-vintage);
+      box-shadow: 0 0 0 3px rgba(158, 120, 68, 0.15);
+    }
+
+    .header-search input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      width: 100%;
+      font-family: var(--font-sans);
+    }
+
+    .header-search input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+
+    .header-search-icon {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-right: 0.5rem;
+      cursor: pointer;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .nav-link {
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      position: relative;
+      padding: 0.2rem 0;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--primary-vintage);
+    }
+
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--primary-vintage);
+      transition: width var(--transition-speed) ease;
+    }
+
+    .nav-link:hover::after, .nav-link.active::after {
+      width: 100%;
+    }
+
+    /* Theme Selector Widget */
+    .theme-widget {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background-color: var(--bg-vintage);
+      border: 1px solid var(--border-vintage);
+      padding: 0.3rem 0.5rem;
+      border-radius: 30px;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+    }
+
+    .theme-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .theme-dot:hover {
+      transform: scale(1.15);
+    }
+
+    .theme-dot.active {
+      border-color: var(--accent-vintage);
+      transform: scale(1.1);
+    }
+
+    .theme-dot.t-blue { background-color: #f0f4f8; box-shadow: 0 0 0 1px #ccd8e6; }
+    .theme-dot.t-dark-blue { background-color: #0d131f; box-shadow: 0 0 0 1px #28374f; }
+    .theme-dot.t-parchment { background-color: #fbf8f3; box-shadow: 0 0 0 1px #e3d6c1; }
+    .theme-dot.t-sepia { background-color: #efe1cf; box-shadow: 0 0 0 1px #cfb38b; }
+    .theme-dot.t-sage { background-color: #eef1ec; box-shadow: 0 0 0 1px #cad1c3; }
+    .theme-dot.t-dark-sepia { background-color: #1c1815; box-shadow: 0 0 0 1px #423830; }
+
+    /* ===== HERO BANNER ===== */
+    .vintage-hero {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .hero-wrapper {
+      background-color: var(--surface-card);
+      border: 1px solid var(--border-vintage);
+      border-radius: 16px;
+      padding: 3rem 4rem;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 3rem;
+      align-items: center;
+      box-shadow: var(--shadow-vintage);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Classic decorative book corners */
+    .hero-wrapper::before, .hero-wrapper::after {
+      content: "";
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 3px double var(--border-vintage);
+      pointer-events: none;
+    }
+
+    .hero-wrapper::before { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+    .hero-wrapper::after { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .hero-tag {
+      align-self: flex-start;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-vintage);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border: 1px solid var(--accent-vintage);
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 3.5vw, 2.75rem);
+      color: var(--text-main);
+      font-weight: 800;
+    }
+
+    .hero-desc {
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 0.25rem;
+    }
+
+    .hero-meta span strong {
+      color: var(--text-main);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    /* Upgraded Premium Buttons with Micro-animations */
+    .btn-premium {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all var(--transition-speed) cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .btn-premium-primary {
+      background-color: var(--primary-vintage);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(158, 120, 68, 0.25);
+    }
+
+    .btn-premium-primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(158, 120, 68, 0.4);
+    }
+
+    .btn-premium-outline {
+      background-color: transparent;
+      border-color: var(--border-vintage);
+      color: var(--text-main);
+    }
+
+    .btn-premium-outline:hover {
+      background-color: var(--surface-vintage);
+      transform: translateY(-2px);
+      border-color: var(--primary-vintage);
+    }
+
+    .hero-cover-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Animated 3D cover stacked styling */
+    .hero-cover-book {
+      width: 200px;
+      height: 280px;
+      background: linear-gradient(135deg, #2b3a4a 0%, #152230 100%);
+      border-radius: 4px 12px 12px 4px;
+      box-shadow: 12px 12px 28px rgba(0,0,0,0.32), 
+                  inset 4px 0 8px rgba(255,255,255,0.06),
+                  inset -3px 0 5px rgba(0,0,0,0.25);
+      border-left: 5px solid rgba(255,255,255,0.08);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1.25rem;
+      color: #e2ecf8;
+      text-align: center;
+      transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+      cursor: pointer;
+    }
+
+    .hero-cover-book::before {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border: 1px solid rgba(226, 236, 248, 0.15);
+      border-radius: 3px;
+      pointer-events: none;
+    }
+
+    .hero-cover-book:hover {
+      transform: rotateY(-12deg) rotateX(6deg) scale(1.04);
+    }
+
+    .book-title-mini {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #dfcdb9;
+      line-height: 1.3;
+    }
+
+    .book-author-mini {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: #9cabbc;
+    }
+
+    /* ===== SECTIONS AND LAYOUT ===== */
+    .vintage-section {
+      max-width: 1200px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid var(--border-vintage);
+      padding-bottom: 0.6rem;
+      margin-bottom: 1.75rem;
+      transition: border-color var(--transition-speed);
+    }
+
+    .section-title-premium {
+      font-size: 1.6rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.1rem;
+    }
+
+    .section-title-premium span {
+      color: var(--primary-vintage);
+      font-style: italic;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    .view-all-link {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-vintage);
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .view-all-link:hover {
+      color: var(--accent-vintage);
+      text-decoration: underline;
+    }
+
+    /* ===== INTERACTIVE CAROUSEL (RECOMMENDED NOVELS) ===== */
+    .recommended-carousel-card {
+      background-color: var(--surface-card);
+      border: 1px solid var(--border-vintage);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow-vintage);
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .carousel-inner {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .carousel-cover-img {
+      width: 180px;
+      height: 250px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ebd7bd;
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      text-align: center;
+      padding: 1rem;
+      box-shadow: 5px 5px 15px rgba(0,0,0,0.15);
+      border: 1.5px solid var(--border-vintage);
+    }
+
+    .carousel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .carousel-title {
+      font-size: 1.8rem;
+      color: var(--text-main);
+    }
+
+    .carousel-author {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin-top: -0.4rem;
+    }
+
+    .carousel-desc {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.7;
+    }
+
+    .carousel-controls {
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .carousel-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--border-vintage);
+      background-color: var(--bg-vintage);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.15s, border-color 0.2s;
+    }
+
+    .carousel-btn:hover {
+      background-color: var(--primary-vintage);
+      color: #fff;
+      transform: scale(1.05);
+      border-color: var(--primary-vintage);
+    }
+
+    /* ===== FILTER TABS ===== */
+    .filter-tabs-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 2rem;
+    }
+
+    .filter-tab {
+      background-color: var(--surface-card);
+      border: 1px solid var(--border-vintage);
+      color: var(--text-muted);
+      padding: 0.5rem 1.25rem;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-speed);
+    }
+
+    .filter-tab:hover {
+      background-color: var(--surface-vintage);
+      color: var(--primary-vintage);
+    }
+
+    .filter-tab.active {
+      background-color: var(--primary-vintage);
+      color: #fff;
+      border-color: var(--primary-vintage);
+      box-shadow: 0 4px 10px rgba(158, 120, 68, 0.2);
+    }
+
+    /* ===== PREMIUM CARD GRID (FEATURED & SEARCH) ===== */
+    .premium-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+
+    .premium-card {
+      background-color: var(--surface-card);
+      border: 1px solid var(--border-vintage);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-vintage);
+      transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s;
+    }
+
+    .premium-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 15px 30px -5px rgba(158, 120, 68, 0.18);
+      border-color: var(--primary-vintage);
+    }
+
+    .card-cover-wrapper {
+      position: relative;
+      height: 250px;
+      overflow: hidden;
+      background: var(--surface-vintage);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-bottom: 1px solid var(--border-vintage);
+    }
+
+    .card-cover-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .premium-card:hover .card-cover-img {
+      transform: scale(1.07);
+    }
+
+    .card-cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, rgba(29,43,58,0.9) 0%, rgba(0,0,0,0) 65%);
+      opacity: 0;
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      transition: opacity 0.3s ease;
+    }
+
+    .premium-card:hover .card-cover-overlay {
+      opacity: 1;
+    }
+
+    .overlay-action-btn {
+      background-color: #fff;
+      color: #1d2b3a;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.45rem 1.15rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transition: transform 0.2s;
+    }
+
+    .overlay-action-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: var(--surface-card);
+      color: var(--primary-vintage);
+      border: 1px solid var(--border-vintage);
+      padding: 0.15rem 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-radius: 4px;
+    }
+
+    .card-info {
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      flex-grow: 1;
+    }
+
+    .card-genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+
+    .card-genre {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      background-color: var(--surface-vintage);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      color: var(--text-main);
+      font-weight: 700;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.35;
+    }
+
+    .card-title:hover {
+      color: var(--primary-vintage);
+    }
+
+    .card-author {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: -0.2rem;
+    }
+
+    .card-desc-snippet {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0.2rem 0;
+    }
+
+    .card-footer-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 0.65rem;
+      border-top: 1px dashed var(--border-vintage);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .card-stars {
+      color: var(--primary-vintage);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ===== RECENT UPDATES SECTION (HORIZONTAL LAYOUT) ===== */
+    .recent-updates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .recent-horizontal-card {
+      background-color: var(--surface-card);
+      border: 1px solid var(--border-vintage);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      gap: 1.15rem;
+      box-shadow: var(--shadow-vintage);
+      transition: transform 0.3s, border-color 0.3s;
+    }
+
+    .recent-horizontal-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--primary-vintage);
+    }
+
+    .recent-cover-img {
+      width: 80px;
+      height: 115px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 3px 3px 8px rgba(0,0,0,0.12);
+      border: 1px solid var(--border-vintage);
+    }
+
+    .recent-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-grow: 1;
+      min-width: 0; /* Prevents overflow of flex child */
+    }
+
+    .recent-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-title:hover {
+      color: var(--primary-vintage);
+    }
+
+    .recent-chap-link {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent-vintage);
+      display: inline-block;
+      margin-top: 0.2rem;
+    }
+
+    .recent-chap-link:hover {
+      text-decoration: underline;
+    }
+
+    .recent-desc {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    .recent-footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      border-top: 1px dashed var(--border-vintage);
+      padding-top: 0.4rem;
+      margin-top: 0.4rem;
+      align-items: center;
+    }
+
+    /* ===== EXPERIMENTAL PREMIUM READER PANEL ===== */
+    .premium-reader-section {
+      background-color: var(--surface-card);
+      border: 2px solid var(--border-vintage);
+      border-radius: 16px;
+      padding: 2.5rem;
+      box-shadow: var(--shadow-vintage);
+      margin-top: 3rem;
+    }
+
+    .reader-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px double var(--border-vintage);
+      padding-bottom: 1.5rem;
+    }
+
+    .reader-header-chapter {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--accent-vintage);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .reader-header-title {
+      font-size: 2.25rem;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .reader-header-novel {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--text-muted);
+    }
+
+    /* Custom Reader Toolbar Widget */
+    .custom-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--surface-vintage);
+      border: 1px solid var(--border-vintage);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      gap: 1rem;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toolbar-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .toolbar-select {
+      background-color: var(--bg-vintage);
+      color: var(--text-main);
+      border: 1px solid var(--border-vintage);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+    }
+
+    .font-size-adjust {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .font-size-btn {
+      width: 32px;
+      height: 32px;
+      background-color: var(--bg-vintage);
+      border: 1px solid var(--border-vintage);
+      color: var(--text-main);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s;
+    }
+
+    .font-size-btn:hover {
+      background-color: var(--border-vintage);
+    }
+
+    .font-size-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    /* Live reading view text box */
+    .reading-content-view {
+      font-family: var(--font-body);
+      font-size: 19px; /* adjust via state */
+      line-height: 1.9;
+      color: var(--text-main);
+      max-width: 760px;
+      margin: 0 auto;
+      text-align: justify;
+      transition: font-size 0.2s, font-family 0.25s;
+    }
+
+    .reading-content-view p {
+      margin-bottom: 1.5rem;
+      text-indent: 1.75rem;
+    }
+
+    .reading-content-view p:first-of-type {
+      text-indent: 0;
+    }
+
+    /* Classic Dropcap style */
+    .reading-content-view p:first-of-type::first-letter {
+      font-family: var(--font-heading);
+      float: left;
+      font-size: 3.5rem;
+      line-height: 0.8;
+      padding-top: 4px;
+      padding-right: 8px;
+      font-weight: 700;
+      color: var(--accent-vintage);
+    }
+
+    /* Reader Navigation buttons */
+    .reader-footer-nav {
+      display: flex;
+      justify-content: space-between;
+      max-width: 760px;
+      margin: 3rem auto 0;
+      padding-top: 1.5rem;
+      border-top: 1px double var(--border-vintage);
+    }
+
+    /* ===== RESPONSIVENESS ===== */
+    @media (max-width: 992px) {
+      .header-container {
+        grid-template-columns: auto 1fr;
+      }
+      .header-search {
+        max-width: 100%;
+        grid-column: span 2;
+        order: 3;
+      }
+      .hero-wrapper {
+        grid-template-columns: 1fr;
+        padding: 2.5rem;
+        text-align: center;
+      }
+      .hero-tag {
+        align-self: center;
+      }
+      .hero-actions {
+        justify-content: center;
+      }
+      .hero-cover-container {
+        display: none;
+      }
+      .carousel-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .carousel-cover-img {
+        margin: 0 auto;
+      }
+      .carousel-controls {
+        bottom: 1rem;
+        right: 50%;
+        transform: translateX(50%);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .header-right {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .header-search {
+        margin-top: 0.5rem;
+      }
+      .custom-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toolbar-group {
+        justify-content: space-between;
+      }
+      .premium-reader-section {
+        padding: 1.5rem;
+      }
+      .reading-content-view {
+        font-size: 17px !important;
+        text-align: left;
+      }
+      .reader-header-title {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. PREMIUM HEADER / NAVIGATION -->
+  <header class="premium-header">
+    <div class="header-container">
+      <div class="header-brand">
+        <h1>CMC <span>Truyện</span></h1>
+        <div class="header-brand-sub">Premium Vintage Edition</div>
+      </div>
+      
+      <!-- Glow Search Bar -->
+      <div class="header-search">
+        <i class="fa-solid fa-magnifying-glass header-search-icon"></i>
+        <input type="text" placeholder="Tìm kiếm truyện, tác giả..." oninput="handleLocalSearch(this.value)">
+      </div>
+      
+      <div class="header-right">
+        <nav class="header-nav">
+          <a href="#" class="nav-link active">Thư Viện</a>
+          <a href="#browse" class="nav-link">Tất Cả Truyện</a>
+          <a href="#demo-reader" class="nav-link">Bản Đọc Thử</a>
+        </nav>
+        
+        <!-- Live Theme Switcher Widget -->
+        <div class="theme-widget">
+          <div class="theme-dot t-blue active" onclick="setVintageTheme('blue')" title="Xanh Cổ Điển"></div>
+          <div class="theme-dot t-dark-blue" onclick="setVintageTheme('dark-blue')" title="Đêm Xanh Thẳm"></div>
+          <div class="theme-dot t-parchment" onclick="setVintageTheme('parchment')" title="Giấy Parchment"></div>
+          <div class="theme-dot t-sepia" onclick="setVintageTheme('sepia')" title="Sepia Cổ Điển"></div>
+          <div class="theme-dot t-sage" onclick="setVintageTheme('sage')" title="Xanh Trà Sage"></div>
+          <div class="theme-dot t-dark-sepia" onclick="setVintageTheme('dark-sepia')" title="Đêm Sepia Tối"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. HERO BANNER - WELCOME HERO SECTION -->
+  <section class="vintage-hero">
+    <div class="hero-wrapper">
+      <div class="hero-text">
+        <span class="hero-tag"><i class="fa-solid fa-award icon-left"></i> Đề Cử Đặc Biệt</span>
+        <h2 class="hero-title">Đại Đường Song Long Truyện</h2>
+        <div class="hero-meta">
+          <span>Tác giả: <strong>Huỳnh Dị</strong></span>
+          <span>Chương: <strong>812 Chương</strong></span>
+          <span>Đánh giá: <strong><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.9</strong></span>
+        </div>
+        <p class="hero-desc">
+          Thế cục cuối đời Tùy loạn lạc, hai chàng trai mồ côi ngụ tại Dương Châu là Khấu Trọng và Từ Tử Lăng vô tình đoạt được võ học chí tôn bí tịch "Trường Sinh Quyết". Kể từ đó, số mệnh dẫn dắt họ phiêu bạt giang hồ, tranh giành giang sơn đầy oanh liệt.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-premium btn-premium-primary" onclick="scrollToReader()">
+            <i class="fa-solid fa-book-open icon-left"></i> Bắt đầu đọc thử
+          </button>
+          <button class="btn-premium btn-premium-outline" onclick="alert('Đã thêm truyện vào danh sách yêu thích của bạn!')">
+            <i class="fa-regular fa-bookmark icon-left"></i> Lưu Vào Tủ Sách
+          </button>
+        </div>
+      </div>
+      
+      <div class="hero-cover-container">
+        <div class="hero-cover-book" onclick="scrollToReader()">
+          <div class="book-title-mini">Đại Đường<br>Song Long</div>
+          <div class="book-author-mini">— Huỳnh Dị —</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. INTERACTIVE RECOMMENDED STORIES (CAROUSEL SLIDER) -->
+  <section class="vintage-section">
+    <div class="section-header">
+      <h3 class="section-title-premium"><i class="fa-solid fa-wand-magic-sparkles icon-left" style="font-size: 1.3rem;"></i> Đề Cử <span>Từ Biên Tập Viên</span></h3>
+    </div>
+    
+    <div class="recommended-carousel-card">
+      <div class="carousel-inner" id="carousel-box">
+        <!-- Will be dynamically updated by JS -->
+        <div class="carousel-cover-img" id="carousel-cover">Tru Tiên</div>
+        <div class="carousel-content">
+          <span class="hero-tag" style="font-size: 0.65rem;" id="carousel-tag"><i class="fa-solid fa-fire icon-left"></i> Tiên Hiệp Hot</span>
+          <h4 class="carousel-title" id="carousel-title">Tru Tiên</h4>
+          <span class="carousel-author" id="carousel-author">Tiêu Đỉnh</span>
+          <p class="carousel-desc" id="carousel-desc">Một trong những tác phẩm tiên hiệp kiệt xuất nhất, kể về Trương Tiểu Phàm trên con đường tu tiên đầy trắc trở, tình duyên oan trái giữa Chính và Tà.</p>
+          <div class="hero-meta" style="font-size: 0.8rem;">
+            <span>Chương: <strong id="carousel-chapters">258</strong></span>
+            <span>Lượt xem: <strong id="carousel-views">1.8M</strong></span>
+            <span>Đánh giá: <strong id="carousel-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.8</strong></span>
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <button class="btn-premium btn-premium-primary" style="padding: 0.5rem 1.25rem; font-size: 0.8rem;" onclick="alert('Đang chuyển hướng đến trang thông tin truyện!')">
+              Xem chi tiết <i class="fa-solid fa-arrow-right icon-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="carousel-controls">
+        <button class="carousel-btn" onclick="prevCarousel()"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="carousel-btn" onclick="nextCarousel()"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. FEATURED STORIES SECTION -->
+  <section class="vintage-section">
+    <div class="section-header">
+      <h3 class="section-title-premium"><i class="fa-solid fa-crown icon-left" style="font-size: 1.35rem;"></i> Truyện <span>Nổi Bật</span></h3>
+      <a href="#browse" class="view-all-link">Xem Tất Cả <i class="fa-solid fa-arrow-right icon-right"></i></a>
+    </div>
+    
+    <div class="premium-grid">
+      
+      <!-- Card 1 -->
+      <article class="premium-card">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #4a3b32 0%, #2b1f1a 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #ebd7bd; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Tiếu Ngạo Giang Hồ
+          </div>
+          <span class="card-badge">Cổ Điển</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Bắt đầu đọc truyện Tiếu Ngạo Giang Hồ!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Kiếm Hiệp</span>
+            <span class="card-genre">Danh Tác</span>
+          </div>
+          <h4 class="card-title"><a href="#">Tiếu Ngạo Giang Hồ</a></h4>
+          <span class="card-author">Kim Dung</span>
+          <p class="card-desc-snippet">Câu chuyện kể về cuộc phiêu lưu của chàng lãng tử Lệnh Hồ Xung và cuộc tranh giành bí kíp võ công Tịch Tà Kiếm Phổ làm điên đảo võ lâm.</p>
+          <div class="card-footer-meta">
+            <span>Đọc: <strong>2.4M</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.9</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2 -->
+      <article class="premium-card">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #482f3a 0%, #2a1b21 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #f5dce8; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Phàm Nhân Tu Tiên
+          </div>
+          <span class="card-badge">Hot</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Bắt đầu đọc truyện Phàm Nhân Tu Tiên!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Tu Tiên</span>
+            <span class="card-genre">Phàm Nhân</span>
+          </div>
+          <h4 class="card-title"><a href="#">Phàm Nhân Tu Tiên</a></h4>
+          <span class="card-author">Vong Ngữ</span>
+          <p class="card-desc-snippet">Hàn Lập - một tiểu tử bình thường ở sơn thôn vô tình bước vào một môn phái giang hồ nhỏ, bắt đầu con đường tu hành nghịch thiên gian nan.</p>
+          <div class="card-footer-meta">
+            <span>Đọc: <strong>5.2M</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.7</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 3 -->
+      <article class="premium-card">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #2d423b 0%, #192621 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #d9ebd9; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Khánh Dư Niên
+          </div>
+          <span class="card-badge">Đề cử</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Bắt đầu đọc truyện Khánh Dư Niên!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Lịch Sử</span>
+            <span class="card-genre">Xuyên Không</span>
+          </div>
+          <h4 class="card-title"><a href="#">Khánh Dư Niên</a></h4>
+          <span class="card-author">Miêu Nị</span>
+          <p class="card-desc-snippet">Phạm Nhàn - một thanh niên mắc bệnh hiểm nghèo trọng sinh về một thời đại phong kiến giả tưởng đầy rẫy tranh đoạt vương quyền hiểm hóc.</p>
+          <div class="card-footer-meta">
+            <span>Đọc: <strong>920K</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.9</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 4 -->
+      <article class="premium-card">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #443c2c 0%, #262118 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #ebd7bd; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Đấu Phá Thương Khung
+          </div>
+          <span class="card-badge">Kinh Điển</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Bắt đầu đọc truyện Đấu Phá Thương Khung!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Huyền Huyễn</span>
+            <span class="card-genre">Dị Giới</span>
+          </div>
+          <h4 class="card-title"><a href="#">Đấu Phá Thương Khung</a></h4>
+          <span class="card-author">Thiên Tằm Thổ Đậu</span>
+          <p class="card-desc-snippet">Tiêu Viêm - một thiên tài võ học bỗng chốc trở thành phế vật chịu mọi sỉ nhục, mở ra con đường tu luyện Đấu Khí vô song chinh phục đỉnh cao dị giới.</p>
+          <div class="card-footer-meta">
+            <span>Đọc: <strong>8.4M</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.8</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 5. RECENT UPDATES SECTION -->
+  <section class="vintage-section">
+    <div class="section-header">
+      <h3 class="section-title-premium"><i class="fa-solid fa-clock-rotate-left icon-left" style="font-size: 1.3rem;"></i> Cập Nhật <span>Mới Nhất</span></h3>
+    </div>
+    
+    <div class="recent-updates-grid">
+      
+      <!-- Horizontal Card 1 -->
+      <div class="recent-horizontal-card">
+        <!-- Cover box -->
+        <div style="background: linear-gradient(135deg, #1f2d3d 0%, #0d1621 100%); width: 80px; height: 115px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #dfecf7; font-family: var(--font-heading); font-size: 0.8rem; text-align: center; padding: 0.5rem; border: 1px solid var(--border-vintage);">
+          Thế Giới Hoàn Mỹ
+        </div>
+        <div class="recent-info">
+          <div>
+            <h4 class="recent-title"><a href="#">Thế Giới Hoàn Mỹ</a></h4>
+            <a href="#" class="recent-chap-link">Chương 2018: Quy Khứ Lai</a>
+          </div>
+          <p class="recent-desc">Thạch Hạo đứng trên đỉnh hoang cổ kiệt xuất vũ trụ bước trên con đường tu đế...</p>
+          <div class="recent-footer">
+            <span>Tác giả: <strong>Thần Đông</strong></span>
+            <span><i class="fa-regular fa-clock icon-left"></i> 5 phút trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Horizontal Card 2 -->
+      <div class="recent-horizontal-card">
+        <div style="background: linear-gradient(135deg, #3d2f1f 0%, #21190f 100%); width: 80px; height: 115px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #ebd8c5; font-family: var(--font-heading); font-size: 0.8rem; text-align: center; padding: 0.5rem; border: 1px solid var(--border-vintage);">
+          Vũ Động Càn Khôn
+        </div>
+        <div class="recent-info">
+          <div>
+            <h4 class="recent-title"><a href="#">Vũ Động Càn Khôn</a></h4>
+            <a href="#" class="recent-chap-link">Chương 1248: Hậu Hội Vô Kỳ</a>
+          </div>
+          <p class="recent-desc">Lâm Động cầm tổ phù chấn áp nguyên môn, bắt đầu hành trình bước lên Cảnh giới vĩ đại.</p>
+          <div class="recent-footer">
+            <span>Tác giả: <strong>Thổ Đậu</strong></span>
+            <span><i class="fa-regular fa-clock icon-left"></i> 12 phút trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Horizontal Card 3 -->
+      <div class="recent-horizontal-card">
+        <div style="background: linear-gradient(135deg, #2f3d32 0%, #17211a 100%); width: 80px; height: 115px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #d9ebd9; font-family: var(--font-heading); font-size: 0.8rem; text-align: center; padding: 0.5rem; border: 1px solid var(--border-vintage);">
+          Thần Mộ
+        </div>
+        <div class="recent-info">
+          <div>
+            <h4 class="recent-title"><a href="#">Thần Mộ</a></h4>
+            <a href="#" class="recent-chap-link">Chương 732: Thần Ma Vô Song</a>
+          </div>
+          <p class="recent-desc">Thần Nam bước ra từ phần mộ Thần Ma vạn năm tìm kiếm tung tích ái nhân Vũ Hinh.</p>
+          <div class="recent-footer">
+            <span>Tác giả: <strong>Ngô Biển</strong></span>
+            <span><i class="fa-regular fa-clock icon-left"></i> 45 phút trước</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 6. ALL NOVELS WITH FILTER TABS (DYNAMIC FILTERING DEMO) -->
+  <section id="browse" class="vintage-section">
+    <div class="section-header">
+      <h3 class="section-title-premium"><i class="fa-solid fa-boxes-stacked icon-left"></i> Tủ Sách <span>Toàn Thư</span></h3>
+    </div>
+    
+    <!-- Filter Tabs (Interactive) -->
+    <div class="filter-tabs-container">
+      <div class="filter-tab active" onclick="filterGenre('all', this)">Tất cả</div>
+      <div class="filter-tab" onclick="filterGenre('tien-hiep', this)">Tiên Hiệp</div>
+      <div class="filter-tab" onclick="filterGenre('kiem-hiep', this)">Kiếm Hiệp</div>
+      <div class="filter-tab" onclick="filterGenre('do-thi', this)">Đô Thị</div>
+      <div class="filter-tab" onclick="filterGenre('huyen-huyen', this)">Huyền Huyễn</div>
+      <div class="filter-tab" onclick="filterGenre('lich-su', this)">Lịch Sử</div>
+    </div>
+    
+    <!-- Novels Grid -->
+    <div class="premium-grid" id="browse-grid">
+      
+      <!-- Item 1 (Kiếm Hiệp) -->
+      <article class="premium-card" data-genre="kiem-hiep">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #4a3b32 0%, #2b1f1a 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #ebd7bd; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Tiếu Ngạo Giang Hồ
+          </div>
+          <span class="card-badge">Kiếm Hiệp</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Đọc ngay Tiếu Ngạo Giang Hồ!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Kiếm Hiệp</span>
+            <span class="card-genre">Kim Dung</span>
+          </div>
+          <h4 class="card-title"><a href="#">Tiếu Ngạo Giang Hồ</a></h4>
+          <span class="card-author">Kim Dung</span>
+          <div class="card-footer-meta">
+            <span>Chương: <strong>40</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.9</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Item 2 (Tiên Hiệp) -->
+      <article class="premium-card" data-genre="tien-hiep">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #2b3a4a 0%, #17212b 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #d5e4f5; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Tru Tiên
+          </div>
+          <span class="card-badge">Tiên Hiệp</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Đọc ngay Tru Tiên!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Tiên Hiệp</span>
+            <span class="card-genre">Tiêu Đỉnh</span>
+          </div>
+          <h4 class="card-title"><a href="#">Tru Tiên</a></h4>
+          <span class="card-author">Tiêu Đỉnh</span>
+          <div class="card-footer-meta">
+            <span>Chương: <strong>258</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.8</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Item 3 (Tiên Hiệp) -->
+      <article class="premium-card" data-genre="tien-hiep">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #482f3a 0%, #2a1b21 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #f5dce8; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Phàm Nhân Tu Tiên
+          </div>
+          <span class="card-badge">Tiên Hiệp</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Đọc ngay Phàm Nhân Tu Tiên!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Tu Tiên</span>
+            <span class="card-genre">Vong Ngữ</span>
+          </div>
+          <h4 class="card-title"><a href="#">Phàm Nhân Tu Tiên</a></h4>
+          <span class="card-author">Vong Ngữ</span>
+          <div class="card-footer-meta">
+            <span>Chương: <strong>2445</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.7</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Item 4 (Lịch Sử) -->
+      <article class="premium-card" data-genre="lich-su">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #2d423b 0%, #192621 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #d9ebd9; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Khánh Dư Niên
+          </div>
+          <span class="card-badge">Lịch Sử</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Đọc ngay Khánh Dư Niên!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Lịch Sử</span>
+            <span class="card-genre">Trọng Sinh</span>
+          </div>
+          <h4 class="card-title"><a href="#">Khánh Dư Niên</a></h4>
+          <span class="card-author">Miêu Nị</span>
+          <div class="card-footer-meta">
+            <span>Chương: <strong>785</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.9</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Item 5 (Huyền Huyễn) -->
+      <article class="premium-card" data-genre="huyen-huyen">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #443c2c 0%, #262118 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #ebd7bd; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Đấu Phá Thương Khung
+          </div>
+          <span class="card-badge">Huyền Huyễn</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Đọc ngay Đấu Phá Thương Khung!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Huyền Huyễn</span>
+            <span class="card-genre">Thiên Tằm</span>
+          </div>
+          <h4 class="card-title"><a href="#">Đấu Phá Thương Khung</a></h4>
+          <span class="card-author">Thiên Tằm Thổ Đậu</span>
+          <div class="card-footer-meta">
+            <span>Chương: <strong>1624</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.8</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Item 6 (Đô Thị) -->
+      <article class="premium-card" data-genre="do-thi">
+        <div class="card-cover-wrapper">
+          <div style="background: linear-gradient(135deg, #2d3c4a 0%, #15222b 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #d5e4f5; font-family: var(--font-heading); font-size: 1.35rem; text-align: center; padding: 1rem;">
+            Đô Thị Kì Môn
+          </div>
+          <span class="card-badge">Đô Thị</span>
+          <div class="card-cover-overlay">
+            <button class="overlay-action-btn" onclick="alert('Đọc ngay Đô Thị Kì Môn!')">Đọc ngay <i class="fa-solid fa-chevron-right icon-right"></i></button>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-genres">
+            <span class="card-genre">Đô Thị</span>
+            <span class="card-genre">Dị Năng</span>
+          </div>
+          <h4 class="card-title"><a href="#">Đô Thị Kỳ Môn Dị Thuật</a></h4>
+          <span class="card-author">Tự Cổ Kinh</span>
+          <div class="card-footer-meta">
+            <span>Chương: <strong>485</strong></span>
+            <span class="card-stars"><i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> 4.6</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 7. LIVE INTERACTIVE BOOK READER PREVIEW -->
+  <section id="demo-reader" class="vintage-section">
+    <div class="section-header">
+      <h3 class="section-title-premium"><i class="fa-solid fa-file-signature icon-left"></i> Bản Đọc Thử <span>Cao Cấp</span></h3>
+      <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">(Thử tăng giảm cỡ chữ & đổi font sách)</span>
+    </div>
+    
+    <div class="premium-reader-section">
+      <!-- Chapter Header -->
+      <div class="reader-header">
+        <div class="reader-header-chapter">Chương 1</div>
+        <h2 class="reader-header-title">Trường Sinh Quyết Xuất Thế</h2>
+        <div class="reader-header-novel">Trích: Đại Đường Song Long Truyện — Huỳnh Dị</div>
+      </div>
+      
+      <!-- Interactive Customizer Toolbar -->
+      <div class="custom-toolbar">
+        <div class="toolbar-group">
+          <span class="toolbar-label">Phông chữ:</span>
+          <select id="font-family-select" class="toolbar-select" onchange="changeReaderFontFamily(this.value)">
+            <option value="Lora, Georgia, serif">Lora (Serif Sách)</option>
+            <option value="Cormorant Garamond, serif">Cormorant Garamond (Cổ Điển)</option>
+            <option value="Playfair Display, Georgia, serif">Playfair (Trang Trọng)</option>
+            <option value="Outfit, sans-serif">Outfit (Không Chân)</option>
+          </select>
+        </div>
+        
+        <div class="toolbar-group">
+          <span class="toolbar-label">Cỡ chữ:</span>
+          <div class="font-size-adjust">
+            <div class="font-size-btn" onclick="adjustReaderFontSize(-1)"><i class="fa-solid fa-minus" style="font-size: 0.8rem;"></i></div>
+            <div id="font-size-indicator" class="font-size-value">19px</div>
+            <div class="font-size-btn" onclick="adjustReaderFontSize(1)"><i class="fa-solid fa-plus" style="font-size: 0.8rem;"></i></div>
+          </div>
+        </div>
+
+        <div class="toolbar-group">
+          <span class="toolbar-label">Màu Giấy:</span>
+          <select id="theme-select" class="toolbar-select" onchange="setVintageTheme(this.value)">
+            <option value="blue">Xanh Cổ Điển (Light)</option>
+            <option value="dark-blue">Đêm Xanh Thẳm (Dark)</option>
+            <option value="parchment">Trắng Kem Parchment</option>
+            <option value="sepia">Vàng Cổ Sepia</option>
+            <option value="sage">Xanh Lá Sage Nhẹ</option>
+            <option value="dark-sepia">Đêm Tối Ấm Áp</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Reading Text Container -->
+      <div id="live-reading-text" class="reading-content-view">
+        <p>
+          Dương Châu thành vào tiết trời cuối thu, gió thổi mang theo hơi lạnh se buốt tràn vào các ngóc ngách của khu ngõ chợ nghèo. Trời vừa sập tối, hai bóng người gầy nhom đang đi thụt lùi vào mái hiên tôn rách nát để trốn gió mùa.
+        </p>
+        <p>
+          "Trọng thiếu gia, đệ nói xem tấm giấy da dê rách này có thực sự là mật tịch võ công vang danh thiên hạ 'Trường Sinh Quyết' không?" Từ Tử Lăng kéo nhẹ góc chiếc áo vải vá chằng vá đắp, ngước mặt lên hỏi.
+        </p>
+        <p>
+          Khấu Trọng ngồi vắt chân lên bục gỗ, tay trái ôm khư khư một cuốn sách mỏng bìa da dê đã ố vàng. Gã cười hí hửng, đôi mắt lém lỉnh chớp liên hồi: "Lăng thiếu gia, đệ ngốc quá! Thạch Long võ sư trân quý nó hơn cả tính mạng, thậm chí hoàng đế Dương Quảng còn phái binh mã đi lùng sục khắp nơi. Nếu nó không phải bảo vật, sao giang hồ lại điên đảo đến vậy?"
+        </p>
+        <p>
+          Nhìn kỹ, cuốn sách không viết bằng chữ Hán thông thường, mà chứa đầy các biểu tượng đồ hình kỳ bí, miêu tả các tư thế tu luyện và những mạch máu dẫn khí chạy khắp cơ thể. Trên góc trang sách có ba chữ triện cổ mạ vàng mờ nhạt: "Trường Sinh Quyết". Hai đứa trẻ mồ côi ngụ ở đầu đường xó chợ Dương Châu chẳng hề biết rằng, từ giây phút lật mở trang giấy này, vận mệnh bá chủ giang sơn của chúng đã chính thức bắt đầu.
+        </p>
+      </div>
+      
+      <!-- Mock Footer nav -->
+      <div class="reader-footer-nav">
+        <button class="btn-premium btn-premium-outline" disabled><i class="fa-solid fa-chevron-left icon-left"></i> Chương Trước</button>
+        <button class="btn-premium btn-premium-primary" onclick="alert('Đã xem hết chương mẫu thử nghiệm!')">Chương Tiếp Theo <i class="fa-solid fa-chevron-right icon-right"></i></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="margin-top: 5rem; padding: 3rem 1rem; text-align: center; border-top: 2px solid var(--border-vintage); background-color: var(--surface-vintage); transition: background-color var(--transition-speed), border-color var(--transition-speed);">
+    <p style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--primary-vintage); margin-bottom: 0.5rem;">CMC Premium Vintage Library</p>
+    <p style="font-size: 0.85rem; color: var(--text-muted);">© 2026 CMC Reading Platform. Thiết kế phục vụ mục đích minh họa giao diện mẫu.</p>
+  </footer>
+
+  <!-- JAVASCRIPT FOR INTERACTION -->
+  <script>
+    // 1. Live Theme Switcher function
+    function setVintageTheme(themeName) {
+      // Set html attribute
+      document.documentElement.setAttribute('data-vintage-theme', themeName);
+      
+      // Update select select dropdown inside reader if it exists
+      const select = document.getElementById('theme-select');
+      if (select) {
+        select.value = themeName;
+      }
+      
+      // Update theme dot highlight class
+      const dots = document.querySelectorAll('.theme-dot');
+      dots.forEach(dot => {
+        dot.classList.remove('active');
+        if (dot.classList.contains('t-' + themeName)) {
+          dot.classList.add('active');
+        }
+      });
+    }
+
+    // 2. Scroll helper
+    function scrollToReader() {
+      const element = document.getElementById('demo-reader');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // 3. Live Font adjust controls
+    let currentFontSize = 19;
+    
+    function adjustReaderFontSize(change) {
+      currentFontSize += change;
+      if (currentFontSize < 14) currentFontSize = 14;
+      if (currentFontSize > 28) currentFontSize = 28;
+      
+      const textContainer = document.getElementById('live-reading-text');
+      if (textContainer) {
+        textContainer.style.fontSize = currentFontSize + 'px';
+      }
+      
+      const indicator = document.getElementById('font-size-indicator');
+      if (indicator) {
+        indicator.textContent = currentFontSize + 'px';
+      }
+    }
+
+    // 4. RECOMMENDED CAROUSEL DATA & LOGIC
+    const recommendedData = [
+      {
+        title: "Tru Tiên",
+        author: "Tiêu Đỉnh",
+        tag: "Tiên Hiệp Hot",
+        desc: "Một trong những tác phẩm tiên hiệp kiệt xuất nhất, kể về Trương Tiểu Phàm trên con đường tu tiên đầy trắc trở, tình duyên oan trái giữa Chính và Tà.",
+        chapters: "258 Chương",
+        views: "1.8M Lượt xem",
+        stars: "4.8",
+        color: "linear-gradient(135deg, #2b3a4a 0%, #17212b 100%)"
+      },
+      {
+        title: "Khánh Dư Niên",
+        author: "Miêu Nị",
+        tag: "Đề Cử Đặc Biệt",
+        desc: "Phạm Nhàn mang cơ thể bệnh tật trọng sinh vào một đứa trẻ sơ sinh bí ẩn nơi hải biên đèo. Lớn lên gã bước chân vào chốn giang hồ và triều đình tranh đoạt quỷ khóc thần sầu.",
+        chapters: "785 Chương",
+        views: "920K Lượt xem",
+        stars: "4.9",
+        color: "linear-gradient(135deg, #2d423b 0%, #192621 100%)"
+      },
+      {
+        title: "Phàm Nhân Tu Tiên",
+        author: "Vong Ngữ",
+        tag: "Kinh Điển Hàng Đầu",
+        desc: "Một phàm nhân sơn thôn bình thường bước vào một môn phái giang hồ nhỏ. Gã dựa vào ý chí, mưu lược cùng bình gỗ thần bí tìm đường đắc đạo phi thăng.",
+        chapters: "2445 Chương",
+        views: "5.2M Lượt xem",
+        stars: "4.7",
+        color: "linear-gradient(135deg, #482f3a 0%, #2a1b21 100%)"
+      }
+    ];
+
+    let currentCarouselIndex = 0;
+    
+    function updateCarousel() {
+      const item = recommendedData[currentCarouselIndex];
+      const cover = document.getElementById('carousel-cover');
+      const tag = document.getElementById('carousel-tag');
+      const title = document.getElementById('carousel-title');
+      const author = document.getElementById('carousel-author');
+      const desc = document.getElementById('carousel-desc');
+      const chapters = document.getElementById('carousel-chapters');
+      const views = document.getElementById('carousel-views');
+      const stars = document.getElementById('carousel-stars');
+
+      cover.textContent = item.title;
+      cover.style.background = item.color;
+      tag.innerHTML = '<i class="fa-solid fa-fire icon-left"></i> ' + item.tag;
+      title.textContent = item.title;
+      author.textContent = item.author;
+      desc.textContent = item.desc;
+      chapters.textContent = item.chapters;
+      views.textContent = item.views;
+      stars.innerHTML = '<i class="fa-solid fa-star" style="color: var(--primary-vintage); margin-right: 2px;"></i> ' + item.stars;
+    }
+
+    function nextCarousel() {
+      currentCarouselIndex = (currentCarouselIndex + 1) % recommendedData.length;
+      updateCarousel();
+    }
+
+    // 5. NOVEL GENRE FILTER LOGIC
+    function filterGenre(genre, element) {
+      // Toggle active tab style
+      const tabs = document.querySelectorAll('.filter-tab');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      element.classList.add('active');
+
+      // Filter cards
+      const cards = document.querySelectorAll('#browse-grid .premium-card');
+      cards.forEach(card => {
+        const cardGenre = card.getAttribute('data-genre');
+        if (genre === 'all' || cardGenre === genre) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // 6. SEARCH FILTER LOGIC (LOCAL SEARCH DEMO)
+    function handleLocalSearch(queryText) {
+      const cards = document.querySelectorAll('#browse-grid .premium-card');
+      const normalizedQuery = queryText.toLowerCase().trim();
+      
+      cards.forEach(card => {
+        const title = card.querySelector('.card-title').textContent.toLowerCase();
+        const author = card.querySelector('.card-author').textContent.toLowerCase();
+        
+        if (title.includes(normalizedQuery) || author.includes(normalizedQuery)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
