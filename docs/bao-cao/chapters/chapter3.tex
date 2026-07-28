@@ -1,0 +1,524 @@
+\chapter{TRIỂN KHAI HỆ THỐNG}
+\label{chap:implementation}
+
+\section{Kiến trúc phần mềm tổng thể}
+
+\subsection{Lựa chọn mô hình kiến trúc}
+
+Mã nguồn hiện thực kiến trúc frontend/backend tách rời. Frontend là ứng dụng đơn trang (SPA) xây dựng bằng React và Vite; trình duyệt trao đổi với REST API Express qua HTTP/JSON. Backend xác thực JWT, điều phối nghiệp vụ và truy vấn PostgreSQL qua connection pool. Redis/BullMQ phục vụ hàng đợi; worker chạy ở tiến trình riêng để xử lý kiểm duyệt và thông báo. Một số dịch vụ bên ngoài được tích hợp cho OAuth, email, lưu trữ và AI \cite{architecture,react-docs,vite-docs}.
+
+Frontend đảm nhiệm giao diện, tương tác và điều hướng phía client. Backend được tổ chức theo các lớp Route--Controller--Model/Service; cách tách này giúp định tuyến, xử lý nghiệp vụ và truy cập dữ liệu có trách nhiệm rõ ràng \cite{express-docs}.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.96\textwidth}{!}{%
+\begin{tikzpicture}[
+  box/.style={draw,rounded corners,minimum width=3.0cm,minimum height=1.0cm,align=center},
+  store/.style={draw,cylinder,shape border rotate=90,aspect=0.28,minimum width=2.8cm,minimum height=1.15cm,align=center},
+  ext/.style={draw,dashed,rounded corners,minimum width=2.5cm,minimum height=0.9cm,align=center},
+  arrow/.style={-{Latex[length=2.3mm]},thick},
+  node distance=1.0cm and 1.2cm
+]
+\node[box] (browser) {Trình duyệt\\React + Vite};
+\node[box,right=of browser] (api) {Express REST API\\JWT + RBAC};
+\node[store,right=of api,yshift=1.2cm] (pg) {PostgreSQL};
+\node[store,right=of api,yshift=-1.2cm] (redis) {Redis / BullMQ};
+\node[box,right=of redis] (worker) {Worker\\moderation + notification};
+\node[ext,above=1.0cm of api] (services) {OAuth / Email / AI / Storage};
+\draw[arrow] (browser) -- (api);
+\draw[arrow] (api) -- (pg);
+\draw[arrow] (api) -- (redis);
+\draw[arrow] (worker) -- (redis);
+\draw[arrow] (worker) to[bend right=18] (pg);
+\draw[arrow] (api) -- (services);
+\end{tikzpicture}%
+}
+\caption{Kiến trúc logic của hệ thống theo source hiện tại}
+\label{fig:overall-architecture}
+\end{figure}
+
+Trong request thông thường, React gọi API; middleware kiểm tra CORS, parse body, xác thực và phân quyền; controller validate/điều phối; model hoặc service truy cập dữ liệu; error handler chuẩn hóa phản hồi. Với tác vụ nền, API ghi job vào queue và trả phản hồi sớm; worker nhận job, xử lý rồi cập nhật PostgreSQL hoặc tạo notification. Việc tách process giúp tránh chặn event loop của web server, nhưng chỉ phát huy tác dụng khi Redis và worker được cấu hình/giám sát đúng.
+\clearpage
+\subsection{Công nghệ và trách nhiệm}
+
+\begin{table}[htbp]
+\centering
+\caption{Stack công nghệ được xác nhận từ package và cấu hình dự án}
+\label{tab:technology-stack}
+\begin{tabularx}{\textwidth}{|>{\bfseries\RaggedRight\arraybackslash}p{3.2cm}|>{\RaggedRight\arraybackslash}p{4.2cm}|X|}
+\hline
+\textbf{Lớp} & \textbf{Công nghệ} & \textbf{Trách nhiệm} \\
+\hline
+Frontend & React 18, React Router 6, Vite 5 & Component UI, route SPA, state phía client và build tài nguyên tĩnh. \\
+\hline
+Giao tiếp & Axios & Base URL, JSON, gắn JWT và xử lý lỗi 401/403 tập trung. \\
+\hline
+Trình bày & CSS, Bootstrap 5, Tailwind CSS trong dependencies & Bố cục, responsive, trạng thái sáng/tối và trải nghiệm đọc. \\
+\hline
+Backend & Node.js, Express 4 & REST API, middleware pipeline, controller và tích hợp dịch vụ. \\
+\hline
+Xác thực & JWT, bcryptjs, Google Auth Library & Phiên không trạng thái, băm mật khẩu và Google OAuth. \\
+\hline
+Cơ sở dữ liệu & PostgreSQL, thư viện \CodePath{pg} & Dữ liệu quan hệ, ràng buộc, index và connection pool. \\
+\hline
+Tác vụ nền & Redis, BullMQ & Queue cho moderation/notification và worker riêng. \\
+\hline
+Lưu trữ/tích hợp & Supabase, Resend, Groq/Gemini & Ảnh, email OTP và tính năng AI qua backend. \\
+\hline
+Kiểm thử & Jest, Supertest, Vitest, Testing Library, Playwright & Unit/integration mức module và kịch bản E2E theo cấu hình. \\
+\hline
+Triển khai & Vercel-compatible SPA, Render web service/worker & Hosting frontend tĩnh, API và process worker. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Các phiên bản trong Bảng~\ref{tab:technology-stack} được lấy từ \CodePath{frontend/package.json}, \CodePath{backend/package.json} và lockfile tại thời điểm rà soát. Báo cáo không khẳng định mọi dependency đã được sử dụng đồng đều chỉ vì xuất hiện trong package; vai trò cụ thể được đối chiếu thêm với import và cấu hình source.
+
+\section{Triển khai frontend}
+
+\subsection{Cấu trúc thư mục}
+
+Entry point frontend là \CodePath{frontend/src/main.jsx}, sau đó render \CodePath{App.jsx}. Source được tổ chức theo pages, components, layouts, contexts, services, utils, styles và data. Tại thời điểm thống kê, thư mục pages có 28 file chính và components có 31 file chính; số lượng này là ảnh chụp trạng thái codebase, không phải chỉ tiêu chất lượng tự thân.
+
+\ReportImage[0.30\textheight]
+  {images/screenshots/fe-folder-tree.png}
+  {Cấu trúc thư mục frontend}
+  {fig:fe-folder-tree}
+  {Chụp cây thư mục \CodePath{frontend/src}; chỉ hiển thị phần liên quan, chữ rõ và không lộ tệp môi trường.}
+
+\begin{table}[htbp]
+\centering
+\caption{Trách nhiệm các thư mục frontend chính}
+\label{tab:frontend-folders}
+\begin{tabularx}{\textwidth}{|>{\bfseries\RaggedRight\arraybackslash}p{3.4cm}|X|}
+\hline
+\textbf{Thư mục/tệp} & \textbf{Trách nhiệm} \\
+\hline
+\CodePath{App.jsx} & Khai báo route, layout công khai, Admin, Moderator và route guard. \\
+\hline
+\CodePath{pages/} & Component cấp trang cho Home, Search, Reader, Account, Dashboard và quản trị. \\
+\hline
+\CodePath{components/} & Thành phần tái sử dụng như Navbar, StoryCard, CommentSection, FollowButton. \\
+\hline
+\CodePath{layouts/} & Khung giao diện riêng cho Admin và Moderator. \\
+\hline
+\CodePath{contexts/} & Trạng thái xác thực và theme chia sẻ trong cây component. \\
+\hline
+\CodePath{services/api.js} & Axios client và facade endpoint theo domain. \\
+\hline
+\CodePath{utils/} & Validation, slug, số chương và chuẩn hóa lỗi. \\
+\hline
+\CodePath{styles/} & CSS chung, dark mode, reader và màn hình quản lý. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Điều hướng và bảo vệ route}
+
+\CodePath{App.jsx} chia route thành ba nhóm. Nhóm user/public dùng Navbar và Footer; nhóm Admin dùng layout riêng (\CodePath{AdminLayout}); nhóm Moderator dùng layout riêng (\CodePath{ModeratorLayout}). \CodePath{ProtectedRoute} yêu cầu đăng nhập, còn \CodePath{RoleProtectedRoute} kiểm tra role trước khi render Dashboard hoặc layout quản trị. Cấu trúc này giảm lặp và giúp sidebar/menu nhất quán trong từng khu vực.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/fe-app-routes-code.png}
+  {Đoạn code chính về route và route guard ở frontend}
+  {fig:fe-routes-code}
+  {Chụp đoạn code thật trong \CodePath{frontend/src/App.jsx}, ưu tiên route Dashboard, Admin và Moderator.}
+
+Route frontend không thay thế quyền backend. Nếu chỉ ẩn menu Admin nhưng API không có middleware, người dùng vẫn có thể gọi endpoint bằng công cụ khác. Source hiện đã đặt RBAC ở backend; frontend guard được xem là lớp trải nghiệm và phòng lỗi điều hướng.
+\clearpage
+\subsection{Lớp gọi API và quản lý phiên}
+
+\CodePath{services/api.js} tạo một Axios instance có base URL từ biến môi trường, fallback về local khi phát triển. Request interceptor đọc \CodePath{cmc_token} và gắn Bearer token; response interceptor xử lý 401/403, xóa phiên và điều hướng về login trong các trường hợp phù hợp. Các endpoint được gom theo domain như auth, stories, chapters, comments, follows, reports, admin và moderator.
+
+Ưu điểm của facade tập trung là component không cần lặp base URL, header và cấu trúc request. Hạn chế là file có thể lớn khi mọi domain cùng nằm trong một object; về lâu dài có thể tách thành các module \CodePath{authApi}, \CodePath{storyApi}, \CodePath{adminApi} nhưng vẫn dùng chung Axios client.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/fe-api-interceptor-code.png}
+  {Đoạn code chính về Axios interceptor ở frontend}
+  {fig:fe-api-code}
+  {Chụp đoạn code thật tạo \CodePath{apiClient} và hai interceptor; che token nếu DevTools đang hiển thị giá trị thật.}
+
+\subsection{Trạng thái giao diện và trải nghiệm}
+
+Source có skeleton screen cho trạng thái tải và optimistic UI kèm rollback ở những tương tác phù hợp như follow, rating hoặc vote. Theme và tùy chọn đọc được tách thành context/panel riêng. Khi đánh giá frontend, cần kiểm tra đủ bốn trạng thái: loading, success có dữ liệu, success rỗng và error. Một giao diện đẹp ở trạng thái thành công nhưng vỡ khi API chậm vẫn chưa phải trải nghiệm hoàn chỉnh.
+
+Về khả năng truy cập, báo cáo chưa có kết quả audit tự động. Nhóm cần kiểm tra bằng bàn phím, focus, label của form, contrast ở dark mode, alt text ảnh bìa và thông báo lỗi có thể đọc được. Đây là hạng mục cần bổ sung bằng minh chứng thật nếu rubric của giảng viên yêu cầu.
+
+\section{Triển khai backend}
+
+\subsection{Cấu trúc phân lớp}
+
+Backend bắt đầu ở \CodePath{src/server.js}, tạo HTTP server từ \CodePath{app.js}. Router chỉ định URL và middleware; controller validate, điều phối và tạo HTTP response; model/service thực hiện query hoặc tích hợp bên ngoài; worker xử lý job. Thống kê source chính cho thấy 16 file route, 17 controller, 17 model, 9 service và 6 middleware, không tính file test.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/be-folder-tree.png}
+  {Cấu trúc thư mục backend}
+  {fig:be-folder-tree}
+  {Chụp cây thư mục \CodePath{backend/src}, hiển thị config, routes, controllers, models, services, middleware và workers.}
+
+\begin{table}[htbp]
+\centering
+\caption{Phân lớp backend và nguyên tắc phụ thuộc}
+\label{tab:backend-layers}
+\begin{tabularx}{\textwidth}{|>{\bfseries\RaggedRight\arraybackslash}p{3.2cm}|X|X|}
+\hline
+\textbf{Lớp} & \textbf{Trách nhiệm} & \textbf{Nguyên tắc} \\
+\hline
+Routes & URL, method, auth, role, upload, rate limit, audit & Không chứa truy vấn SQL dài hoặc nghiệp vụ phức tạp. \\
+\hline
+Controllers & Validate request, điều phối model/service, response & Không tin user id/role do client tự gửi khi đã có JWT. \\
+\hline
+Models & Truy vấn và ánh xạ dữ liệu & Parameterized query; transaction dùng cùng DB client. \\
+\hline
+Services & Nghiệp vụ/tích hợp dùng lại & Che chi tiết AI, email, storage, queue khỏi controller. \\
+\hline
+Middleware & Xử lý cắt ngang & Auth trước role; audit sau khi biết response thành công. \\
+\hline
+Workers & Consumer job nền & Chạy process riêng, idempotent khi có thể. \\
+\hline
+Config & Biến môi trường và client hạ tầng & Secret chỉ ở backend; không commit \CodePath{.env}. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Pipeline request}
+
+\CodePath{app.js} lần lượt cấu hình Helmet, CORS, log HTTP, các parser JSON và URL-encoded, static cover, health check, 16 nhóm router rồi not-found và error handler. Thứ tự middleware quan trọng: error handler phải ở cuối; role middleware phải sau auth; audit cần quan sát kết quả response nhưng không được ghi dữ liệu nhạy cảm.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw,rounded corners,minimum width=2.3cm,minimum height=0.85cm,align=center},
+  arrow/.style={-{Latex[length=2.1mm]},thick},
+  node distance=0.55cm
+]
+\node[box] (request) {HTTP request};
+\node[box,right=of request] (security) {Helmet / CORS\\parser / log};
+\node[box,right=of security] (auth) {Auth / RBAC\\rate limit};
+\node[box,right=of auth] (route) {Route +\\Controller};
+\node[box,below=0.9cm of route] (data) {Model / Service\\PostgreSQL / Queue};
+\node[box,left=of data] (response) {HTTP response};
+\node[box,left=of response] (error) {Not found /\\Error handler};
+\draw[arrow] (request) -- (security);
+\draw[arrow] (security) -- (auth);
+\draw[arrow] (auth) -- (route);
+\draw[arrow] (route) -- (data);
+\draw[arrow] (data) -- (response);
+\draw[arrow] (response) -- (error);
+\end{tikzpicture}
+\caption{Pipeline xử lý request ở backend}
+\label{fig:backend-pipeline}
+\end{figure}
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/be-app-routes-code.png}
+  {Đoạn code chính cấu hình middleware và mount router}
+  {fig:be-app-code}
+  {Chụp code thật trong \CodePath{backend/src/app.js}, gồm security middleware, health check và các \CodePath{app.use('/api/...')}.}
+\clearpage
+\subsection{Xác thực, phân quyền và audit}
+
+\CodePath{authenticateToken} đọc header Authorization, yêu cầu định dạng Bearer, xác minh JWT bằng secret từ environment và gán payload vào \CodePath{req.user}. \CodePath{optionalAuth} không từ chối Guest; token lỗi được xem như không có phiên ở các route công khai. \CodePath{authorizeRole} chuẩn hóa chữ thường để tránh sai khác giữa \CodePath{Admin} và \CodePath{admin}. Cấu trúc và cách kiểm tra token được đối chiếu với đặc tả JWT \cite{rfc7519}.
+
+Audit middleware bao quanh các thao tác làm thay đổi dữ liệu quản trị như đổi vai trò, đổi trạng thái người dùng, duyệt truyện, xử lý báo cáo và quản lý từ khóa. Kiểm thử xác nhận hệ thống chỉ ghi hành động thành công, giới hạn phạm vi Moderator và loại dữ liệu mật khẩu/credential khỏi nhật ký. Các biện pháp xác thực, phân quyền, kiểm soát đầu vào và ghi log được rà soát theo nhóm rủi ro ứng dụng web phổ biến của OWASP \cite{owasp-top10}.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/be-auth-rbac-code.png}
+  {Đoạn code chính về xác thực JWT và RBAC}
+  {fig:be-auth-code}
+  {Chụp code thật trong \CodePath{authMiddleware.js} và \CodePath{roleMiddleware.js}; không chụp giá trị secret hoặc token.}
+
+\subsection{Tác vụ nền và dịch vụ AI}
+
+\CodePath{startWorker.js} khởi động moderation worker và notification worker. Queue dùng \CodePath{REDIS_URL}; API và worker phải trỏ cùng Redis \cite{redis-docs,bullmq-docs}. Với AI, backend ưu tiên Groq rồi fallback Gemini, có timeout và cache; tóm tắt chương được lưu ở \CodePath{ai_summaries}. API key không đi xuống frontend vì mã phía client có thể được người dùng xem trực tiếp.
+
+Tuy nhiên, fallback giữa hai mô hình có thể tạo kết quả khác nhau; hệ thống cần log provider, thời gian và lỗi ở mức đủ chẩn đoán nhưng không ghi prompt nhạy cảm. Với moderation tự động, quyết định có tác động lớn nên có cơ chế review của người vận hành thay vì coi output AI là phán quyết tuyệt đối.
+
+\section{Triển khai cơ sở dữ liệu}
+
+\subsection{Mô hình dữ liệu}
+
+Schema chính \CodePath{backend/scripts/schema.sql} định nghĩa các nhóm dữ liệu về tài khoản, truyện và chương, lịch sử đọc, tương tác, thông báo, kiểm duyệt và nhật ký quản trị. Các script riêng bổ sung tag, liên kết truyện--tag và báo cáo vi phạm. Thiết kế sử dụng khóa chính, khóa ngoại, \CodePath{UNIQUE} và \CodePath{CHECK} để bảo đảm tính toàn vẹn dữ liệu \cite{postgresql-docs}.
+
+% Trang ERD A3 ngang được dựng sẵn để giữ đúng khổ giấy và không sinh
+% trang trắng khi chuyển giữa A4 và A3.
+\clearpage
+\refstepcounter{figure}
+\addcontentsline{lof}{figure}{%
+  \protect\numberline{\thefigure}Lược đồ ERD của cơ sở dữ liệu CMC Truyện}
+\label{fig:database-er}
+\includepdf[
+  pages=1,
+  fitpaper=true,
+  pagecommand={\thispagestyle{empty}}
+]{images/database-erd-a3.pdf}
+
+Hình~\ref{fig:database-er} thể hiện các quan hệ chính của hệ thống. \CodePath{users}, \CodePath{stories} và \CodePath{chapters} là ba thực thể trung tâm; các bảng lịch sử đọc, theo dõi, đánh giá, bình luận và thông báo liên kết hành vi người dùng với nội dung. Nhóm bảng \CodePath{reports}, \CodePath{bad_words} và \CodePath{audit_logs} phục vụ kiểm duyệt và truy vết.
+
+ERD do nhóm cung cấp có đồng thời \CodePath{ratings} và \CodePath{story_ratings}, trong khi schema chính được rà soát sử dụng \CodePath{ratings}. Trước khi nộp, nhóm cần xác nhận bảng đang được ứng dụng sử dụng, loại bỏ bảng dư hoặc giải thích rõ mục đích của từng bảng; đồng thời bảo đảm ERD, migration và cơ sở dữ liệu triển khai cùng một phiên bản.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/db-folder-schema.png}
+  {Cấu trúc script, migration và schema cơ sở dữ liệu}
+  {fig:db-folder}
+  {Chụp \CodePath{backend/scripts} và \CodePath{backend/src/scripts/migrations}; hiển thị tên file, không chụp chuỗi kết nối.}
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/db-main-sql-code.png}
+  {Đoạn SQL chính về bảng truyện, chương và ràng buộc}
+  {fig:db-sql-code}
+  {Chụp đoạn code thật trong \CodePath{schema.sql}, ưu tiên primary key, foreign key, CHECK, UNIQUE và index.}
+
+\subsection{Connection pool, index và transaction}
+
+Backend cấu hình PostgreSQL Pool với tối đa 20 connection, idle timeout 30 giây và connection timeout 5 giây. Môi trường production có thể dùng \CodePath{DATABASE_URL}; môi trường local có thể dùng các biến host/port/name/user/password. Index tập trung vào slug, danh sách truyện công khai, số chương, trạng thái bình luận, khóa ngoại và audit. API danh sách chương không trả trường content, qua đó giảm kích thước phản hồi.
+
+Khi một nghiệp vụ có nhiều bước ghi dữ liệu, tất cả query từ \CodePath{BEGIN} đến \CodePath{COMMIT/ROLLBACK} phải dùng cùng client lấy từ \CodePath{pool.connect()}. Nếu trộn \CodePath{pool.query()} với client trong một transaction, các query có thể chạy trên connection khác và rollback không còn bảo đảm tính nguyên tử.
+
+\subsection{Nợ kỹ thuật dữ liệu}
+
+Phần dữ liệu hiện có ba cơ chế cùng tồn tại: schema tổng, script bổ sung và một số DDL chạy khi module database kết nối. Cách tổ chức này làm nguồn sự thật bị phân tán và khó tái tạo một cơ sở dữ liệu mới. Bảng \CodePath{reports} dùng script \CodePath{CREATE TYPE} và \CodePath{CREATE TABLE} chưa có \CodePath{IF NOT EXISTS}; \CodePath{bad_words} xuất hiện trên ERD nhưng chưa có DDL trong phần mã nguồn đã rà soát. Hướng hoàn thiện là:
+
+\begin{itemize}
+  \item đưa mọi thay đổi vào migration đánh số và có thể chạy lặp an toàn;
+  \item tạo migration chính thức cho \CodePath{bad_words}, \CodePath{reports}, \CodePath{tags}/\CodePath{story_tags};
+  \item xác nhận và xử lý sự trùng lặp giữa \CodePath{ratings} và \CodePath{story_ratings};
+  \item loại DDL biến đổi schema khỏi đường khởi động ứng dụng sau khi migration ổn định;
+  \item bổ sung bảng theo dõi migration và kiểm thử khởi tạo DB trắng;
+  \item ghi rõ baseline schema tương ứng với commit dùng để nộp.
+\end{itemize}
+
+\section{Cấu hình và triển khai}
+
+\subsection{Biến môi trường}
+
+Các biến chính gồm URL frontend/backend, PostgreSQL, Redis, JWT, Google OAuth, Resend, Supabase và nhà cung cấp AI. File \CodePath{.env} không được commit. Frontend chỉ nhận biến public như \CodePath{VITE_API_URL}; service key, JWT secret và AI key phải ở backend.
+
+\begin{table}[htbp]
+\centering
+\caption{Nhóm biến môi trường và nguyên tắc bảo mật}
+\label{tab:environment-vars}
+\begin{tabularx}{\textwidth}{|>{\bfseries\RaggedRight\arraybackslash}p{3.2cm}|X|X|}
+\hline
+\textbf{Nhóm} & \textbf{Ví dụ tên biến} & \textbf{Nguyên tắc} \\
+\hline
+Database & DATABASE\_URL, DB\_HOST, DB\_NAME & Chỉ backend; production ưu tiên secret manager. \\
+\hline
+Auth & JWT\_SECRET, GOOGLE\_CLIENT\_ID & Secret đủ mạnh; không dùng fallback production. \\
+\hline
+Queue & REDIS\_URL & API và worker dùng cùng instance; bật TLS nếu nhà cung cấp yêu cầu. \\
+\hline
+Email/Storage & RESEND\_API\_KEY, SUPABASE\_SERVICE\_KEY & Service key không xuất hiện trong bundle frontend/log. \\
+\hline
+AI & GROQ\_API\_KEY, GEMINI\_API\_KEY & Chỉ backend; đặt timeout, quota và theo dõi lỗi. \\
+\hline
+Frontend & VITE\_API\_URL & Có thể công khai; trỏ đúng tiền tố \CodePath{/api}. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Topology triển khai}
+
+\CodePath{render.yaml} khai báo hai service Node: web service chạy backend và worker chạy \CodePath{src/startWorker.js}. Frontend có \CodePath{vercel.json} rewrite mọi route SPA về \CodePath{index.html}. PostgreSQL và Redis không được khai báo trực tiếp trong file Render; chúng phải được cung cấp qua dịch vụ managed hoặc hạ tầng khác và cấu hình bằng environment.
+
+\begin{table}[htbp]
+\centering
+\caption{Liên kết bàn giao và minh chứng triển khai}
+\label{tab:delivery-links}
+\begin{tabularx}{\textwidth}{|>{\bfseries\RaggedRight\arraybackslash}p{4.0cm}|X|}
+\hline
+\textbf{Hạng mục} & \textbf{Liên kết} \\
+\hline
+Website chạy thực tế & \OptionalURL{\WebsiteURL}{https://thanhnt2k.app/} \\
+\hline
+Kho source dùng để nộp & \OptionalURL{\SourceCodeURL}{https://github.com/ThanhNT2k/web-app-project} \\
+\hline
+\end{tabularx}
+\end{table}
+
+\clearpage
+
+\section{Kiểm thử và kết quả xác minh}
+
+\subsection{Kết quả thực chạy}
+
+Ngày 22/07/2026, bộ test mặc định và build frontend được chạy trên workspace cung cấp. Kết quả được ghi ở Bảng~\ref{tab:test-results}; đây là số liệu của lần chạy cụ thể, không phải con số giả định.
+
+\begin{table}[htbp]
+\centering
+\caption{Kết quả kiểm thử và build đã thực chạy}
+\label{tab:test-results}
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{4.0cm}|>{\centering\arraybackslash}p{2.4cm}|X|}
+\hline
+\textbf{Hạng mục} & \textbf{Kết quả} & \textbf{Ghi chú quan sát} \\
+\hline
+Backend baseline (Jest) & 49/49 pass & 12 test suite pass; có log Redis \CodePath{ECONNREFUSED} và Jest force-exit do handle chưa đóng. \\
+\hline
+Frontend (Vitest) & 23/23 pass & 8 test file pass; có cảnh báo tùy chọn esbuild/oxc deprecated từ toolchain. \\
+\hline
+Tổng test mặc định & 72/72 pass & Lệnh root test hoàn thành exit code 0. \\
+\hline
+Frontend production build & Thành công & 161 module transformed; build trong 2,75 giây ở lần chạy ghi nhận. \\
+\hline
+Bundle JavaScript & 535,36 kB & Gzip 158,54 kB; Vite cảnh báo chunk lớn hơn 500 kB. \\
+\hline
+E2E Playwright & 3/3 pass & 100\% pass (3 kịch bản E2E mock API kiểm tra luồng login, search và reader thành công). \\
+\hline
+\end{tabularx}
+\end{table}
+
+Kết quả pass cho thấy logic đã được bảo vệ ở nhiều nhánh: health, auth, RBAC, audit, OTP, import file, ranking, moderation, report và workflow truyện. Tuy nhiên, log Redis thất bại cho thấy test chưa cô lập hoàn toàn queue hoặc còn resource mở. Cần đóng queue/connection trong teardown, mock Redis rõ ràng ở unit test và chạy một nhóm integration test với Redis thật. Cảnh báo bundle nên được xử lý bằng route-level lazy loading, dynamic import và chia vendor chunk; sau tối ưu phải đo lại thay vì chỉ tăng ngưỡng cảnh báo.
+
+\subsection{Kịch bản kiểm thử thủ công cần bổ sung}
+
+\begingroup
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{1.35cm}|>{\RaggedRight\arraybackslash}p{4.3cm}|>{\RaggedRight\arraybackslash}p{5.0cm}|>{\RaggedRight\arraybackslash}p{3.55cm}|}
+\caption{Kịch bản kiểm thử thủ công trước khi nộp}\label{tab:manual-tests}\\
+\hline
+\textbf{Mã} & \textbf{Tiền điều kiện} & \textbf{Thao tác} & \textbf{Kết quả mong đợi} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Mã} & \textbf{Tiền điều kiện} & \textbf{Thao tác} & \textbf{Kết quả mong đợi} \\
+\hline
+\endhead
+\hline
+\multicolumn{4}{|r|}{\emph{Còn tiếp ở trang sau}}\\
+\hline
+\endfoot
+\hline
+\endlastfoot
+MT01 & Guest, có truyện approved & Tìm theo từ khóa, mở chi tiết và đọc chương & Không yêu cầu login cho nội dung public; URL đúng slug/chương. \\
+\hline
+MT02 & User đã đăng nhập & Follow, tải lại trang, xem danh sách theo dõi & Trạng thái nhất quán với DB; lỗi mạng có rollback. \\
+\hline
+MT03 & User đọc nhiều chương & Đọc, cuộn, thoát và mở lịch sử & Trở về đúng truyện/chương; không ghi nhầm user. \\
+\hline
+MT04 & Uploader có truyện pending & Thử thêm chương hoặc tự publish & Bị chặn với thông báo đúng; không đổi DB. \\
+\hline
+MT05 & Moderator có truyện pending & Yêu cầu sửa không nhập lý do, sau đó nhập lý do & Lần đầu bị validate; lần sau cập nhật trạng thái, notify và audit. \\
+\hline
+MT06 & User tạo report & Gửi lặp trong khoảng rate limit & Report đầu hợp lệ; request lặp bị hạn chế. \\
+\hline
+MT07 & Admin đăng nhập & Đổi role/status một user & UI cập nhật; audit không chứa password/token. \\
+\hline
+MT08 & Token hết hạn & Mở trang account/admin & API trả 401; frontend xóa phiên và về login không lặp vô hạn. \\
+\hline
+MT09 & Màn hình 375px và desktop & Duyệt Home, Reader, Admin & Không tràn ngang; nút có thể thao tác; chữ đủ đọc. \\
+\hline
+MT10 & Hạ tầng Redis/worker thật & Tạo chương mới đủ điều kiện & Job được xử lý một lần; notification tạo đúng người nhận. \\
+\hline
+\end{longtable}
+\endgroup
+
+\section{Giao diện người dùng}
+
+Toàn bộ ảnh giao diện trong bản in cần chuyển sang trắng đen hoặc chụp ở chế độ không màu theo yêu cầu, nhưng vẫn phải giữ đủ tương phản để đọc chữ và nhận biết trạng thái. Các khung dưới đây là vị trí chèn ảnh thật; caption đã được đánh số theo chương và tự động xuất hiện trong danh mục hình.
+
+\subsection{Giao diện khách hàng}
+
+Trang chủ cần thể hiện cấu trúc khám phá: điều hướng, nội dung nổi bật và các danh sách chính. Ảnh phải được chụp từ phiên bản chạy thật, không dùng mockup nếu phần mô tả gọi đó là sản phẩm đã triển khai.
+
+\ReportImage[0.40\textheight]
+  {images/screenshots/ui-customer-home.png}
+  {Giao diện trang chủ dành cho khách hàng}
+  {fig:ui-customer-home}
+  {Chụp toàn bộ phần nhìn thấy đầu trang ở desktop; chuyển ảnh sang trắng đen, không để dữ liệu nhạy cảm.}
+
+Trang tìm kiếm/khám phá cần chứng minh bộ lọc, kết quả và trạng thái không có dữ liệu. Nếu chỉ có một ảnh, ưu tiên trạng thái có kết quả và mô tả thêm cách xử lý trạng thái rỗng trong phần thuyết minh.
+
+\ReportImage[0.40\textheight]
+  {images/screenshots/ui-customer-browse.png}
+  {Giao diện tìm kiếm và khám phá truyện}
+  {fig:ui-customer-browse}
+  {Chụp ô tìm kiếm, bộ lọc và danh sách kết quả; dùng dữ liệu demo hợp lệ của nhóm.}
+
+Trang chi tiết là điểm nối giữa khám phá và đọc. Ảnh nên có bìa, metadata, mô tả, danh sách chương và hành động follow/rating nếu phiên đăng nhập cho phép.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-customer-story-detail.png}
+  {Giao diện chi tiết truyện}
+  {fig:ui-customer-detail}
+  {Chụp truyện có dữ liệu đầy đủ; không dùng nội dung vi phạm bản quyền hoặc thông tin chưa được phép công bố.}
+
+Trang đọc chương cần ưu tiên khả năng đọc, điều hướng chương và tùy chọn hiển thị. Vì ảnh trắng đen, phải kiểm tra đường biên/nút không phụ thuộc duy nhất vào màu.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-customer-reader.png}
+  {Giao diện đọc chương và tùy chọn đọc}
+  {fig:ui-customer-reader}
+  {Chụp phần tiêu đề, nội dung, tiến độ hoặc bảng tùy chọn; che nội dung nếu chưa có quyền sử dụng.}
+
+Trang tài khoản thể hiện giá trị sau đăng nhập như truyện theo dõi, lịch sử hoặc cài đặt. Ảnh không được lộ email, token hay dữ liệu cá nhân thật nếu chưa được đồng ý.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-customer-account.png}
+  {Giao diện cài đặt cá nhân}
+  {fig:ui-customer-account}
+  {Chọn một màn hình tiêu biểu; dùng tài khoản demo và ẩn thông tin cá nhân không cần thiết.}
+
+\subsection{Giao diện Admin và Moderator}
+
+Khu vực quản trị cần thể hiện rõ layout riêng, sidebar, tiêu đề trang và trạng thái active. Dashboard nên dùng số liệu demo nhất quán với database của lần chụp; không tự điền số đẹp vào ảnh.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-admin-dashboard.png}
+  {Giao diện dashboard quản trị}
+  {fig:ui-admin-dashboard}
+  {Chụp bằng tài khoản Admin demo; số liệu phải do hệ thống trả về ở thời điểm chụp.}
+
+Màn hình user management cần chứng minh tìm kiếm, role, trạng thái và thao tác quản trị. Nên tránh chụp danh sách tài khoản thật; dữ liệu seed/demo là phù hợp hơn.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-admin-users.png}
+  {Giao diện quản lý người dùng}
+  {fig:ui-admin-users}
+  {Chụp danh sách user demo và control đổi role/trạng thái; ẩn email hoặc dữ liệu thật.}
+
+Hàng chờ truyện là màn hình quan trọng để chứng minh workflow không chỉ tồn tại ở backend. Ảnh cần có trạng thái pending và các hành động duyệt/yêu cầu sửa/từ chối.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-moderator-pending-stories.png}
+  {Giao diện quản lý bình luận}
+  {fig:ui-moderator-pending}
+  {Chụp bằng Moderator/Admin demo; không thao tác trên dữ liệu cần bảo toàn khi chỉ chụp minh chứng.}
+
+Màn hình report thể hiện khả năng lọc và xử lý vi phạm. Nên chụp trạng thái trước khi xử lý; nếu cần ảnh sau xử lý, tạo report demo riêng để không làm sai dữ liệu của nhóm.
+
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-admin-reports.png}
+  {Giao diện quản lý báo cáo vi phạm}
+  {fig:ui-admin-reports}
+  {Chụp bộ lọc, target, trạng thái và action; nội dung nhạy cảm cần được che phù hợp.}
+
+Audit log chứng minh tính truy vết. Ảnh phải cho thấy actor, action, entity và thời điểm nhưng không chứa token, password hay request body nhạy cảm.
+
+\ReportImage[0.40\textheight]
+  {images/screenshots/ui-admin-audit-logs.png}
+  {Giao diện nhật ký thao tác quản trị}
+  {fig:ui-admin-audit}
+  {Chụp audit của dữ liệu demo sau một thao tác quản trị đã biết; kiểm tra không có credential.}
+
+\section{Đánh giá, hạn chế và hướng hoàn thiện}
+
+\subsection{Điểm đạt được}
+
+Source đã hình thành một sản phẩm full-stack có phạm vi tương đối rộng: route SPA cho nhiều vai trò, API phân lớp, PostgreSQL với ràng buộc/index, workflow kiểm duyệt, report, audit, queue/worker và kiểm thử tự động. Kết quả 72 test pass và build production thành công là bằng chứng kỹ thuật cụ thể. Tài liệu kiến trúc/API trong repository cũng giúp truy vết quyết định.
+\clearpage
+\subsection{Hạn chế cần công khai}
+
+\begin{itemize}
+  \item migration/schema phân tán, thiếu DDL \CodePath{bad_words} trong phần source rà soát và còn DDL chạy lúc startup;
+  \item test log có Redis \CodePath{ECONNREFUSED} và Jest force-exit, cho thấy teardown/tích hợp queue chưa sạch;
+  \item chưa có kết quả E2E, kiểm thử tải, security audit và accessibility audit trong lần xác minh này;
+  \item bundle frontend vượt ngưỡng cảnh báo 500 kB;
+  \item link deploy, link commit, video và ảnh giao diện chưa được cung cấp nên báo cáo để trống.
+\end{itemize}
+
+\subsection{Thứ tự ưu tiên hoàn thiện}
+
+Nhóm cần hoàn tất metadata, phân công, URL và ảnh thật; sau đó chuẩn hóa migration, xử lý Redis/open handles, chạy E2E và tối ưu bundle.
+
+\section{Kết luận chương}
+
+Chương 3 đã trình bày kiến trúc SPA + REST, cách tổ chức frontend, backend, cơ sở dữ liệu, triển khai và kiểm thử. Các hạn chế còn lại được tổng hợp thành danh sách ưu tiên hoàn thiện.
