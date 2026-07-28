@@ -1,39 +1,26 @@
 import axios from 'axios';
 
-// Các key dùng để lưu token và thông tin user vào localStorage
-// Dùng prefix 'cmc_' để tránh xung đột với các ứng dụng khác cùng domain
 const storageKeys = {
   token: 'cmc_token',
   user: 'cmc_user',
 };
 
-/**
- * Xác định URL gốc của API backend.
- * Hỗ trợ 2 tên biến môi trường (Vite và Create React App) để tương thích rộng hơn.
- * Fallback về localhost:5000 khi không tìm thấy biến môi trường (môi trường development).
- */
 function getBaseURL() {
   return (
-    import.meta.env.VITE_API_URL ||       // Vite environment variable
-    import.meta.env.REACT_APP_API_URL ||  // Create React App (legacy)
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.REACT_APP_API_URL ||
     'http://localhost:5000/api'
   );
 }
 
-/**
- * Xóa thông tin xác thực khỏi localStorage (dùng khi đăng xuất hoặc token hết hạn).
- */
 function clearAuthStorage() {
   try {
     localStorage.removeItem(storageKeys.token);
     localStorage.removeItem(storageKeys.user);
   } catch {
-    // ignore - nếu không xóa được thì cũng không nghiêm trọng
   }
 }
 
-// Tạo axios instance với cấu hình chung
-// Mọi request qua apiClient đều tự động có baseURL và Content-Type đúng
 const apiClient = axios.create({
   baseURL: getBaseURL(),
   headers: {
@@ -42,11 +29,6 @@ const apiClient = axios.create({
   },
 });
 
-/**
- * Request Interceptor: Tự động thêm Authorization header vào mỗi request.
- * Chạy TRƯỚC KHI request được gửi đi.
- * Nếu có token trong localStorage, gắn vào header dạng "Bearer <token>".
- */
 apiClient.interceptors.request.use((config) => {
   try {
     const token = localStorage.getItem('cmc_token');
@@ -54,8 +36,6 @@ apiClient.interceptors.request.use((config) => {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
   } catch (err) {
-    // localStorage may be unavailable in some environments (private mode, strict policies).
-    // Silently ignore so the app doesn't spam the console or throw runtime errors.
   }
   
   return config;
@@ -63,24 +43,12 @@ apiClient.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-/**
- * Response Interceptor: Xử lý tự động khi server trả về lỗi 401 (Unauthorized).
- * Chạy SAU KHI nhận response lỗi từ server.
- *
- * Khi nhận 401:
- * - Xóa thông tin xác thực đã lưu (token đã hết hạn hoặc không hợp lệ)
- * - Chuyển hướng về trang đăng nhập
- * - NGOẠI LỆ: Không redirect khi đang ở trang login/register/home
- *   (tránh vòng lặp redirect vô hạn)
- */
 apiClient.interceptors.response.use(
-  (response) => response, // Nếu thành công, trả về nguyên response
+  (response) => response,
   (error) => {
     if ((error?.response?.status === 401 || error?.response?.status === 403) && typeof window !== 'undefined') {
       const path = window.location.pathname;
 
-      // Chỉ redirect nếu KHÔNG đang ở các trang public (login, register, home)
-      // Tránh redirect loop: login page nhận 401/403 → redirect về login
       if (!path.startsWith('/login') && !path.startsWith('/register') && path !== '/') {
         clearAuthStorage();
         window.location.href = '/login';
@@ -90,10 +58,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-/**
- * Hàm wrapper gọi API và trả về chỉ data (không phải toàn bộ axios response).
- * Giúp controller/component đơn giản hơn khi dùng: không cần .data mỗi lần.
- */
 async function request(path, options = {}) {
   const response = await apiClient({
     url: path,
@@ -104,34 +68,24 @@ async function request(path, options = {}) {
   return response.data;
 }
 
-/**
- * Object API tập trung toàn bộ các endpoint của ứng dụng.
- * Cấu trúc theo domain: auth, stories, chapters, comments, ai, readingHistory, follows, preferences, upload, tags, admin.
- * Giúp dễ tìm và quản lý các API call trong toàn bộ codebase frontend.
- */
 const API = {
   auditLogs: {
     get: (params = {}) => request('/audit-logs', { method: 'GET', params }),
   },
-  // ── Xác thực người dùng ──────────────────────────────────────────────────
   auth: {
     register: (data) => request('/auth/register', { method: 'POST', data }),
     login: (data) => request('/auth/login', { method: 'POST', data }),
     logout: () => request('/auth/logout', { method: 'POST' }),
     getCurrentUser: () => request('/auth/me', { method: 'GET' }),
     updateProfile: (data) => request('/auth/profile', { method: 'PUT', data }),
-    // Google OAuth
     googleLogin: (idToken) => request('/auth/google', { method: 'POST', data: { idToken } }),
     googleComplete: (data) => request('/auth/google/complete', { method: 'POST', data }),
-    // Quên mật khẩu
     forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', data: { email } }),
     verifyOtp: (email, otp) => request('/auth/verify-otp', { method: 'POST', data: { email, otp } }),
     resetPassword: (data) => request('/auth/reset-password', { method: 'POST', data }),
-    // Đổi mật khẩu từ Profile
     changePassword: (data) => request('/auth/change-password', { method: 'PUT', data }),
   },
 
-  // ── Quản lý truyện ───────────────────────────────────────────────────────
   stories: {
     getAll: (page = 1, limit = 10, sortBy = 'newest') => request('/stories', { method: 'GET', params: { page, limit, sortBy } }),
     getMine: (page = 1, limit = 20) => request('/stories/mine', { method: 'GET', params: { page, limit } }),
@@ -182,7 +136,6 @@ const API = {
     }),
   },
 
-  // ── Quản lý chương ───────────────────────────────────────────────────────
   chapters: {
     getByStory: (storyId, page = 1, limit = 10, sort = 'asc') => request(`/stories/${storyId}/chapters`, { method: 'GET', params: { page, limit, sort } }),
     getById: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'GET' }),
@@ -218,7 +171,6 @@ const API = {
     delete: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'DELETE' }),
   },
 
-  // ── Bình luận ────────────────────────────────────────────────────────────
   comments: {
     getByStory: (storyId) => request(`/comments/story/${storyId}`, { method: 'GET' }),
     getByChapter: (chapterId, storyId) => request(`/comments/chapter/${chapterId}`, {
