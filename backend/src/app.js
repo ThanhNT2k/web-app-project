@@ -63,7 +63,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-
 // Route đăng ký
 app.use('/api/auth', authRoutes);
 app.use('/api/stories', storyRoutes);

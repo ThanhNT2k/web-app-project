@@ -56,7 +56,8 @@ Guest có thể duyệt, tìm kiếm, xem chi tiết và đọc nội dung công
 \begin{tikzpicture}[
   flownode/.style={draw,rounded corners=4pt,minimum width=3.0cm,minimum height=1.0cm,align=center,font=\small},
   decision/.style={draw,diamond,aspect=1.8,minimum width=3.0cm,minimum height=1.0cm,align=center,font=\small,inner sep=2pt},
-  arrow/.style={-{Latex[length=2.3mm,width=1.6mm]},thick}
+  arrow/.style={-{Latex[length=2.3mm,width=1.6mm]},thick},
+  terminal/.style={draw,ellipse,minimum width=2.2cm,minimum height=0.8cm,align=center,font=\small}
 ]
 \node[flownode] (home) at (0, 2.4) {Truy cập\\trang chủ};
 \node[flownode] (find) at (4.4, 2.4) {Tìm kiếm /\\chọn xếp hạng};
@@ -67,13 +68,15 @@ Guest có thể duyệt, tìm kiếm, xem chi tiết và đọc nội dung công
 \node[flownode] (login) at (0, 0) {Đăng nhập nếu cần\\tính năng cá nhân};
 
 \node[flownode] (deny) at (8.8, -2.2) {Thông báo không có quyền\\hoặc không tồn tại};
+\node[terminal] (end) at (8.8, -3.8) {Kết thúc};
 
 \draw[arrow] (home) -- (find);
 \draw[arrow] (find) -- (detail);
 \draw[arrow] (detail) -- (public);
 \draw[arrow] (public) -- node[above,font=\footnotesize]{Có} (read);
-\draw[arrow] (read) -- node[above,font=\footnotesize]{Tùy chọn} (login);
+\draw[arrow] (read) -- node[below,font=\scriptsize]{Nếu cần} (login);
 \draw[arrow] (public) -- node[right,font=\footnotesize]{Không} (deny);
+\draw[arrow] (deny) -- (end);
 \end{tikzpicture}
 \caption{Luồng khám phá và đọc truyện của Guest}
 \label{fig:guest-reading-flow}
@@ -92,25 +95,36 @@ Frontend gửi thông tin đăng nhập đến \CodePath{POST /api/auth/login}; 
   lifeline/.style={draw=darkgray,densely dashed,thick},
   msg/.style={-{Latex[length=2.2mm,width=1.5mm]},thick},
   return/.style={-{Latex[length=2.2mm,width=1.5mm]},thick,dashed},
-  lbl/.style={font=\footnotesize,above,align=center,inner sep=2pt}
+  lbl/.style={font=\footnotesize,above,align=center,inner sep=2pt},
+  internal/.style={draw,fill=white,rounded corners=2pt,minimum width=2.5cm,minimum height=0.65cm,align=center,font=\scriptsize,inner sep=2pt}
 ]
 \node[actor] (u) at (0,0) {Người dùng};
 \node[actor] (fe) at (3.8,0) {React};
 \node[actor] (api) at (7.6,0) {Express API};
 \node[actor] (db) at (11.4,0) {PostgreSQL};
 
-\draw[lifeline] (u.south) -- (0,-6.4);
-\draw[lifeline] (fe.south) -- (3.8,-6.4);
-\draw[lifeline] (api.south) -- (7.6,-6.4);
-\draw[lifeline] (db.south) -- (11.4,-6.4);
+\draw[lifeline] (u.south) -- (0,-11.1);
+\draw[lifeline] (fe.south) -- (3.8,-11.1);
+\draw[lifeline] (api.south) -- (7.6,-11.1);
+\draw[lifeline] (db.south) -- (11.4,-11.1);
 
 \draw[msg] (0,-1.0) -- node[lbl]{Nhập email/mật khẩu} (3.8,-1.0);
-\draw[msg] (3.8,-1.9) -- node[lbl]{POST /api/auth/login} (7.6,-1.9);
-\draw[msg] (7.6,-2.8) -- node[lbl]{Tìm user} (11.4,-2.8);
-\draw[return] (11.4,-3.6) -- node[lbl]{Bản ghi user} (7.6,-3.6);
-\draw[return] (7.6,-4.4) -- node[lbl]{JWT + thông tin an toàn} (3.8,-4.4);
-\draw[msg] (3.8,-5.2) -- node[lbl]{Request kèm Bearer token} (7.6,-5.2);
-\draw[return] (7.6,-6.0) -- node[lbl]{Dữ liệu hoặc 401/403} (3.8,-6.0);
+\draw[msg] (3.8,-2.0) -- node[lbl]{POST /api/auth/login} (7.6,-2.0);
+\draw[msg] (7.6,-3.0) -- node[lbl]{Tìm user theo email} (11.4,-3.0);
+\draw[return] (11.4,-4.0) -- node[lbl]{User + password hash} (7.6,-4.0);
+
+\node[internal] (check) at (7.6,-5.0)
+  {Kiểm tra tài khoản active\\và bcrypt.compare};
+\node[internal] (issue) at (7.6,-6.2)
+  {Tạo JWT};
+
+\draw[return] (7.6,-7.2) -- node[lbl]{JWT + thông tin user an toàn} (3.8,-7.2);
+\node[internal] (save) at (3.8,-8.2)
+  {Lưu token vào localStorage};
+\draw[msg] (3.8,-9.2) -- node[lbl]{Request sau kèm Bearer token} (7.6,-9.2);
+\node[internal] (verify) at (7.6,-10.1)
+  {jwt.verify; gán req.user};
+\draw[return] (7.6,-11.0) -- node[lbl]{Dữ liệu hoặc 401/403} (3.8,-11.0);
 \end{tikzpicture}
 \caption{Trình tự xác thực và sử dụng JWT}
 \label{fig:auth-sequence}
@@ -274,7 +288,7 @@ Với bình luận và hồ sơ bị báo cáo, Moderator dùng bộ lọc để
         \node[flownode] (review) at ( 2.1,4) {Xem metadata\\và nội dung};
 
         % Tầng 2: quyết định
-        \node[decision] (decision) at (0,2.1) {Quyết định};
+        \node[decision] (decision) at (0,2.1) {Chọn đúng 1\\kết quả};
 
         % Tầng 3: các kết quả xử lý
         \node[flownode] (approve) at (-4.2,-0.4)
@@ -306,6 +320,7 @@ Với bình luận và hồ sơ bị báo cáo, Moderator dùng bộ lọc để
         \draw[arrow]
             (decision.west)
             to[out=205,in=90]
+            node[font=\footnotesize,above,sloped,pos=0.58]{[Duyệt]}
             (approve.north);
 
         \draw[arrow]
@@ -315,6 +330,7 @@ Với bình luận và hồ sơ bị báo cáo, Moderator dùng bộ lọc để
         \draw[arrow]
             (decision.east)
             to[out=-25,in=90]
+            node[font=\footnotesize,above,sloped,pos=0.58]{[Từ chối]}
             (reject.north);
 
         % Ba điểm nhận riêng trên cạnh trên của node cập nhật
