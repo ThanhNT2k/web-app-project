@@ -8,7 +8,6 @@ import StoryReader, { loadReaderPrefs, saveReaderPrefs } from '../components/Sto
 import ReportModal from '../components/ReportModal';
 import API from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { mockChapter } from '../data/mockStories';
 
 const AUTOSAVE_INTERVAL_MS = 30000;
 
@@ -16,7 +15,7 @@ function ChapterReaderPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { storySlug, chapterNumber } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, setCrystalBalance } = useAuth();
   
   const [chapter, setChapter] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -29,6 +28,10 @@ function ChapterReaderPage() {
   const [lineSpacing, setLineSpacing] = useState(1.6);
   const [fontFamily, setFontFamily] = useState('Inter, sans-serif');
   const [autoBookmark, setAutoBookmark] = useState(true);
+  const [autoUnlockNext, setAutoUnlockNext] = useState(false);
+  const [lockedChapter, setLockedChapter] = useState(null);
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState('');
   
   const readTimeRef = useRef(0);
   const scrollRef = useRef(0);
@@ -60,6 +63,7 @@ function ChapterReaderPage() {
         const chapterResponse = await API.chapters.getBySlugAndNumber(storySlug, chapterNumber);
         const resolvedChapter = chapterResponse.chapter || chapterResponse;
         setChapter(resolvedChapter);
+        setLockedChapter(null);
 
         // Fetch all chapters for the dropdown (use story_total_chapters or a large limit)
         const totalChapters = resolvedChapter.story_total_chapters || 100;
@@ -67,12 +71,26 @@ function ChapterReaderPage() {
         const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, limit);
         setChapters(chaptersResponse.chapters || []);
       } catch (err) {
-        setChapter(mockChapter);
+        if (err?.response?.data?.code === 'CHAPTER_LOCKED') {
+          const locked = err.response.data.data;
+          setChapter(null);
+          setLockedChapter(locked);
+          try {
+            const response = await API.chapters.getByStory(locked.story_id, 1, 1000);
+            setChapters(response.chapters || []);
+          } catch {
+            setChapters([]);
+          }
+          setError('');
+          return;
+        }
+        setChapter(null);
+        setLockedChapter(null);
         setChapters([]);
         if (err?.response?.status === 404) {
           setError('Chương truyện không tồn tại hoặc đã bị ẩn.');
         } else {
-          setError('Không tải được chương từ máy chủ. Đang hiển thị chương mô phỏng.');
+          setError('Không tải được chương từ máy chủ.');
         }
       } finally {
         setLoading(false);
@@ -117,6 +135,7 @@ function ChapterReaderPage() {
         const p = res.preferences;
         if (p) {
           setAutoBookmark(p.auto_bookmark !== false);
+          setAutoUnlockNext(Boolean(p.auto_unlock_next_chapter));
           if (p.font_size) setFontSize(p.font_size);
           if (p.line_spacing) setLineSpacing(Number(p.line_spacing));
           if (p.font_family) setFontFamily(p.font_family);
@@ -315,9 +334,39 @@ function ChapterReaderPage() {
     navigate(`/${storySlug}/${targetChapterNumber}`);
   };
 
+  const unlockAndGo = async (target) => {
+    if (!target) return;
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    try {
+      setUnlocking(true);
+      setUnlockError('');
+      const response = await API.chapters.unlock(target.id || target.chapter_id);
+      setCrystalBalance(response.crystal_balance);
+      goToChapter(target.chapter_number);
+    } catch (err) {
+      setUnlockError(err?.response?.data?.message || 'Không thể mở khóa chương.');
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const requestChapterNavigation = (target, allowAutoUnlock = false) => {
+    if (!target) return;
+    if (target.can_read !== false) {
+      goToChapter(target.chapter_number);
+    } else if (allowAutoUnlock && autoUnlockNext) {
+      unlockAndGo(target);
+    } else {
+      setLockedChapter({ ...target, unlock_cost: target.unlock_cost || 2 });
+    }
+  };
+
   const handlePrevious = () => {
     if (chapterIndex > 0) {
-      goToChapter(chapters[chapterIndex - 1].chapter_number);
+      requestChapterNavigation(chapters[chapterIndex - 1]);
       return;
     }
     const num = Number(chapter?.chapter_number || 1);
@@ -328,7 +377,35 @@ function ChapterReaderPage() {
 
   const handleNext = () => {
     if (chapterIndex >= 0 && chapterIndex < chapters.length - 1) {
-      goToChapter(chapters[chapterIndex + 1].chapter_number);
+      requestChapterNavigation(chapters[chapterIndex + 1], true);
+    }
+  };
+
+  const handleChapterSelect = (chapterId) => {
+    const target = chapters.find((item) => String(item.id) === String(chapterId));
+    requestChapterNavigation(
+      target,
+      Number(target?.chapter_number) > Number(chapter?.chapter_number || 0)
+    );
+  };
+
+  const handleAutoUnlockChange = async (enabled) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    if (
+      enabled
+      && !window.confirm('Khi bật, hệ thống sẽ tự động dùng 2 Tinh thạch để mở khóa chương trả phí tiếp theo mà không hỏi lại.')
+    ) {
+      return;
+    }
+    setAutoUnlockNext(enabled);
+    try {
+      await API.preferences.update({ auto_unlock_next_chapter: enabled });
+    } catch {
+      setAutoUnlockNext(!enabled);
+      setUnlockError('Không thể lưu thiết lập tự động mở khóa.');
     }
   };
 
@@ -347,7 +424,7 @@ function ChapterReaderPage() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [chapterIndex, chapters, chapter]);
+  }, [chapterIndex, chapters, chapter, autoUnlockNext, unlocking]);
 
   if (loading) {
     return (
@@ -360,6 +437,31 @@ function ChapterReaderPage() {
           <div className="skeleton-box mb-3" style={{ height: '16px', width: '95%', borderRadius: '4px' }} />
           <div className="skeleton-box mb-3" style={{ height: '16px', width: '98%', borderRadius: '4px' }} />
         </div>
+      </main>
+    );
+  }
+
+  if (!chapter && lockedChapter) {
+    return (
+      <main className="cmc-main">
+        <section className="panel-card mx-auto p-4 p-md-5 text-center" style={{ maxWidth: '720px' }}>
+          <h2>Chương {lockedChapter.chapter_number} đang bị khóa</h2>
+          <p>{lockedChapter.title || 'Mở khóa chương để tiếp tục đọc.'}</p>
+          <p>
+            <strong>{lockedChapter.unlock_cost || 2} Tinh thạch</strong>
+            {' · '}
+            Số dư: {Number(user?.crystal_balance ?? lockedChapter.crystal_balance ?? 0)}
+          </p>
+          {unlockError ? <div className="alert-cmc alert-cmc-warning mb-3">{unlockError}</div> : null}
+          <button
+            type="button"
+            className="btn-cmc btn-cmc-primary"
+            disabled={unlocking}
+            onClick={() => unlockAndGo(lockedChapter)}
+          >
+            {unlocking ? 'Đang mở khóa...' : `Mở khóa với ${lockedChapter.unlock_cost || 2} Tinh thạch`}
+          </button>
+        </section>
       </main>
     );
   }
@@ -395,13 +497,40 @@ function ChapterReaderPage() {
       <ReadingScrollProgress />
 
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
+      {unlockError ? <div className="alert-cmc alert-cmc-warning">{unlockError}</div> : null}
+
+      {lockedChapter && chapter ? (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Mở khóa chương">
+          <div className="modal-content">
+            <button type="button" className="close-modal" onClick={() => setLockedChapter(null)}>&times;</button>
+            <h2>Mở khóa chương {lockedChapter.chapter_number}</h2>
+            <p>{lockedChapter.title || 'Chương trả phí'}</p>
+            <p>
+              Giá: <strong>{lockedChapter.unlock_cost || 2} Tinh thạch</strong><br />
+              Số dư hiện tại: {Number(user?.crystal_balance || 0)}<br />
+              Số dư sau mở khóa: {Number(user?.crystal_balance || 0) - (lockedChapter.unlock_cost || 2)}
+            </p>
+            <button
+              type="button"
+              className="btn-cmc btn-cmc-primary"
+              disabled={unlocking}
+              onClick={() => unlockAndGo(lockedChapter)}
+            >
+              {unlocking ? 'Đang mở khóa...' : `Mở khóa với ${lockedChapter.unlock_cost || 2} Tinh thạch`}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <StoryReader
         chapter={chapter}
         chapters={chapters}
         onPrevious={handlePrevious}
         onNext={handleNext}
-        onChapterSelect={goToChapter}
+        onChapterSelect={handleChapterSelect}
+        autoUnlockNext={autoUnlockNext}
+        onAutoUnlockChange={handleAutoUnlockChange}
+        navigationBusy={unlocking}
         fontSize={fontSize}
         setFontSize={setFontSize}
         lineSpacing={lineSpacing}
@@ -423,7 +552,10 @@ function ChapterReaderPage() {
                   type="button"
                   className={`btn btn-sm ${isActive ? 'btn-brand' : 'btn-cmc-outline'}`}
                   style={{ minWidth: '55px', borderRadius: '8px' }}
-                  onClick={() => goToChapter(ch.chapter_number)}
+                  onClick={() => requestChapterNavigation(
+                    ch,
+                    Number(ch.chapter_number) > Number(chapter.chapter_number)
+                  )}
                 >
                   Ch. {ch.chapter_number}
                 </button>

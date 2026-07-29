@@ -12,6 +12,7 @@ import {
   faChevronDown,
   faClockRotateLeft,
   faGear,
+  faGem,
   faHouse,
   faLightbulb,
   faMagnifyingGlass,
@@ -93,6 +94,12 @@ function Navbar() {
           </nav>
 
           <div className="cmc-nav-actions">
+            {isAuthenticated ? (
+              <span className="nav-crystal-balance" title="Số dư Tinh thạch">
+                <FontAwesomeIcon icon={faGem} />
+                <strong>{Number(user?.crystal_balance || 0)}</strong>
+              </span>
+            ) : null}
             <NotificationBell />
             <button
               type="button"

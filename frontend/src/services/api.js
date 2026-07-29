@@ -46,7 +46,11 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if ((error?.response?.status === 401 || error?.response?.status === 403) && typeof window !== 'undefined') {
+    if (
+      (error?.response?.status === 401 || error?.response?.status === 403)
+      && error?.response?.data?.code !== 'CHAPTER_LOCKED'
+      && typeof window !== 'undefined'
+    ) {
       const path = window.location.pathname;
 
       if (!path.startsWith('/login') && !path.startsWith('/register') && path !== '/') {
@@ -71,6 +75,9 @@ async function request(path, options = {}) {
 const API = {
   auditLogs: {
     get: (params = {}) => request('/audit-logs', { method: 'GET', params }),
+  },
+  wallet: {
+    get: (page = 1, limit = 20) => request('/wallet', { method: 'GET', params: { page, limit } }),
   },
   auth: {
     register: (data) => request('/auth/register', { method: 'POST', data }),
@@ -140,6 +147,7 @@ const API = {
     getByStory: (storyId, page = 1, limit = 10, sort = 'asc') => request(`/stories/${storyId}/chapters`, { method: 'GET', params: { page, limit, sort } }),
     getById: (storyId, chapterId) => request(`/stories/${storyId}/chapters/${chapterId}`, { method: 'GET' }),
     getBySlugAndNumber: (storySlug, chapterNumber) => request(`/stories/by-slug/${storySlug}/chapters/${chapterNumber}`, { method: 'GET' }),
+    unlock: (chapterId) => request(`/chapters/${chapterId}/unlock`, { method: 'POST' }),
     create: (storyId, data) => request(`/stories/${storyId}/chapters`, { method: 'POST', data }),
     previewFile: async (storyId, payload, file) => {
       const formData = new FormData();

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(50) NOT NULL DEFAULT 'User'
         CHECK (role IN ('Admin', 'Uploader', 'User', 'Moderator')),
     bio TEXT,
+    crystal_balance INTEGER NOT NULL DEFAULT 50 CHECK (crystal_balance >= 0),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT true
@@ -76,7 +77,28 @@ CREATE TABLE IF NOT EXISTS chapters (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_published BOOLEAN NOT NULL DEFAULT true,
+    is_paid BOOLEAN NOT NULL DEFAULT false,
     UNIQUE (story_id, chapter_number)
+);
+
+CREATE TABLE IF NOT EXISTS chapter_unlocks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    chapter_id INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+    crystal_cost INTEGER NOT NULL CHECK (crystal_cost >= 0),
+    unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, chapter_id)
+);
+
+CREATE TABLE IF NOT EXISTS crystal_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(40) NOT NULL CHECK (type IN ('DEMO_GRANT', 'CHAPTER_UNLOCK')),
+    amount INTEGER NOT NULL,
+    balance_after INTEGER NOT NULL CHECK (balance_after >= 0),
+    chapter_id INTEGER REFERENCES chapters(id) ON DELETE SET NULL,
+    description VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- -----------------------------------------------------------------------------
@@ -180,6 +202,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     font_family VARCHAR(100) NOT NULL DEFAULT 'Arial',
     theme_color VARCHAR(50) NOT NULL DEFAULT 'default',
     auto_bookmark BOOLEAN NOT NULL DEFAULT true,
+    auto_unlock_next_chapter BOOLEAN NOT NULL DEFAULT false,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

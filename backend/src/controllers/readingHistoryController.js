@@ -5,6 +5,7 @@ const { Chapter, Story } = require('../models');
 const ReadingHistory = require('../models/ReadingHistory');
 const UserChapterRead = require('../models/UserChapterRead');
 const AISummary = require('../models/AISummary');
+const { getChapterAccess, lockedChapterResponse } = require('../services/chapterAccessService');
 
 // Schema validate dữ liệu khi lưu tiến trình đọc
 // Frontend gửi scrollY (vị trí cuộn trang) và elapsed seconds (thời gian đọc)
@@ -62,6 +63,15 @@ async function saveProgress(req, res) {
         success: false,
         message: 'Invalid story_id or chapter_id',
       });
+    }
+
+    const chapter = await Chapter.getChapterById(chapterId);
+    if (!chapter || Number(chapter.story_id) !== storyId) {
+      return res.status(404).json({ success: false, message: 'Chapter not found' });
+    }
+    const access = await getChapterAccess(req.user, chapter);
+    if (!access.canRead) {
+      return res.status(403).json(lockedChapterResponse(chapter));
     }
 
     // Lưu tiến trình đọc vào bảng reading_history (UPSERT)
@@ -199,6 +209,10 @@ async function getChapterSummary(req, res) {
     const chapter = await Chapter.getChapterById(id);
     if (!chapter) {
       return res.status(404).json({ success: false, message: 'Chapter not found' });
+    }
+    const access = await getChapterAccess(req.user, chapter);
+    if (!access.canRead) {
+      return res.status(403).json(lockedChapterResponse(chapter));
     }
 
     // Nếu không yêu cầu tạo lại, kiểm tra cache trong database trước

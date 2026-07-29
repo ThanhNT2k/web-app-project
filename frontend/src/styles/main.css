@@ -6561,3 +6561,13 @@ body {
   .auto-sliding-story-row-recommended { --visible-story-cards: 4; }
   .auto-sliding-story-row-horizontal { --visible-story-cards: 3.75; }
 }
+.nav-crystal-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
+  white-space: nowrap;
+}

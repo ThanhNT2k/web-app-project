@@ -18,7 +18,7 @@ const EMPTY_STORY = {
   tags: [],
 };
 
-const EMPTY_CHAPTER_FORM = { title: '', content: '', chapter_number: 1 };
+const EMPTY_CHAPTER_FORM = { title: '', content: '', chapter_number: 1, is_paid: false };
 const ALLOWED_IMPORT_EXTENSIONS = ['.txt', '.md', '.epub'];
 
 const MODERATION_STATUS = {
@@ -306,6 +306,7 @@ function DashboardPage() {
       title: '',
       content: '',
       chapter_number: fallbackChapterNumber,
+      is_paid: Number(fallbackChapterNumber) > 3,
     });
     setChapterUploadFile(null);
     setSplitChapterFile(true);
@@ -322,6 +323,7 @@ function DashboardPage() {
       setChapterForm((currentForm) => ({
         ...currentForm,
         chapter_number: getNextChapterNumber(response.chapters || [], story.total_chapters),
+        is_paid: getNextChapterNumber(response.chapters || [], story.total_chapters) > 3,
       }));
     } catch (error) {
       if (chapterEditorSessionRef.current === editorSession) {
@@ -341,6 +343,7 @@ function DashboardPage() {
       title: chapter.title || '',
       content: chapter.content || '',
       chapter_number: chapter.chapter_number,
+      is_paid: Boolean(chapter.is_paid),
     });
     setChapterUploadFile(null);
     setSplitChapterFile(true);
@@ -364,6 +367,7 @@ function DashboardPage() {
         await API.chapters.update(story.id, chapter.id, {
           title: chapterForm.title,
           content: chapterForm.content,
+          is_paid: chapterForm.is_paid,
         });
         showMessage('Đã cập nhật chương');
       } else {
@@ -383,6 +387,7 @@ function DashboardPage() {
               start_chapter_number: chapterForm.chapter_number,
               title: chapterForm.title,
               raw_text_override: chapterUploadIsEpub ? '' : chapterForm.content,
+              is_paid: chapterForm.is_paid,
             },
             chapterUploadFile
           );
@@ -919,6 +924,20 @@ function DashboardPage() {
                   </p>
                 </div>
               )}
+              <label className="d-flex align-items-center gap-2 mb-3">
+                <input
+                  type="checkbox"
+                  checked={Boolean(chapterForm.is_paid)}
+                  onChange={(event) => setChapterForm({
+                    ...chapterForm,
+                    is_paid: event.target.checked,
+                  })}
+                />
+                <span>
+                  <strong>Chương trả phí</strong>
+                  <small className="d-block text-muted">Giá mở khóa cố định: 2 Tinh thạch</small>
+                </span>
+              </label>
               <input
                 type="text"
                 placeholder={chapterEntryMode === 'file' && splitChapterFile ? 'Tiêu đề dự phòng (tùy chọn)' : 'Tiêu đề chương'}

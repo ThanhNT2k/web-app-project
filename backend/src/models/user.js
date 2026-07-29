@@ -16,7 +16,8 @@ const baseSelect = `
   updated_at,
   is_active,
   google_id,
-  auth_provider
+  auth_provider,
+  crystal_balance
 `;
 
 /**
@@ -43,14 +44,21 @@ async function findById(id) {
  */
 async function createUser({ username, email, password, fullName, role = 'User' }) {
   const result = await db.query(
-    `
-      INSERT INTO users (username, email, password, full_name, role)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING ${baseSelect}
-    `,
+    `WITH new_user AS (
+       INSERT INTO users (username, email, password, full_name, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING ${baseSelect}
+     ),
+     demo_grant AS (
+       INSERT INTO crystal_transactions
+         (user_id, type, amount, balance_after, description)
+       SELECT id, 'DEMO_GRANT', 50, crystal_balance, 'Cấp Tinh thạch demo'
+       FROM new_user
+       RETURNING user_id
+     )
+     SELECT new_user.* FROM new_user JOIN demo_grant ON demo_grant.user_id = new_user.id`,
     [username, email, password, fullName || null, role]
   );
-
   return result.rows[0];
 }
 
@@ -162,11 +170,19 @@ async function findByGoogleId(googleId) {
  */
 async function createGoogleUser({ googleId, email, password, fullName, avatarUrl, username }) {
   const result = await db.query(
-    `
-      INSERT INTO users (username, email, password, full_name, avatar_url, role, google_id, auth_provider)
-      VALUES ($1, $2, $3, $4, $5, 'User', $6, 'google')
-      RETURNING ${baseSelect}
-    `,
+    `WITH new_user AS (
+       INSERT INTO users (username, email, password, full_name, avatar_url, role, google_id, auth_provider)
+       VALUES ($1, $2, $3, $4, $5, 'User', $6, 'google')
+       RETURNING ${baseSelect}
+     ),
+     demo_grant AS (
+       INSERT INTO crystal_transactions
+         (user_id, type, amount, balance_after, description)
+       SELECT id, 'DEMO_GRANT', 50, crystal_balance, 'Cấp Tinh thạch demo'
+       FROM new_user
+       RETURNING user_id
+     )
+     SELECT new_user.* FROM new_user JOIN demo_grant ON demo_grant.user_id = new_user.id`,
     [username, email, password, fullName || null, avatarUrl || null, googleId]
   );
   return result.rows[0];

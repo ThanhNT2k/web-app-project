@@ -5,7 +5,7 @@ const db = require('../config/database');
  * COUNT(*) OVER(): Window function để lấy tổng số chương mà không cần query COUNT riêng.
  * Thứ tự sắp xếp theo chapter_number (tức là theo số thứ tự chương, không phải thời gian tạo).
  */
-async function getChaptersByStory(storyId, page = 1, limit = 10, sort = 'asc') {
+async function getChaptersByStory(storyId, page = 1, limit = 10, sort = 'asc', userId = null) {
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
   const safeLimit = Math.max(parseInt(limit, 10) || 10, 1);
   const offset = (safePage - 1) * safeLimit;
@@ -25,13 +25,18 @@ async function getChaptersByStory(storyId, page = 1, limit = 10, sort = 'asc') {
           created_at,
           updated_at,
           is_published,
+          is_paid,
+          EXISTS (
+            SELECT 1 FROM chapter_unlocks cu
+            WHERE cu.chapter_id = chapters.id AND cu.user_id = $4
+          ) AS is_unlocked,
           COUNT(*) OVER() AS total_count
         FROM chapters
         WHERE story_id = $1
         ORDER BY chapter_number ${orderDirection}
         LIMIT $2 OFFSET $3
       `,
-      [storyId, safeLimit, offset]
+      [storyId, safeLimit, offset, userId]
     );
 
     const totalItems = result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
@@ -68,6 +73,7 @@ async function getChapterById(chapterId) {
           c.created_at,
           c.updated_at,
           c.is_published,
+          c.is_paid,
           s.id AS story_id_ref,
           s.title AS story_title,
           s.slug AS story_slug,
@@ -117,8 +123,8 @@ async function createChapter(chapterData) {
     // Bước 1: Tạo chương mới
     const insertResult = await client.query(
       `
-        INSERT INTO chapters (story_id, chapter_number, title, content)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO chapters (story_id, chapter_number, title, content, is_paid)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING
           id,
           story_id,
@@ -127,9 +133,16 @@ async function createChapter(chapterData) {
           content,
           created_at,
           updated_at,
-          is_published
+          is_published,
+          is_paid
       `,
-      [chapterData.story_id, chapterData.chapter_number, chapterData.title || null, chapterData.content || null]
+      [
+        chapterData.story_id,
+        chapterData.chapter_number,
+        chapterData.title || null,
+        chapterData.content || null,
+        chapterData.is_paid ?? Number(chapterData.chapter_number) > 3,
+      ]
     );
 
     // Bước 2: Tăng tổng số chương của truyện lên 1
@@ -161,7 +174,7 @@ async function createChapter(chapterData) {
  * Dùng COALESCE để partial update: chỉ cập nhật trường được gửi lên.
  */
 async function updateChapter(id, chapterData) {
-  const { title, content } = chapterData;
+  const { title, content, is_paid } = chapterData;
 
   try {
     const result = await db.query(
@@ -170,8 +183,9 @@ async function updateChapter(id, chapterData) {
         SET
           title = COALESCE($1, title),
           content = COALESCE($2, content),
+          is_paid = COALESCE($3, is_paid),
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = $3
+        WHERE id = $4
         RETURNING
           id,
           story_id,
@@ -180,9 +194,10 @@ async function updateChapter(id, chapterData) {
           content,
           created_at,
           updated_at,
-          is_published
+          is_published,
+          is_paid
       `,
-      [title || null, content || null, id]
+      [title || null, content || null, is_paid ?? null, id]
     );
 
     return result.rows[0] || null;
@@ -295,8 +310,8 @@ async function createChaptersBatch(storyId, chapters, options = {}) {
 
       const insertResult = await client.query(
         `
-          INSERT INTO chapters (story_id, chapter_number, title, content)
-          VALUES ($1, $2, $3, $4)
+          INSERT INTO chapters (story_id, chapter_number, title, content, is_paid)
+          VALUES ($1, $2, $3, $4, $5)
           RETURNING
             id,
             story_id,
@@ -305,9 +320,16 @@ async function createChaptersBatch(storyId, chapters, options = {}) {
             content,
             created_at,
             updated_at,
-            is_published
+            is_published,
+            is_paid
         `,
-        [storyId, chapterNumber, chapter.title || null, chapter.content || null]
+        [
+          storyId,
+          chapterNumber,
+          chapter.title || null,
+          chapter.content || null,
+          options.isPaid ?? chapterNumber > 3,
+        ]
       );
 
       created.push(insertResult.rows[0]);
@@ -356,6 +378,7 @@ async function getChapterBySlugAndNumber(storySlug, chapterNumber) {
           c.created_at,
           c.updated_at,
           c.is_published,
+          c.is_paid,
           s.id AS story_id_ref,
           s.title AS story_title,
           s.slug AS story_slug,
@@ -384,6 +407,7 @@ async function getChapterBySlugAndNumber(storySlug, chapterNumber) {
           c.created_at,
           c.updated_at,
           c.is_published,
+          c.is_paid,
           s.id AS story_id_ref,
           s.title AS story_title,
           s.slug AS story_slug,

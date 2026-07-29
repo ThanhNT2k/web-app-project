@@ -83,7 +83,7 @@ function formatRatingWithCount(averageValue, countValue) {
 function StoryDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, setCrystalBalance } = useAuth();
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [storyProgress, setStoryProgress] = useState(null);
@@ -97,6 +97,7 @@ function StoryDetailPage() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showRatingPanel, setShowRatingPanel] = useState(false);
   const [introExpanded, setIntroExpanded] = useState(false);
+  const [unlockingChapterId, setUnlockingChapterId] = useState(null);
 
   // Load story info once
   useEffect(() => {
@@ -210,6 +211,34 @@ function StoryDetailPage() {
       return chapterNumber.includes(numberKeyword) || chapterTitle.includes(keyword);
     });
   }, [chapters, chapterSearch]);
+
+  const handleLockedChapterClick = async (event, chapter) => {
+    if (chapter.can_read !== false) return;
+    event.preventDefault();
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    const cost = chapter.unlock_cost || 2;
+    if (!window.confirm(
+      `Mở khóa chương ${chapter.chapter_number} với ${cost} Tinh thạch?\n`
+      + `Số dư sau mở khóa: ${Number(user?.crystal_balance || 0) - cost}`
+    )) return;
+
+    try {
+      setUnlockingChapterId(chapter.id);
+      const response = await API.chapters.unlock(chapter.id);
+      setCrystalBalance(response.crystal_balance);
+      setChapters((current) => current.map((item) => (
+        item.id === chapter.id ? { ...item, is_unlocked: true, can_read: true } : item
+      )));
+      navigate(`/${story.id}-${story.slug}/${chapter.chapter_number}`);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Không thể mở khóa chương.');
+    } finally {
+      setUnlockingChapterId(null);
+    }
+  };
 
   if (loading) {
     return <StoryDetailSkeleton />;
@@ -457,12 +486,20 @@ function StoryDetailPage() {
                     <Link
                       to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
                       className={isRead ? 'chapter-link-is-read' : ''}
+                      onClick={(event) => handleLockedChapterClick(event, chapter)}
                     >
                       <span>
                         Ch.{chapter.chapter_number}: {chapter.title || `Chương ${chapter.chapter_number}`}
+                        {chapter.is_paid ? (
+                          <small className="ms-2">
+                            {chapter.can_read ? '🔓 Đã mở' : `🔒 ${chapter.unlock_cost || 2} Tinh thạch`}
+                          </small>
+                        ) : null}
                       </span>
                       <span className="text-muted small chapter-upload-date">
-                        {formatChapterUploadDate(chapter.created_at)}
+                        {unlockingChapterId === chapter.id
+                          ? 'Đang mở khóa...'
+                          : formatChapterUploadDate(chapter.created_at)}
                       </span>
                     </Link>
                   </li>

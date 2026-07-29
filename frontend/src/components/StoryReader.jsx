@@ -40,6 +40,9 @@ function StoryReader({
   setLineSpacing,
   fontFamily,
   setFontFamily,
+  autoUnlockNext,
+  onAutoUnlockChange,
+  navigationBusy = false,
 }) {
 
   const hasPrevious = useMemo(() => {
@@ -112,20 +115,28 @@ function StoryReader({
         <button
           className="btn reader-nav-button px-4 py-2"
           onClick={onPrevious}
-          disabled={!hasPrevious}
+          disabled={!hasPrevious || navigationBusy}
         >
           <FontAwesomeIcon icon={faArrowLeft} /> Chap trước
         </button>
         <button
           className="btn reader-nav-button px-4 py-2"
           onClick={onNext}
-          disabled={!hasNext}
+          disabled={!hasNext || navigationBusy}
         >
           Chap sau <FontAwesomeIcon icon={faArrowRight} />
         </button>
       </div>
 
       <div className="reader-toolbar rounded p-3 mb-4 d-flex flex-wrap gap-4 align-items-center justify-content-center">
+        <label className="d-flex align-items-center gap-2 small mb-0">
+          <input
+            type="checkbox"
+            checked={Boolean(autoUnlockNext)}
+            onChange={(event) => onAutoUnlockChange?.(event.target.checked)}
+          />
+          <span>Tự động mở khóa chương tiếp theo (2 Tinh thạch)</span>
+        </label>
         {chapters.length > 0 && onChapterSelect ? (
           <select
             className="form-select form-select-sm reader-select reader-chapter-select"
@@ -207,7 +218,7 @@ function StoryReader({
           className="btn reader-floating-button d-flex align-items-center justify-content-center"
           onClick={onPrevious}
           type="button"
-          disabled={!hasPrevious}
+          disabled={!hasPrevious || navigationBusy}
         >
           <FontAwesomeIcon icon={faArrowLeft} />
         </button>
@@ -233,7 +244,7 @@ function StoryReader({
           className="btn reader-floating-button d-flex align-items-center justify-content-center"
           onClick={onNext}
           type="button"
-          disabled={!hasNext}
+          disabled={!hasNext || navigationBusy}
         >
           <FontAwesomeIcon icon={faArrowRight} />
         </button>

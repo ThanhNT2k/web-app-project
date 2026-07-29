@@ -11,6 +11,7 @@ const BadWord = require('./BadWord');
 const StoryCollaborator = require('./StoryCollaborator');
 const StoryRating = require('./StoryRating');
 const UserChapterRead = require('./UserChapterRead');
+const Wallet = require('./Wallet');
 
 module.exports = {
   db,
@@ -25,5 +26,6 @@ module.exports = {
   BadWord,
   StoryCollaborator,
   StoryRating,
-  UserChapterRead
+  UserChapterRead,
+  Wallet
 };

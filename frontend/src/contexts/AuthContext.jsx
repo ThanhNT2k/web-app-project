@@ -123,6 +123,14 @@ function AuthProvider({ children }) {
       logout,
       loginWithGoogle,
       setUser,
+      setCrystalBalance: (crystalBalance) => {
+        setUser((current) => {
+          if (!current) return current;
+          const updated = { ...current, crystal_balance: Number(crystalBalance) };
+          authService.saveAuthData(token, updated);
+          return updated;
+        });
+      },
       refreshCurrentUser: async () => {
         const response = await API.auth.getCurrentUser();
         setUser(response.user || null);

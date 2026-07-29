@@ -1,7 +1,8 @@
 const Joi = require('joi');
 const { Queue } = require('bullmq');
 
-const { Chapter, Story, StoryCollaborator } = require('../models');
+const { Chapter, Story, StoryCollaborator, Wallet } = require('../models');
+const { getChapterAccess, lockedChapterResponse } = require('../services/chapterAccessService');
 const { parseStoryUploadFile, parseStoryTextToChapters } = require('../services/storyFileImportService');
 const redisConfig = require('../config/redisConfig');
 
@@ -20,12 +21,14 @@ const createChapterSchema = Joi.object({
   title: Joi.string().trim().max(255).required(),
   content: Joi.string().trim().required(),
   chapter_number: Joi.number().integer().min(1).required(),
+  is_paid: Joi.boolean().optional(),
 }).required();
 
 // Schema validate khi CẬP NHẬT chương (không cho phép đổi chapter_number)
 const updateChapterSchema = Joi.object({
   title: Joi.string().trim().max(255).required(),
   content: Joi.string().trim().required(),
+  is_paid: Joi.boolean().optional(),
 }).required();
 
 const importChapterFileSchema = Joi.object({
@@ -33,6 +36,7 @@ const importChapterFileSchema = Joi.object({
   start_chapter_number: Joi.number().integer().min(1).optional(),
   title: Joi.string().trim().max(255).allow('', null).optional(),
   raw_text_override: Joi.string().trim().allow('', null).optional(),
+  is_paid: Joi.boolean().optional(),
 }).required();
 
 const previewChapterFileSchema = Joi.object({
@@ -125,10 +129,20 @@ async function getChapters(req, res) {
       }
     }
 
-    const result = await Chapter.getChaptersByStory(storyId, page, limit, sort);
+    const result = await Chapter.getChaptersByStory(storyId, page, limit, sort, req.user?.id || null);
+    const privileged = req.user && (
+      req.user.role === 'Admin'
+      || Number(req.user.id) === Number(story.author_id)
+      || await StoryCollaborator.isCollaborator(story.id, req.user.id)
+    );
+    const chapters = result.chapters.map((chapter) => ({
+      ...chapter,
+      unlock_cost: chapter.is_paid ? Wallet.UNLOCK_COST : 0,
+      can_read: !chapter.is_paid || chapter.is_unlocked || Boolean(privileged),
+    }));
     return res.status(200).json({
       success: true,
-      chapters: result.chapters,
+      chapters,
       pagination: result.pagination,
     });
   } catch (error) {
@@ -169,9 +183,14 @@ async function getChapterById(req, res) {
       }
     }
 
+    const access = await getChapterAccess(req.user, chapter);
+    if (!access.canRead) {
+      const wallet = req.user?.id ? await Wallet.getWallet(req.user.id, 1, 1) : null;
+      return res.status(403).json(lockedChapterResponse(chapter, wallet?.crystal_balance ?? null));
+    }
     return res.status(200).json({
       success: true,
-      chapter,
+      chapter: { ...chapter, is_unlocked: access.isUnlocked, can_read: true, unlock_cost: chapter.is_paid ? Wallet.UNLOCK_COST : 0 },
     });
   } catch (error) {
     console.error('[chapterController.getChapterById]', error);
@@ -242,6 +261,7 @@ async function createChapter(req, res) {
       chapter_number: value.chapter_number,
       title: value.title,
       content: value.content,
+      is_paid: value.is_paid ?? value.chapter_number > 3,
     };
 
     let createdChapter;
@@ -348,6 +368,7 @@ async function importChapterFile(req, res) {
 
     const createdChapters = await Chapter.createChaptersBatch(storyId, chaptersFromFile, {
       startChapterNumber,
+      isPaid: value.is_paid,
     });
 
     try {
@@ -620,9 +641,14 @@ async function getChapterBySlugAndNumber(req, res) {
       }
     }
 
+    const access = await getChapterAccess(req.user, chapter);
+    if (!access.canRead) {
+      const wallet = req.user?.id ? await Wallet.getWallet(req.user.id, 1, 1) : null;
+      return res.status(403).json(lockedChapterResponse(chapter, wallet?.crystal_balance ?? null));
+    }
     return res.status(200).json({
       success: true,
-      chapter,
+      chapter: { ...chapter, is_unlocked: access.isUnlocked, can_read: true, unlock_cost: chapter.is_paid ? Wallet.UNLOCK_COST : 0 },
     });
   } catch (error) {
     console.error('[chapterController.getChapterBySlugAndNumber]', error);
@@ -630,6 +656,49 @@ async function getChapterBySlugAndNumber(req, res) {
       success: false,
       message: 'Internal server error',
     });
+  }
+}
+
+async function unlockChapter(req, res) {
+  try {
+    const chapter = await Chapter.getChapterById(req.params.id);
+    if (!chapter) {
+      return res.status(404).json({ success: false, code: 'CHAPTER_NOT_FOUND', message: 'Chapter not found' });
+    }
+    const access = await getChapterAccess(req.user, chapter);
+    if (access.canRead && access.reason !== 'UNLOCKED') {
+      return res.status(409).json({
+        success: false,
+        code: 'CHAPTER_ALREADY_FREE',
+        message: 'Chương này không cần mở khóa.',
+      });
+    }
+    const result = await Wallet.unlockChapter(req.user.id, chapter.id);
+    return res.status(200).json({
+      success: true,
+      code: result.already_unlocked ? 'CHAPTER_ALREADY_UNLOCKED' : 'CHAPTER_UNLOCKED',
+      message: result.already_unlocked ? 'Chương đã được mở khóa trước đó.' : 'Mở khóa chương thành công.',
+      crystal_balance: result.crystal_balance,
+      unlock_cost: result.already_unlocked ? 0 : Wallet.UNLOCK_COST,
+    });
+  } catch (error) {
+    if (error.code === 'INSUFFICIENT_CRYSTALS') {
+      return res.status(409).json({
+        success: false,
+        code: error.code,
+        message: 'Bạn không đủ Tinh thạch để mở khóa chương này.',
+        crystal_balance: error.crystalBalance,
+        unlock_cost: Wallet.UNLOCK_COST,
+      });
+    }
+    if (error.code === 'CHAPTER_ALREADY_FREE') {
+      return res.status(409).json({ success: false, code: error.code, message: 'Chương này đang miễn phí.' });
+    }
+    if (error.code === 'CHAPTER_NOT_FOUND') {
+      return res.status(404).json({ success: false, code: error.code, message: 'Chapter not found' });
+    }
+    console.error('[chapterController.unlockChapter]', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
 
@@ -642,4 +711,5 @@ module.exports = {
   updateChapter,
   deleteChapter,
   getChapterBySlugAndNumber,
+  unlockChapter,
 };

@@ -12,6 +12,7 @@ const updateSchema = Joi.object({
   font_family: Joi.string().max(100),                // Font chữ
   theme_color: Joi.string().max(50),                 // Màu chủ đạo
   auto_bookmark: Joi.boolean(),                      // Tự động lưu vị trí đọc
+  auto_unlock_next_chapter: Joi.boolean(),
 }).min(1);
 
 /**
