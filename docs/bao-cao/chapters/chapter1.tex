@@ -11,13 +11,13 @@ Từ thực tế đó, nhóm xây dựng ứng dụng web \textbf{CMC Truyện}.
 
 \subsection{Vấn đề của người đọc}
 
-Các vấn đề chính của người đọc gồm:
+\noindent Các vấn đề chính của người đọc gồm:
 
 \begin{itemize}
-  \item khó tìm kiếm và chọn truyện khi dữ liệu tăng;
-  \item không đồng bộ lịch sử, vị trí đọc và truyện đang theo dõi;
-  \item thiếu tùy chỉnh hiển thị và thông báo chương mới;
-  \item bình luận rác hoặc nội dung vi phạm làm giảm chất lượng cộng đồng.
+  \item Khó tìm kiếm và chọn truyện khi dữ liệu tăng;
+  \item Không đồng bộ lịch sử, vị trí đọc và truyện đang theo dõi;
+  \item Thiếu tùy chỉnh hiển thị và thông báo chương mới;
+  \item Bình luận rác hoặc nội dung vi phạm làm giảm chất lượng cộng đồng.
 \end{itemize}
 
 \subsection{Vấn đề của người đăng nội dung và đội ngũ vận hành}
@@ -51,6 +51,7 @@ M6 & Có khả năng kiểm chứng chất lượng kỹ thuật & Có kiểm th
 
 Báo cáo mô tả hệ thống tại thời điểm hoàn thiện sản phẩm. Kết quả được ghi nhận dựa trên mã nguồn, kiểm thử, bản build và minh chứng vận hành tương ứng.
 
+\clearpage
 \section{Đối tượng sử dụng và bên liên quan}
 
 \begin{figure}[H]
@@ -69,7 +70,7 @@ Báo cáo mô tả hệ thống tại thời điểm hoàn thiện sản phẩm.
     double,
     very thick,
     minimum width=5.2cm,
-    minimum height=4.2cm,
+    minimum height=3.4cm,
     align=center
   },
   arrow/.style={-{Latex[length=2.4mm]},thick}
@@ -81,11 +82,11 @@ Báo cáo mô tả hệ thống tại thời điểm hoàn thiện sản phẩm.
   Đăng nội dung\\
   Kiểm duyệt và quản trị
 };
-\node[actor,left=1.8cm of sys,yshift=2.0cm] (guest) {Guest};
+\node[actor,left=1.8cm of sys,yshift=1.7cm] (guest) {Guest};
 \node[actor,left=1.8cm of sys] (user) {User};
-\node[actor,left=1.8cm of sys,yshift=-2.0cm] (uploader) {Uploader};
-\node[actor,right=1.8cm of sys,yshift=1.35cm] (moderator) {Moderator};
-\node[actor,right=1.8cm of sys,yshift=-1.35cm] (admin) {Admin};
+\node[actor,left=1.8cm of sys,yshift=-1.7cm] (uploader) {Uploader};
+\node[actor,right=1.8cm of sys,yshift=1.15cm] (moderator) {Moderator};
+\node[actor,right=1.8cm of sys,yshift=-1.15cm] (admin) {Admin};
 \draw[arrow] (guest) -- (sys);
 \draw[arrow] (user) -- (sys);
 \draw[arrow] (uploader) -- (sys);
@@ -102,6 +103,8 @@ Hình~\ref{fig:system-context} khái quát năm nhóm tác nhân tương tác v�
 \centering
 \caption{Đối tượng sử dụng và nhu cầu chính}
 \label{tab:stakeholders}
+\small
+\renewcommand{\arraystretch}{1.08}
 \begin{tabularx}{\textwidth}{|>{\bfseries\RaggedRight\arraybackslash}p{2.7cm}|X|X|}
 \hline
 \textbf{Đối tượng} & \textbf{Nhu cầu} & \textbf{Giá trị hệ thống cung cấp} \\
@@ -120,6 +123,7 @@ Nhóm phát triển & Bảo trì và mở rộng sản phẩm & Duy trì kiến 
 \hline
 \end{tabularx}
 \end{table}
+\clearpage
 \section{Phạm vi chức năng}
 
 \subsection{Chức năng trong phạm vi}

@@ -91,46 +91,55 @@ Frontend gửi thông tin đăng nhập đến \CodePath{POST /api/auth/login}; 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  actor/.style={draw,rounded corners=3pt,minimum width=2.4cm,minimum height=0.8cm,align=center,font=\small\bfseries,fill=white},
+  scale=0.86,
+  transform shape,
+  actor/.style={draw,rounded corners=3pt,minimum width=2.5cm,minimum height=0.8cm,align=center,font=\small\bfseries,fill=white},
   lifeline/.style={draw=darkgray,densely dashed,thick},
   msg/.style={-{Latex[length=2.2mm,width=1.5mm]},thick},
   return/.style={-{Latex[length=2.2mm,width=1.5mm]},thick,dashed},
   lbl/.style={font=\footnotesize,above,align=center,inner sep=2pt},
-  internal/.style={draw,fill=white,rounded corners=2pt,minimum width=2.5cm,minimum height=0.65cm,align=center,font=\scriptsize,inner sep=2pt}
+  internal/.style={draw,fill=white,rounded corners=2pt,minimum width=2.8cm,minimum height=0.62cm,align=center,font=\scriptsize,inner sep=2pt},
+  phase/.style={font=\footnotesize\bfseries,anchor=west}
 ]
 \node[actor] (u) at (0,0) {Người dùng};
-\node[actor] (fe) at (3.8,0) {React};
-\node[actor] (api) at (7.6,0) {Express API};
-\node[actor] (db) at (11.4,0) {PostgreSQL};
+\node[actor] (fe) at (3.7,0) {React + Axios};
+\node[actor] (api) at (7.5,0) {Express API};
+\node[actor] (db) at (11.3,0) {PostgreSQL};
 
-\draw[lifeline] (u.south) -- (0,-11.1);
-\draw[lifeline] (fe.south) -- (3.8,-11.1);
-\draw[lifeline] (api.south) -- (7.6,-11.1);
-\draw[lifeline] (db.south) -- (11.4,-11.1);
+\draw[lifeline] (u.south) -- (0,-13.3);
+\draw[lifeline] (fe.south) -- (3.7,-13.3);
+\draw[lifeline] (api.south) -- (7.5,-13.3);
+\draw[lifeline] (db.south) -- (11.3,-13.3);
 
-\draw[msg] (0,-1.0) -- node[lbl]{Nhập email/mật khẩu} (3.8,-1.0);
-\draw[msg] (3.8,-2.0) -- node[lbl]{POST /api/auth/login} (7.6,-2.0);
-\draw[msg] (7.6,-3.0) -- node[lbl]{Tìm user theo email} (11.4,-3.0);
-\draw[return] (11.4,-4.0) -- node[lbl]{User + password hash} (7.6,-4.0);
+\node[phase] at (-0.3,-0.75) {A. Đăng nhập và cấp token};
+\draw[msg] (0,-1.35) -- node[lbl]{Nhập email/mật khẩu} (3.7,-1.35);
+\draw[msg] (3.7,-2.15) -- node[lbl]{POST /api/auth/login\\(không có Bearer token)} (7.5,-2.15);
+\node[internal] at (7.5,-3.0) {Validate request};
+\draw[msg] (7.5,-3.75) -- node[lbl]{Tìm user theo email} (11.3,-3.75);
+\draw[return] (11.3,-4.55) -- node[lbl]{User + password hash} (7.5,-4.55);
+\node[internal] at (7.5,-5.35)
+  {Kiểm tra is\_active\\và bcrypt.compare};
+\node[internal] at (7.5,-6.35)
+  {jwt.sign(payload, secret, expiry)};
+\draw[return] (7.5,-7.15) -- node[lbl]{200: JWT + user đã loại password} (3.7,-7.15);
+\node[internal] at (3.7,-7.95)
+  {Lưu cmc\_token và cmc\_user};
 
-\node[internal] (check) at (7.6,-5.0)
-  {Kiểm tra tài khoản active\\và bcrypt.compare};
-\node[internal] (issue) at (7.6,-6.2)
-  {Tạo JWT};
-
-\draw[return] (7.6,-7.2) -- node[lbl]{JWT + thông tin user an toàn} (3.8,-7.2);
-\node[internal] (save) at (3.8,-8.2)
-  {Lưu token vào localStorage};
-\draw[msg] (3.8,-9.2) -- node[lbl]{Request sau kèm Bearer token} (7.6,-9.2);
-\node[internal] (verify) at (7.6,-10.1)
-  {jwt.verify; gán req.user};
-\draw[return] (7.6,-11.0) -- node[lbl]{Dữ liệu hoặc 401/403} (3.8,-11.0);
+\node[phase] at (-0.3,-8.65) {B. Gọi API được bảo vệ};
+\draw[msg] (3.7,-9.25) -- node[lbl]{Authorization: Bearer \{JWT\}} (7.5,-9.25);
+\node[internal] at (7.5,-10.05)
+  {authenticateToken: jwt.verify\\và gán payload vào req.user};
+\node[internal] at (7.5,-11.05)
+  {RBAC nếu route yêu cầu;\\sau đó controller xử lý};
+\draw[msg] (7.5,-11.75) -- node[lbl]{Truy vấn/cập nhật theo req.user.id} (11.3,-11.75);
+\draw[return] (11.3,-12.45) -- node[lbl]{Kết quả} (7.5,-12.45);
+\draw[return] (7.5,-13.15) -- node[lbl]{2xx; hoặc 401 token lỗi;\\403 không đủ quyền} (3.7,-13.15);
 \end{tikzpicture}
 \caption{Trình tự xác thực và sử dụng JWT}
 \label{fig:auth-sequence}
 \end{figure}
 
-Token không hợp lệ nhận mã 401 và phiên phía client bị xóa; mã 403 cho biết người dùng đã đăng nhập nhưng không đủ quyền. Luồng quên mật khẩu gồm yêu cầu OTP, xác minh và đặt mật khẩu mới; việc gửi email thật cần kiểm thử tích hợp riêng.
+Token thiếu, sai chữ ký hoặc hết hạn nhận mã 401; mã 403 được dùng khi tài khoản bị khóa hoặc người dùng đã xác thực nhưng không đủ vai trò. Response interceptor hiện xóa \CodePath{cmc_token}, \CodePath{cmc_user} và chuyển về trang đăng nhập khi nhận 401 hoặc 403, ngoại trừ mã \CodePath{CHAPTER_LOCKED}. Luồng quên mật khẩu gồm yêu cầu OTP, xác minh và đặt mật khẩu mới; việc gửi email thật cần kiểm thử tích hợp riêng.
 \clearpage
 \subsection{Theo dõi, lịch sử và tương tác}
 
@@ -288,24 +297,38 @@ Với bình luận và hồ sơ bị báo cáo, Moderator dùng bộ lọc để
         \node[flownode] (review) at ( 2.1,4) {Xem metadata\\và nội dung};
 
         % Tầng 2: quyết định
-        \node[decision] (decision) at (0,2.1) {Chọn đúng 1\\kết quả};
+        \node[decision,fill=lightgray] (decision) at (0,2.1)
+            {XOR\\chọn 1 nhánh};
 
-        % Tầng 3: các kết quả xử lý
-        \node[flownode] (approve) at (-4.2,-0.4)
+        % XOR chỉ có một đường ra; việc tỏa nhánh diễn ra tại cổng chọn bên dưới.
+        \node[
+            draw,
+            rounded corners=2pt,
+            fill=white,
+            minimum width=3.8cm,
+            minimum height=0.55cm,
+            align=center,
+            font=\scriptsize,
+            inner sep=2pt
+        ] (branch) at (0,0.65)
+            {Cổng chọn: đúng duy nhất 1 điều kiện};
+
+        % Tầng 3: ba kết quả loại trừ nhau
+        \node[flownode] (approve) at (-4.2,-1.0)
             {Duyệt và\\công khai};
 
-        \node[flownode] (change) at (0,-0.4)
+        \node[flownode] (change) at (0,-1.0)
             {Yêu cầu sửa\\kèm lý do};
 
-        \node[flownode] (reject) at (4.2,-0.4)
+        \node[flownode] (reject) at (4.2,-1.0)
             {Từ chối\\kèm lý do};
 
         % Tầng 4: cập nhật hệ thống
         \node[
             flownode,
             minimum width=10.5cm
-        ] (record) at (0,-2.8)
-            {Cập nhật DB + notification + audit};
+        ] (record) at (0,-3.4)
+            {Sau nhánh đã chọn: cập nhật DB + notification + audit};
 
         % Luồng chính
         \draw[arrow]
@@ -316,20 +339,25 @@ Với bình luận và hồ sơ bị báo cáo, Moderator dùng bộ lọc để
             to[out=-90,in=30]
             (decision.east);
 
-        % Các nhánh quyết định
+        % Chỉ một đường đi ra khỏi XOR đến cổng chọn nhánh
         \draw[arrow]
-            (decision.west)
-            to[out=205,in=90]
+            (decision.south) -- (branch.north);
+
+        % Từ cổng chọn mới tỏa ra ba nhánh có điều kiện loại trừ nhau
+        \draw[arrow]
+            (branch.west)
+            to[out=190,in=90]
             node[font=\footnotesize,above,sloped,pos=0.58]{[Duyệt]}
             (approve.north);
 
         \draw[arrow]
-            (decision.south)
-            -- (change.north);
+            (branch.south)
+            -- node[font=\footnotesize,right,pos=0.55]{[Yêu cầu sửa]}
+            (change.north);
 
         \draw[arrow]
-            (decision.east)
-            to[out=-25,in=90]
+            (branch.east)
+            to[out=-10,in=90]
             node[font=\footnotesize,above,sloped,pos=0.58]{[Từ chối]}
             (reject.north);
 
