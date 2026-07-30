@@ -3209,16 +3209,13 @@ kbd {
 }
 
 .google-btn-container {
-  position: absolute;
-  inset: 0;
+  position: relative;
   width: 100%;
   min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  opacity: 0.01;
-  z-index: 2;
+  overflow: visible;
 }
 
 /* Ensure Google button fills container */
