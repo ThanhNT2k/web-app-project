@@ -2,7 +2,7 @@ const { OAuth2Client } = require('google-auth-library');
 const env = require('../config/environment');
 const User = require('../models/user');
 
-const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_IDS[0] || '');
 
 /**
  * Xác thực Google ID Token (credential) trả về từ Google Identity Services.
@@ -16,7 +16,7 @@ const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 async function verifyGoogleToken(idToken) {
   const ticket = await googleClient.verifyIdToken({
     idToken,
-    audience: env.GOOGLE_CLIENT_ID,
+    audience: env.GOOGLE_CLIENT_IDS,
   });
 
   const payload = ticket.getPayload();

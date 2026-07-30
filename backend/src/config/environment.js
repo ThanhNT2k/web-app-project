@@ -51,6 +51,9 @@ const env = {
 
   // Google OAuth - Client ID để xác thực Google ID Token trên backend
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_IDS: process.env.GOOGLE_CLIENT_ID
+    ? process.env.GOOGLE_CLIENT_ID.split(',').map(id => id.trim())
+    : [],
 
   // Resend - Dịch vụ gửi email cho OTP quên mật khẩu
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
