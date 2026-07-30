@@ -1,0 +1,63 @@
+\contentsline {chapter}{DANH MỤC BẢNG}{iii}{section*.2}%
+\contentsline {chapter}{DANH MỤC HÌNH}{iv}{section*.4}%
+\contentsline {chapter}{Danh mục từ viết tắt}{v}{chapter*.6}%
+\contentsline {chapter}{\numberline {1}GIỚI THIỆU BÀI TOÁN}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Bối cảnh và động cơ thực hiện}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Phát biểu bài toán}{1}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}Vấn đề của người đọc}{1}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}Vấn đề của người đăng nội dung và đội ngũ vận hành}{1}{subsection.1.2.2}%
+\contentsline {section}{\numberline {1.3}Mục tiêu của hệ thống}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Đối tượng sử dụng và bên liên quan}{2}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Phạm vi chức năng}{3}{section.1.5}%
+\contentsline {subsection}{\numberline {1.5.1}Chức năng trong phạm vi}{3}{subsection.1.5.1}%
+\contentsline {subsection}{\numberline {1.5.2}Ngoài phạm vi hoặc chưa đủ minh chứng}{4}{subsection.1.5.2}%
+\contentsline {section}{\numberline {1.6}Yêu cầu phi chức năng}{5}{section.1.6}%
+\contentsline {section}{\numberline {1.7}Phương pháp thực hiện}{6}{section.1.7}%
+\contentsline {section}{\numberline {1.8}Kết luận chương}{6}{section.1.8}%
+\contentsline {chapter}{\numberline {2}PHÂN TÍCH LUỒNG HOẠT ĐỘNG}{7}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Tổng quan tác nhân và nguyên tắc phân quyền}{7}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Luồng của khách và người dùng}{8}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Khám phá và đọc truyện khi chưa đăng nhập}{8}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Đăng ký, đăng nhập và duy trì phiên}{9}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Theo dõi, lịch sử và tương tác}{10}{subsection.2.2.3}%
+\contentsline {section}{\numberline {2.3}Luồng của Uploader}{11}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Tạo truyện và nhập nội dung}{11}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Quản lý chương và cộng tác viên}{11}{subsection.2.3.2}%
+\contentsline {section}{\numberline {2.4}Luồng của Moderator}{12}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Luồng của Admin}{13}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Luồng báo cáo vi phạm}{14}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Truy vết luồng đến endpoint và source}{15}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Quy tắc xử lý lỗi và an toàn luồng}{16}{section.2.8}%
+\contentsline {section}{\numberline {2.9}Kết luận chương}{16}{section.2.9}%
+\contentsline {chapter}{\numberline {3}TRIỂN KHAI HỆ THỐNG}{17}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Kiến trúc phần mềm tổng thể}{17}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Lựa chọn mô hình kiến trúc}{17}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Công nghệ và trách nhiệm}{18}{subsection.3.1.2}%
+\contentsline {section}{\numberline {3.2}Triển khai frontend}{19}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Cấu trúc thư mục}{19}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Điều hướng và bảo vệ route}{20}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Lớp gọi API và quản lý phiên}{21}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Trạng thái giao diện và trải nghiệm}{22}{subsection.3.2.4}%
+\contentsline {section}{\numberline {3.3}Triển khai backend}{22}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Cấu trúc phân lớp}{22}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Pipeline request}{23}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Xác thực, phân quyền và audit}{25}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Tác vụ nền và dịch vụ AI}{26}{subsection.3.3.4}%
+\contentsline {section}{\numberline {3.4}Triển khai cơ sở dữ liệu}{26}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Mô hình dữ liệu}{26}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Connection pool, index và transaction}{29}{subsection.3.4.2}%
+\contentsline {section}{\numberline {3.5}Cấu hình và triển khai}{30}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Biến môi trường}{30}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Topology triển khai}{30}{subsection.3.5.2}%
+\contentsline {section}{\numberline {3.6}Kiểm thử và kết quả xác minh}{32}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Kết quả thực chạy}{32}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Kịch bản kiểm thử thủ công cần bổ sung}{32}{subsection.3.6.2}%
+\contentsline {section}{\numberline {3.7}Giao diện người dùng}{33}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Giao diện khách hàng}{34}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Giao diện Admin và Moderator}{38}{subsection.3.7.2}%
+\contentsline {section}{\numberline {3.8}Đánh giá, hạn chế và hướng hoàn thiện}{41}{section.3.8}%
+\contentsline {subsection}{\numberline {3.8.1}Điểm đạt được}{41}{subsection.3.8.1}%
+\contentsline {subsection}{\numberline {3.8.2}Hạn chế cần công khai}{42}{subsection.3.8.2}%
+\contentsline {section}{\numberline {3.9}Kết luận chương}{42}{section.3.9}%
+\contentsline {chapter}{Kết luận}{43}{chapter*.43}%
+\contentsline {chapter}{Tài liệu tham khảo}{44}{chapter*.44}%

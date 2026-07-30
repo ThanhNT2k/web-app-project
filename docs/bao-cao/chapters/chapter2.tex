@@ -138,14 +138,14 @@ Sau khi đăng nhập, người dùng có thể theo dõi, đánh giá và bình
 
 Khi đọc chương, hệ thống gửi tiến độ đến \CodePath{POST /api/reading-history}. Backend dùng định danh user từ JWT thay vì tin vào user id do client tự khai báo. Các endpoint lịch sử và chương đã đọc đều yêu cầu xác thực. Luồng điển hình gồm:
 
-\begin{enumerate}
-  \item người dùng mở trang chi tiết và chọn chương;
-  \item frontend lấy nội dung chương theo slug và số chương;
-  \item trình đọc hiển thị nội dung, tiến độ cuộn và tùy chọn đọc;
-  \item sau một mốc phù hợp, frontend lưu chương/vị trí/thời gian đọc;
-  \item lần truy cập sau, lịch sử cho phép quay lại truyện và chương gần nhất;
-  \item nếu request lưu thất bại, giao diện không được khẳng định đã đồng bộ.
-\end{enumerate}
+\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
+  \item Người dùng mở trang chi tiết và chọn chương;
+  \item Frontend lấy nội dung chương theo slug và số chương;
+  \item Trình đọc hiển thị nội dung, tiến độ cuộn và tùy chọn đọc;
+  \item Sau một mốc phù hợp, frontend lưu chương/vị trí/thời gian đọc;
+  \item Lần truy cập sau, lịch sử cho phép quay lại truyện và chương gần nhất;
+  \item Nếu request lưu thất bại, giao diện không được khẳng định đã đồng bộ.
+\end{itemize}
 
 Report API áp dụng rate limiter; Moderator/Admin xử lý báo cáo và lưu kết quả giải quyết.
 \clearpage
@@ -366,15 +366,14 @@ Với bình luận và hồ sơ bị báo cáo, Moderator dùng bộ lọc để
 \section{Luồng của Admin}
 
 Admin có phạm vi vận hành rộng nhất nhưng vẫn đi qua xác thực, RBAC và audit. Các nhóm công việc chính gồm:
-
-\begin{itemize}
-  \item xem thống kê tổng quan và danh sách truyện;
-  \item tìm kiếm user, cập nhật role hoặc trạng thái hoạt động;
-  \item ẩn/hiện truyện, xóa bình luận theo quy định;
-  \item quản lý danh sách từ khóa và tier kiểm duyệt;
-  \item xem, phân loại và giải quyết báo cáo;
-  \item truy vấn audit log để đối chiếu hành động quản trị;
-  \item thực hiện các chức năng moderator khi cần.
+\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
+  \item Xem thống kê tổng quan và danh sách truyện;
+  \item Tìm kiếm user, cập nhật role hoặc trạng thái hoạt động;
+  \item Ẩn/hiện truyện, xóa bình luận theo quy định;
+  \item Quản lý danh sách từ khóa và tier kiểm duyệt;
+  \item Xem, phân loại và giải quyết báo cáo;
+  \item Truy vấn audit log để đối chiếu hành động quản trị;
+  \item Thực hiện các chức năng moderator khi cần.
 \end{itemize}
 
 \begin{table}[htbp]
@@ -460,7 +459,7 @@ Xem audit & \CodePath{GET /api/audit-logs} & Admin/\newline Moderator theo phạ
 
 Một luồng được xem là hoàn chỉnh khi có cả đường thành công và đường lỗi. Các nguyên tắc được áp dụng hoặc cần duy trì gồm:
 
-\begin{itemize}
+\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
   \item \textbf{400} cho dữ liệu đầu vào không hợp lệ, kèm thông báo đủ để người dùng sửa;
   \item \textbf{401} khi thiếu hoặc sai phiên xác thực;
   \item \textbf{403} khi đã xác thực nhưng không đủ quyền;
@@ -468,9 +467,9 @@ Một luồng được xem là hoàn chỉnh khi có cả đường thành công
   \item \textbf{409} cho xung đột nghiệp vụ như trùng số chương;
   \item \textbf{429} khi vượt giới hạn request/report;
   \item \textbf{500} chỉ cho lỗi ngoài dự kiến, không trả stack trace hoặc secret ra client;
-  \item mutation nhiều bước cần transaction cùng một DB client để bảo đảm rollback nhất quán;
-  \item optimistic UI phải hoàn tác khi API thất bại;
-  \item mọi quyết định quyền phải được lặp lại ở backend dù frontend đã ẩn nút.
+  \item Mutation nhiều bước cần transaction cùng một DB client để bảo đảm rollback nhất quán;
+  \item Optimistic UI phải hoàn tác khi API thất bại;
+  \item Mọi quyết định quyền phải được lặp lại ở backend dù frontend đã ẩn nút.
 \end{itemize}
 
 \section{Kết luận chương}

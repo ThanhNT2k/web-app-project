@@ -127,7 +127,7 @@ Route frontend không thay thế quyền backend. Nếu chỉ ẩn menu Admin nh
 \clearpage
 \subsection{Lớp gọi API và quản lý phiên}
 
-\CodePath{services/api.js} tạo một Axios instance có base URL từ biến môi trường, fallback về local khi phát triển. Request interceptor đọc \CodePath{cmc_token} và gắn Bearer token; response interceptor xử lý 401/403, xóa phiên và điều hướng về login trong các trường hợp phù hợp. Các endpoint được gom theo domain như auth, stories, chapters, comments, follows, reports, admin và moderator.
+\CodePath{Services/api.js} tạo một Axios instance có base URL từ biến môi trường, fallback về local khi phát triển. Request interceptor đọc \CodePath{cmc_token} và gắn Bearer token; response interceptor xử lý 401/403, xóa phiên và điều hướng về login trong các trường hợp phù hợp. Các endpoint được gom theo domain như auth, stories, chapters, comments, follows, reports, admin và moderator.
 
 Ưu điểm của facade tập trung là component không cần lặp base URL, header và cấu trúc request. Hạn chế là file có thể lớn khi mọi domain cùng nằm trong một object; về lâu dài có thể tách thành các module \CodePath{authApi}, \CodePath{storyApi}, \CodePath{adminApi} nhưng vẫn dùng chung Axios client.
 
@@ -182,7 +182,7 @@ Config & Biến môi trường và client hạ tầng & Secret chỉ ở backend
 
 \subsection{Pipeline request}
 
-\CodePath{app.js} lần lượt cấu hình Helmet, CORS, log HTTP, các parser JSON và URL-encoded, static cover, health check, 16 nhóm router rồi not-found và error handler. Thứ tự middleware quan trọng: error handler phải ở cuối; role middleware phải sau auth; audit cần quan sát kết quả response nhưng không được ghi dữ liệu nhạy cảm.
+\CodePath{App.js} lần lượt cấu hình Helmet, CORS, log HTTP, các parser JSON và URL-encoded, static cover, health check, 16 nhóm router rồi not-found và error handler. Thứ tự middleware quan trọng: error handler phải ở cuối; role middleware phải sau auth; audit cần quan sát kết quả response nhưng không được ghi dữ liệu nhạy cảm.
 
 \begin{figure}[H]
 \centering
@@ -217,7 +217,7 @@ Config & Biến môi trường và client hạ tầng & Secret chỉ ở backend
 \clearpage
 \subsection{Xác thực, phân quyền và audit}
 
-\CodePath{authenticateToken} đọc header Authorization, yêu cầu định dạng Bearer, xác minh JWT bằng secret từ environment và gán payload vào \CodePath{req.user}. \CodePath{optionalAuth} không từ chối Guest; token lỗi được xem như không có phiên ở các route công khai. \CodePath{authorizeRole} chuẩn hóa chữ thường để tránh sai khác giữa \CodePath{Admin} và \CodePath{admin}. Cấu trúc và cách kiểm tra token được đối chiếu với đặc tả JWT \cite{rfc7519}.
+\CodePath{AuthenticateToken} đọc header Authorization, yêu cầu định dạng Bearer, xác minh JWT bằng secret từ environment và gán payload vào \CodePath{req.user}. \CodePath{optionalAuth} không từ chối Guest; token lỗi được xem như không có phiên ở các route công khai. \CodePath{authorizeRole} chuẩn hóa chữ thường để tránh sai khác giữa \CodePath{Admin} và \CodePath{admin}. Cấu trúc và cách kiểm tra token được đối chiếu với đặc tả JWT \cite{rfc7519}.
 
 Audit middleware bao quanh các thao tác làm thay đổi dữ liệu quản trị như đổi vai trò, đổi trạng thái người dùng, duyệt truyện, xử lý báo cáo và quản lý từ khóa. Kiểm thử xác nhận hệ thống chỉ ghi hành động thành công, giới hạn phạm vi Moderator và loại dữ liệu mật khẩu/credential khỏi nhật ký. Các biện pháp xác thực, phân quyền, kiểm soát đầu vào và ghi log được rà soát theo nhóm rủi ro ứng dụng web phổ biến của OWASP \cite{owasp-top10}.
 
@@ -229,7 +229,7 @@ Audit middleware bao quanh các thao tác làm thay đổi dữ liệu quản tr
 
 \subsection{Tác vụ nền và dịch vụ AI}
 
-\CodePath{startWorker.js} khởi động moderation worker và notification worker. Queue dùng \CodePath{REDIS_URL}; API và worker phải trỏ cùng Redis \cite{redis-docs,bullmq-docs}. Với AI, backend ưu tiên Groq rồi fallback Gemini, có timeout và cache; tóm tắt chương được lưu ở \CodePath{ai_summaries}. API key không đi xuống frontend vì mã phía client có thể được người dùng xem trực tiếp.
+\CodePath{StartWorker.js} khởi động moderation worker và notification worker. Queue dùng \CodePath{REDIS_URL}; API và worker phải trỏ cùng Redis \cite{redis-docs,bullmq-docs}. Với AI, backend ưu tiên Groq rồi fallback Gemini, có timeout và cache; tóm tắt chương được lưu ở \CodePath{ai_summaries}. API key không đi xuống frontend vì mã phía client có thể được người dùng xem trực tiếp.
 
 Tuy nhiên, fallback giữa hai mô hình có thể tạo kết quả khác nhau; hệ thống cần log provider, thời gian và lỗi ở mức đủ chẩn đoán nhưng không ghi prompt nhạy cảm. Với moderation tự động, quyết định có tác động lớn nên có cơ chế review của người vận hành thay vì coi output AI là phán quyết tuyệt đối.
 
@@ -254,7 +254,6 @@ Schema chính \CodePath{backend/scripts/schema.sql} định nghĩa các nhóm d�
 
 Hình~\ref{fig:database-er} thể hiện các quan hệ chính của hệ thống. \CodePath{users}, \CodePath{stories} và \CodePath{chapters} là ba thực thể trung tâm; các bảng lịch sử đọc, theo dõi, đánh giá, bình luận và thông báo liên kết hành vi người dùng với nội dung. Nhóm bảng \CodePath{reports}, \CodePath{bad_words} và \CodePath{audit_logs} phục vụ kiểm duyệt và truy vết.
 
-ERD do nhóm cung cấp có đồng thời \CodePath{ratings} và \CodePath{story_ratings}, trong khi schema chính được rà soát sử dụng \CodePath{ratings}. Trước khi nộp, nhóm cần xác nhận bảng đang được ứng dụng sử dụng, loại bỏ bảng dư hoặc giải thích rõ mục đích của từng bảng; đồng thời bảo đảm ERD, migration và cơ sở dữ liệu triển khai cùng một phiên bản.
 
 \ReportImage[1.0\textheight]
   {images/screenshots/db-folder-schema.png}
@@ -274,18 +273,7 @@ Backend cấu hình PostgreSQL Pool với tối đa 20 connection, idle timeout 
 
 Khi một nghiệp vụ có nhiều bước ghi dữ liệu, tất cả query từ \CodePath{BEGIN} đến \CodePath{COMMIT/ROLLBACK} phải dùng cùng client lấy từ \CodePath{pool.connect()}. Nếu trộn \CodePath{pool.query()} với client trong một transaction, các query có thể chạy trên connection khác và rollback không còn bảo đảm tính nguyên tử.
 
-\subsection{Nợ kỹ thuật dữ liệu}
 
-Phần dữ liệu hiện có ba cơ chế cùng tồn tại: schema tổng, script bổ sung và một số DDL chạy khi module database kết nối. Cách tổ chức này làm nguồn sự thật bị phân tán và khó tái tạo một cơ sở dữ liệu mới. Bảng \CodePath{reports} dùng script \CodePath{CREATE TYPE} và \CodePath{CREATE TABLE} chưa có \CodePath{IF NOT EXISTS}; \CodePath{bad_words} xuất hiện trên ERD nhưng chưa có DDL trong phần mã nguồn đã rà soát. Hướng hoàn thiện là:
-
-\begin{itemize}
-  \item đưa mọi thay đổi vào migration đánh số và có thể chạy lặp an toàn;
-  \item tạo migration chính thức cho \CodePath{bad_words}, \CodePath{reports}, \CodePath{tags}/\CodePath{story_tags};
-  \item xác nhận và xử lý sự trùng lặp giữa \CodePath{ratings} và \CodePath{story_ratings};
-  \item loại DDL biến đổi schema khỏi đường khởi động ứng dụng sau khi migration ổn định;
-  \item bổ sung bảng theo dõi migration và kiểm thử khởi tạo DB trắng;
-  \item ghi rõ baseline schema tương ứng với commit dùng để nộp.
-\end{itemize}
 
 \section{Cấu hình và triển khai}
 
@@ -318,7 +306,7 @@ Frontend & VITE\_API\_URL & Có thể công khai; trỏ đúng tiền tố \Code
 
 \subsection{Topology triển khai}
 
-\CodePath{render.yaml} khai báo hai service Node: web service chạy backend và worker chạy \CodePath{src/startWorker.js}. Frontend có \CodePath{vercel.json} rewrite mọi route SPA về \CodePath{index.html}. PostgreSQL và Redis không được khai báo trực tiếp trong file Render; chúng phải được cung cấp qua dịch vụ managed hoặc hạ tầng khác và cấu hình bằng environment.
+\CodePath{Render.yaml} khai báo hai service Node: web service chạy backend và worker chạy \CodePath{src/startWorker.js}. Frontend có \CodePath{vercel.json} rewrite mọi route SPA về \CodePath{index.html}. PostgreSQL và Redis không được khai báo trực tiếp trong file Render; chúng phải được cung cấp qua dịch vụ managed hoặc hạ tầng khác và cấu hình bằng environment.
 
 \begin{table}[htbp]
 \centering
@@ -507,17 +495,14 @@ Source đã hình thành một sản phẩm full-stack có phạm vi tương đ�
 \clearpage
 \subsection{Hạn chế cần công khai}
 
-\begin{itemize}
-  \item migration/schema phân tán, thiếu DDL \CodePath{bad_words} trong phần source rà soát và còn DDL chạy lúc startup;
-  \item test log có Redis \CodePath{ECONNREFUSED} và Jest force-exit, cho thấy teardown/tích hợp queue chưa sạch;
-  \item chưa có kết quả E2E, kiểm thử tải, security audit và accessibility audit trong lần xác minh này;
-  \item bundle frontend vượt ngưỡng cảnh báo 500 kB;
-  \item link deploy, link commit, video và ảnh giao diện chưa được cung cấp nên báo cáo để trống.
+\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
+  \item Migration/schema phân tán, thiếu DDL \CodePath{bad_words} trong phần source rà soát và còn DDL chạy lúc startup;
+  \item Test log có Redis \CodePath{ECONNREFUSED} và Jest force-exit, cho thấy teardown/tích hợp queue chưa sạch;
+  \item Chưa có kết quả E2E, kiểm thử tải, security audit và accessibility audit trong lần xác minh này;
+  \item Bundle frontend vượt ngưỡng cảnh báo 500 kB;
+  \item Link deploy, link commit, video và ảnh giao diện chưa được cung cấp nên báo cáo để trống.
 \end{itemize}
 
-\subsection{Thứ tự ưu tiên hoàn thiện}
-
-Nhóm cần hoàn tất metadata, phân công, URL và ảnh thật; sau đó chuẩn hóa migration, xử lý Redis/open handles, chạy E2E và tối ưu bundle.
 
 \section{Kết luận chương}
 
