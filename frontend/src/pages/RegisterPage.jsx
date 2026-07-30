@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import PasswordChecklist from '../components/PasswordChecklist';
+import PasswordInput from '../components/PasswordInput';
 import { useAuth } from '../contexts/AuthContext';
 
 function RegisterPage() {
@@ -21,6 +22,10 @@ function RegisterPage() {
     /[A-Z]/.test(password) &&
     /[0-9]/.test(password) &&
     /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const confirmPasswordError =
+    confirmPassword && password !== confirmPassword
+      ? 'Mật khẩu nhập lại không khớp.'
+      : '';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -110,9 +115,8 @@ function RegisterPage() {
                 />
 
                 <div>
-                  <input
-                    className="form-control form-control-lg"
-                    type="password"
+                  <PasswordInput
+                    id="register-password"
                     name="password"
                     autoComplete="new-password"
                     placeholder="Mật khẩu"
@@ -123,14 +127,14 @@ function RegisterPage() {
                   <PasswordChecklist password={password} />
                 </div>
 
-                <input
-                  className="form-control form-control-lg"
-                  type="password"
+                <PasswordInput
+                  id="register-confirm-password"
                   name="confirmPassword"
                   autoComplete="new-password"
                   placeholder="Xác nhận mật khẩu"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  error={confirmPasswordError}
                   required
                 />
 

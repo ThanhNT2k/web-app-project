@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import PasswordChecklist from '../components/PasswordChecklist';
+import PasswordInput from '../components/PasswordInput';
 import API from '../services/api';
 import { getApiErrorMessage } from '../utils/apiError';
 import { isStrongPassword, passwordsMatch } from '../utils/passwordValidation';
@@ -25,6 +26,10 @@ function ForgotPasswordPage() {
 
   const passwordValid = isStrongPassword(newPassword);
   const passwordConfirmed = passwordsMatch(newPassword, confirmPassword);
+  const confirmPasswordError =
+    confirmPassword && !passwordConfirmed
+      ? 'Mật khẩu nhập lại không khớp.'
+      : '';
 
   // Step 1: Gửi OTP
   const handleSendOtp = async (e) => {
@@ -182,9 +187,8 @@ function ForgotPasswordPage() {
                     Nhập mật khẩu mới cho tài khoản:
                   </label>
                   <div>
-                    <input
-                      className="form-control form-control-lg"
-                      type="password"
+                    <PasswordInput
+                      id="reset-password"
                       autoComplete="new-password"
                       placeholder="Mật khẩu mới"
                       value={newPassword}
@@ -193,13 +197,13 @@ function ForgotPasswordPage() {
                     />
                     <PasswordChecklist password={newPassword} />
                   </div>
-                  <input
-                    className="form-control form-control-lg"
-                    type="password"
+                  <PasswordInput
+                    id="reset-confirm-password"
                     autoComplete="new-password"
                     placeholder="Xác nhận mật khẩu mới"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    error={confirmPasswordError}
                     required
                   />
                   <button
