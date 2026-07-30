@@ -1,8 +1,8 @@
 name: Deploy production
 
 on:
-  push:
-    branches: [main]
+  # Tạm dừng auto-deploy khi push. Production hiện được cập nhật thủ công
+  # bằng cách pull repository trực tiếp trên VM.
   workflow_dispatch:
 
 concurrency:
