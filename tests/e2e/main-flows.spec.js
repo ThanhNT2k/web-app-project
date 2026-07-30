@@ -23,6 +23,22 @@ const chapter = {
 
 async function mockApi(page) {
   await page.route('**/api/auth/login', async (route) => {
+    const credentials = route.request().postDataJSON();
+    if (credentials.email === 'offline@example.com') {
+      await route.abort('failed');
+      return;
+    }
+    if (credentials.password !== 'Password1!') {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: false, message: 'Invalid credentials' }),
+      });
+      return;
+    }
+    const role = credentials.email === 'admin@example.com'
+      ? 'Admin'
+      : credentials.email === 'moderator@example.com' ? 'Moderator' : 'User';
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -33,7 +49,7 @@ async function mockApi(page) {
           id: 1,
           email: 'reader@example.com',
           username: 'reader',
-          role: 'User',
+          role,
         },
       }),
     });
@@ -151,6 +167,36 @@ test('login flow redirects a reader to the home page', async ({ page }) => {
   await page.locator('main form button[type="submit"]').click();
 
   await expect(page).toHaveURL('/');
+});
+
+test('login shows an API error and stays on the page for wrong credentials', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByPlaceholder('Email').fill('reader@example.com');
+  await page.getByPlaceholder(/kh/i).fill('WrongPassword1!');
+  await page.locator('main form button[type="submit"]').click();
+
+  await expect(page).toHaveURL('/login');
+  await expect(page.getByText('Invalid credentials')).toBeVisible();
+  await expect(page.locator('main form button[type="submit"]')).toBeEnabled();
+});
+
+test('login displays a safe fallback when the network is unavailable', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByPlaceholder('Email').fill('offline@example.com');
+  await page.getByPlaceholder(/kh/i).fill('Password1!');
+  await page.locator('main form button[type="submit"]').click();
+
+  await expect(page).toHaveURL('/login');
+  await expect(page.locator('.alert-danger')).toBeVisible();
+});
+
+test('admin login routes to the admin dashboard', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByPlaceholder('Email').fill('admin@example.com');
+  await page.getByPlaceholder(/kh/i).fill('Password1!');
+  await page.locator('main form button[type="submit"]').click();
+
+  await expect(page).toHaveURL('/admin');
 });
 
 test('search flow shows matching stories', async ({ page }) => {
