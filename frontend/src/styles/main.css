@@ -6602,10 +6602,83 @@ body {
 .nav-crystal-balance {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.7rem;
+  gap: 0.45rem;
+  padding: 0.42rem 0.85rem;
   border-radius: 999px;
-  color: #7c3aed;
-  background: rgba(124, 58, 237, 0.1);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #7c2d12;
+  background: #ffedd5;
+  border: 1.5px solid #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.28);
   white-space: nowrap;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.nav-crystal-balance:hover {
+  background: #fed7aa;
+  border-color: #ea580c;
+  color: #7c2d12;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+}
+
+/* High contrast light style for nav crystal balance across all pages in Light Mode */
+.cmc-site-header.is-on-story.is-at-top .nav-crystal-balance,
+.cmc-site-header.is-on-story.is-scrolled .nav-crystal-balance {
+  color: #7c2d12;
+  background: #ffedd5;
+  border: 1.5px solid #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.28);
+  text-shadow: none;
+}
+
+[data-theme='dark'] .cmc-site-header.is-on-story.is-at-top .nav-crystal-balance {
+  color: #fbbf24;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1.5px solid #f59e0b;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Hot Genres Section Styling */
+.hot-genres-section {
+  margin-bottom: 2.5rem;
+}
+
+.hot-genres-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.hot-genre-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary, #475569);
+  background: var(--surface-card, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hot-genre-chip:hover {
+  color: var(--primary-color, #2563eb);
+  border-color: var(--primary-color, #2563eb);
+  background: color-mix(in srgb, var(--primary-color, #2563eb) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+.hot-genre-chip.is-active {
+  color: #ffffff;
+  background: var(--primary-color, #2563eb);
+  border-color: var(--primary-color, #2563eb);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--primary-color, #2563eb) 35%, transparent);
 }
