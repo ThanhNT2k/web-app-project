@@ -37,11 +37,14 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
+
       const localhostPattern = /^http:\/\/localhost(:\d+)?$/;
       if (localhostPattern.test(origin)) return callback(null, true);
-      if (origin === env.FRONTEND_URL) return callback(null, true);
-      const vercelPreviewPattern = /^https:\/\/cmc-truyen.*\.vercel\.app$/;
-      if (vercelPreviewPattern.test(origin)) return callback(null, true);
+
+      if (env.FRONTEND_URL && origin === env.FRONTEND_URL) return callback(null, true);
+
+      if (env.ALLOWED_ORIGINS && env.ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+
       return callback(new Error(`CORS: Origin ${origin} not allowed`));
     },
     credentials: true,

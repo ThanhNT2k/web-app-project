@@ -14,5 +14,4 @@ test-results/
 playwright-report/
 # Scratch / analysis files
 commits_grouped.json
-
-supabase/
+/supabase/

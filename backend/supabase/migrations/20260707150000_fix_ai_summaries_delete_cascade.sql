@@ -1,0 +1,1 @@
+ALTER TABLE ai_summaries DROP CONSTRAINT IF EXISTS ai_summaries_chapter_id_fkey; ALTER TABLE ai_summaries ADD CONSTRAINT ai_summaries_chapter_id_fkey FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE;

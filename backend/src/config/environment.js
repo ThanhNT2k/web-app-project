@@ -43,6 +43,9 @@ const env = {
 
   // Frontend - URL của ứng dụng React (dùng để cấu hình whitelist CORS)
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+    : [],
 
   REDIS_URL: process.env.REDIS_URL,
 
