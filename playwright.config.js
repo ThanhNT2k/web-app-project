@@ -10,8 +10,8 @@ module.exports = defineConfig({
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
   },
-  webServer: {
-    command: 'npm run build --prefix frontend && npm run preview --prefix frontend -- --host 127.0.0.1 --port 4173',
+  webServer: process.env.E2E_EXTERNAL_SERVER ? undefined : {
+    command: 'node frontend/node_modules/vite/bin/vite.js preview frontend --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

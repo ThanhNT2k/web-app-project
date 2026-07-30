@@ -1,29 +1,29 @@
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {1.1}{\ignorespaces Sơ đồ ngữ cảnh và các tác nhân chính}}{2}{figure.caption.8}%
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Sơ đồ ngữ cảnh và các tác nhân chính\relax }}{3}{figure.caption.8}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Luồng khám phá và đọc truyện của Guest}}{8}{figure.caption.12}%
-\contentsline {figure}{\numberline {2.2}{\ignorespaces Trình tự xác thực và sử dụng JWT}}{9}{figure.caption.13}%
-\contentsline {figure}{\numberline {2.3}{\ignorespaces Vòng đời kiểm duyệt của truyện}}{11}{figure.caption.14}%
-\contentsline {figure}{\numberline {2.4}{\ignorespaces Luồng Moderator xử lý truyện chờ duyệt}}{12}{figure.caption.15}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Luồng khám phá và đọc truyện của Guest\relax }}{8}{figure.caption.12}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Trình tự xác thực và sử dụng JWT\relax }}{9}{figure.caption.13}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Vòng đời kiểm duyệt của truyện\relax }}{11}{figure.caption.14}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Luồng Moderator xử lý truyện chờ duyệt\relax }}{12}{figure.caption.15}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Kiến trúc logic của hệ thống theo source hiện tại}}{17}{figure.caption.17}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Cấu trúc thư mục frontend}}{19}{figure.caption.19}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Đoạn code chính về route và route guard ở frontend}}{20}{figure.caption.21}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Đoạn code chính về Axios interceptor ở frontend}}{21}{figure.caption.22}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Cấu trúc thư mục backend}}{22}{figure.caption.23}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces Pipeline xử lý request ở backend}}{23}{figure.caption.25}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces Đoạn code chính cấu hình middleware và mount router}}{24}{figure.caption.26}%
-\contentsline {figure}{\numberline {3.8}{\ignorespaces Đoạn code chính về xác thực JWT và RBAC}}{25}{figure.caption.27}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Kiến trúc logic của hệ thống theo source hiện tại\relax }}{17}{figure.caption.17}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Cấu trúc thư mục frontend\relax }}{19}{figure.caption.19}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Đoạn code chính về route và route guard ở frontend\relax }}{20}{figure.caption.21}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Đoạn code chính về Axios interceptor ở frontend\relax }}{21}{figure.caption.22}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Cấu trúc thư mục backend\relax }}{22}{figure.caption.23}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Pipeline xử lý request ở backend\relax }}{23}{figure.caption.25}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Đoạn code chính cấu hình middleware và mount router\relax }}{24}{figure.caption.26}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Đoạn code chính về xác thực JWT và RBAC\relax }}{25}{figure.caption.27}%
 \contentsline {figure}{\numberline {3.9}Lược đồ ERD của cơ sở dữ liệu CMC Truyện}{27}{figure.3.9}%
-\contentsline {figure}{\numberline {3.10}{\ignorespaces Cấu trúc script, migration và schema cơ sở dữ liệu}}{28}{figure.caption.28}%
-\contentsline {figure}{\numberline {3.11}{\ignorespaces Đoạn SQL chính về bảng truyện, chương và ràng buộc}}{29}{figure.caption.29}%
-\contentsline {figure}{\numberline {3.12}{\ignorespaces Giao diện trang chủ dành cho khách hàng}}{34}{figure.caption.33}%
-\contentsline {figure}{\numberline {3.13}{\ignorespaces Giao diện tìm kiếm và khám phá truyện}}{35}{figure.caption.34}%
-\contentsline {figure}{\numberline {3.14}{\ignorespaces Giao diện chi tiết truyện}}{36}{figure.caption.35}%
-\contentsline {figure}{\numberline {3.15}{\ignorespaces Giao diện đọc chương và tùy chọn đọc}}{37}{figure.caption.36}%
-\contentsline {figure}{\numberline {3.16}{\ignorespaces Giao diện cài đặt cá nhân}}{38}{figure.caption.37}%
-\contentsline {figure}{\numberline {3.17}{\ignorespaces Giao diện dashboard quản trị}}{39}{figure.caption.38}%
-\contentsline {figure}{\numberline {3.18}{\ignorespaces Giao diện quản lý người dùng}}{39}{figure.caption.39}%
-\contentsline {figure}{\numberline {3.19}{\ignorespaces Giao diện quản lý bình luận}}{40}{figure.caption.40}%
-\contentsline {figure}{\numberline {3.20}{\ignorespaces Giao diện quản lý báo cáo vi phạm}}{40}{figure.caption.41}%
-\contentsline {figure}{\numberline {3.21}{\ignorespaces Giao diện nhật ký thao tác quản trị}}{41}{figure.caption.42}%
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Cấu trúc script, migration và schema cơ sở dữ liệu\relax }}{28}{figure.caption.28}%
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Đoạn SQL chính về bảng truyện, chương và ràng buộc\relax }}{29}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Giao diện trang chủ dành cho khách hàng\relax }}{34}{figure.caption.33}%
+\contentsline {figure}{\numberline {3.13}{\ignorespaces Giao diện tìm kiếm và khám phá truyện\relax }}{35}{figure.caption.34}%
+\contentsline {figure}{\numberline {3.14}{\ignorespaces Giao diện chi tiết truyện\relax }}{36}{figure.caption.35}%
+\contentsline {figure}{\numberline {3.15}{\ignorespaces Giao diện đọc chương và tùy chọn đọc\relax }}{37}{figure.caption.36}%
+\contentsline {figure}{\numberline {3.16}{\ignorespaces Giao diện cài đặt cá nhân\relax }}{38}{figure.caption.37}%
+\contentsline {figure}{\numberline {3.17}{\ignorespaces Giao diện dashboard quản trị\relax }}{39}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.18}{\ignorespaces Giao diện quản lý người dùng\relax }}{39}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.19}{\ignorespaces Giao diện quản lý bình luận\relax }}{40}{figure.caption.40}%
+\contentsline {figure}{\numberline {3.20}{\ignorespaces Giao diện quản lý báo cáo vi phạm\relax }}{40}{figure.caption.41}%
+\contentsline {figure}{\numberline {3.21}{\ignorespaces Giao diện nhật ký thao tác quản trị\relax }}{41}{figure.caption.42}%

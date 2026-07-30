@@ -268,6 +268,7 @@ ERD do nhóm cung cấp có đồng thời \CodePath{ratings} và \CodePath{stor
   {fig:db-sql-code}
   {Chụp đoạn code thật trong \CodePath{schema.sql}, ưu tiên primary key, foreign key, CHECK, UNIQUE và index.}
 
+\clearpage
 \subsection{Connection pool, index và transaction}
 
 Backend cấu hình PostgreSQL Pool với tối đa 20 connection, idle timeout 30 giây và connection timeout 5 giây. Môi trường production có thể dùng \CodePath{DATABASE_URL}; môi trường local có thể dùng các biến host/port/name/user/password. Index tập trung vào slug, danh sách truyện công khai, số chương, trạng thái bình luận, khóa ngoại và audit. API danh sách chương không trả trường content, qua đó giảm kích thước phản hồi.
@@ -368,6 +369,7 @@ E2E Playwright & 3/3 pass & 100\% pass (3 kịch bản E2E mock API kiểm tra l
 
 Kết quả pass cho thấy logic đã được bảo vệ ở nhiều nhánh: health, auth, RBAC, audit, OTP, import file, ranking, moderation, report và workflow truyện. Tuy nhiên, log Redis thất bại cho thấy test chưa cô lập hoàn toàn queue hoặc còn resource mở. Cần đóng queue/connection trong teardown, mock Redis rõ ràng ở unit test và chạy một nhóm integration test với Redis thật. Cảnh báo bundle nên được xử lý bằng route-level lazy loading, dynamic import và chia vendor chunk; sau tối ưu phải đo lại thay vì chỉ tăng ngưỡng cảnh báo.
 
+\clearpage
 \subsection{Kịch bản kiểm thử thủ công cần bổ sung}
 
 \begingroup
@@ -411,6 +413,7 @@ MT10 & Hạ tầng Redis/worker thật & Tạo chương mới đủ điều ki�
 \end{longtable}
 \endgroup
 
+\clearpage
 \section{Giao diện người dùng}
 
 Toàn bộ ảnh giao diện trong bản in cần chuyển sang trắng đen hoặc chụp ở chế độ không màu theo yêu cầu, nhưng vẫn phải giữ đủ tương phản để đọc chữ và nhận biết trạng thái. Các khung dưới đây là vị trí chèn ảnh thật; caption đã được đánh số theo chương và tự động xuất hiện trong danh mục hình.
