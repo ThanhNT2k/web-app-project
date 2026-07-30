@@ -27,6 +27,7 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
       });
 
     let resizeObserver;
+    let lastRenderedWidth = 0;
 
     loadGoogleScript().then(() => {
       if (!window.google?.accounts || !containerRef.current) {
@@ -51,6 +52,10 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
         if (!containerRef.current) return;
 
         const width = Math.max(Math.round(containerRef.current.offsetWidth || 0), 240);
+        if (width === lastRenderedWidth && containerRef.current.childElementCount > 0) {
+          return;
+        }
+        lastRenderedWidth = width;
         containerRef.current.replaceChildren();
 
         window.google.accounts.id.renderButton(containerRef.current, {
