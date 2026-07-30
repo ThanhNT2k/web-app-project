@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import PasswordChecklist from '../components/PasswordChecklist';
+import PasswordInput from '../components/PasswordInput';
 import { useAuth } from '../contexts/AuthContext';
 import API from '../services/api';
 
@@ -27,6 +28,10 @@ function GoogleRegisterCompletePage() {
     /[A-Z]/.test(password) &&
     /[0-9]/.test(password) &&
     /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const confirmPasswordError =
+    confirmPassword && password !== confirmPassword
+      ? 'Mật khẩu nhập lại không khớp.'
+      : '';
 
   // Redirect nếu không có state hợp lệ (ai đó vào thẳng URL)
   useEffect(() => {
@@ -97,9 +102,8 @@ function GoogleRegisterCompletePage() {
 
               <form className="d-grid gap-3" onSubmit={handleSubmit}>
                 <div>
-                  <input
-                    className="form-control form-control-lg"
-                    type="password"
+                  <PasswordInput
+                    id="google-register-password"
                     autoComplete="new-password"
                     placeholder="Đặt mật khẩu cho tài khoản"
                     value={password}
@@ -110,20 +114,20 @@ function GoogleRegisterCompletePage() {
                   <PasswordChecklist password={password} />
                 </div>
 
-                <input
-                  className="form-control form-control-lg"
-                  type="password"
+                <PasswordInput
+                  id="google-register-confirm-password"
                   autoComplete="new-password"
                   placeholder="Xác nhận mật khẩu"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  error={confirmPasswordError}
                   required
                 />
 
                 <button
                   className="btn-cmc btn-cmc-primary w-100"
                   type="submit"
-                  disabled={loading || !passwordValid}
+                  disabled={loading || !passwordValid || Boolean(confirmPasswordError)}
                 >
                   {loading ? 'Đang tạo tài khoản...' : 'Hoàn tất đăng ký'}
                 </button>

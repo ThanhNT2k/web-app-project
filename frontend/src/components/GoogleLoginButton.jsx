@@ -1,19 +1,8 @@
 import { useEffect, useRef } from 'react';
 
-import { FontAwesomeIcon, faGoogle } from '../lib/icons';
-
 function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
   const containerRef = useRef(null);
   const initializedRef = useRef(false);
-
-  const buttonLabelMap = {
-    signin_with: 'Đăng nhập với Google',
-    signup_with: 'Đăng ký với Google',
-    continue_with: 'Tiếp tục với Google',
-    signin: 'Đăng nhập',
-  };
-
-  const visibleLabel = buttonLabelMap[text] || buttonLabelMap.continue_with;
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -38,6 +27,7 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
       });
 
     let resizeObserver;
+    let lastRenderedWidth = 0;
 
     loadGoogleScript().then(() => {
       if (!window.google?.accounts || !containerRef.current) {
@@ -62,6 +52,10 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
         if (!containerRef.current) return;
 
         const width = Math.max(Math.round(containerRef.current.offsetWidth || 0), 240);
+        if (width === lastRenderedWidth && containerRef.current.childElementCount > 0) {
+          return;
+        }
+        lastRenderedWidth = width;
         containerRef.current.replaceChildren();
 
         window.google.accounts.id.renderButton(containerRef.current, {
@@ -95,12 +89,6 @@ function GoogleLoginButton({ onSuccess, onError, text = 'continue_with' }) {
 
   return (
     <div className="google-btn-wrapper">
-      <div className="google-btn-shell" aria-hidden="true">
-        <span className="google-btn-shell__icon-wrap">
-          <FontAwesomeIcon icon={faGoogle} />
-        </span>
-        <span className="google-btn-shell__label">{visibleLabel}</span>
-      </div>
       <div ref={containerRef} className="google-btn-container" />
     </div>
   );

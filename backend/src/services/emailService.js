@@ -108,12 +108,18 @@ async function sendOtpEmail(to, otp) {
     return;
   }
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: env.RESEND_FROM_EMAIL,
     to,
     subject: `[CMC Truyện] Mã OTP đặt lại mật khẩu: ${otp}`,
     html,
   });
+
+  if (result?.error) {
+    throw new Error(`Resend rejected the OTP email: ${result.error.message || 'Unknown error'}`);
+  }
+
+  return result?.data;
 }
 
 module.exports = { sendOtpEmail };
