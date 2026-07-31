@@ -50,11 +50,7 @@ body.dark-mode {
   background: var(--navbar-bg) !important;
 }
 
-[data-theme='dark'] .nav-crystal-balance {
-  color: #fbbf24;
-  background: rgba(245, 158, 11, 0.22);
-  border-color: rgba(245, 158, 11, 0.4);
-}
+
 
 [data-theme='dark'] .hot-genre-chip {
   color: var(--text-secondary, #cbd5e1);

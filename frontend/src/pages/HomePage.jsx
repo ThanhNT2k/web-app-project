@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import FeaturedCarousel from '../components/FeaturedCarousel';
@@ -15,6 +16,14 @@ import {
   faMagnifyingGlass,
   faRotateRight,
   faTriangleExclamation,
+  faYinYang,
+  faWandMagicSparkles,
+  faCity,
+  faHeart,
+  faDragon,
+  faScroll,
+  faFire,
+  FontAwesomeIcon,
 } from '../lib/icons';
 
 function StoryCardSkeleton({ compact }) {
@@ -62,40 +71,92 @@ function SectionHeading({ eyebrow, title, icon, action }) {
 }
 
 const HOT_GENRES = [
-  { slug: 'Tien Hiep', label: 'Tiên Hiệp', icon: '⚔️' },
-  { slug: 'Huyen Huyen', label: 'Huyền Huyễn', icon: '✨' },
-  { slug: 'Do Thi', label: 'Đô Thị', icon: '🏙️' },
-  { slug: 'Ngon Tinh', label: 'Ngôn Tình', icon: '💕' },
-  { slug: 'Kiem Hiep', label: 'Kiếm Hiệp', icon: '🗡️' },
-  { slug: 'Lich Su', label: 'Lịch Sử', icon: '📜' },
+  { slug: 'Tien Hiep', label: 'Tiên Hiệp', icon: faYinYang },
+  { slug: 'Huyen Huyen', label: 'Huyền Huyễn', icon: faWandMagicSparkles },
+  { slug: 'Do Thi', label: 'Đô Thị', icon: faCity },
+  { slug: 'Ngon Tinh', label: 'Ngôn Tình', icon: faHeart },
+  { slug: 'Kiem Hiep', label: 'Kiếm Hiệp', icon: faDragon },
+  { slug: 'Lich Su', label: 'Lịch Sử', icon: faScroll },
 ];
 
 function HomePage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [stories, setStories] = useState([]);
-  const [featuredStories, setFeaturedStories] = useState([]);
-  const [recentStories, setRecentStories] = useState([]);
-  const [selectedHotGenre, setSelectedHotGenre] = useState('Tien Hiep');
-
-  const [loading, setLoading] = useState(true);
-  const [loadingFeatured, setLoadingFeatured] = useState(true);
-  const [loadingRecent, setLoadingRecent] = useState(true);
-  const [error, setError] = useState('');
-  const [usingFallbackStories, setUsingFallbackStories] = useState(false);
-  const [usingFallbackFeatured, setUsingFallbackFeatured] = useState(false);
-  const [usingFallbackRecent, setUsingFallbackRecent] = useState(false);
-
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
+  const [selectedHotGenre, setSelectedHotGenre] = useState(HOT_GENRES[0].slug);
 
   const isSearching = useMemo(
     () => Boolean(query.trim() || (category && category !== 'all')),
     [query, category]
   );
+
+  const { data: featuredResponse, isLoading: loadingFeatured } = useQuery({
+    queryKey: ['stories', 'featured'],
+    queryFn: async () => {
+      try {
+        const response = await API.stories.getAll(1, 10, 'popular');
+        return { stories: response.stories || [], isFallback: false };
+      } catch {
+        return {
+          stories: [...mockStories].sort((a, b) => b.total_chapters - a.total_chapters).slice(0, 10),
+          isFallback: true,
+        };
+      }
+    },
+    enabled: !isSearching,
+  });
+  const featuredStories = featuredResponse?.stories || [];
+  const usingFallbackFeatured = featuredResponse?.isFallback || false;
+
+  const { data: recentResponse, isLoading: loadingRecent } = useQuery({
+    queryKey: ['stories', 'recent'],
+    queryFn: async () => {
+      try {
+        const response = await API.stories.getAll(1, 9, 'updated');
+        return { stories: response.stories || [], isFallback: false };
+      } catch {
+        return {
+          stories: [...mockStories].slice(0, 9),
+          isFallback: true,
+        };
+      }
+    },
+    enabled: !isSearching,
+  });
+  const recentStories = recentResponse?.stories || [];
+  const usingFallbackRecent = recentResponse?.isFallback || false;
+
+  const { data: storiesResponse, isLoading: loading } = useQuery({
+    queryKey: ['stories', 'main', isSearching, query, category, page],
+    queryFn: async () => {
+      try {
+        const cat = category && category !== 'all' ? category : null;
+        const response = isSearching
+          ? await API.stories.search(query.trim(), cat, null, page, 15)
+          : await API.stories.getAll(page, 15, 'newest');
+        return {
+          stories: response.stories || [],
+          pagination: response.pagination || { page: 1, totalPages: 1 },
+          isFallback: false,
+          error: '',
+        };
+      } catch {
+        return {
+          stories: mockStories,
+          pagination: { page: 1, totalPages: 1 },
+          isFallback: true,
+          error: 'Không thể kết nối đến máy chủ. Hệ thống đang hoạt động ở chế độ ngoại tuyến.',
+        };
+      }
+    },
+  });
+  const stories = storiesResponse?.stories || [];
+  const pagination = storiesResponse?.pagination || { page: 1, totalPages: 1 };
+  const usingFallbackStories = storiesResponse?.isFallback || false;
+  const error = storiesResponse?.error || '';
 
   const hotGenreStories = useMemo(() => {
     const allAvailable = [...featuredStories, ...recentStories, ...stories];
@@ -149,84 +210,6 @@ function HomePage() {
       }
     }
   }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (isSearching) {
-      setFeaturedStories([]);
-      setUsingFallbackFeatured(false);
-      setLoadingFeatured(false);
-      return;
-    }
-
-    const fetchFeatured = async () => {
-      try {
-        setLoadingFeatured(true);
-        setUsingFallbackFeatured(false);
-        const response = await API.stories.getAll(1, 10, 'popular');
-        setFeaturedStories(response.stories || []);
-      } catch {
-        setUsingFallbackFeatured(true);
-        setFeaturedStories([...mockStories].sort((a, b) => b.total_chapters - a.total_chapters).slice(0, 10));
-      } finally {
-        setLoadingFeatured(false);
-      }
-    };
-
-    fetchFeatured();
-  }, [isSearching]);
-
-  useEffect(() => {
-    if (isSearching) {
-      setRecentStories([]);
-      setUsingFallbackRecent(false);
-      setLoadingRecent(false);
-      return;
-    }
-
-    const fetchRecent = async () => {
-      try {
-        setLoadingRecent(true);
-        setUsingFallbackRecent(false);
-        const response = await API.stories.getAll(1, 9, 'updated');
-        setRecentStories(response.stories || []);
-      } catch {
-        setUsingFallbackRecent(true);
-        setRecentStories([...mockStories].slice(0, 9));
-      } finally {
-        setLoadingRecent(false);
-      }
-    };
-
-    fetchRecent();
-  }, [isSearching]);
-
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        setUsingFallbackStories(false);
-
-        const cat = category && category !== 'all' ? category : null;
-        const response = isSearching
-          ? await API.stories.search(query.trim(), cat, null, page, 15)
-          : await API.stories.getAll(page, 15, 'newest');
-
-        const list = response.stories || [];
-        setStories(list);
-        setPagination(response.pagination || { page: 1, totalPages: 1 });
-      } catch {
-        setUsingFallbackStories(true);
-        setError('Không thể kết nối đến máy chủ. Hệ thống đang hoạt động ở chế độ ngoại tuyến.');
-        setStories(mockStories);
-        setPagination({ page: 1, totalPages: 1 });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStories();
-  }, [isSearching, query, category, page]);
 
   const goToPage = (nextPage) => {
     setPage(nextPage);
@@ -290,7 +273,8 @@ function HomePage() {
           <section className="home-section hot-genres-section">
             <SectionHeading
               eyebrow="Xu hướng tìm kiếm"
-              title="🔥 Thể Loại Hot"
+              title="Thể Loại Hot"
+              icon={faFire}
               action={<Link to="/tim-truyen" className="section-action-link">Tất cả thể loại</Link>}
             />
             <div className="hot-genres-tabs">
@@ -301,7 +285,7 @@ function HomePage() {
                   className={`hot-genre-chip ${selectedHotGenre === g.slug ? 'is-active' : ''}`}
                   onClick={() => setSelectedHotGenre(g.slug)}
                 >
-                  <span className="hot-genre-icon">{g.icon}</span>
+                  <span className="hot-genre-icon"><FontAwesomeIcon icon={g.icon} /></span>
                   <span>{g.label}</span>
                 </button>
               ))}

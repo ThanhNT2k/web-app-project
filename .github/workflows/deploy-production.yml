@@ -1,9 +1,11 @@
 name: Deploy production
 
 on:
-  # Tạm dừng auto-deploy khi push. Production hiện được cập nhật thủ công
-  # bằng cách pull repository trực tiếp trên VM.
-  workflow_dispatch:
+  # Chỉ chạy sau khi workflow test hoàn tất. Điều kiện ở cấp job bảo đảm chỉ
+  # commit của push lên nhánh mặc định và pass toàn bộ test mới được deploy.
+  workflow_run:
+    workflows: [Automated Tests]
+    types: [completed]
 
 concurrency:
   group: cmc-truyen-production
@@ -15,6 +17,11 @@ permissions:
 jobs:
   deploy:
     name: Deploy exact commit to VM
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -23,6 +30,8 @@ jobs:
           DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
+          test -n "$DEPLOY_KEY" || { echo "Thiếu secret DEPLOY_SSH_KEY"; exit 1; }
+          test -n "$KNOWN_HOSTS" || { echo "Thiếu secret DEPLOY_KNOWN_HOSTS"; exit 1; }
           install -m 700 -d ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
@@ -31,12 +40,28 @@ jobs:
 
       - name: Deploy commit
         env:
-          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST || '157.245.58.32' }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER || 'root' }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
         run: |
+          [[ "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Commit SHA không hợp lệ"; exit 1; }
           ssh \
             -i ~/.ssh/deploy_key \
+            -p "$DEPLOY_PORT" \
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
-            root@157.245.58.32 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
             "deploy $COMMIT_SHA"
+
+      - name: Record deployment summary
+        env:
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+          TEST_RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          {
+            echo "## Deploy production thành công"
+            echo "- Commit: \`$COMMIT_SHA\`"
+            echo "- Test workflow: $TEST_RUN_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
