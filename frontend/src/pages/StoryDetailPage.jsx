@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import CommentSection from '../components/CommentSection';
@@ -90,15 +91,7 @@ function StoryDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user, setCrystalBalance } = useAuth();
-  const [story, setStory] = useState(null);
-  const [chapters, setChapters] = useState([]);
-  const [storyProgress, setStoryProgress] = useState(null);
-  const [readChapterNumbers, setReadChapterNumbers] = useState(() => new Set());
-  const [loading, setLoading] = useState(true);
-  const [chapterLoading, setChapterLoading] = useState(false);
-  const [error, setError] = useState('');
   const [chapterPage, setChapterPage] = useState(1);
-  const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [sortOrder, setSortOrder] = useState(() => {
     return localStorage.getItem('cmc_chapter_sort_order') || 'desc';
   });
@@ -117,10 +110,7 @@ function StoryDetailPage() {
     setChapterPage(1);
   };
 
-  // Reset auto-jump flag when story changes
-  useEffect(() => {
-    hasAutoJumpedRef.current = false;
-  }, [story?.id]);
+
 
   // Debounce chapter search to avoid excessive API calls (#9)
   useEffect(() => {
@@ -137,30 +127,39 @@ function StoryDetailPage() {
     };
   }, [chapterSearch]);
 
-  // Load story info once
-  useEffect(() => {
-    const fetchStory = async () => {
+  // Load story info
+  const { data: storyResponse, isLoading: loading } = useQuery({
+    queryKey: ['story', slug],
+    queryFn: async () => {
       try {
-        setLoading(true);
-        setIntroExpanded(false);
-        const storyResponse = await API.stories.getBySlug(slug);
-        setStory(storyResponse.story || storyResponse);
-        setError('');
+        const response = await API.stories.getBySlug(slug);
+        return { story: response.story || response, isFallback: false, error: '' };
       } catch (err) {
         if (err?.response?.status === 404) {
-          setStory(null);
-          setError('Truyện không tồn tại hoặc đã bị ẩn.');
-        } else {
-          const fallbackStory = mockStories.find((item) => item.slug === slug) || mockStories[0];
-          setStory(fallbackStory);
-          setError('Không kết nối API. Hiển thị dữ liệu mẫu.');
+          return { story: null, isFallback: false, error: 'Truyện không tồn tại hoặc đã bị ẩn.' };
         }
-      } finally {
-        setLoading(false);
+        const match = slug.match(/^(\d+)-(.*)$/);
+        let fallbackStory;
+        if (match) {
+          fallbackStory = mockStories.find((item) => item.id === Number(match[1]));
+        } else {
+          fallbackStory = mockStories.find((item) => item.slug === slug);
+        }
+        return {
+          story: fallbackStory || mockStories[0],
+          isFallback: true,
+          error: 'Không kết nối API. Hiển thị dữ liệu mẫu.',
+        };
       }
-    };
-    fetchStory();
-  }, [slug]);
+    },
+  });
+  const story = storyResponse?.story || null;
+  const error = storyResponse?.error || '';
+
+  // Reset auto-jump flag when story changes
+  useEffect(() => {
+    hasAutoJumpedRef.current = false;
+  }, [story?.id]);
 
   // Redirect to canonical URL (storyId-slug) if not already matching
   useEffect(() => {
@@ -172,55 +171,46 @@ function StoryDetailPage() {
     }
   }, [story, slug, navigate]);
 
-  // Load chapter metadata with pagination or full search across all chapters
-  useEffect(() => {
-    if (!story?.id) return;
-    const fetchChapters = async () => {
+  // Load chapter metadata
+  const isSearchingChapter = Boolean(debouncedSearch.trim());
+  const pageToFetch = isSearchingChapter ? 1 : chapterPage;
+  const limitToFetch = isSearchingChapter ? 1000 : CHAPTERS_PER_PAGE;
+
+  const { data: chaptersResponse, isLoading: chapterLoading } = useQuery({
+    queryKey: ['chapters', story?.id, pageToFetch, limitToFetch, sortOrder, debouncedSearch],
+    queryFn: async () => {
       try {
-        setChapterLoading(true);
-        const isSearchingChapter = Boolean(debouncedSearch.trim());
-        const pageToFetch = isSearchingChapter ? 1 : chapterPage;
-        const limitToFetch = isSearchingChapter ? 1000 : CHAPTERS_PER_PAGE;
-        const chaptersResponse = await API.chapters.getByStory(story.id, pageToFetch, limitToFetch, sortOrder);
-        setChapters(chaptersResponse.chapters || []);
-        setChapterPagination(chaptersResponse.pagination || { page: 1, totalPages: 1, totalItems: 0 });
+        const res = await API.chapters.getByStory(story.id, pageToFetch, limitToFetch, sortOrder);
+        return {
+          chapters: res.chapters || [],
+          pagination: res.pagination || { page: 1, totalPages: 1, totalItems: 0 },
+        };
       } catch {
-        setChapters([
-          { id: 1, chapter_number: 1, title: 'Chương mẫu 1' },
-          { id: 2, chapter_number: 2, title: 'Chương mẫu 2' },
-        ]);
-      } finally {
-        setChapterLoading(false);
+        return {
+          chapters: [
+            { id: 1, chapter_number: 1, title: 'Chương mẫu 1' },
+            { id: 2, chapter_number: 2, title: 'Chương mẫu 2' },
+          ],
+          pagination: { page: 1, totalPages: 1, totalItems: 2 },
+        };
       }
-    };
-    fetchChapters();
-  }, [story?.id, chapterPage, sortOrder, debouncedSearch]);
+    },
+    enabled: !!story?.id,
+  });
+  const chapters = chaptersResponse?.chapters || [];
+  const chapterPagination = chaptersResponse?.pagination || { page: 1, totalPages: 1, totalItems: 0 };
 
-  useEffect(() => {
-    if (!isAuthenticated || !story?.id) {
-      setStoryProgress(null);
-      setReadChapterNumbers(new Set());
-      return;
-    }
-
-    let isActive = true;
-
-    const fetchReadingState = async () => {
+  // Load reading progress
+  const { data: readingStateResponse } = useQuery({
+    queryKey: ['readingState', story?.id],
+    queryFn: async () => {
       const [progressResult, readChaptersResult] = await Promise.allSettled([
         API.readingHistory.getStoryProgress(story.id),
         API.readingHistory.getReadChapters(story.id),
       ]);
-
-      if (!isActive) return;
-
-      const progress = progressResult.status === 'fulfilled'
-        ? progressResult.value?.progress || null
-        : null;
-      setStoryProgress(progress);
-
-      const readChapterList = readChaptersResult.status === 'fulfilled'
-        ? readChaptersResult.value?.chapter_numbers || []
-        : [];
+      const progress = progressResult.status === 'fulfilled' ? progressResult.value?.progress || null : null;
+      const readChapterList = readChaptersResult.status === 'fulfilled' ? readChaptersResult.value?.chapter_numbers || [] : [];
+      
       const nextReadChapters = new Set(
         readChapterList
           .map((chapterNumber) => Number(chapterNumber))
@@ -230,16 +220,12 @@ function StoryDetailPage() {
       if (nextReadChapters.size === 0 && progress?.chapter_number) {
         nextReadChapters.add(Number(progress.chapter_number));
       }
-
-      setReadChapterNumbers(nextReadChapters);
-    };
-
-    fetchReadingState();
-
-    return () => {
-      isActive = false;
-    };
-  }, [isAuthenticated, story?.id]);
+      return { progress, nextReadChapters };
+    },
+    enabled: !!story?.id && isAuthenticated,
+  });
+  const storyProgress = readingStateResponse?.progress || null;
+  const readChapterNumbers = readingStateResponse?.nextReadChapters || new Set();
 
   // Auto-jump to the page containing the current reading progress on initial load
   useEffect(() => {
@@ -319,7 +305,7 @@ function StoryDetailPage() {
       )));
       navigate(`/${story.id}-${story.slug}/${chapter.chapter_number}`);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Không thể mở khóa chương.');
+      window.alert(err?.response?.data?.message || 'Không thể mở khóa chương.');
     } finally {
       setUnlockingChapterId(null);
     }
@@ -609,34 +595,28 @@ function StoryDetailPage() {
                     aria-current={isLastRead ? 'true' : undefined}
                     aria-disabled={isUnlocking ? 'true' : undefined}
                   >
-                    <span>
+                    <span className="chapter-title-text text-truncate">
                       Ch.{chapter.chapter_number}: {chapter.title || `Chương ${chapter.chapter_number}`}
-                      {isLastRead ? (
-                        <small className="ms-2 chapter-link-last-read-badge">
-                          <FontAwesomeIcon icon={faBookBookmark} className="me-1" />
-                          Đang đọc
-                        </small>
-                      ) : null}
-                      {chapter.is_paid ? (
-                        <small className="ms-2">
-                          {chapter.can_read ? (
-                            <>
-                              <FontAwesomeIcon icon={faLockOpen} className="me-1 text-success" />
-                              Đã mở
-                            </>
-                          ) : (
-                            <>
-                              <FontAwesomeIcon icon={faLock} className="me-1 text-warning" />
-                              {chapter.unlock_cost || 2} Tinh thạch
-                            </>
-                          )}
-                        </small>
-                      ) : null}
                     </span>
-                    <span className="text-muted small chapter-upload-date">
-                      {isUnlocking
-                        ? 'Đang mở khóa...'
-                        : formatChapterUploadDate(chapter.created_at)}
+                    <span className="chapter-meta-right">
+                      {chapter.is_paid ? (
+                        chapter.can_read ? (
+                          <span className="chapter-badge badge-unlocked">
+                            <FontAwesomeIcon icon={faLockOpen} className="me-1" />
+                            Đã mở
+                          </span>
+                        ) : (
+                          <span className="chapter-badge badge-locked">
+                            <FontAwesomeIcon icon={faLock} className="me-1" />
+                            {chapter.unlock_cost || 2} Tinh thạch
+                          </span>
+                        )
+                      ) : null}
+                      <span className="text-muted small chapter-upload-date">
+                        {isUnlocking
+                          ? 'Đang mở khóa...'
+                          : formatChapterUploadDate(chapter.created_at)}
+                      </span>
                     </span>
                   </Link>
                 </li>

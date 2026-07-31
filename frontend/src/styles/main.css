@@ -2096,11 +2096,50 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 }
 
 .chapter-list { list-style: none; padding: 0; margin: 0; }
-.chapter-list li a { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border); transition: color 0.15s ease; }
+.chapter-list li a { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); transition: color 0.15s ease; }
 .chapter-list li a:hover { color: var(--primary-color); }
 .chapter-list li a.chapter-link-is-read { color: var(--text-muted); }
 .chapter-list li a.chapter-link-is-read .chapter-upload-date { color: var(--text-muted) !important; }
 .chapter-list li a.chapter-link-is-read:hover { color: color-mix(in srgb, var(--text-muted) 70%, var(--text)); }
+.chapter-title-text { flex: 1; min-width: 0; }
+.chapter-meta-right { display: inline-flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.chapter-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.chapter-badge.badge-unlocked {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.chapter-badge.badge-locked {
+  background: #fffbe6;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+/* Dark Mode badge adjustments */
+[data-theme='dark'] .chapter-badge.badge-unlocked {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme='dark'] .chapter-badge.badge-locked {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
 .chapter-upload-date {
   min-width: 92px;
   text-align: right;
