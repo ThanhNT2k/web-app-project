@@ -284,9 +284,9 @@ function ChapterReaderPage() {
         
         // Use fetch with keepalive to save during unload
         try {
-          const token = localStorage.getItem('token');
+          const token = localStorage.getItem('cmc_token');
           fetch(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/reading-history`,
+            `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/$/, '')}/reading-history`,
             {
               method: 'POST',
               headers: {

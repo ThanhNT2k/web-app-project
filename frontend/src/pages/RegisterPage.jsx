@@ -3,7 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import PasswordChecklist from '../components/PasswordChecklist';
+import PasswordInput from '../components/PasswordInput';
 import { useAuth } from '../contexts/AuthContext';
+import { getApiErrorMessage } from '../utils/apiError';
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -21,6 +23,10 @@ function RegisterPage() {
     /[A-Z]/.test(password) &&
     /[0-9]/.test(password) &&
     /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const confirmPasswordError =
+    confirmPassword && password !== confirmPassword
+      ? 'Mật khẩu nhập lại không khớp.'
+      : '';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -40,7 +46,7 @@ function RegisterPage() {
       await register(username, email, password, fullName);
       navigate('/');
     } catch (registerError) {
-      setError(registerError?.response?.data?.message || registerError.message || 'Đăng ký thất bại.');
+      setError(getApiErrorMessage(registerError, 'Đăng ký thất bại.'));
     } finally {
       setLoading(false);
     }
@@ -58,7 +64,7 @@ function RegisterPage() {
         navigate('/');
       }
     } catch (err) {
-      setError(err?.response?.data?.message || 'Đăng nhập Google thất bại.');
+      setError(getApiErrorMessage(err, 'Đăng nhập Google thất bại.'));
     } finally {
       setLoading(false);
     }
@@ -110,9 +116,8 @@ function RegisterPage() {
                 />
 
                 <div>
-                  <input
-                    className="form-control form-control-lg"
-                    type="password"
+                  <PasswordInput
+                    id="register-password"
                     name="password"
                     autoComplete="new-password"
                     placeholder="Mật khẩu"
@@ -123,14 +128,14 @@ function RegisterPage() {
                   <PasswordChecklist password={password} />
                 </div>
 
-                <input
-                  className="form-control form-control-lg"
-                  type="password"
+                <PasswordInput
+                  id="register-confirm-password"
                   name="confirmPassword"
                   autoComplete="new-password"
                   placeholder="Xác nhận mật khẩu"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  error={confirmPasswordError}
                   required
                 />
 

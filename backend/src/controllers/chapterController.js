@@ -132,6 +132,7 @@ async function getChapters(req, res) {
     const result = await Chapter.getChaptersByStory(storyId, page, limit, sort, req.user?.id || null);
     const privileged = req.user && (
       req.user.role === 'Admin'
+      || req.user.role === 'Uploader'
       || Number(req.user.id) === Number(story.author_id)
       || await StoryCollaborator.isCollaborator(story.id, req.user.id)
     );

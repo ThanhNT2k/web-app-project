@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { localizeApiError } from '../utils/apiError';
 
 const storageKeys = {
   token: 'cmc_token',
@@ -46,6 +47,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    localizeApiError(error);
     if (
       (error?.response?.status === 401 || error?.response?.status === 403)
       && error?.response?.data?.code !== 'CHAPTER_LOCKED'

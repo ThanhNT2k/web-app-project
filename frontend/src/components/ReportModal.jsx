@@ -5,6 +5,7 @@ import {
   REPORT_TARGET_LABELS,
 } from '../constants/reportConstants';
 import API from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
 import { FontAwesomeIcon, faFlag } from '../lib/icons';
 
 const ReportModal = ({ chapterId, storyId, commentId, reportedUserId, targetLabel, onClose }) => {
@@ -44,7 +45,7 @@ const ReportModal = ({ chapterId, storyId, commentId, reportedUserId, targetLabe
       alert("Cảm ơn bạn đã báo cáo!");
       onClose();
     } catch (err) {
-      setError("Có lỗi xảy ra: " + (err.response?.data?.error ? JSON.stringify(err.response.data.error) : "Vui lòng thử lại sau"));
+      setError(getApiErrorMessage(err, 'Không thể gửi báo cáo. Vui lòng thử lại sau.'));
     } finally {
       setLoading(false);
     }

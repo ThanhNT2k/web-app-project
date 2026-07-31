@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import GoogleLoginButton from './GoogleLoginButton';
 import PasswordChecklist from './PasswordChecklist';
 import { useAuth } from '../contexts/AuthContext';
+import { getApiErrorMessage } from '../utils/apiError';
 
 function AuthModal({ open, onClose }) {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ function AuthModal({ open, onClose }) {
       }
 
     } catch (err) {
-      setError(err?.response?.data?.message || 'Đăng nhập thất bại. Kiểm tra email và mật khẩu.');
+      setError(getApiErrorMessage(err, 'Đăng nhập thất bại. Kiểm tra email và mật khẩu.'));
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ function AuthModal({ open, onClose }) {
       setError('');
       alert('Đăng ký thành công! Vui lòng đăng nhập.');
     } catch (err) {
-      setError(err?.response?.data?.message || 'Đăng ký thất bại.');
+      setError(getApiErrorMessage(err, 'Đăng ký thất bại.'));
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ function AuthModal({ open, onClose }) {
         }
       }
     } catch (err) {
-      setError(err?.response?.data?.message || 'Đăng nhập Google thất bại.');
+      setError(getApiErrorMessage(err, 'Đăng nhập Google thất bại.'));
     } finally {
       setLoading(false);
     }

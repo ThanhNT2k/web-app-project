@@ -37,7 +37,7 @@ async function checkFollow(req, res) {
 
     const storyId = parseInt(req.params.storyId, 10);
     // Validate storyId hợp lệ, trả về false thay vì lỗi nếu ID không hợp lệ
-    if (!storyId || Number.isNaN(storyId)) {
+    if (!Number.isInteger(storyId) || storyId <= 0) {
       return res.status(200).json({ success: true, following: false });
     }
 
@@ -65,7 +65,7 @@ async function followStory(req, res) {
 
     const storyId = parseInt(req.params.storyId, 10);
     // Validate storyId trước khi insert vào database
-    if (!storyId || Number.isNaN(storyId)) {
+    if (!Number.isInteger(storyId) || storyId <= 0) {
       return res.status(400).json({ success: false, message: 'Invalid story ID' });
     }
 
@@ -93,7 +93,7 @@ async function unfollowStory(req, res) {
     }
 
     const storyId = parseInt(req.params.storyId, 10);
-    if (!storyId || Number.isNaN(storyId)) {
+    if (!Number.isInteger(storyId) || storyId <= 0) {
       return res.status(400).json({ success: false, message: 'Invalid story ID' });
     }
 
