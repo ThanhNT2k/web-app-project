@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Link, useNavigate, useParams, useNavigationType } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGem } from '@fortawesome/free-solid-svg-icons';
 
 import AIChapterSummary from '../components/AIChapterSummary';
 import ReadingScrollProgress from '../components/ReadingScrollProgress';
@@ -15,21 +18,14 @@ function ChapterReaderPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { storySlug, chapterNumber } = useParams();
   const navigate = useNavigate();
+  const navType = useNavigationType();
   const { isAuthenticated, user, setCrystalBalance } = useAuth();
-  
-  const [chapter, setChapter] = useState(null);
-  const [chapters, setChapters] = useState([]);
-  const [storyProgress, setStoryProgress] = useState(null);
-  
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   
   const [fontSize, setFontSize] = useState(18);
   const [lineSpacing, setLineSpacing] = useState(1.6);
   const [fontFamily, setFontFamily] = useState('Inter, sans-serif');
   const [autoBookmark, setAutoBookmark] = useState(true);
   const [autoUnlockNext, setAutoUnlockNext] = useState(false);
-  const [lockedChapter, setLockedChapter] = useState(null);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState('');
   
@@ -39,6 +35,67 @@ function ChapterReaderPage() {
   const hasInitialRestoreRef = useRef(false);
   const preferencesReadyRef = useRef(false);
 
+  const { data: chapterData, isLoading: loading } = useQuery({
+    queryKey: ['chapterData', storySlug, chapterNumber],
+    queryFn: async () => {
+      try {
+        const chapterResponse = await API.chapters.getBySlugAndNumber(storySlug, chapterNumber);
+        const resolvedChapter = chapterResponse.chapter || chapterResponse;
+
+        const totalChapters = resolvedChapter.story_total_chapters || 100;
+        const limit = Math.max(totalChapters, 10);
+        const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, limit);
+        
+        return {
+          chapter: resolvedChapter,
+          chapters: chaptersResponse.chapters || [],
+          lockedChapter: null,
+          error: '',
+        };
+      } catch (err) {
+        if (err?.response?.data?.code === 'CHAPTER_LOCKED') {
+          const locked = err.response.data.data;
+          try {
+            const response = await API.chapters.getByStory(locked.story_id, 1, 1000);
+            return { chapter: null, chapters: response.chapters || [], lockedChapter: locked, error: '' };
+          } catch {
+            return { chapter: null, chapters: [], lockedChapter: locked, error: '' };
+          }
+        }
+        
+        if (err?.response?.status === 404) {
+          return { chapter: null, chapters: [], lockedChapter: null, error: 'Chương truyện không tồn tại hoặc đã bị ẩn.' };
+        }
+        
+        const { mockChapter } = await import('../data/mockStories');
+        const fallback = { ...mockChapter };
+        fallback.chapter_number = Number(chapterNumber);
+        fallback.title = `Chương mẫu ${chapterNumber}`;
+        const match = storySlug.match(/^(\d+)-(.*)$/);
+        if (match) {
+          fallback.story_id = Number(match[1]);
+          fallback.story_slug = match[2];
+        } else {
+          fallback.story_slug = storySlug;
+        }
+        
+        return {
+          chapter: fallback,
+          chapters: [
+            { id: 101, chapter_number: 1, title: 'Chương mẫu 1' },
+            { id: 102, chapter_number: 2, title: 'Chương mẫu 2' }
+          ],
+          lockedChapter: null,
+          error: ''
+        };
+      }
+    }
+  });
+
+  const chapter = chapterData?.chapter || null;
+  const chapters = chapterData?.chapters || [];
+  const lockedChapter = chapterData?.lockedChapter || null;
+  const error = chapterData?.error || '';
   const chapterNumericId = useMemo(() => chapter?.id || null, [chapter]);
 
   useEffect(() => {
@@ -51,8 +108,6 @@ function ChapterReaderPage() {
     }
     hasInitialSavedRef.current = false;
     hasInitialRestoreRef.current = false;    
-    // Reset scroll position for new chapter
-    window.scrollTo(0, 0);
   }, [chapterNumber]);
 
   useEffect(() => {
@@ -111,6 +166,7 @@ function ChapterReaderPage() {
 
     fetchData();
   }, [storySlug, chapterNumber]);
+  const [storyProgress, setStoryProgress] = useState(null);
 
   useEffect(() => {
     if (chapter && chapter.story_id && chapter.story_slug) {
@@ -208,24 +264,28 @@ function ChapterReaderPage() {
 
   // Restore scroll position when chapter loads
   useEffect(() => {
-    if (!storyProgress) return;
+    if (!storyProgress || loading) return; // Đợi load xong giao diện (chiều cao > 0)
     if (hasInitialRestoreRef.current) return; // Only restore once per chapter
     
-    hasInitialRestoreRef.current = true;    
+    hasInitialRestoreRef.current = true;
+    
+    // Nếu là POP navigation (người dùng ấn Back/Forward), trình duyệt sẽ tự động
+    // phục hồi scroll thông qua <ScrollRestoration>. KHÔNG can thiệp bằng Javascript!
+    if (navType === 'POP') return;
+
     // Reset to top initially, then restore saved position after a small delay
     // to ensure DOM is fully rendered
-    window.scrollTo(0, 0);
     
     const timer = setTimeout(() => {
       const savedPosition = storyProgress.read_position || 0;
-      if (savedPosition > 0) {
+      if (savedPosition > 0 && window.scrollY === 0) {
         window.scrollTo(0, savedPosition);
         scrollRef.current = savedPosition;
       }
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [storyProgress, chapterNumber]);
+  }, [storyProgress, chapterNumber, loading, navType]);
 
   const saveProgress = useCallback(async () => {
     if (!isAuthenticated || !chapter) return;
@@ -455,11 +515,13 @@ function ChapterReaderPage() {
         <section className="panel-card mx-auto p-4 p-md-5 text-center" style={{ maxWidth: '720px' }}>
           <h2>Chương {lockedChapter.chapter_number} đang bị khóa</h2>
           <p>{lockedChapter.title || 'Mở khóa chương để tiếp tục đọc.'}</p>
-          <p>
-            <strong>{lockedChapter.unlock_cost || 2} Tinh thạch</strong>
-            {' · '}
-            Số dư: {Number(user?.crystal_balance ?? lockedChapter.crystal_balance ?? 0)}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ fontWeight: '500' }}>Chi phí: {lockedChapter.unlock_cost || 2}</span>
+            <span className="nav-crystal-balance" title="Số dư Tinh thạch">
+              <FontAwesomeIcon icon={faGem} />
+              <strong>{Number(user?.crystal_balance ?? lockedChapter.crystal_balance ?? 0)}</strong>
+            </span>
+          </div>
           {unlockError ? <div className="alert-cmc alert-cmc-warning mb-3">{unlockError}</div> : null}
           <button
             type="button"

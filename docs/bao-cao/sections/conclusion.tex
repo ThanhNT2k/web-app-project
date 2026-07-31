@@ -3,6 +3,24 @@
 
 Báo cáo đã trình bày bài toán, phạm vi, luồng hoạt động theo vai trò và quá trình triển khai CMC Truyện bằng React, Express, PostgreSQL và Redis/BullMQ. Sản phẩm đã hình thành các nhóm chức năng chính: khám phá và đọc truyện, quản lý tài khoản, tương tác, đăng nội dung, kiểm duyệt và quản trị.
 
+\phantomsection
+\addcontentsline{toc}{section}{Đánh giá, hạn chế và hướng hoàn thiện}
+\section*{Đánh giá, hạn chế và hướng hoàn thiện}
+
+\subsection*{Điểm đạt được}
+
+Source đã hình thành một sản phẩm full-stack có phạm vi tương đối rộng: route SPA cho nhiều vai trò, API phân lớp, PostgreSQL với ràng buộc/index, workflow kiểm duyệt, report, audit, queue/worker và kiểm thử tự động. Kết quả 72 test pass và build production thành công là bằng chứng kỹ thuật cụ thể. Tài liệu kiến trúc/API trong repository cũng giúp truy vết quyết định.
+
+\subsection*{Hạn chế cần công khai}
+
+\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
+  \item Migration/schema phân tán, thiếu DDL \CodePath{bad_words} trong phần source rà soát và còn DDL chạy lúc startup;
+  \item Test log có Redis \CodePath{ECONNREFUSED} và Jest force-exit, cho thấy teardown/tích hợp queue chưa sạch;
+  \item Chưa có kết quả E2E, kiểm thử tải, security audit và accessibility audit trong lần xác minh này;
+  \item Bundle frontend vượt ngưỡng cảnh báo 500 kB;
+  \item Link deploy, link commit, video và ảnh giao diện chưa được cung cấp nên báo cáo để trống.
+\end{itemize}
+
 Tại lần xác minh được ghi nhận trong dự án, 72/72 kiểm thử đã đạt và frontend build production thành công. Kết quả này cho thấy các luồng cốt lõi đã được kiểm tra ở mức mã nguồn. Tuy nhiên, hệ thống vẫn cần đồng bộ schema/migration với ERD, xử lý kết nối Redis trong môi trường test, tối ưu bundle và bổ sung kiểm thử E2E trên hạ tầng thật.
 
 Trước khi nộp, nhóm cần điền các liên kết còn trống, bổ sung ảnh giao diện đúng phiên bản triển khai và cập nhật kết quả kiểm thử thủ công. Trong giai đoạn tiếp theo, nhóm định hướng chuẩn hóa migration, hoàn thiện E2E, tối ưu hiệu năng frontend và bổ sung giám sát khi vận hành.

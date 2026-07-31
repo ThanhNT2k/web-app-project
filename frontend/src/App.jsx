@@ -1,9 +1,9 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, RouterProvider, Navigate, Outlet, Route } from 'react-router-dom';
+import { ScrollRestoration } from 'react-router-dom';
 import ModeratorLayout from './layouts/ModeratorLayout';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LegacyRedirect from './components/LegacyRedirect';
-import ScrollToTop from './components/ScrollToTop';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
@@ -49,18 +49,23 @@ function Layout() {
   );
 }
 
-function App() {
+function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <LegacyRedirect />
+        <ScrollRestoration />
+        <LegacyRedirect />
+        <Outlet />
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
 
-          <Routes>
-
-            {/* USER LAYOUT */}
-            <Route element={<Layout />}>
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<RootLayout />}>
+      {/* USER LAYOUT */}
+      <Route element={<Layout />}>
 
               <Route path="/" element={<HomePage />} />
               <Route path="/browse" element={<FindStoriesPage />} />
@@ -162,13 +167,14 @@ function App() {
               <Route path="/moderator/logs" element={<AuditLogsPage />} />
             </Route>
 
-            <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="/home" element={<Navigate to="/" replace />} />
 
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
-  );
+    </Route>
+  )
+);
+
+function App() {
+  return <RouterProvider router={router} />;
 }
 
 export default App;

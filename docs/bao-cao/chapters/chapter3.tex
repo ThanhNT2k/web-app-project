@@ -72,7 +72,87 @@ Triển khai & Vercel-compatible SPA, Render web service/worker & Hosting fronte
 \end{tabularx}
 \end{table}
 
-Các phiên bản trong Bảng~\ref{tab:technology-stack} được lấy từ \CodePath{frontend/package.json}, \CodePath{backend/package.json} và lockfile tại thời điểm rà soát. Báo cáo không khẳng định mọi dependency đã được sử dụng đồng đều chỉ vì xuất hiện trong package; vai trò cụ thể được đối chiếu thêm với import và cấu hình source.
+
+
+\section{Thiết kế giao diện theo vai trò}
+
+
+
+\subsection{Giao diện khách hàng}
+
+Trang chủ cần thể hiện cấu trúc khám phá: điều hướng, nội dung nổi bật và các danh sách chính.. Bố cục giúp người dùng nhanh chóng khám phá nội dung, tìm kiếm truyện và chuyển đến trang chi tiết hoặc bắt đầu đọc truyện.
+
+
+\ReportImage[0.40\textheight]
+  {images/screenshots/ui-customer-home.png}
+  {Giao diện trang chủ dành cho khách hàng}
+  {fig:ui-customer-home}
+  {Chụp toàn bộ phần nhìn thấy đầu trang ở desktop; chuyển ảnh sang trắng đen, không để dữ liệu nhạy cảm.}
+
+Giao diện tìm kiếm và khám phá truyện cung cấp ô tìm kiếm, bộ lọc theo thể loại/tag và danh sách kết quả, giúp người dùng dễ dàng tìm truyện phù hợp hoặc tiếp tục khám phá các nội dung mới
+\ReportImage[0.40\textheight]
+  {images/screenshots/ui-customer-browse.png}
+  {Giao diện tìm kiếm và khám phá truyện}
+  {fig:ui-customer-browse}
+  {Chụp ô tìm kiếm, bộ lọc và danh sách kết quả; dùng dữ liệu demo hợp lệ của nhóm.}
+
+Trang chi tiết minh họa giao diện chi tiết truyện, hiển thị bìa, thông tin cơ bản, mô tả, danh sách chương và các chức năng tương tác như theo dõi hoặc đánh giá. Từ trang này, người dùng có thể nắm được nội dung tổng quan và chọn chương để bắt đầu đọc.
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-customer-story-detail.png}
+  {Giao diện chi tiết truyện}
+  {fig:ui-customer-detail}
+  {Chụp truyện có dữ liệu đầy đủ; không dùng nội dung vi phạm bản quyền hoặc thông tin chưa được phép công bố.}
+
+Giao diện đọc chương và các tùy chọn đọc tập trung hiển thị nội dung rõ ràng, đồng thời cung cấp điều hướng giữa các chương và tùy chỉnh như cỡ chữ, kiểu chữ hoặc chế độ hiển thị để nâng cao trải nghiệm đọc.
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-customer-reader.png}
+  {Giao diện đọc chương và tùy chọn đọc}
+  {fig:ui-customer-reader}
+  {Chụp phần tiêu đề, nội dung, tiến độ hoặc bảng tùy chọn; che nội dung nếu chưa có quyền sử dụng.}
+
+Giao diện cài đặt cá nhân cho phép người dùng quản lý thông tin tài khoản và điều chỉnh các tùy chọn sử dụng. Người dùng có thể cập nhật hồ sơ, thay đổi mật khẩu và thiết lập các tùy chọn phù hợp với nhu cầu cá nhân.
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-customer-account.png}
+  {Giao diện cài đặt cá nhân}
+  {fig:ui-customer-account}
+  {Chọn một màn hình tiêu biểu; dùng tài khoản demo và ẩn thông tin cá nhân không cần thiết.}
+
+\subsection{Giao diện Admin và Moderator}
+
+Giao diện dashboard quản trị cung cấp cái nhìn tổng quan về hoạt động của hệ thống thông qua các số liệu thống kê và danh sách thông tin quan trọng. Từ đây, quản trị viên có thể nhanh chóng theo dõi tình trạng hệ thống và truy cập các chức năng quản lý.
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-admin-dashboard.png}
+  {Giao diện dashboard quản trị}
+  {fig:ui-admin-dashboard}
+  {Chụp bằng tài khoản Admin demo; số liệu phải do hệ thống trả về ở thời điểm chụp.}
+
+Giao diện quản lý người dùng cho phép quản trị viên tìm kiếm, xem thông tin và theo dõi trạng thái các tài khoản. Giao diện cũng hỗ trợ thực hiện các thao tác quản trị như thay đổi vai trò hoặc khóa/mở khóa tài khoản khi cần thiết.
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-admin-users.png}
+  {Giao diện quản lý người dùng}
+  {fig:ui-admin-users}
+  {Chụp danh sách user demo và control đổi role/trạng thái; ẩn email hoặc dữ liệu thật.}
+
+Giao diện quản lý bình luận hỗ trợ quản trị viên hoặc kiểm duyệt viên theo dõi, tìm kiếm và xử lý các bình luận trong hệ thống. Từ giao diện này, người quản lý có thể kiểm tra nội dung và thực hiện các thao tác phù hợp nhằm duy trì môi trường thảo luận lành mạnh.
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-moderator-pending-stories.png}
+  {Giao diện quản lý bình luận}
+  {fig:ui-moderator-pending}
+  {Chụp bằng Moderator/Admin demo; không thao tác trên dữ liệu cần bảo toàn khi chỉ chụp minh chứng.}
+
+Giao diện quản lý báo cáo vi phạm hiển thị danh sách các nội dung hoặc tài khoản bị người dùng báo cáo. Quản trị viên có thể xem chi tiết, lọc theo trạng thái và xử lý từng báo cáo nhằm đảm bảo nội dung trên hệ thống tuân thủ quy định.
+\ReportImage[1.0\textheight]
+  {images/screenshots/ui-admin-reports.png}
+  {Giao diện quản lý báo cáo vi phạm}
+  {fig:ui-admin-reports}
+  {Chụp bộ lọc, target, trạng thái và action; nội dung nhạy cảm cần được che phù hợp.}
+
+Giao diện nhật ký thao tác quản trị ghi nhận các hoạt động quan trọng của quản trị viên và kiểm duyệt viên. Thông tin nhật ký gồm người thực hiện, hành động, đối tượng tác động và thời gian, hỗ trợ việc theo dõi và truy vết khi cần thiết.
+\ReportImage[0.40\textheight]
+  {images/screenshots/ui-admin-audit-logs.png}
+  {Giao diện nhật ký thao tác quản trị}
+  {fig:ui-admin-audit}
+  {Chụp audit của dữ liệu demo sau một thao tác quản trị đã biết; kiểm tra không có credential.}
 
 \section{Triển khai frontend}
 
@@ -127,7 +207,7 @@ Route frontend không thay thế quyền backend. Nếu chỉ ẩn menu Admin nh
 \clearpage
 \subsection{Lớp gọi API và quản lý phiên}
 
-\CodePath{services/api.js} tạo một Axios instance có base URL từ biến môi trường, fallback về local khi phát triển. Request interceptor đọc \CodePath{cmc_token} và gắn Bearer token; response interceptor xử lý 401/403, xóa phiên và điều hướng về login trong các trường hợp phù hợp. Các endpoint được gom theo domain như auth, stories, chapters, comments, follows, reports, admin và moderator.
+\CodePath{Services/api.js} tạo một Axios instance có base URL từ biến môi trường, fallback về local khi phát triển. Request interceptor đọc \CodePath{cmc_token} và gắn Bearer token; response interceptor xử lý 401/403, xóa phiên và điều hướng về login trong các trường hợp phù hợp. Các endpoint được gom theo domain như auth, stories, chapters, comments, follows, reports, admin và moderator.
 
 Ưu điểm của facade tập trung là component không cần lặp base URL, header và cấu trúc request. Hạn chế là file có thể lớn khi mọi domain cùng nằm trong một object; về lâu dài có thể tách thành các module \CodePath{authApi}, \CodePath{storyApi}, \CodePath{adminApi} nhưng vẫn dùng chung Axios client.
 
@@ -141,7 +221,6 @@ Route frontend không thay thế quyền backend. Nếu chỉ ẩn menu Admin nh
 
 Source có skeleton screen cho trạng thái tải và optimistic UI kèm rollback ở những tương tác phù hợp như follow, rating hoặc vote. Theme và tùy chọn đọc được tách thành context/panel riêng. Khi đánh giá frontend, cần kiểm tra đủ bốn trạng thái: loading, success có dữ liệu, success rỗng và error. Một giao diện đẹp ở trạng thái thành công nhưng vỡ khi API chậm vẫn chưa phải trải nghiệm hoàn chỉnh.
 
-Về khả năng truy cập, báo cáo chưa có kết quả audit tự động. Nhóm cần kiểm tra bằng bàn phím, focus, label của form, contrast ở dark mode, alt text ảnh bìa và thông báo lỗi có thể đọc được. Đây là hạng mục cần bổ sung bằng minh chứng thật nếu rubric của giảng viên yêu cầu.
 
 \section{Triển khai backend}
 
@@ -182,7 +261,7 @@ Config & Biến môi trường và client hạ tầng & Secret chỉ ở backend
 
 \subsection{Pipeline request}
 
-\CodePath{app.js} lần lượt cấu hình Helmet, CORS, log HTTP, các parser JSON và URL-encoded, static cover, health check, 16 nhóm router rồi not-found và error handler. Thứ tự middleware quan trọng: error handler phải ở cuối; role middleware phải sau auth; audit cần quan sát kết quả response nhưng không được ghi dữ liệu nhạy cảm.
+\CodePath{App.js} lần lượt cấu hình Helmet, CORS, log HTTP, các parser JSON và URL-encoded, static cover, health check, 16 nhóm router rồi not-found và error handler. Thứ tự middleware quan trọng: error handler phải ở cuối; role middleware phải sau auth; audit cần quan sát kết quả response nhưng không được ghi dữ liệu nhạy cảm.
 
 \begin{figure}[H]
 \centering
@@ -217,7 +296,7 @@ Config & Biến môi trường và client hạ tầng & Secret chỉ ở backend
 \clearpage
 \subsection{Xác thực, phân quyền và audit}
 
-\CodePath{authenticateToken} đọc header Authorization, yêu cầu định dạng Bearer, xác minh JWT bằng secret từ environment và gán payload vào \CodePath{req.user}. \CodePath{optionalAuth} không từ chối Guest; token lỗi được xem như không có phiên ở các route công khai. \CodePath{authorizeRole} chuẩn hóa chữ thường để tránh sai khác giữa \CodePath{Admin} và \CodePath{admin}. Cấu trúc và cách kiểm tra token được đối chiếu với đặc tả JWT \cite{rfc7519}.
+\CodePath{AuthenticateToken} đọc header Authorization, yêu cầu định dạng Bearer, xác minh JWT bằng secret từ environment và gán payload vào \CodePath{req.user}. \CodePath{optionalAuth} không từ chối Guest; token lỗi được xem như không có phiên ở các route công khai. \CodePath{authorizeRole} chuẩn hóa chữ thường để tránh sai khác giữa \CodePath{Admin} và \CodePath{admin}. Cấu trúc và cách kiểm tra token được đối chiếu với đặc tả JWT \cite{rfc7519}.
 
 Audit middleware bao quanh các thao tác làm thay đổi dữ liệu quản trị như đổi vai trò, đổi trạng thái người dùng, duyệt truyện, xử lý báo cáo và quản lý từ khóa. Kiểm thử xác nhận hệ thống chỉ ghi hành động thành công, giới hạn phạm vi Moderator và loại dữ liệu mật khẩu/credential khỏi nhật ký. Các biện pháp xác thực, phân quyền, kiểm soát đầu vào và ghi log được rà soát theo nhóm rủi ro ứng dụng web phổ biến của OWASP \cite{owasp-top10}.
 
@@ -229,7 +308,7 @@ Audit middleware bao quanh các thao tác làm thay đổi dữ liệu quản tr
 
 \subsection{Tác vụ nền và dịch vụ AI}
 
-\CodePath{startWorker.js} khởi động moderation worker và notification worker. Queue dùng \CodePath{REDIS_URL}; API và worker phải trỏ cùng Redis \cite{redis-docs,bullmq-docs}. Với AI, backend ưu tiên Groq rồi fallback Gemini, có timeout và cache; tóm tắt chương được lưu ở \CodePath{ai_summaries}. API key không đi xuống frontend vì mã phía client có thể được người dùng xem trực tiếp.
+\CodePath{StartWorker.js} khởi động moderation worker và notification worker. Queue dùng \CodePath{REDIS_URL}; API và worker phải trỏ cùng Redis \cite{redis-docs,bullmq-docs}. Với AI, backend ưu tiên Groq rồi fallback Gemini, có timeout và cache; tóm tắt chương được lưu ở \CodePath{ai_summaries}. API key không đi xuống frontend vì mã phía client có thể được người dùng xem trực tiếp.
 
 Tuy nhiên, fallback giữa hai mô hình có thể tạo kết quả khác nhau; hệ thống cần log provider, thời gian và lỗi ở mức đủ chẩn đoán nhưng không ghi prompt nhạy cảm. Với moderation tự động, quyết định có tác động lớn nên có cơ chế review của người vận hành thay vì coi output AI là phán quyết tuyệt đối.
 
@@ -254,7 +333,6 @@ Schema chính \CodePath{backend/scripts/schema.sql} định nghĩa các nhóm d�
 
 Hình~\ref{fig:database-er} thể hiện các quan hệ chính của hệ thống. \CodePath{users}, \CodePath{stories} và \CodePath{chapters} là ba thực thể trung tâm; các bảng lịch sử đọc, theo dõi, đánh giá, bình luận và thông báo liên kết hành vi người dùng với nội dung. Nhóm bảng \CodePath{reports}, \CodePath{bad_words} và \CodePath{audit_logs} phục vụ kiểm duyệt và truy vết.
 
-ERD do nhóm cung cấp có đồng thời \CodePath{ratings} và \CodePath{story_ratings}, trong khi schema chính được rà soát sử dụng \CodePath{ratings}. Trước khi nộp, nhóm cần xác nhận bảng đang được ứng dụng sử dụng, loại bỏ bảng dư hoặc giải thích rõ mục đích của từng bảng; đồng thời bảo đảm ERD, migration và cơ sở dữ liệu triển khai cùng một phiên bản.
 
 \ReportImage[1.0\textheight]
   {images/screenshots/db-folder-schema.png}
@@ -275,18 +353,7 @@ Backend cấu hình PostgreSQL Pool với tối đa 20 connection, idle timeout 
 
 Khi một nghiệp vụ có nhiều bước ghi dữ liệu, tất cả query từ \CodePath{BEGIN} đến \CodePath{COMMIT/ROLLBACK} phải dùng cùng client lấy từ \CodePath{pool.connect()}. Nếu trộn \CodePath{pool.query()} với client trong một transaction, các query có thể chạy trên connection khác và rollback không còn bảo đảm tính nguyên tử.
 
-\subsection{Nợ kỹ thuật dữ liệu}
 
-Phần dữ liệu hiện có ba cơ chế cùng tồn tại: schema tổng, script bổ sung và một số DDL chạy khi module database kết nối. Cách tổ chức này làm nguồn sự thật bị phân tán và khó tái tạo một cơ sở dữ liệu mới. Bảng \CodePath{reports} dùng script \CodePath{CREATE TYPE} và \CodePath{CREATE TABLE} chưa có \CodePath{IF NOT EXISTS}; \CodePath{bad_words} xuất hiện trên ERD nhưng chưa có DDL trong phần mã nguồn đã rà soát. Hướng hoàn thiện là:
-
-\begin{itemize}
-  \item đưa mọi thay đổi vào migration đánh số và có thể chạy lặp an toàn;
-  \item tạo migration chính thức cho \CodePath{bad_words}, \CodePath{reports}, \CodePath{tags}/\CodePath{story_tags};
-  \item xác nhận và xử lý sự trùng lặp giữa \CodePath{ratings} và \CodePath{story_ratings};
-  \item loại DDL biến đổi schema khỏi đường khởi động ứng dụng sau khi migration ổn định;
-  \item bổ sung bảng theo dõi migration và kiểm thử khởi tạo DB trắng;
-  \item ghi rõ baseline schema tương ứng với commit dùng để nộp.
-\end{itemize}
 
 \section{Cấu hình và triển khai}
 
@@ -319,7 +386,7 @@ Frontend & VITE\_API\_URL & Có thể công khai; trỏ đúng tiền tố \Code
 
 \subsection{Topology triển khai}
 
-\CodePath{render.yaml} khai báo hai service Node: web service chạy backend và worker chạy \CodePath{src/startWorker.js}. Frontend có \CodePath{vercel.json} rewrite mọi route SPA về \CodePath{index.html}. PostgreSQL và Redis không được khai báo trực tiếp trong file Render; chúng phải được cung cấp qua dịch vụ managed hoặc hạ tầng khác và cấu hình bằng environment.
+\CodePath{Render.yaml} khai báo hai service Node: web service chạy backend và worker chạy \CodePath{src/startWorker.js}. Frontend có \CodePath{vercel.json} rewrite mọi route SPA về \CodePath{index.html}. PostgreSQL và Redis không được khai báo trực tiếp trong file Render; chúng phải được cung cấp qua dịch vụ managed hoặc hạ tầng khác và cấu hình bằng environment.
 
 \begin{table}[htbp]
 \centering
@@ -414,114 +481,6 @@ MT10 & Hạ tầng Redis/worker thật & Tạo chương mới đủ điều ki�
 \endgroup
 
 \clearpage
-\section{Giao diện người dùng}
-
-Toàn bộ ảnh giao diện trong bản in cần chuyển sang trắng đen hoặc chụp ở chế độ không màu theo yêu cầu, nhưng vẫn phải giữ đủ tương phản để đọc chữ và nhận biết trạng thái. Các khung dưới đây là vị trí chèn ảnh thật; caption đã được đánh số theo chương và tự động xuất hiện trong danh mục hình.
-
-\subsection{Giao diện khách hàng}
-
-Trang chủ cần thể hiện cấu trúc khám phá: điều hướng, nội dung nổi bật và các danh sách chính. Ảnh phải được chụp từ phiên bản chạy thật, không dùng mockup nếu phần mô tả gọi đó là sản phẩm đã triển khai.
-
-\ReportImage[0.40\textheight]
-  {images/screenshots/ui-customer-home.png}
-  {Giao diện trang chủ dành cho khách hàng}
-  {fig:ui-customer-home}
-  {Chụp toàn bộ phần nhìn thấy đầu trang ở desktop; chuyển ảnh sang trắng đen, không để dữ liệu nhạy cảm.}
-
-Trang tìm kiếm/khám phá cần chứng minh bộ lọc, kết quả và trạng thái không có dữ liệu. Nếu chỉ có một ảnh, ưu tiên trạng thái có kết quả và mô tả thêm cách xử lý trạng thái rỗng trong phần thuyết minh.
-
-\ReportImage[0.40\textheight]
-  {images/screenshots/ui-customer-browse.png}
-  {Giao diện tìm kiếm và khám phá truyện}
-  {fig:ui-customer-browse}
-  {Chụp ô tìm kiếm, bộ lọc và danh sách kết quả; dùng dữ liệu demo hợp lệ của nhóm.}
-
-Trang chi tiết là điểm nối giữa khám phá và đọc. Ảnh nên có bìa, metadata, mô tả, danh sách chương và hành động follow/rating nếu phiên đăng nhập cho phép.
-
-\ReportImage[1.0\textheight]
-  {images/screenshots/ui-customer-story-detail.png}
-  {Giao diện chi tiết truyện}
-  {fig:ui-customer-detail}
-  {Chụp truyện có dữ liệu đầy đủ; không dùng nội dung vi phạm bản quyền hoặc thông tin chưa được phép công bố.}
-
-Trang đọc chương cần ưu tiên khả năng đọc, điều hướng chương và tùy chọn hiển thị. Vì ảnh trắng đen, phải kiểm tra đường biên/nút không phụ thuộc duy nhất vào màu.
-
-\ReportImage[1.0\textheight]
-  {images/screenshots/ui-customer-reader.png}
-  {Giao diện đọc chương và tùy chọn đọc}
-  {fig:ui-customer-reader}
-  {Chụp phần tiêu đề, nội dung, tiến độ hoặc bảng tùy chọn; che nội dung nếu chưa có quyền sử dụng.}
-
-Trang tài khoản thể hiện giá trị sau đăng nhập như truyện theo dõi, lịch sử hoặc cài đặt. Ảnh không được lộ email, token hay dữ liệu cá nhân thật nếu chưa được đồng ý.
-
-\ReportImage[1.0\textheight]
-  {images/screenshots/ui-customer-account.png}
-  {Giao diện cài đặt cá nhân}
-  {fig:ui-customer-account}
-  {Chọn một màn hình tiêu biểu; dùng tài khoản demo và ẩn thông tin cá nhân không cần thiết.}
-
-\subsection{Giao diện Admin và Moderator}
-
-Khu vực quản trị cần thể hiện rõ layout riêng, sidebar, tiêu đề trang và trạng thái active. Dashboard nên dùng số liệu demo nhất quán với database của lần chụp; không tự điền số đẹp vào ảnh.
-
-\ReportImage[1.0\textheight]
-  {images/screenshots/ui-admin-dashboard.png}
-  {Giao diện dashboard quản trị}
-  {fig:ui-admin-dashboard}
-  {Chụp bằng tài khoản Admin demo; số liệu phải do hệ thống trả về ở thời điểm chụp.}
-
-Màn hình user management cần chứng minh tìm kiếm, role, trạng thái và thao tác quản trị. Nên tránh chụp danh sách tài khoản thật; dữ liệu seed/demo là phù hợp hơn.
-
-\ReportImage[1.0\textheight]
-  {images/screenshots/ui-admin-users.png}
-  {Giao diện quản lý người dùng}
-  {fig:ui-admin-users}
-  {Chụp danh sách user demo và control đổi role/trạng thái; ẩn email hoặc dữ liệu thật.}
-
-Hàng chờ truyện là màn hình quan trọng để chứng minh workflow không chỉ tồn tại ở backend. Ảnh cần có trạng thái pending và các hành động duyệt/yêu cầu sửa/từ chối.
-
-\ReportImage[1.0\textheight]
-  {images/screenshots/ui-moderator-pending-stories.png}
-  {Giao diện quản lý bình luận}
-  {fig:ui-moderator-pending}
-  {Chụp bằng Moderator/Admin demo; không thao tác trên dữ liệu cần bảo toàn khi chỉ chụp minh chứng.}
-
-Màn hình report thể hiện khả năng lọc và xử lý vi phạm. Nên chụp trạng thái trước khi xử lý; nếu cần ảnh sau xử lý, tạo report demo riêng để không làm sai dữ liệu của nhóm.
-
-\ReportImage[1.0\textheight]
-  {images/screenshots/ui-admin-reports.png}
-  {Giao diện quản lý báo cáo vi phạm}
-  {fig:ui-admin-reports}
-  {Chụp bộ lọc, target, trạng thái và action; nội dung nhạy cảm cần được che phù hợp.}
-
-Audit log chứng minh tính truy vết. Ảnh phải cho thấy actor, action, entity và thời điểm nhưng không chứa token, password hay request body nhạy cảm.
-
-\ReportImage[0.40\textheight]
-  {images/screenshots/ui-admin-audit-logs.png}
-  {Giao diện nhật ký thao tác quản trị}
-  {fig:ui-admin-audit}
-  {Chụp audit của dữ liệu demo sau một thao tác quản trị đã biết; kiểm tra không có credential.}
-
-\section{Đánh giá, hạn chế và hướng hoàn thiện}
-
-\subsection{Điểm đạt được}
-
-Source đã hình thành một sản phẩm full-stack có phạm vi tương đối rộng: route SPA cho nhiều vai trò, API phân lớp, PostgreSQL với ràng buộc/index, workflow kiểm duyệt, report, audit, queue/worker và kiểm thử tự động. Kết quả 72 test pass và build production thành công là bằng chứng kỹ thuật cụ thể. Tài liệu kiến trúc/API trong repository cũng giúp truy vết quyết định.
-\clearpage
-\subsection{Hạn chế cần công khai}
-
-\begin{itemize}
-  \item migration/schema phân tán, thiếu DDL \CodePath{bad_words} trong phần source rà soát và còn DDL chạy lúc startup;
-  \item test log có Redis \CodePath{ECONNREFUSED} và Jest force-exit, cho thấy teardown/tích hợp queue chưa sạch;
-  \item chưa có kết quả E2E, kiểm thử tải, security audit và accessibility audit trong lần xác minh này;
-  \item bundle frontend vượt ngưỡng cảnh báo 500 kB;
-  \item link deploy, link commit, video và ảnh giao diện chưa được cung cấp nên báo cáo để trống.
-\end{itemize}
-
-\subsection{Thứ tự ưu tiên hoàn thiện}
-
-Nhóm cần hoàn tất metadata, phân công, URL và ảnh thật; sau đó chuẩn hóa migration, xử lý Redis/open handles, chạy E2E và tối ưu bundle.
-
 \section{Kết luận chương}
 
-Chương 3 đã trình bày kiến trúc SPA + REST, cách tổ chức frontend, backend, cơ sở dữ liệu, triển khai và kiểm thử. Các hạn chế còn lại được tổng hợp thành danh sách ưu tiên hoàn thiện.
+Chương 3 đã trình bày kiến trúc SPA + REST, thiết kế giao diện theo vai trò, cách tổ chức frontend, backend, cơ sở dữ liệu, triển khai và kiểm thử. Phần đánh giá, hạn chế và hướng hoàn thiện được tổng hợp trong kết luận cuối cùng của báo cáo.
