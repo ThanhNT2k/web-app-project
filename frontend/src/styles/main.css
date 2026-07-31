@@ -1791,16 +1791,9 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
   text-align: center;
 }
 
-.storyqq-chapter-list li a {
-  border-bottom-style: dashed;
-}
-
 .storyqq-chapter-list {
   max-height: 620px;
-  padding-right: 0.35rem;
   overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--primary-color) 45%, var(--border)) transparent;
 }
@@ -1869,6 +1862,83 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
   padding: 2rem 1rem;
   color: var(--text-muted);
   text-align: center;
+}
+
+.storyqq-chapter-empty button {
+  display: block;
+  margin: 0.6rem auto 0;
+  padding: 0.35rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--primary-color);
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.storyqq-chapter-empty button:hover {
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  border-color: var(--primary-color);
+}
+
+/* Highlight chapter currently being read (#8) */
+.chapter-link-last-read {
+  color: var(--primary-color) !important;
+  background: color-mix(in srgb, var(--primary-color) 6%, transparent);
+  border-left: 3px solid var(--primary-color);
+  padding-left: 0.65rem !important;
+  border-radius: 0 6px 6px 0;
+}
+
+.chapter-link-last-read:hover {
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent) !important;
+}
+
+.chapter-link-last-read-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--primary-color);
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+/* Disable row during unlock (#4) */
+.chapter-link-unlocking {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: wait;
+}
+
+/* Jump-to-page input (#7) */
+.storyqq-chapter-pagination-jump {
+  width: 3.2rem;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.storyqq-chapter-pagination-jump::-webkit-inner-spin-button,
+.storyqq-chapter-pagination-jump::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.storyqq-chapter-pagination-jump:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 14%, transparent);
 }
 
 @media (max-width: 768px) {
@@ -2028,9 +2098,9 @@ textarea.form-control-cmc { resize: vertical; min-height: 80px; }
 .chapter-list { list-style: none; padding: 0; margin: 0; }
 .chapter-list li a { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border); transition: color 0.15s ease; }
 .chapter-list li a:hover { color: var(--primary-color); }
-.chapter-list li a.chapter-link-is-read { color: #8a8a8a; }
-.chapter-list li a.chapter-link-is-read .chapter-upload-date { color: #9a9a9a !important; }
-.chapter-list li a.chapter-link-is-read:hover { color: #6f6f6f; }
+.chapter-list li a.chapter-link-is-read { color: var(--text-muted); }
+.chapter-list li a.chapter-link-is-read .chapter-upload-date { color: var(--text-muted) !important; }
+.chapter-list li a.chapter-link-is-read:hover { color: color-mix(in srgb, var(--text-muted) 70%, var(--text)); }
 .chapter-upload-date {
   min-width: 92px;
   text-align: right;

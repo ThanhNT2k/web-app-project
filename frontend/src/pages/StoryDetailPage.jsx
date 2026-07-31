@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import CommentSection from '../components/CommentSection';
@@ -95,10 +95,27 @@ function StoryDetailPage() {
   const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [sortOrder, setSortOrder] = useState('desc');
   const [chapterSearch, setChapterSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showRatingPanel, setShowRatingPanel] = useState(false);
   const [introExpanded, setIntroExpanded] = useState(false);
   const [unlockingChapterId, setUnlockingChapterId] = useState(null);
+  const debounceTimerRef = useRef(null);
+
+  // Debounce chapter search to avoid excessive API calls (#9)
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(chapterSearch);
+    }, 350);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [chapterSearch]);
 
   // Load story info once
   useEffect(() => {
@@ -141,7 +158,7 @@ function StoryDetailPage() {
     const fetchChapters = async () => {
       try {
         setChapterLoading(true);
-        const isSearchingChapter = Boolean(chapterSearch.trim());
+        const isSearchingChapter = Boolean(debouncedSearch.trim());
         const pageToFetch = isSearchingChapter ? 1 : chapterPage;
         const limitToFetch = isSearchingChapter ? 1000 : CHAPTERS_PER_PAGE;
         const chaptersResponse = await API.chapters.getByStory(story.id, pageToFetch, limitToFetch, sortOrder);
@@ -157,7 +174,7 @@ function StoryDetailPage() {
       }
     };
     fetchChapters();
-  }, [story?.id, chapterPage, sortOrder, chapterSearch]);
+  }, [story?.id, chapterPage, sortOrder, debouncedSearch]);
 
   useEffect(() => {
     if (!isAuthenticated || !story?.id) {
@@ -217,6 +234,7 @@ function StoryDetailPage() {
   }, [chapters, chapterSearch]);
 
   const handleLockedChapterClick = async (event, chapter) => {
+    if (unlockingChapterId) { event.preventDefault(); return; }
     if (chapter.can_read !== false) return;
     event.preventDefault();
     if (!isAuthenticated) {
@@ -446,9 +464,9 @@ function StoryDetailPage() {
         </div>
         </section>
 
-        <section className="panel-card mt-4 storyqq-panel">
+        <section className="panel-card mt-4 storyqq-panel" aria-labelledby="chapter-list-heading">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <h4 className="panel-title mb-0">
+          <h4 id="chapter-list-heading" className="panel-title mb-0">
             Danh sách chương ({chapterPagination.totalItems || 0})
           </h4>
           <div className="storyqq-chapter-tools">
@@ -462,13 +480,13 @@ function StoryDetailPage() {
                 aria-label="Tìm kiếm chương"
               />
               {chapterSearch ? (
-                <button type="button" onClick={() => setChapterSearch('')} aria-label="Xóa tìm kiếm chương">×</button>
+                <button type="button" onClick={() => { setChapterSearch(''); setDebouncedSearch(''); }} aria-label="Xóa tìm kiếm chương">×</button>
               ) : null}
             </label>
             <select
               className="form-select form-select-sm"
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
+              onChange={(e) => { setSortOrder(e.target.value); setChapterPage(1); }}
               aria-label="Sắp xếp chương"
             >
               <option value="asc">Sắp xếp: Cũ nhất</option>
@@ -477,66 +495,131 @@ function StoryDetailPage() {
           </div>
         </div>
 
-        {chapterLoading ? (
-          <div className="loading-text" aria-label="Đang tải danh sách chương" />
-        ) : (
-          <ul className="chapter-list storyqq-chapter-list">
-              {filteredChapters.map((chapter) => {
-                const chapterNumber = Number(chapter.chapter_number || 0);
-                const isRead = readChapterNumbers.has(chapterNumber);
+        <div style={{ position: 'relative' }}>
+          {chapterLoading ? (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'color-mix(in srgb, var(--surface) 30%, transparent)',
+                backdropFilter: 'blur(1px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10,
+                borderRadius: '8px',
+              }}
+            >
+              <div className="spinner-border text-primary" role="status" style={{ width: '2.5rem', height: '2.5rem' }}>
+                <span className="visually-hidden">Đang tải...</span>
+              </div>
+            </div>
+          ) : null}
+          <ul
+            className="chapter-list storyqq-chapter-list"
+            style={{
+              opacity: chapterLoading ? 0.5 : 1,
+              pointerEvents: chapterLoading ? 'none' : 'auto',
+              transition: 'opacity 0.15s ease',
+            }}
+          >
+            {filteredChapters.map((chapter) => {
+              const chapterNumber = Number(chapter.chapter_number || 0);
+              const isRead = readChapterNumbers.has(chapterNumber);
+              const isLastRead = lastReadChapterNumber > 0 && chapterNumber === lastReadChapterNumber;
+              const isUnlocking = unlockingChapterId === chapter.id;
+              const linkClass = [
+                isLastRead ? 'chapter-link-last-read' : (isRead ? 'chapter-link-is-read' : ''),
+                isUnlocking ? 'chapter-link-unlocking' : '',
+              ].filter(Boolean).join(' ') || undefined;
 
-                return (
-                  <li key={chapter.id}>
-                    <Link
-                      to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
-                      className={isRead ? 'chapter-link-is-read' : ''}
-                      onClick={(event) => handleLockedChapterClick(event, chapter)}
-                    >
-                      <span>
-                        Ch.{chapter.chapter_number}: {chapter.title || `Chương ${chapter.chapter_number}`}
-                        {chapter.is_paid ? (
-                          <small className="ms-2">
-                            {chapter.can_read ? '🔓 Đã mở' : `🔒 ${chapter.unlock_cost || 2} Tinh thạch`}
-                          </small>
-                        ) : null}
-                      </span>
-                      <span className="text-muted small chapter-upload-date">
-                        {unlockingChapterId === chapter.id
-                          ? 'Đang mở khóa...'
-                          : formatChapterUploadDate(chapter.created_at)}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-              {filteredChapters.length === 0 ? (
-                <li className="storyqq-chapter-empty">
-                  Không tìm thấy chương phù hợp với “{chapterSearch.trim()}”.
+              return (
+                <li key={chapter.id}>
+                  <Link
+                    to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
+                    className={linkClass}
+                    onClick={(event) => handleLockedChapterClick(event, chapter)}
+                    aria-current={isLastRead ? 'true' : undefined}
+                    aria-disabled={isUnlocking ? 'true' : undefined}
+                  >
+                    <span>
+                      Ch.{chapter.chapter_number}: {chapter.title || `Chương ${chapter.chapter_number}`}
+                      {isLastRead ? (
+                        <small className="ms-2 chapter-link-last-read-badge">📖 Đang đọc</small>
+                      ) : null}
+                      {chapter.is_paid ? (
+                        <small className="ms-2">
+                          {chapter.can_read ? '🔓 Đã mở' : `🔒 ${chapter.unlock_cost || 2} Tinh thạch`}
+                        </small>
+                      ) : null}
+                    </span>
+                    <span className="text-muted small chapter-upload-date">
+                      {isUnlocking
+                        ? 'Đang mở khóa...'
+                        : formatChapterUploadDate(chapter.created_at)}
+                    </span>
+                  </Link>
                 </li>
-              ) : null}
-            </ul>
-        )}
+              );
+            })}
+            {filteredChapters.length === 0 ? (
+              <li className="storyqq-chapter-empty">
+                Không tìm thấy chương phù hợp với “{chapterSearch.trim()}”.
+                <button type="button" onClick={() => { setChapterSearch(''); setDebouncedSearch(''); }}>
+                  Xóa bộ lọc
+                </button>
+              </li>
+            ) : null}
+          </ul>
+        </div>
 
-        {!chapterSearch.trim() && !chapterLoading && chapterPagination.totalPages > 1 ? (
-          <div className="home-pagination mt-3 d-flex justify-content-center align-items-center gap-2">
+        {!chapterSearch.trim() && chapterPagination.totalPages > 1 ? (
+          <div
+            className="home-pagination mt-3 d-flex justify-content-center align-items-center gap-2"
+            role="navigation"
+            aria-label="Phân trang danh sách chương"
+            style={{
+              opacity: chapterLoading ? 0.6 : 1,
+              pointerEvents: chapterLoading ? 'none' : 'auto',
+              transition: 'opacity 0.15s ease',
+            }}
+          >
             <button
               type="button"
               className="btn-cmc btn-cmc-outline btn-cmc-sm"
-              disabled={chapterPage <= 1}
+              disabled={chapterPage <= 1 || chapterLoading}
               onClick={() => setChapterPage((p) => Math.max(p - 1, 1))}
+              aria-label={`Chuyển đến trang ${Math.max(chapterPage - 1, 1)}`}
             >
-              Trang trước
+              ‹ Trước
             </button>
             <span className="small text-muted fw-semibold px-2">
-              Trang {chapterPagination.page} / {chapterPagination.totalPages}
+              Trang{' '}
+              <input
+                type="number"
+                className="storyqq-chapter-pagination-jump"
+                min={1}
+                max={chapterPagination.totalPages}
+                value={chapterPage}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!Number.isNaN(val)) {
+                    setChapterPage(Math.max(1, Math.min(val, chapterPagination.totalPages)));
+                  }
+                }}
+                aria-label="Nhập số trang"
+                disabled={chapterLoading}
+              />
+              {' '}/ {chapterPagination.totalPages}
             </span>
             <button
               type="button"
               className="btn-cmc btn-cmc-outline btn-cmc-sm"
-              disabled={chapterPage >= chapterPagination.totalPages}
+              disabled={chapterPage >= chapterPagination.totalPages || chapterLoading}
               onClick={() => setChapterPage((p) => Math.min(p + 1, chapterPagination.totalPages))}
+              aria-label={`Chuyển đến trang ${Math.min(chapterPage + 1, chapterPagination.totalPages)}`}
             >
-              Trang sau
+              Sau ›
             </button>
           </div>
         ) : null}
