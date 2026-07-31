@@ -16,7 +16,7 @@ kích thước tệp là 25 MB.
 | 8 | Chưa đăng nhập | Không có `req.user` | HTTP `401`, không đọc/import tệp | Yêu cầu đăng nhập | HTTP `401`, không truy vấn truyện — **Đạt** |
 | 9 | Uploader không sở hữu/không cộng tác | User `99` upload vào truyện của user `7` | HTTP `403`, không tạo chương | Chặn truy cập trái phép | HTTP `403`, không tạo chương — **Đạt** |
 | 10 | Truyện chưa được Moderator duyệt | Truyện `pending`, `is_published: false` | HTTP `409`, không tạo chương | Chỉ cho import sau khi duyệt | HTTP `409`, không tạo chương — **Đạt** |
-| 11 | Database không chạy khi import | Tệp hợp lệ; DB báo `Database unavailable` | HTTP `500`, `success: false`, không báo thành công | Phản hồi lỗi hệ thống và không trả kết quả giả | HTTP `500`, message `Database unavailable` — **Đạt** |
+| 11 | Database không chạy khi import | Tệp hợp lệ; DB không khả dụng | HTTP `500`, `Hệ thống đang gặp sự cố. Vui lòng thử lại sau.` | Không trả kết quả giả hoặc lộ lỗi nội bộ | HTTP `500`, thông báo chung bằng tiếng Việt — **Đạt** |
 
 ## Cách chạy
 

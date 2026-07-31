@@ -6,6 +6,7 @@ const morgan = require('morgan');
 
 const env = require('./config/environment');
 const { uploadDir } = require('./middleware/upload');
+const { localizeErrorResponse } = require('./middleware/localizeErrorResponse');
 const { loadModerationData } = require('./services/moderationService');
 
 // Import tất cả các router
@@ -54,6 +55,7 @@ app.use(
 app.use(morgan(env.isDevelopment ? 'dev' : 'combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(localizeErrorResponse);
 
 // Static files
 app.use('/uploads/covers', express.static(uploadDir));

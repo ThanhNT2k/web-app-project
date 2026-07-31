@@ -176,7 +176,7 @@ test('login shows an API error and stays on the page for wrong credentials', asy
   await page.locator('main form button[type="submit"]').click();
 
   await expect(page).toHaveURL('/login');
-  await expect(page.getByText('Invalid credentials')).toBeVisible();
+  await expect(page.getByText('Email hoặc mật khẩu không chính xác.')).toBeVisible();
   await expect(page.locator('main form button[type="submit"]')).toBeEnabled();
 });
 

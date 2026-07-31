@@ -5,6 +5,7 @@ import GoogleLoginButton from '../components/GoogleLoginButton';
 import PasswordChecklist from '../components/PasswordChecklist';
 import PasswordInput from '../components/PasswordInput';
 import { useAuth } from '../contexts/AuthContext';
+import { getApiErrorMessage } from '../utils/apiError';
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ function RegisterPage() {
       await register(username, email, password, fullName);
       navigate('/');
     } catch (registerError) {
-      setError(registerError?.response?.data?.message || registerError.message || 'Đăng ký thất bại.');
+      setError(getApiErrorMessage(registerError, 'Đăng ký thất bại.'));
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ function RegisterPage() {
         navigate('/');
       }
     } catch (err) {
-      setError(err?.response?.data?.message || 'Đăng nhập Google thất bại.');
+      setError(getApiErrorMessage(err, 'Đăng nhập Google thất bại.'));
     } finally {
       setLoading(false);
     }

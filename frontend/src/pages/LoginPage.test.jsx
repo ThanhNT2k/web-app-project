@@ -88,7 +88,7 @@ describe('LoginPage', () => {
       target: { value: 'wrong' },
     });
     fireEvent.submit(document.querySelector('form'));
-    expect(await screen.findByText('Invalid credentials')).toHaveClass('alert-danger');
+    expect(await screen.findByText('Email hoặc mật khẩu không chính xác.')).toHaveClass('alert-danger');
     expect(document.querySelector('button[type="submit"]')).toBeEnabled();
   });
 });
