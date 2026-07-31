@@ -397,9 +397,9 @@ function ChapterReaderPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isAuthenticated, chapter]);
 
-  const chapterIndex = useMemo(
-    () => chapters.findIndex((c) => String(c.id) === String(chapter?.id)),
-    [chapters, chapter]
+  const currentChapterNum = useMemo(
+    () => Number(chapter?.chapter_number || lockedChapter?.chapter_number || chapterNumber || 1),
+    [chapter, lockedChapter, chapterNumber]
   );
 
   const goToChapter = (targetChapterNumber) => {
@@ -431,23 +431,13 @@ function ChapterReaderPage() {
   };
 
   const handlePrevious = () => {
-    if (chapterIndex > 0) {
-      requestChapterNavigation(chapters[chapterIndex - 1]);
-      return;
-    }
-    const num = Number(chapter?.chapter_number || 1);
-    if (num > 1) {
-      goToChapter(num - 1);
+    if (currentChapterNum > 1) {
+      goToChapter(currentChapterNum - 1);
     }
   };
 
   const handleNext = () => {
-    if (chapterIndex >= 0 && chapterIndex < chapters.length - 1) {
-      requestChapterNavigation(chapters[chapterIndex + 1]);
-      return;
-    }
-    const num = Number(chapter?.chapter_number || 1);
-    goToChapter(num + 1);
+    goToChapter(currentChapterNum + 1);
   };
 
   const handleChapterSelect = (chapterId) => {
@@ -492,7 +482,7 @@ function ChapterReaderPage() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [chapterIndex, chapters, chapter, autoUnlockNext, unlocking]);
+  }, [currentChapterNum, handlePrevious, handleNext]);
 
   if (loading) {
     return (

@@ -52,21 +52,24 @@ function StoryReader({
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
+  const currentChapterNum = useMemo(
+    () => Number(chapter?.chapter_number || lockedChapter?.chapter_number || 1),
+    [chapter, lockedChapter]
+  );
+
   const hasPrevious = useMemo(() => {
-    if (!chapter || chapters.length === 0) {
-      return Number(chapter?.chapter_number) > 1;
-    }
-    const idx = chapters.findIndex((c) => Number(c.id) === Number(chapter.id));
-    return idx > 0;
-  }, [chapter, chapters]);
+    return currentChapterNum > 1;
+  }, [currentChapterNum]);
 
   const hasNext = useMemo(() => {
-    if (!chapter || chapters.length === 0) {
-      return true;
+    if (chapters.length > 0) {
+      const maxChapterNum = Math.max(...chapters.map((c) => Number(c.chapter_number || 0)));
+      if (maxChapterNum > 0 && currentChapterNum >= maxChapterNum) {
+        return false;
+      }
     }
-    const idx = chapters.findIndex((c) => Number(c.id) === Number(chapter.id));
-    return idx >= 0 && idx < chapters.length - 1;
-  }, [chapter, chapters]);
+    return true;
+  }, [currentChapterNum, chapters]);
 
 
   useEffect(() => {
