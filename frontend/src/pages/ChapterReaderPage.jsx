@@ -510,28 +510,40 @@ function ChapterReaderPage() {
   }
 
   if (!chapter && lockedChapter) {
+    const fallbackPreviewChapter = {
+      id: lockedChapter.chapter_id || lockedChapter.id,
+      story_id: lockedChapter.story_id,
+      chapter_number: lockedChapter.chapter_number,
+      title: lockedChapter.title,
+      content: lockedChapter.content || 'Nội dung chương này đang bị khóa. Dùng Tinh thạch để mở khóa toàn bộ nội dung.',
+      story_title: lockedChapter.story_title,
+      story_slug: lockedChapter.story_slug,
+      is_paid: true,
+      can_read: false,
+      is_preview: true,
+    };
     return (
-      <main className="cmc-main">
-        <section className="panel-card mx-auto p-4 p-md-5 text-center" style={{ maxWidth: '720px' }}>
-          <h2>Chương {lockedChapter.chapter_number} đang bị khóa</h2>
-          <p>{lockedChapter.title || 'Mở khóa chương để tiếp tục đọc.'}</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-            <span style={{ fontWeight: '500' }}>Chi phí: {lockedChapter.unlock_cost || 2}</span>
-            <span className="nav-crystal-balance" title="Số dư Tinh thạch">
-              <FontAwesomeIcon icon={faGem} />
-              <strong>{Number(user?.crystal_balance ?? lockedChapter.crystal_balance ?? 0)}</strong>
-            </span>
-          </div>
-          {unlockError ? <div className="alert-cmc alert-cmc-warning mb-3">{unlockError}</div> : null}
-          <button
-            type="button"
-            className="btn-cmc btn-cmc-primary"
-            disabled={unlocking}
-            onClick={() => unlockAndGo(lockedChapter)}
-          >
-            {unlocking ? 'Đang mở khóa...' : `Mở khóa với ${lockedChapter.unlock_cost || 2} Tinh thạch`}
-          </button>
-        </section>
+      <main className="cmc-main px-0 px-md-3">
+        <StoryReader
+          chapter={fallbackPreviewChapter}
+          chapters={chapters}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onChapterSelect={handleChapterSelect}
+          autoUnlockNext={autoUnlockNext}
+          onAutoUnlockChange={handleAutoUnlockChange}
+          navigationBusy={unlocking}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          lineSpacing={lineSpacing}
+          setLineSpacing={setLineSpacing}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
+          lockedChapter={lockedChapter}
+          unlocking={unlocking}
+          unlockError={unlockError}
+          onUnlock={() => unlockAndGo(lockedChapter)}
+        />
       </main>
     );
   }
