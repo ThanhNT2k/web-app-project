@@ -524,7 +524,7 @@ function StoryDetailPage() {
             <label className="storyqq-chapter-search">
               <span className="visually-hidden">Tìm kiếm chương</span>
               <input
-                type="search"
+                type="text"
                 value={chapterSearch}
                 onChange={(e) => setChapterSearch(e.target.value)}
                 placeholder="Tìm số hoặc tên chương..."
@@ -591,7 +591,7 @@ function StoryDetailPage() {
                   <Link
                     to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
                     className={linkClass}
-                    onClick={(event) => { saveScrollPosition(); handleLockedChapterClick(event, chapter); }}
+                    onClick={() => saveScrollPosition()}
                     aria-current={isLastRead ? 'true' : undefined}
                     aria-disabled={isUnlocking ? 'true' : undefined}
                   >

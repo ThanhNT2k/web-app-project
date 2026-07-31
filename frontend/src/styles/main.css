@@ -6807,3 +6807,237 @@ body {
   border-color: var(--primary-color, #2563eb);
   box-shadow: 0 3px 12px color-mix(in srgb, var(--primary-color, #2563eb) 35%, transparent);
 }
+
+/* Remove WebKit search input cancel button duplicate */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration,
+.storyqq-chapter-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none !important;
+}
+
+/* Chapter Preview & Unlock Card Styling */
+.chapter-preview-container {
+  position: relative;
+}
+
+.chapter-preview-fade {
+  position: relative;
+  max-height: 460px;
+  overflow: hidden;
+}
+
+.chapter-preview-fade::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 220px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--surface, #ffffff) 100%);
+  pointer-events: none;
+}
+
+[data-theme='dark'] .chapter-preview-fade::after {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, var(--surface, #0f172a) 100%);
+}
+
+.chapter-unlock-card {
+  width: 100%;
+  max-width: 580px;
+  margin: 1.5rem auto 3rem;
+  padding: 2.25rem 2rem;
+  text-align: center;
+  border-radius: 20px;
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.07);
+  transition: all 0.25s ease;
+}
+
+[data-theme='dark'] .chapter-unlock-card {
+  background: var(--surface, #0f172a);
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.chapter-unlock-card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: #7c2d12;
+  background: #ffedd5;
+  border: 1.5px solid #f97316;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.2);
+}
+
+[data-theme='dark'] .chapter-unlock-card-icon {
+  color: #eab308 !important;
+  background: rgba(42, 29, 15, 0.85) !important;
+  border: 1.5px solid #a16207 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+.chapter-unlock-card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+[data-theme='dark'] .chapter-unlock-card-title {
+  color: #f8fafc !important;
+}
+
+.chapter-unlock-card-desc {
+  font-size: 0.95rem;
+  color: #334155;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.chapter-unlock-card-desc strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+[data-theme='dark'] .chapter-unlock-card-desc {
+  color: #cbd5e1 !important;
+}
+
+[data-theme='dark'] .chapter-unlock-card-desc strong {
+  color: #f8fafc !important;
+  font-weight: 700;
+}
+
+.chapter-unlock-balance-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.35rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7c2d12;
+  background: #ffedd5;
+  border: 1.5px solid #f97316;
+  margin-bottom: 1.75rem;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25);
+}
+
+.chapter-unlock-balance-pill strong,
+.chapter-unlock-balance-pill span {
+  color: inherit;
+}
+
+[data-theme='dark'] .chapter-unlock-balance-pill {
+  color: #eab308 !important;
+  background: rgba(42, 29, 15, 0.85) !important;
+  border: 1.5px solid #a16207 !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme='dark'] .chapter-unlock-balance-pill strong,
+[data-theme='dark'] .chapter-unlock-balance-pill span {
+  color: #eab308 !important;
+}
+
+.chapter-unlock-gem-icon {
+  color: inherit;
+  margin-right: 6px;
+}
+
+[data-theme='dark'] .chapter-unlock-gem-icon {
+  color: #eab308 !important;
+}
+
+.chapter-unlock-divider {
+  display: inline-block;
+  width: 1.5px;
+  height: 14px;
+  background: #f97316;
+  margin: 0 0.35rem;
+  opacity: 0.6;
+}
+
+[data-theme='dark'] .chapter-unlock-divider {
+  background: #a16207;
+  opacity: 0.8;
+}
+
+.chapter-unlock-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.chapter-unlock-primary-btn {
+  width: 100%;
+  max-width: 380px;
+  padding: 0.85rem 1.5rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: none;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chapter-unlock-primary-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+}
+
+.chapter-unlock-secondary-link {
+  font-size: 0.88rem;
+  color: var(--primary-color, #4f46e5);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Mobile & Tablet Responsive Adjustments */
+@media (max-width: 576px) {
+  .chapter-unlock-card {
+    padding: 1.5rem 1.15rem;
+    margin: 1.25rem auto 2.25rem;
+    border-radius: 16px;
+  }
+  .chapter-unlock-card-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 1.45rem;
+    margin-bottom: 1rem;
+  }
+  .chapter-unlock-card-title {
+    font-size: 1.15rem;
+  }
+  .chapter-unlock-card-desc {
+    font-size: 0.88rem;
+    margin-bottom: 1.25rem;
+  }
+  .chapter-unlock-balance-pill {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.82rem;
+    width: 100%;
+    margin-bottom: 1.35rem;
+  }
+  .chapter-unlock-primary-btn {
+    max-width: 100%;
+    padding: 0.78rem 1.2rem;
+    font-size: 0.95rem;
+  }
+}

@@ -20,6 +20,10 @@ async function getChapterAccess(user, chapter) {
 }
 
 function lockedChapterResponse(chapter, crystalBalance = null) {
+  const fullContent = chapter?.content || '';
+  const lines = fullContent.split('\n').map((l) => l.trim()).filter(Boolean);
+  const previewText = lines.length > 0 ? lines.slice(0, 4).join('\n\n') : fullContent.slice(0, 300);
+
   return {
     success: false,
     code: 'CHAPTER_LOCKED',
@@ -29,10 +33,13 @@ function lockedChapterResponse(chapter, crystalBalance = null) {
       story_id: chapter.story_id,
       chapter_number: chapter.chapter_number,
       title: chapter.title,
+      content: previewText,
       story_title: chapter.story_title,
       story_slug: chapter.story_slug,
       unlock_cost: Wallet.UNLOCK_COST,
       crystal_balance: crystalBalance,
+      is_paid: true,
+      can_read: false,
     },
   };
 }

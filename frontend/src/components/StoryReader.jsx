@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon, faArrowLeft, faArrowRight, faCircleInfo } from '../lib/icons';
+import { Link, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon, faArrowLeft, faArrowRight, faCircleInfo, faLock, faGem } from '../lib/icons';
+import { useAuth } from '../contexts/AuthContext';
 
 const FONT_FAMILIES = [
   { value: 'Inter, sans-serif', label: 'Inter' },
@@ -43,23 +44,32 @@ function StoryReader({
   autoUnlockNext,
   onAutoUnlockChange,
   navigationBusy = false,
+  lockedChapter,
+  unlocking = false,
+  unlockError = '',
+  onUnlock,
 }) {
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+
+  const currentChapterNum = useMemo(
+    () => Number(chapter?.chapter_number || lockedChapter?.chapter_number || 1),
+    [chapter, lockedChapter]
+  );
 
   const hasPrevious = useMemo(() => {
-    if (!chapter || chapters.length === 0) {
-      return Number(chapter?.chapter_number) > 1;
-    }
-    const idx = chapters.findIndex((c) => Number(c.id) === Number(chapter.id));
-    return idx > 0;
-  }, [chapter, chapters]);
+    return currentChapterNum > 1;
+  }, [currentChapterNum]);
 
   const hasNext = useMemo(() => {
-    if (!chapter || chapters.length === 0) {
-      return true;
+    if (chapters.length > 0) {
+      const maxChapterNum = Math.max(...chapters.map((c) => Number(c.chapter_number || 0)));
+      if (maxChapterNum > 0 && currentChapterNum >= maxChapterNum) {
+        return false;
+      }
     }
-    const idx = chapters.findIndex((c) => Number(c.id) === Number(chapter.id));
-    return idx >= 0 && idx < chapters.length - 1;
-  }, [chapter, chapters]);
+    return true;
+  }, [currentChapterNum, chapters]);
 
 
   useEffect(() => {
@@ -192,8 +202,8 @@ function StoryReader({
         </select>
       </div>
 
-      <div className="reader-content-card panel-card mb-5">
-        <div className="reader-content-body p-3 p-sm-4 p-lg-5">
+      <div className="reader-content-card panel-card mb-4">
+        <div className={`reader-content-body p-3 p-sm-4 p-lg-5 ${chapter?.is_preview || lockedChapter ? 'chapter-preview-fade' : ''}`}>
           <div
             className="chapter-content reader-content"
             style={{
@@ -206,6 +216,56 @@ function StoryReader({
           </div>
         </div>
       </div>
+
+      {(lockedChapter || chapter?.is_preview) ? (
+        <div className="chapter-unlock-card">
+          <div className="chapter-unlock-card-icon">
+            <FontAwesomeIcon icon={faLock} />
+          </div>
+          <h3 className="chapter-unlock-card-title">Mở khóa ngay để đọc tiếp</h3>
+          <p className="chapter-unlock-card-desc">
+            <strong>Chương {lockedChapter?.chapter_number || chapter?.chapter_number}</strong> là chương trả phí.
+            Dùng Tinh thạch để mở khóa toàn bộ nội dung chương này.
+          </p>
+          <div className="chapter-unlock-balance-pill">
+            <span>
+              <FontAwesomeIcon icon={faGem} className="chapter-unlock-gem-icon" />
+              Giá: <strong>{lockedChapter?.unlock_cost || 2} Tinh thạch</strong>
+            </span>
+            <span className="chapter-unlock-divider" />
+            <span>Số dư của bạn: <strong>{Number(user?.crystal_balance ?? lockedChapter?.crystal_balance ?? 0)} Tinh thạch</strong></span>
+          </div>
+
+          {unlockError ? <div className="alert-cmc alert-cmc-warning mb-3">{unlockError}</div> : null}
+
+          <div className="chapter-unlock-btn-group">
+            <button
+              type="button"
+              className="chapter-unlock-primary-btn"
+              disabled={unlocking}
+              onClick={onUnlock}
+            >
+              {unlocking ? 'Đang mở khóa...' : 'Mở khóa chương'}
+            </button>
+
+            {!isAuthenticated ? (
+              <span
+                className="chapter-unlock-secondary-link"
+                onClick={() => navigate('/login')}
+              >
+                Đăng nhập để xem số dư và mở khóa
+              </span>
+            ) : Number(user?.crystal_balance ?? 0) < (lockedChapter?.unlock_cost || 2) ? (
+              <span
+                className="chapter-unlock-secondary-link text-danger"
+                onClick={() => navigate('/user-profile')}
+              >
+                Bạn không đủ Tinh thạch. Nạp Tinh thạch ngay →
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <div className="reader-nav-actions d-flex justify-content-center gap-2 mb-5">
         <button className="btn reader-nav-button px-4 py-2" onClick={onPrevious} disabled={!hasPrevious}><FontAwesomeIcon icon={faArrowLeft} /> Chap trước</button>

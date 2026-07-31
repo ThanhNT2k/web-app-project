@@ -110,6 +110,62 @@ function ChapterReaderPage() {
     hasInitialRestoreRef.current = false;    
   }, [chapterNumber]);
 
+  const loadChapterData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const chapterResponse = await API.chapters.getBySlugAndNumber(storySlug, chapterNumber);
+      const resolvedChapter = chapterResponse.chapter || chapterResponse;
+      setChapter(resolvedChapter);
+      setLockedChapter(null);
+
+      // Fetch all chapters for the dropdown (use story_total_chapters or a large limit)
+      const totalChapters = resolvedChapter.story_total_chapters || 100;
+      const limit = Math.max(totalChapters, 10); // At least 10, up to total
+      const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, limit);
+      setChapters(chaptersResponse.chapters || []);
+    } catch (err) {
+      if (err?.response?.data?.code === 'CHAPTER_LOCKED') {
+        const locked = err.response.data.data;
+        const previewChapter = {
+          id: locked.chapter_id,
+          story_id: locked.story_id,
+          chapter_number: locked.chapter_number,
+          title: locked.title,
+          content: locked.content || 'Nội dung chương này đang bị khóa...',
+          story_title: locked.story_title,
+          story_slug: locked.story_slug,
+          is_paid: true,
+          can_read: false,
+          is_preview: true,
+        };
+        setChapter(previewChapter);
+        setLockedChapter(locked);
+        try {
+          const response = await API.chapters.getByStory(locked.story_id, 1, 1000);
+          setChapters(response.chapters || []);
+        } catch {
+          setChapters([]);
+        }
+        setError('');
+        return;
+      }
+      setChapter(null);
+      setLockedChapter(null);
+      setChapters([]);
+      if (err?.response?.status === 404) {
+        setError('Chương truyện không tồn tại hoặc đã bị ẩn.');
+      } else {
+        setError('Không tải được chương từ máy chủ.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [storySlug, chapterNumber]);
+
+  useEffect(() => {
+    loadChapterData();
+  }, [loadChapterData]);
   const [storyProgress, setStoryProgress] = useState(null);
 
   useEffect(() => {
@@ -341,9 +397,9 @@ function ChapterReaderPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isAuthenticated, chapter]);
 
-  const chapterIndex = useMemo(
-    () => chapters.findIndex((c) => String(c.id) === String(chapter?.id)),
-    [chapters, chapter]
+  const currentChapterNum = useMemo(
+    () => Number(chapter?.chapter_number || lockedChapter?.chapter_number || chapterNumber || 1),
+    [chapter, lockedChapter, chapterNumber]
   );
 
   const goToChapter = (targetChapterNumber) => {
@@ -351,58 +407,60 @@ function ChapterReaderPage() {
   };
 
   const unlockAndGo = async (target) => {
-    if (!target) return;
+    const chapterIdToUnlock = lockedChapter?.chapter_id || chapter?.id || target?.chapter_id || target?.id;
+    if (!chapterIdToUnlock) {
+      setUnlockError('Không tìm thấy ID chương để mở khóa.');
+      return;
+    }
+
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+
     try {
       setUnlocking(true);
       setUnlockError('');
-      const response = await API.chapters.unlock(target.id || target.chapter_id);
-      setCrystalBalance(response.crystal_balance);
-      goToChapter(target.chapter_number);
+      const response = await API.chapters.unlock(chapterIdToUnlock);
+      if (response?.crystal_balance !== undefined && typeof setCrystalBalance === 'function') {
+        setCrystalBalance(response.crystal_balance);
+      }
+
+      // Mở khóa thành công -> Tự động nạp lại trang (F5) lập tức để hiển thị full truyện!
+      window.location.reload();
     } catch (err) {
+      console.error('[unlockAndGo error]', err?.response?.data || err);
+      const errCode = err?.response?.data?.code;
+      if (errCode === 'CHAPTER_ALREADY_UNLOCKED' || errCode === 'CHAPTER_ALREADY_FREE') {
+        window.location.reload();
+        return;
+      }
       setUnlockError(err?.response?.data?.message || 'Không thể mở khóa chương.');
     } finally {
       setUnlocking(false);
     }
   };
 
-  const requestChapterNavigation = (target, allowAutoUnlock = false) => {
+  const requestChapterNavigation = (target) => {
     if (!target) return;
-    if (target.can_read !== false) {
-      goToChapter(target.chapter_number);
-    } else if (allowAutoUnlock && autoUnlockNext) {
-      unlockAndGo(target);
-    } else {
-      setLockedChapter({ ...target, unlock_cost: target.unlock_cost || 2 });
-    }
+    goToChapter(target.chapter_number);
   };
 
   const handlePrevious = () => {
-    if (chapterIndex > 0) {
-      requestChapterNavigation(chapters[chapterIndex - 1]);
-      return;
-    }
-    const num = Number(chapter?.chapter_number || 1);
-    if (num > 1) {
-      goToChapter(num - 1);
+    if (currentChapterNum > 1) {
+      goToChapter(currentChapterNum - 1);
     }
   };
 
   const handleNext = () => {
-    if (chapterIndex >= 0 && chapterIndex < chapters.length - 1) {
-      requestChapterNavigation(chapters[chapterIndex + 1], true);
-    }
+    goToChapter(currentChapterNum + 1);
   };
 
   const handleChapterSelect = (chapterId) => {
     const target = chapters.find((item) => String(item.id) === String(chapterId));
-    requestChapterNavigation(
-      target,
-      Number(target?.chapter_number) > Number(chapter?.chapter_number || 0)
-    );
+    if (target) {
+      goToChapter(target.chapter_number);
+    }
   };
 
   const handleAutoUnlockChange = async (enabled) => {
@@ -440,7 +498,7 @@ function ChapterReaderPage() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [chapterIndex, chapters, chapter, autoUnlockNext, unlocking]);
+  }, [currentChapterNum, handlePrevious, handleNext]);
 
   if (loading) {
     return (
@@ -458,28 +516,40 @@ function ChapterReaderPage() {
   }
 
   if (!chapter && lockedChapter) {
+    const fallbackPreviewChapter = {
+      id: lockedChapter.chapter_id || lockedChapter.id,
+      story_id: lockedChapter.story_id,
+      chapter_number: lockedChapter.chapter_number,
+      title: lockedChapter.title,
+      content: lockedChapter.content || 'Nội dung chương này đang bị khóa. Dùng Tinh thạch để mở khóa toàn bộ nội dung.',
+      story_title: lockedChapter.story_title,
+      story_slug: lockedChapter.story_slug,
+      is_paid: true,
+      can_read: false,
+      is_preview: true,
+    };
     return (
-      <main className="cmc-main">
-        <section className="panel-card mx-auto p-4 p-md-5 text-center" style={{ maxWidth: '720px' }}>
-          <h2>Chương {lockedChapter.chapter_number} đang bị khóa</h2>
-          <p>{lockedChapter.title || 'Mở khóa chương để tiếp tục đọc.'}</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-            <span style={{ fontWeight: '500' }}>Chi phí: {lockedChapter.unlock_cost || 2}</span>
-            <span className="nav-crystal-balance" title="Số dư Tinh thạch">
-              <FontAwesomeIcon icon={faGem} />
-              <strong>{Number(user?.crystal_balance ?? lockedChapter.crystal_balance ?? 0)}</strong>
-            </span>
-          </div>
-          {unlockError ? <div className="alert-cmc alert-cmc-warning mb-3">{unlockError}</div> : null}
-          <button
-            type="button"
-            className="btn-cmc btn-cmc-primary"
-            disabled={unlocking}
-            onClick={() => unlockAndGo(lockedChapter)}
-          >
-            {unlocking ? 'Đang mở khóa...' : `Mở khóa với ${lockedChapter.unlock_cost || 2} Tinh thạch`}
-          </button>
-        </section>
+      <main className="cmc-main px-0 px-md-3">
+        <StoryReader
+          chapter={fallbackPreviewChapter}
+          chapters={chapters}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onChapterSelect={handleChapterSelect}
+          autoUnlockNext={autoUnlockNext}
+          onAutoUnlockChange={handleAutoUnlockChange}
+          navigationBusy={unlocking}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          lineSpacing={lineSpacing}
+          setLineSpacing={setLineSpacing}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
+          lockedChapter={lockedChapter}
+          unlocking={unlocking}
+          unlockError={unlockError}
+          onUnlock={() => unlockAndGo(lockedChapter)}
+        />
       </main>
     );
   }
@@ -517,29 +587,6 @@ function ChapterReaderPage() {
       {error ? <div className="alert-cmc alert-cmc-warning">{error}</div> : null}
       {unlockError ? <div className="alert-cmc alert-cmc-warning">{unlockError}</div> : null}
 
-      {lockedChapter && chapter ? (
-        <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Mở khóa chương">
-          <div className="modal-content">
-            <button type="button" className="close-modal" onClick={() => setLockedChapter(null)}>&times;</button>
-            <h2>Mở khóa chương {lockedChapter.chapter_number}</h2>
-            <p>{lockedChapter.title || 'Chương trả phí'}</p>
-            <p>
-              Giá: <strong>{lockedChapter.unlock_cost || 2} Tinh thạch</strong><br />
-              Số dư hiện tại: {Number(user?.crystal_balance || 0)}<br />
-              Số dư sau mở khóa: {Number(user?.crystal_balance || 0) - (lockedChapter.unlock_cost || 2)}
-            </p>
-            <button
-              type="button"
-              className="btn-cmc btn-cmc-primary"
-              disabled={unlocking}
-              onClick={() => unlockAndGo(lockedChapter)}
-            >
-              {unlocking ? 'Đang mở khóa...' : `Mở khóa với ${lockedChapter.unlock_cost || 2} Tinh thạch`}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       <StoryReader
         chapter={chapter}
         chapters={chapters}
@@ -555,6 +602,10 @@ function ChapterReaderPage() {
         setLineSpacing={setLineSpacing}
         fontFamily={fontFamily}
         setFontFamily={setFontFamily}
+        lockedChapter={lockedChapter}
+        unlocking={unlocking}
+        unlockError={unlockError}
+        onUnlock={() => unlockAndGo(lockedChapter)}
       />
 
       {/* --- PHỤC HỒI BẢNG CHỌN CHƯƠNG NHANH CÓ CĂN GIỮA --- */}
