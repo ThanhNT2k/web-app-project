@@ -3519,8 +3519,16 @@ kbd {
 }
 
 [data-theme='dark'] .google-profile-preview {
-  background: rgba(91, 141, 239, 0.08);
-  border-color: rgba(91, 141, 239, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='dark'] .google-profile-preview__name {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .google-profile-preview__email {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .google-profile-preview__avatar {
