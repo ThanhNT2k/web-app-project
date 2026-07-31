@@ -15,3 +15,22 @@ playwright-report/
 # Scratch / analysis files
 commits_grouped.json
 /supabase/
+
+# LaTeX temporary files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+*.synctex.gz
+*.synctex(busy)
+*.pdfsync
+*.fdb_latexmk
+docs/bao-cao/main.pdf

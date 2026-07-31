@@ -20,7 +20,7 @@ import {
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80';
 
-const CHAPTERS_SCROLL_LIMIT = 1000;
+const CHAPTERS_PER_PAGE = 10;
 
 function StoryDetailSkeleton() {
   return (
@@ -91,6 +91,7 @@ function StoryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [chapterLoading, setChapterLoading] = useState(false);
   const [error, setError] = useState('');
+  const [chapterPage, setChapterPage] = useState(1);
   const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
   const [sortOrder, setSortOrder] = useState('desc');
   const [chapterSearch, setChapterSearch] = useState('');
@@ -134,13 +135,16 @@ function StoryDetailPage() {
     }
   }, [story, slug, navigate]);
 
-  // Load chapter metadata for the in-list vertical scroller.
+  // Load chapter metadata with pagination or full search across all chapters
   useEffect(() => {
     if (!story?.id) return;
     const fetchChapters = async () => {
       try {
         setChapterLoading(true);
-        const chaptersResponse = await API.chapters.getByStory(story.id, 1, CHAPTERS_SCROLL_LIMIT, sortOrder);
+        const isSearchingChapter = Boolean(chapterSearch.trim());
+        const pageToFetch = isSearchingChapter ? 1 : chapterPage;
+        const limitToFetch = isSearchingChapter ? 1000 : CHAPTERS_PER_PAGE;
+        const chaptersResponse = await API.chapters.getByStory(story.id, pageToFetch, limitToFetch, sortOrder);
         setChapters(chaptersResponse.chapters || []);
         setChapterPagination(chaptersResponse.pagination || { page: 1, totalPages: 1, totalItems: 0 });
       } catch {
@@ -153,7 +157,7 @@ function StoryDetailPage() {
       }
     };
     fetchChapters();
-  }, [story?.id, sortOrder]);
+  }, [story?.id, chapterPage, sortOrder, chapterSearch]);
 
   useEffect(() => {
     if (!isAuthenticated || !story?.id) {
@@ -512,6 +516,30 @@ function StoryDetailPage() {
               ) : null}
             </ul>
         )}
+
+        {!chapterSearch.trim() && !chapterLoading && chapterPagination.totalPages > 1 ? (
+          <div className="home-pagination mt-3 d-flex justify-content-center align-items-center gap-2">
+            <button
+              type="button"
+              className="btn-cmc btn-cmc-outline btn-cmc-sm"
+              disabled={chapterPage <= 1}
+              onClick={() => setChapterPage((p) => Math.max(p - 1, 1))}
+            >
+              Trang trước
+            </button>
+            <span className="small text-muted fw-semibold px-2">
+              Trang {chapterPagination.page} / {chapterPagination.totalPages}
+            </span>
+            <button
+              type="button"
+              className="btn-cmc btn-cmc-outline btn-cmc-sm"
+              disabled={chapterPage >= chapterPagination.totalPages}
+              onClick={() => setChapterPage((p) => Math.min(p + 1, chapterPagination.totalPages))}
+            >
+              Trang sau
+            </button>
+          </div>
+        ) : null}
         </section>
 
         <section className="mt-4 storyqq-panel-stack">

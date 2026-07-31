@@ -61,6 +61,15 @@ function SectionHeading({ eyebrow, title, icon, action }) {
   );
 }
 
+const HOT_GENRES = [
+  { slug: 'Tien Hiep', label: 'Tiên Hiệp', icon: '⚔️' },
+  { slug: 'Huyen Huyen', label: 'Huyền Huyễn', icon: '✨' },
+  { slug: 'Do Thi', label: 'Đô Thị', icon: '🏙️' },
+  { slug: 'Ngon Tinh', label: 'Ngôn Tình', icon: '💕' },
+  { slug: 'Kiem Hiep', label: 'Kiếm Hiệp', icon: '🗡️' },
+  { slug: 'Lich Su', label: 'Lịch Sử', icon: '📜' },
+];
+
 function HomePage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -68,6 +77,7 @@ function HomePage() {
   const [stories, setStories] = useState([]);
   const [featuredStories, setFeaturedStories] = useState([]);
   const [recentStories, setRecentStories] = useState([]);
+  const [selectedHotGenre, setSelectedHotGenre] = useState('Tien Hiep');
 
   const [loading, setLoading] = useState(true);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
@@ -86,6 +96,24 @@ function HomePage() {
     () => Boolean(query.trim() || (category && category !== 'all')),
     [query, category]
   );
+
+  const hotGenreStories = useMemo(() => {
+    const allAvailable = [...featuredStories, ...recentStories, ...stories];
+    const uniqueMap = new Map();
+    allAvailable.forEach((s) => uniqueMap.set(s.id, s));
+    const uniqueStories = Array.from(uniqueMap.values());
+
+    const targetGenre = HOT_GENRES.find((g) => g.slug === selectedHotGenre);
+    if (!targetGenre) return uniqueStories.slice(0, 6);
+
+    const filtered = uniqueStories.filter((s) => {
+      const catMatch = s.category && s.category.toLowerCase().includes(targetGenre.label.toLowerCase());
+      const tagMatch = s.tags && s.tags.some((t) => t.name.toLowerCase().includes(targetGenre.label.toLowerCase()));
+      return catMatch || tagMatch;
+    });
+
+    return filtered.length > 0 ? filtered.slice(0, 6) : uniqueStories.slice(0, 6);
+  }, [featuredStories, recentStories, stories, selectedHotGenre]);
 
   const heroStories = useMemo(() => {
     if (!isSearching && featuredStories.length > 0) return featuredStories;
@@ -252,6 +280,45 @@ function HomePage() {
                 <div>
                   <h3>Chưa có truyện nổi bật</h3>
                   <p>Danh sách sẽ được cập nhật khi có thêm dữ liệu đọc và theo dõi.</p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {!isSearching && (
+          <section className="home-section hot-genres-section">
+            <SectionHeading
+              eyebrow="Xu hướng tìm kiếm"
+              title="🔥 Thể Loại Hot"
+              action={<Link to="/tim-truyen" className="section-action-link">Tất cả thể loại</Link>}
+            />
+            <div className="hot-genres-tabs">
+              {HOT_GENRES.map((g) => (
+                <button
+                  key={g.slug}
+                  type="button"
+                  className={`hot-genre-chip ${selectedHotGenre === g.slug ? 'is-active' : ''}`}
+                  onClick={() => setSelectedHotGenre(g.slug)}
+                >
+                  <span className="hot-genre-icon">{g.icon}</span>
+                  <span>{g.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {hotGenreStories.length > 0 ? (
+              <div className="stories-grid">
+                {hotGenreStories.map((story) => (
+                  <StoryCard key={`hot-genre-${story.id}`} story={story} compact />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state-card compact">
+                <IconBadge icon={faBookOpen} size="md" tone="primary" />
+                <div>
+                  <h3>Đang cập nhật truyện thuộc thể loại này</h3>
+                  <p>Hãy khám phá các thể loại hot khác hoặc xem toàn bộ thư viện truyện.</p>
                 </div>
               </div>
             )}

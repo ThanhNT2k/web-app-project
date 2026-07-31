@@ -49,3 +49,21 @@ body.dark-mode {
 [data-theme='dark'] .navbar.cmc-navbar {
   background: var(--navbar-bg) !important;
 }
+
+[data-theme='dark'] .nav-crystal-balance {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+[data-theme='dark'] .hot-genre-chip {
+  color: var(--text-secondary, #cbd5e1);
+  background: var(--surface, #1e293b);
+  border-color: var(--border, #334155);
+}
+
+[data-theme='dark'] .hot-genre-chip.is-active {
+  color: #ffffff;
+  background: var(--primary-color, #2563eb);
+  border-color: var(--primary-color, #2563eb);
+}

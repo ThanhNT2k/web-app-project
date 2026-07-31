@@ -9,6 +9,7 @@ async function getChapterAccess(user, chapter) {
   }
   if (
     user.role === 'Admin'
+    || user.role === 'Uploader'
     || Number(user.id) === Number(chapter.story_author_id)
     || await StoryCollaborator.isCollaborator(chapter.story_id, user.id)
   ) {
