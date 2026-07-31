@@ -455,7 +455,7 @@ function StoryDetailPage() {
             <label className="storyqq-chapter-search">
               <span className="visually-hidden">Tìm kiếm chương</span>
               <input
-                type="search"
+                type="text"
                 value={chapterSearch}
                 onChange={(e) => setChapterSearch(e.target.value)}
                 placeholder="Tìm số hoặc tên chương..."
@@ -490,7 +490,6 @@ function StoryDetailPage() {
                     <Link
                       to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
                       className={isRead ? 'chapter-link-is-read' : ''}
-                      onClick={(event) => handleLockedChapterClick(event, chapter)}
                     >
                       <span>
                         Ch.{chapter.chapter_number}: {chapter.title || `Chương ${chapter.chapter_number}`}
