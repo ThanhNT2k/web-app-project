@@ -104,7 +104,7 @@ function HomePage() {
     const uniqueStories = Array.from(uniqueMap.values());
 
     const targetGenre = HOT_GENRES.find((g) => g.slug === selectedHotGenre);
-    if (!targetGenre) return uniqueStories.slice(0, 6);
+    if (!targetGenre) return uniqueStories.slice(0, 10);
 
     const filtered = uniqueStories.filter((s) => {
       const catMatch = s.category && s.category.toLowerCase().includes(targetGenre.label.toLowerCase());
@@ -112,7 +112,7 @@ function HomePage() {
       return catMatch || tagMatch;
     });
 
-    return filtered.length > 0 ? filtered.slice(0, 6) : uniqueStories.slice(0, 6);
+    return filtered.length > 0 ? filtered.slice(0, 10) : uniqueStories.slice(0, 10);
   }, [featuredStories, recentStories, stories, selectedHotGenre]);
 
   const heroStories = useMemo(() => {
@@ -308,11 +308,11 @@ function HomePage() {
             </div>
 
             {hotGenreStories.length > 0 ? (
-              <div className="stories-grid">
+              <AutoSlidingStoryRow className="stories-grid stories-grid-featured" label="Thể loại hot" autoSlide={false}>
                 {hotGenreStories.map((story) => (
                   <StoryCard key={`hot-genre-${story.id}`} story={story} compact />
                 ))}
-              </div>
+              </AutoSlidingStoryRow>
             ) : (
               <div className="empty-state-card compact">
                 <IconBadge icon={faBookOpen} size="md" tone="primary" />
