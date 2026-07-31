@@ -147,7 +147,7 @@ Sau khi đăng nhập, người dùng có thể theo dõi, đánh giá và bình
 
 Khi đọc chương, hệ thống gửi tiến độ đến \CodePath{POST /api/reading-history}. Backend dùng định danh user từ JWT thay vì tin vào user id do client tự khai báo. Các endpoint lịch sử và chương đã đọc đều yêu cầu xác thực. Luồng điển hình gồm:
 
-\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
+\begin{itemize}[leftmargin=4.5em, label=--, labelsep=0.6em]
   \item Người dùng mở trang chi tiết và chọn chương;
   \item Frontend lấy nội dung chương theo slug và số chương;
   \item Trình đọc hiển thị nội dung, tiến độ cuộn và tùy chọn đọc;
@@ -394,7 +394,7 @@ Với bình luận và hồ sơ bị báo cáo, Moderator dùng bộ lọc để
 \section{Luồng của Admin}
 
 Admin có phạm vi vận hành rộng nhất nhưng vẫn đi qua xác thực, RBAC và audit. Các nhóm công việc chính gồm:
-\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
+\begin{itemize}[leftmargin=4.5em, label=--, labelsep=0.6em]
   \item Xem thống kê tổng quan và danh sách truyện;
   \item Tìm kiếm user, cập nhật role hoặc trạng thái hoạt động;
   \item Ẩn/hiện truyện, xóa bình luận theo quy định;
@@ -487,7 +487,7 @@ Xem audit & \CodePath{GET /api/audit-logs} & Admin/\newline Moderator theo phạ
 
 Một luồng được xem là hoàn chỉnh khi có cả đường thành công và đường lỗi. Các nguyên tắc được áp dụng hoặc cần duy trì gồm:
 
-\begin{itemize}[leftmargin=4em, label=--, labelsep=0.6em]
+\begin{itemize}[leftmargin=4.5em, label=--, labelsep=0.6em]
   \item \textbf{400} cho dữ liệu đầu vào không hợp lệ, kèm thông báo đủ để người dùng sửa;
   \item \textbf{401} khi thiếu hoặc sai phiên xác thực;
   \item \textbf{403} khi đã xác thực nhưng không đủ quyền;

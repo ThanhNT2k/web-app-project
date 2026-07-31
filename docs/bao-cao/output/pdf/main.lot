@@ -8,9 +8,9 @@
 \contentsline {table}{\numberline {2.3}{\ignorespaces Truy vết luồng nghiệp vụ đến API và module hiện thực}}{15}{table.2.3}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {3.1}{\ignorespaces Stack công nghệ được xác nhận từ package và cấu hình dự án}}{18}{table.caption.18}%
-\contentsline {table}{\numberline {3.2}{\ignorespaces Trách nhiệm các thư mục frontend chính}}{19}{table.caption.20}%
-\contentsline {table}{\numberline {3.3}{\ignorespaces Phân lớp backend và nguyên tắc phụ thuộc}}{23}{table.caption.24}%
-\contentsline {table}{\numberline {3.4}{\ignorespaces Nhóm biến môi trường và nguyên tắc bảo mật}}{30}{table.caption.30}%
-\contentsline {table}{\numberline {3.5}{\ignorespaces Liên kết bàn giao và minh chứng triển khai}}{31}{table.caption.31}%
-\contentsline {table}{\numberline {3.6}{\ignorespaces Kết quả kiểm thử và build đã thực chạy}}{32}{table.caption.32}%
-\contentsline {table}{\numberline {3.7}{\ignorespaces Kịch bản kiểm thử thủ công trước khi nộp}}{33}{table.3.7}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Trách nhiệm các thư mục frontend chính}}{27}{table.caption.30}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Phân lớp backend và nguyên tắc phụ thuộc}}{31}{table.caption.34}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Nhóm biến môi trường và nguyên tắc bảo mật}}{38}{table.caption.40}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Liên kết bàn giao và minh chứng triển khai}}{39}{table.caption.41}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Kết quả kiểm thử và build đã thực chạy}}{40}{table.caption.42}%
+\contentsline {table}{\numberline {3.7}{\ignorespaces Kịch bản kiểm thử thủ công trước khi nộp}}{41}{table.3.7}%

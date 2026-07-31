@@ -7,9 +7,9 @@
 \contentsline {subsection}{\numberline {1.2.1}Vấn đề của người đọc}{1}{subsection.1.2.1}%
 \contentsline {subsection}{\numberline {1.2.2}Vấn đề của người đăng nội dung và đội ngũ vận hành}{1}{subsection.1.2.2}%
 \contentsline {section}{\numberline {1.3}Mục tiêu của hệ thống}{2}{section.1.3}%
-\contentsline {section}{\numberline {1.4}Đối tượng sử dụng và bên liên quan}{2}{section.1.4}%
-\contentsline {section}{\numberline {1.5}Phạm vi chức năng}{3}{section.1.5}%
-\contentsline {subsection}{\numberline {1.5.1}Chức năng trong phạm vi}{3}{subsection.1.5.1}%
+\contentsline {section}{\numberline {1.4}Đối tượng sử dụng và bên liên quan}{3}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Phạm vi chức năng}{4}{section.1.5}%
+\contentsline {subsection}{\numberline {1.5.1}Chức năng trong phạm vi}{4}{subsection.1.5.1}%
 \contentsline {subsection}{\numberline {1.5.2}Ngoài phạm vi hoặc chưa đủ minh chứng}{4}{subsection.1.5.2}%
 \contentsline {section}{\numberline {1.6}Yêu cầu phi chức năng}{5}{section.1.6}%
 \contentsline {section}{\numberline {1.7}Phương pháp thực hiện}{6}{section.1.7}%
@@ -33,31 +33,29 @@
 \contentsline {section}{\numberline {3.1}Kiến trúc phần mềm tổng thể}{17}{section.3.1}%
 \contentsline {subsection}{\numberline {3.1.1}Lựa chọn mô hình kiến trúc}{17}{subsection.3.1.1}%
 \contentsline {subsection}{\numberline {3.1.2}Công nghệ và trách nhiệm}{18}{subsection.3.1.2}%
-\contentsline {section}{\numberline {3.2}Triển khai frontend}{19}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Cấu trúc thư mục}{19}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Điều hướng và bảo vệ route}{20}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Lớp gọi API và quản lý phiên}{21}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Trạng thái giao diện và trải nghiệm}{22}{subsection.3.2.4}%
-\contentsline {section}{\numberline {3.3}Triển khai backend}{22}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Cấu trúc phân lớp}{22}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Pipeline request}{23}{subsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.3.3}Xác thực, phân quyền và audit}{25}{subsection.3.3.3}%
-\contentsline {subsection}{\numberline {3.3.4}Tác vụ nền và dịch vụ AI}{26}{subsection.3.3.4}%
-\contentsline {section}{\numberline {3.4}Triển khai cơ sở dữ liệu}{26}{section.3.4}%
-\contentsline {subsection}{\numberline {3.4.1}Mô hình dữ liệu}{26}{subsection.3.4.1}%
-\contentsline {subsection}{\numberline {3.4.2}Connection pool, index và transaction}{29}{subsection.3.4.2}%
-\contentsline {section}{\numberline {3.5}Cấu hình và triển khai}{30}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}Biến môi trường}{30}{subsection.3.5.1}%
-\contentsline {subsection}{\numberline {3.5.2}Topology triển khai}{30}{subsection.3.5.2}%
-\contentsline {section}{\numberline {3.6}Kiểm thử và kết quả xác minh}{32}{section.3.6}%
-\contentsline {subsection}{\numberline {3.6.1}Kết quả thực chạy}{32}{subsection.3.6.1}%
-\contentsline {subsection}{\numberline {3.6.2}Kịch bản kiểm thử thủ công cần bổ sung}{32}{subsection.3.6.2}%
-\contentsline {section}{\numberline {3.7}Giao diện người dùng}{33}{section.3.7}%
-\contentsline {subsection}{\numberline {3.7.1}Giao diện khách hàng}{34}{subsection.3.7.1}%
-\contentsline {subsection}{\numberline {3.7.2}Giao diện Admin và Moderator}{38}{subsection.3.7.2}%
-\contentsline {section}{\numberline {3.8}Đánh giá, hạn chế và hướng hoàn thiện}{41}{section.3.8}%
-\contentsline {subsection}{\numberline {3.8.1}Điểm đạt được}{41}{subsection.3.8.1}%
-\contentsline {subsection}{\numberline {3.8.2}Hạn chế cần công khai}{42}{subsection.3.8.2}%
-\contentsline {section}{\numberline {3.9}Kết luận chương}{42}{section.3.9}%
+\contentsline {section}{\numberline {3.2}Thiết kế giao diện theo vai trò}{18}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Giao diện khách hàng}{19}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Giao diện Admin và Moderator}{23}{subsection.3.2.2}%
+\contentsline {section}{\numberline {3.3}Triển khai frontend}{26}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Cấu trúc thư mục}{26}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Điều hướng và bảo vệ route}{27}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Lớp gọi API và quản lý phiên}{29}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Trạng thái giao diện và trải nghiệm}{30}{subsection.3.3.4}%
+\contentsline {section}{\numberline {3.4}Triển khai backend}{30}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Cấu trúc phân lớp}{30}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Pipeline request}{31}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Xác thực, phân quyền và audit}{33}{subsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.4.4}Tác vụ nền và dịch vụ AI}{34}{subsection.3.4.4}%
+\contentsline {section}{\numberline {3.5}Triển khai cơ sở dữ liệu}{34}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Mô hình dữ liệu}{34}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Connection pool, index và transaction}{38}{subsection.3.5.2}%
+\contentsline {section}{\numberline {3.6}Cấu hình và triển khai}{38}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Biến môi trường}{38}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Topology triển khai}{39}{subsection.3.6.2}%
+\contentsline {section}{\numberline {3.7}Kiểm thử và kết quả xác minh}{40}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Kết quả thực chạy}{40}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Kịch bản kiểm thử thủ công cần bổ sung}{41}{subsection.3.7.2}%
+\contentsline {section}{\numberline {3.8}Kết luận chương}{42}{section.3.8}%
 \contentsline {chapter}{Kết luận}{43}{chapter*.43}%
-\contentsline {chapter}{Tài liệu tham khảo}{44}{chapter*.44}%
+\contentsline {section}{Đánh giá, hạn chế và hướng hoàn thiện}{43}{section*.44}%
+\contentsline {chapter}{Tài liệu tham khảo}{44}{chapter*.45}%
