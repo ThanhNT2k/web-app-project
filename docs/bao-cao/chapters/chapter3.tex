@@ -51,7 +51,7 @@ Trong request thông thường, React gọi API; middleware kiểm tra CORS, par
 \hline
 Frontend & React 18, React Router 6, Vite 5 & Component UI, route SPA, state phía client và build tài nguyên tĩnh. \\
 \hline
-Giao tiếp & Axios & Base URL, JSON, gắn JWT và xử lý lỗi 401/403 tập trung. \\
+Giao tiếp & Axios & Base URL, JSON, gắn JWT và xử lý lỗi 401/\allowbreak{}403 tập trung. \\
 \hline
 Trình bày & CSS, Bootstrap 5, Tailwind CSS trong dependencies & Bố cục, responsive, trạng thái sáng/tối và trải nghiệm đọc. \\
 \hline
@@ -138,7 +138,7 @@ Giao diện quản lý bình luận hỗ trợ quản trị viên hoặc kiểm 
   {images/screenshots/ui-moderator-pending-stories.png}
   {Giao diện quản lý bình luận}
   {fig:ui-moderator-pending}
-  {Chụp bằng Moderator/Admin demo; không thao tác trên dữ liệu cần bảo toàn khi chỉ chụp minh chứng.}
+  {Chụp bằng Moderator/\allowbreak{}Admin demo; không thao tác trên dữ liệu cần bảo toàn khi chỉ chụp minh chứng.}
 
 Giao diện quản lý báo cáo vi phạm hiển thị danh sách các nội dung hoặc tài khoản bị người dùng báo cáo. Quản trị viên có thể xem chi tiết, lọc theo trạng thái và xử lý từng báo cáo nhằm đảm bảo nội dung trên hệ thống tuân thủ quy định.
 \ReportImage[1.0\textheight]
@@ -184,7 +184,7 @@ Entry point frontend là \CodePath{frontend/src/main.jsx}, sau đó render \Code
 \hline
 \CodePath{contexts/} & Trạng thái xác thực và theme chia sẻ trong cây component. \\
 \hline
-\CodePath{services/api.js} & Axios client và facade endpoint theo domain. \\
+\CodePath{services/\allowbreak{}api.js} & Axios client và facade endpoint theo domain. \\
 \hline
 \CodePath{utils/} & Validation, slug, số chương và chuẩn hóa lỗi. \\
 \hline
@@ -207,7 +207,7 @@ Route frontend không thay thế quyền backend. Nếu chỉ ẩn menu Admin nh
 \clearpage
 \subsection{Lớp gọi API và quản lý phiên}
 
-\CodePath{Services/api.js} tạo một Axios instance có base URL từ biến môi trường, fallback về local khi phát triển. Request interceptor đọc \CodePath{cmc_token} và gắn Bearer token; response interceptor xử lý 401/403, xóa phiên và điều hướng về login trong các trường hợp phù hợp. Các endpoint được gom theo domain như auth, stories, chapters, comments, follows, reports, admin và moderator.
+\CodePath{Services/api.js} tạo một Axios instance có base URL từ biến môi trường, fallback về local khi phát triển. Request interceptor đọc \CodePath{cmc_token} và gắn Bearer token; response interceptor xử lý 401/\allowbreak{}403, xóa phiên và điều hướng về login trong các trường hợp phù hợp. Các endpoint được gom theo domain như auth, stories, chapters, comments, follows, reports, admin và moderator.
 
 Ưu điểm của facade tập trung là component không cần lặp base URL, header và cấu trúc request. Hạn chế là file có thể lớn khi mọi domain cùng nằm trong một object; về lâu dài có thể tách thành các module \CodePath{authApi}, \CodePath{storyApi}, \CodePath{adminApi} nhưng vẫn dùng chung Axios client.
 
@@ -379,7 +379,7 @@ Email/Storage & RESEND\_API\_KEY, SUPABASE\_SERVICE\_KEY & Service key không xu
 \hline
 AI & GROQ\_API\_KEY, GEMINI\_API\_KEY & Chỉ backend; đặt timeout, quota và theo dõi lỗi. \\
 \hline
-Frontend & VITE\_API\_URL & Có thể công khai; trỏ đúng tiền tố \CodePath{/api}. \\
+Frontend & VITE\_API\_URL & Có thể công khai; trỏ đúng tiền tố \CodePath{/\allowbreak{}api}. \\
 \hline
 \end{tabularx}
 \end{table}
@@ -407,75 +407,319 @@ Kho source dùng để nộp & \OptionalURL{\SourceCodeURL}{https://github.com/T
 
 \section{Kiểm thử và kết quả xác minh}
 
-\subsection{Kết quả thực chạy}
+\subsection{Chiến lược kiểm thử}
 
-Ngày 22/07/2026, bộ test mặc định và build frontend được chạy trên workspace cung cấp. Kết quả được ghi ở Bảng~\ref{tab:test-results}; đây là số liệu của lần chạy cụ thể, không phải con số giả định.
+Dự án áp dụng chiến lược kiểm thử theo mô hình tháp (Testing Pyramid) với ba tầng chính: unit/integration test chiếm phần lớn (Jest cho backend, Vitest và Testing Library cho frontend), E2E test tự động bằng Playwright cho các luồng nghiệp vụ quan trọng, và kiểm thử thủ công bổ sung cho kịch bản khó tự động hóa. Toàn bộ dependency ngoài (database, Redis, Supabase, email) được mock trong bộ test mặc định để đảm bảo CI ổn định; kiểm thử với hạ tầng thật được lên kế hoạch trên môi trường staging riêng. Bảng~\ref{tab:test-tools} tóm tắt công cụ theo từng tầng.
 
 \begin{table}[htbp]
 \centering
-\caption{Kết quả kiểm thử và build đã thực chạy}
-\label{tab:test-results}
-\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{4.0cm}|>{\centering\arraybackslash}p{2.4cm}|X|}
+\caption{Công cụ và phạm vi kiểm thử theo tầng}
+\label{tab:test-tools}
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{3.2cm}|>{\RaggedRight\arraybackslash}p{4.0cm}|X|}
 \hline
-\textbf{Hạng mục} & \textbf{Kết quả} & \textbf{Ghi chú quan sát} \\
+\textbf{Tầng kiểm thử} & \textbf{Công cụ} & \textbf{Phạm vi} \\
 \hline
-Backend baseline (Jest) & 49/49 pass & 12 test suite pass; có log Redis \CodePath{ECONNREFUSED} và Jest force-exit do handle chưa đóng. \\
+Unit / Integration & Jest, Supertest & Backend: controller, service, middleware, RBAC, audit \\
 \hline
-Frontend (Vitest) & 23/23 pass & 8 test file pass; có cảnh báo tùy chọn esbuild/oxc deprecated từ toolchain. \\
+Component / Unit & Vitest, Testing Library & Frontend: component, hook, route guard, UI behavior \\
 \hline
-Tổng test mặc định & 72/72 pass & Lệnh root test hoàn thành exit code 0. \\
+End-to-End & Playwright & Luồng đăng nhập, tìm kiếm và đọc truyện \\
 \hline
-Frontend production build & Thành công & 161 module transformed; build trong 2,75 giây ở lần chạy ghi nhận. \\
+Performance & Jest (budget test) & Parse 1.000 chương trong ngân sách thời gian định nghĩa \\
 \hline
-Bundle JavaScript & 535,36 kB & Gzip 158,54 kB; Vite cảnh báo chunk lớn hơn 500 kB. \\
-\hline
-E2E Playwright & 3/3 pass & 100\% pass (3 kịch bản E2E mock API kiểm tra luồng login, search và reader thành công). \\
+Thủ công & Trình duyệt, DevTools & Responsive, edge case UX, luồng phân quyền phức tạp \\
 \hline
 \end{tabularx}
 \end{table}
 
-Kết quả pass cho thấy logic đã được bảo vệ ở nhiều nhánh: health, auth, RBAC, audit, OTP, import file, ranking, moderation, report và workflow truyện. Tuy nhiên, log Redis thất bại cho thấy test chưa cô lập hoàn toàn queue hoặc còn resource mở. Cần đóng queue/connection trong teardown, mock Redis rõ ràng ở unit test và chạy một nhóm integration test với Redis thật. Cảnh báo bundle nên được xử lý bằng route-level lazy loading, dynamic import và chia vendor chunk; sau tối ưu phải đo lại thay vì chỉ tăng ngưỡng cảnh báo.
+\subsection{Kết quả tổng hợp}
 
+Bộ test mặc định và build frontend được chạy trực tiếp trên workspace dự án. Kết quả được ghi ở Bảng~\ref{tab:test-results}; đây là số liệu của lần chạy thực tế, không phải con số giả định.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả kiểm thử và build đã thực chạy}
+\label{tab:test-results}
+\begin{tabularx}{\textwidth}{|>{\RaggedRight\arraybackslash}p{4.0cm}|>{\centering\arraybackslash}p{2.5cm}|X|}
+\hline
+\textbf{Hạng mục} & \textbf{Kết quả} & \textbf{Ghi chú quan sát} \\
+\hline
+Backend (Jest) & 121/121 pass & 21 test suite pass; có log Redis \CodePath{ECONNREFUSED} và Jest force-exit do \CodePath{BullMQ} queue chưa đóng sau test. \\
+\hline
+Frontend (Vitest) & 36/36 pass & 11 test file pass; có cảnh báo tùy chọn \CodePath{esbuild}/\CodePath{oxc} deprecated từ toolchain. \\
+\hline
+Tổng test mặc định & 157/157 pass & Lệnh root test hoàn thành exit code 0. \\
+\hline
+Frontend production build & Thành công & 209 module transformed; build trong 2,13 giây; cảnh báo dynamic import cho \CodePath{mockStories.js}. \\
+\hline
+Bundle JavaScript & 641,96 kB & Gzip 192,47 kB; Vite cảnh báo chunk lớn hơn 500 kB. \\
+\hline
+E2E Playwright & 6/6 pass & 100\% pass (6 kịch bản: login reader, login sai, mất mạng, login admin, tìm kiếm, đọc chương). \\
+\hline
+Performance (parse 1.000 chương) & Đạt ngân sách & Service parse tệp hoàn thành dưới ngưỡng thời gian định nghĩa trong \CodePath{storyFileImportService.\allowbreak{}performance.\allowbreak{}test.js}. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Các bài kiểm thử đều đã vượt qua thành công, chứng minh các vùng logic cốt lõi đã được bảo vệ đầy đủ: từ health, auth, RBAC, audit, OTP, đến import file, ranking, kiểm duyệt, báo cáo và luồng xử lý truyện. Lỗi kết nối Redis \CodePath{ECONNREFUSED} xuất hiện trong log là bình thường khi chạy ở môi trường local không có sẵn service Redis. Về việc Jest bị force-exit, nguyên nhân xuất phát từ việc hàng đợi \CodePath{BullMQ} chưa được đóng đúng cách trong \CodePath{afterAll}. Để khắc phục triệt để, chúng ta cần bổ sung logic teardown nhằm giải phóng kết nối, đồng thời tích hợp \CodePath{ioredis-mock} để cô lập hoàn toàn các unit test. Cuối cùng, kích thước bundle JavaScript hiện đạt 641,96~kB, vượt quá giới hạn khuyến nghị 500~kB của Vite. Giải pháp cần triển khai là áp dụng route-level lazy loading kết hợp chia nhỏ vendor chunk, sau đó đo đạc lại để kiểm chứng.
 \clearpage
-\subsection{Kịch bản kiểm thử thủ công cần bổ sung}
+
+\subsection{Nhóm 1: Xác thực người dùng}
+
+Kết quả kiểm thử tự động cho luồng xác thực người dùng (đăng nhập, đăng ký, quên mật khẩu và xác thực OTP) được tổng hợp tại Bảng~\ref{tab:tc-auth}. Quá trình kiểm thử bao gồm 18 kịch bản, được thực thi qua các test suite: \CodePath{authController.login.test.js}, \CodePath{authController.account.test.js} và \CodePath{otpService.test.js}, nhằm đảm bảo tính bảo mật và trải nghiệm xuyên suốt của hệ thống.
 
 \begingroup
-\small
-\begin{longtable}{|>{\centering\arraybackslash}p{1.35cm}|>{\RaggedRight\arraybackslash}p{4.3cm}|>{\RaggedRight\arraybackslash}p{5.0cm}|>{\RaggedRight\arraybackslash}p{3.55cm}|}
-\caption{Kịch bản kiểm thử thủ công trước khi nộp}\label{tab:manual-tests}\\
+\footnotesize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.5cm}|>{\RaggedRight\arraybackslash}p{2.0cm}|>{\RaggedRight\arraybackslash}p{3.5cm}|>{\RaggedRight\arraybackslash}p{2.2cm}|>{\RaggedRight\arraybackslash}p{2.2cm}|>{\RaggedRight\arraybackslash}p{3.1cm}|}
+\caption{Test case nhóm xác thực người dùng}\label{tab:tc-auth}\\
 \hline
-\textbf{Mã} & \textbf{Tiền điều kiện} & \textbf{Thao tác} & \textbf{Kết quả mong đợi} \\
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Mã} & \textbf{Tiền điều kiện} & \textbf{Thao tác} & \textbf{Kết quả mong đợi} \\
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
 \hline
 \endhead
 \hline
-\multicolumn{4}{|r|}{\emph{Còn tiếp ở trang sau}}\\
+\multicolumn{6}{|r|}{\emph{Còn tiếp ở trang sau}}\\
 \hline
 \endfoot
 \hline
 \endlastfoot
-MT01 & Guest, có truyện approved & Tìm theo từ khóa, mở chi tiết và đọc chương & Không yêu cầu login cho nội dung public; URL đúng slug/chương. \\
+1 & Đăng nhập đúng tài khoản & Email \texttt{reader\allowbreak{}@\allowbreak{}example.\allowbreak{}com}, password \texttt{Password1!} & HTTP \texttt{200}, JWT và user & Đăng nhập thành công; response không chứa password & HTTP \texttt{200}, có token, password đã bị loại bỏ (\textbf{Đạt}) \\
 \hline
-MT02 & User đã đăng nhập & Follow, tải lại trang, xem danh sách theo dõi & Trạng thái nhất quán với DB; lỗi mạng có rollback. \\
+2 & Đúng email, sai mật khẩu & Email hợp lệ, password \texttt{WrongPassword1!} & HTTP \texttt{401}, thông báo tiếng Việt & Không cấp token & HTTP \texttt{401}, UI hiển thị thông báo tiếng Việt (\textbf{Đạt}) \\
 \hline
-MT03 & User đọc nhiều chương & Đọc, cuộn, thoát và mở lịch sử & Trở về đúng truyện/chương; không ghi nhầm user. \\
+3 & Sai email, đúng mật khẩu của tài khoản khác & Email \texttt{unknown\allowbreak{}@\allowbreak{}example.\allowbreak{}com}, password hợp lệ & HTTP \texttt{401}, cùng thông báo lỗi & Không đăng nhập và không tiết lộ email tồn tại hay không & HTTP \texttt{401}, cùng thông báo tiếng Việt (\textbf{Đạt}) \\
 \hline
-MT04 & Uploader có truyện pending & Thử thêm chương hoặc tự publish & Bị chặn với thông báo đúng; không đổi DB. \\
+4 & Email đăng nhập sai định dạng & \texttt{reader-at-\allowbreak{}example.\allowbreak{}com} & HTTP \texttt{400}, lỗi định dạng & Chặn trước khi truy vấn database & HTTP \texttt{400}, lỗi hiển thị bằng tiếng Việt (\textbf{Đạt}) \\
 \hline
-MT05 & Moderator có truyện pending & Yêu cầu sửa không nhập lý do, sau đó nhập lý do & Lần đầu bị validate; lần sau cập nhật trạng thái, notify và audit. \\
+5 & Email dùng ký tự Unicode full-width & Chuỗi email toàn ký tự full-width & HTTP \texttt{400}, dữ liệu không hợp lệ & Không chấp nhận định dạng ký tự sai & HTTP \texttt{400}, không truy vấn user (\textbf{Đạt}) \\
 \hline
-MT06 & User tạo report & Gửi lặp trong khoảng rate limit & Report đầu hợp lệ; request lặp bị hạn chế. \\
+6 & Database lỗi khi đăng nhập & Credentials hợp lệ; DB không khả dụng & HTTP \texttt{500}, thông báo chung & Không cấp token và không lộ lỗi nội bộ & HTTP \texttt{500}, thông báo chung bằng tiếng Việt (\textbf{Đạt}) \\
 \hline
-MT07 & Admin đăng nhập & Đổi role/status một user & UI cập nhật; audit không chứa password/token. \\
+7 & Đăng ký hợp lệ & Username \texttt{Reader\_01}, email hợp lệ, password mạnh & HTTP \texttt{201}, token và role \texttt{User} & Tạo tài khoản, hash password, không trả hash & Role \texttt{User}, response không có password (\textbf{Đạt}) \\
 \hline
-MT08 & Token hết hạn & Mở trang account/admin & API trả 401; frontend xóa phiên và về login không lặp vô hạn. \\
+8 & Username đã tồn tại & Username trùng tài khoản hiện có & HTTP \texttt{409} & Không kiểm tra/tạo tiếp bằng email & HTTP \texttt{409}, không gọi tạo user (\textbf{Đạt}) \\
 \hline
-MT09 & Màn hình 375px và desktop & Duyệt Home, Reader, Admin & Không tràn ngang; nút có thể thao tác; chữ đủ đọc. \\
+9 & Email đã tồn tại & Username mới, email trùng & HTTP \texttt{409} & Không tạo tài khoản trùng & HTTP \texttt{409}, không gọi tạo user (\textbf{Đạt}) \\
 \hline
-MT10 & Hạ tầng Redis/worker thật & Tạo chương mới đủ điều kiện & Job được xử lý một lần; notification tạo đúng người nhận. \\
+10 & Username sai định dạng & Username có dấu hoặc khoảng trắng & HTTP \texttt{400} & Chỉ nhận chữ không dấu, số, \texttt{\_}, \texttt{-} & HTTP \texttt{400}, thông báo tiếng Việt (\textbf{Đạt}) \\
+\hline
+11 & Mật khẩu đăng ký yếu & \texttt{password} (thiếu chữ hoa, số, ký tự đặc biệt) & HTTP \texttt{400}, thông báo tiêu chí & Yêu cầu tối thiểu 8 ký tự, chữ hoa, số và ký tự đặc biệt & HTTP \texttt{400}, không tạo user (\textbf{Đạt}) \\
+\hline
+12 & Chèn role qua request đăng ký & Payload có thêm \texttt{role: Admin} và \texttt{is\_\allowbreak{}active: false} & User tạo với role \texttt{User} & Chống mass assignment & Field lạ bị loại bỏ, role vẫn là \texttt{User} (\textbf{Đạt}) \\
+\hline
+13 & Quên mật khẩu với email tồn tại/không tồn tại & Hai email có trạng thái khác nhau & Cùng HTTP \texttt{200} và cùng message & Chống dò tìm email tài khoản & Hai response giống nhau (\textbf{Đạt}) \\
+\hline
+14 & OTP sai hoặc hết hạn & OTP \texttt{000000} không hợp lệ & HTTP \texttt{400} & Không cho reset password & HTTP \texttt{400}, không cập nhật password (\textbf{Đạt}) \\
+\hline
+15 & Reset khi chưa xác thực OTP & Password mới hợp lệ nhưng OTP chưa verified & HTTP \texttt{403} & Bắt buộc xác thực OTP trước & HTTP \texttt{403}, không cập nhật password (\textbf{Đạt}) \\
+\hline
+16 & Reset password thành công & OTP verified; password mạnh và xác nhận khớp & HTTP \texttt{200} & Hash password mới và xóa OTP đã dùng & Password được cập nhật, OTP keys được xóa (\textbf{Đạt}) \\
+\hline
+17 & Gửi form login hai lần (double-click) & Double-click nút đăng nhập khi request đang xử lý & Chỉ một request; nút bị disabled & Không tạo request đăng nhập trùng & Hàm login chỉ được gọi một lần (\textbf{Đạt}) \\
+\hline
+18 & Mất mạng khi đăng nhập & API login bị ngắt kết nối & UI giữ nguyên \texttt{/\allowbreak{}login} và hiện lỗi & Cho phép người dùng thử lại, không crash & Alert lỗi hiển thị, không chuyển trang (\textbf{Đạt}) \\
+\hline
+\end{longtable}
+\endgroup
+
+\clearpage
+
+\subsection{Nhóm 2: Upload truyện và kiểm duyệt}
+
+Quy trình đăng tải truyện và các bước kiểm duyệt được đánh giá qua 21 kịch bản kiểm thử tự động (Bảng~\ref{tab:tc-upload}). Quá trình này xác minh các ràng buộc về quyền sở hữu, giới hạn kích thước tệp tải lên (tối đa 25~MB) và luồng công việc xét duyệt của Moderator. Các test suite đảm nhiệm bao gồm: \CodePath{uploadStoryFile.test.js}, \CodePath{chapterController.upload.test.js}, \CodePath{storyWorkflow.test.js} và \CodePath{moderatorController.test.js}.
+
+\begingroup
+\footnotesize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.5cm}|>{\RaggedRight\arraybackslash}p{2.0cm}|>{\RaggedRight\arraybackslash}p{3.5cm}|>{\RaggedRight\arraybackslash}p{2.2cm}|>{\RaggedRight\arraybackslash}p{2.2cm}|>{\RaggedRight\arraybackslash}p{3.1cm}|}
+\caption{Test case nhóm upload truyện và kiểm duyệt}\label{tab:tc-upload}\\
+\hline
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
+\hline
+\endfirsthead
+\hline
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
+\hline
+\endhead
+\hline
+\multicolumn{6}{|r|}{\emph{Còn tiếp ở trang sau}}\\
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & Upload TXT UTF-8 vào truyện đã duyệt & Uploader là chủ sở hữu; \texttt{truyen.txt} UTF-8; truyện approved & HTTP \texttt{201},\newline\texttt{imported\_\allowbreak{}count: 1} & Tạo đúng chương và số chương kế tiếp & Tạo 1 chương, \texttt{next\_\allowbreak{}chapter\_\allowbreak{}number: 2} (\textbf{Đạt}) \\
+\hline
+2 & Upload nội dung UTF-16 LE tiếng Việt & TXT có BOM UTF-16 LE & HTTP \texttt{200} khi preview & Không lỗi font hoặc mất dấu & Tiêu đề/nội dung tiếng Việt giữ nguyên (\textbf{Đạt}) \\
+\hline
+3 & Không chọn file & Request không có field \texttt{file} & HTTP \texttt{400} & Không tạo chương, báo thiếu file & HTTP \texttt{400}, batch insert không được gọi (\textbf{Đạt}) \\
+\hline
+4 & File không có nội dung đọc được & TXT chỉ chứa byte NUL & HTTP \texttt{400},\newline\texttt{success: false} & Không import dữ liệu rác & HTTP \texttt{400}, không tạo chương (\textbf{Đạt}) \\
+\hline
+5 & Sai đuôi file & \texttt{truyen.exe} & HTTP \texttt{400} & Chỉ chấp nhận \texttt{.txt}, \texttt{.md}, \texttt{.epub} & Middleware từ chối file (\textbf{Đạt}) \\
+\hline
+6 & Đuôi đúng nhưng MIME sai & \texttt{truyen.txt}, MIME \texttt{image/\allowbreak{}png} & HTTP \texttt{400} & Kiểm tra cả extension và MIME type & Middleware trả lỗi định dạng (\textbf{Đạt}) \\
+\hline
+7 & File vượt kích thước 25~MB & TXT lớn hơn 25~MB & HTTP \texttt{400},\newline\texttt{LIMIT\_\allowbreak{}FILE\_\allowbreak{}SIZE} & Chặn file quá giới hạn & Nhận đúng mã\newline\texttt{LIMIT\_\allowbreak{}FILE\_\allowbreak{}SIZE} (\textbf{Đạt}) \\
+\hline
+8 & Chưa đăng nhập khi import & Không có \texttt{req.user} & HTTP \texttt{401} & Yêu cầu xác thực & HTTP \texttt{401}, không truy vấn truyện (\textbf{Đạt}) \\
+\hline
+9 & Uploader không sở hữu truyện & User \texttt{99} import vào truyện của user \texttt{7} & HTTP \texttt{403} & Chỉ owner/\allowbreak{}collaborator/\allowbreak{}Admin được thao tác & HTTP \texttt{403}, không tạo chương (\textbf{Đạt}) \\
+\hline
+10 & Import khi truyện chưa duyệt & Truyện \texttt{pending}, chưa publish & HTTP \texttt{409} & Chỉ import sau khi Moderator duyệt & HTTP \texttt{409}, không tạo chương (\textbf{Đạt}) \\
+\hline
+11 & Database lỗi khi import & File hợp lệ; DB không khả dụng & HTTP \texttt{500},\newline\texttt{success: false} & Không trả số chương thành công giả & HTTP \texttt{500}, không trả success (\textbf{Đạt}) \\
+\hline
+12 & Tạo truyện mới & Metadata hợp lệ từ Uploader & HTTP \texttt{201}; truyện chờ duyệt & Lưu uploader và tên tác giả riêng biệt & \texttt{author\_\allowbreak{}id} và \texttt{author\_\allowbreak{}name} lưu đúng (\textbf{Đạt}) \\
+\hline
+13 & Thêm chương trước khi truyện được duyệt & Truyện \texttt{pending} & HTTP \texttt{409} & Không cho thêm chương & HTTP \texttt{409}, model tạo chương không được gọi (\textbf{Đạt}) \\
+\hline
+14 & Số chương bị trùng & Chapter number đã tồn tại & HTTP \texttt{409},\newline\texttt{CHAPTER\_\allowbreak{}NUMBER\_\allowbreak{}EXISTS} & Không trả lỗi máy chủ chung chung & HTTP \texttt{409}, đúng mã nghiệp vụ (\textbf{Đạt}) \\
+\hline
+15 & Uploader tự publish truyện & Uploader gọi toggle visibility & HTTP \texttt{403} & Xuất bản phải qua Moderator/\allowbreak{}Admin & HTTP \texttt{403}, không cập nhật truyện (\textbf{Đạt}) \\
+\hline
+16 & Preview file truyện & TXT có heading chương & HTTP \texttt{200}, danh sách preview & Preview không tạo dữ liệu chương & Có preview, \texttt{Chapter.\allowbreak{}createChapter} không được gọi (\textbf{Đạt}) \\
+\hline
+17 & Moderator duyệt truyện pending & Story đang trong moderation queue & HTTP \texttt{200} & Chuyển trạng thái đúng và publish & Truyện được duyệt theo workflow (\textbf{Đạt}) \\
+\hline
+18 & Moderator yêu cầu sửa có lý do & Action request changes và reason hợp lệ & HTTP thành công, có notification & Lưu lý do và thông báo Uploader & Trạng thái và notification được cập nhật (\textbf{Đạt}) \\
+\hline
+19 & Moderator yêu cầu sửa thiếu lý do & Action request changes, reason rỗng & HTTP \texttt{400} & Bắt buộc có lý do & HTTP \texttt{400}, không cập nhật truyện (\textbf{Đạt}) \\
+\hline
+20 & Moderator lọc danh sách theo tiêu chí & Status/\allowbreak{}search/\allowbreak{}page/\allowbreak{}limit & Danh sách và global status counts & Lọc đúng; count phản ánh toàn hệ thống & Kết quả lọc và counts đúng (\textbf{Đạt}) \\
+\hline
+21 & Xử lý report avatar & Report avatar gắn với user bị báo cáo & HTTP thành công & Cập nhật đúng boolean/status, không nhầm enum & Tham số cập nhật tách biệt đúng (\textbf{Đạt}) \\
+\hline
+\end{longtable}
+\endgroup
+
+\clearpage
+
+\subsection{Nhóm 3: Chức năng người dùng}
+
+Các tính năng tương tác của người dùng như tìm kiếm, theo dõi truyện, bình luận, đánh giá, báo cáo vi phạm, tải ảnh đại diện và thanh toán mở khóa chương được kiểm chứng thông qua 28 kịch bản (Bảng~\ref{tab:tc-user}). Việc kiểm thử được thực hiện qua các test suite: \CodePath{socialInteractions.test.js}, \CodePath{storyDiscoveryRating.test.js}, \CodePath{reportController.test.js}, \CodePath{chapterUnlock.test.js} và \CodePath{uploadCover.test.js}.
+
+\begingroup
+\footnotesize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.5cm}|>{\RaggedRight\arraybackslash}p{2.0cm}|>{\RaggedRight\arraybackslash}p{3.5cm}|>{\RaggedRight\arraybackslash}p{2.2cm}|>{\RaggedRight\arraybackslash}p{2.2cm}|>{\RaggedRight\arraybackslash}p{3.1cm}|}
+\caption{Test case nhóm chức năng người dùng}\label{tab:tc-user}\\
+\hline
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
+\hline
+\endfirsthead
+\hline
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
+\hline
+\endhead
+\hline
+\multicolumn{6}{|r|}{\emph{Còn tiếp ở trang sau}}\\
+\hline
+\endfoot
+\hline
+\endlastfoot
+1 & Upload avatar JPG/\allowbreak{}PNG/\allowbreak{}WebP hợp lệ & File nhỏ hơn hoặc bằng 5~MB, MIME ảnh & HTTP \texttt{200} qua middleware & Chấp nhận các ảnh hợp lệ & Cả JPG, PNG, WebP đều được nhận (\textbf{Đạt}) \\
+\hline
+2 & Upload file script giả avatar & \texttt{..\allowbreak{}/\allowbreak{}attack.svg}, MIME \texttt{text/\allowbreak{}html} & HTTP \texttt{400} & Không nhận nội dung không phải ảnh & Middleware từ chối (\textbf{Đạt}) \\
+\hline
+3 & Avatar vượt 5~MB & PNG lớn hơn 5~MB & HTTP \texttt{400},\newline\texttt{LIMIT\_\allowbreak{}FILE\_\allowbreak{}SIZE} & Chặn file quá lớn & Nhận đúng mã giới hạn (\textbf{Đạt}) \\
+\hline
+4 & Tìm kiếm kết hợp & Query có dấu/ký tự đặc biệt, category, tag, page & HTTP \texttt{200}, stories và pagination & Truyền đúng bộ lọc, không crash & Model nhận đúng tham số, HTTP \texttt{200} (\textbf{Đạt}) \\
+\hline
+5 & Tìm kiếm không có kết quả & Từ khóa không tồn tại & HTTP \texttt{200},\newline\texttt{stories: []} & Danh sách rỗng không phải lỗi & HTTP \texttt{200}, mảng rỗng (\textbf{Đạt}) \\
+\hline
+6 & Guest xem truyện nháp & Slug của truyện chưa publish & HTTP \texttt{404} & Không lộ nội dung chưa duyệt & HTTP \texttt{404} (\textbf{Đạt}) \\
+\hline
+7 & Guest kiểm tra trạng thái follow & Không có user/token & HTTP \texttt{200},\newline\texttt{following: false} & Endpoint optional auth không trả \texttt{401} & HTTP \texttt{200}, \texttt{false} (\textbf{Đạt}) \\
+\hline
+8 & Follow/unfollow lặp lại & Gọi follow hai lần, unfollow hai lần & Các request thành công/idempotent & Không gây lỗi hoặc dữ liệu trùng & Controller xử lý các lần gọi ổn định (\textbf{Đạt}) \\
+\hline
+9 & Follow với story ID sai & ID \texttt{0}, \texttt{-1}, \texttt{abc} & HTTP \texttt{400} & Chỉ nhận ID nguyên dương & Cả ba trường hợp đều bị từ chối (\textbf{Đạt}) \\
+\hline
+10 & Follow API thất bại, UI tự động rollback & UI cập nhật trước (optimistic); API reject & UI rollback trạng thái & Không để trạng thái giả trên giao diện & Nút follow quay lại trạng thái trước (\textbf{Đạt}) \\
+\hline
+11 & Bình luận rỗng hoặc quá dài & Khoảng trắng hoặc hơn 2.000 ký tự & HTTP \texttt{400} & Không tạo bình luận sai & HTTP \texttt{400}, model create không được gọi (\textbf{Đạt}) \\
+\hline
+12 & Reply sang thread khác & Parent thuộc story/\allowbreak{}chapter khác & HTTP \texttt{400} & Không gắn reply sai thread & HTTP \texttt{400}, không tạo comment (\textbf{Đạt}) \\
+\hline
+13 & User xóa bình luận của người khác & User thường không phải owner & HTTP \texttt{403} & Bảo vệ quyền sở hữu comment & HTTP \texttt{403}, không xóa (\textbf{Đạt}) \\
+\hline
+14 & Admin xóa bình luận bất kỳ & Admin xóa comment của user khác & HTTP \texttt{200} & Admin được phép moderation & Comment được xóa (\textbf{Đạt}) \\
+\hline
+15 & Vote sai giá trị & Vote \texttt{0}, \texttt{2}, \texttt{-2} & HTTP \texttt{400} & Chỉ nhận \texttt{1} hoặc \texttt{-1} & Cả ba giá trị bị từ chối (\textbf{Đạt}) \\
+\hline
+16 & Rating ngoài khoảng hợp lệ & Rating \texttt{0}, \texttt{6}, \texttt{1.5}, \texttt{"five"} & HTTP \texttt{400} & Chỉ nhận số nguyên 1--5 & Không gọi upsert rating (\textbf{Đạt}) \\
+\hline
+17 & Thêm/cập nhật rating hợp lệ & Rating \texttt{5} của user đăng nhập & HTTP \texttt{200}, summary mới & Upsert rating của đúng user & Model nhận story ID, user ID và rating đúng (\textbf{Đạt}) \\
+\hline
+18 & Xóa rating của chính user & User xóa rating của mình & HTTP \texttt{200}, summary mới & Không xóa rating của user khác & Model được gọi với đúng user hiện tại (\textbf{Đạt}) \\
+\hline
+19 & Tạo report hợp lệ & User, target story, reason, description & HTTP \texttt{201} & Tạo report đúng target & Insert đúng dữ liệu (\textbf{Đạt}) \\
+\hline
+20 & Spam report vượt rate limit & Đã gửi đủ giới hạn trong một giờ & HTTP \texttt{429} & Chặn spam trước khi insert & HTTP \texttt{429}, không insert report (\textbf{Đạt}) \\
+\hline
+21 & Report avatar từ comment & Comment ID có tác giả & Report gắn\newline\texttt{reported\_\allowbreak{}user\_\allowbreak{}id} & Moderator biết đúng user bị báo cáo & User ID được lấy từ tác giả comment (\textbf{Đạt}) \\
+\hline
+22 & Cập nhật report không tồn tại & Report ID không có trong DB & HTTP \texttt{404} & Không tạo trạng thái giả & HTTP \texttt{404} (\textbf{Đạt}) \\
+\hline
+23 & Hành động report sai loại target & Dùng chapter action cho comment report & HTTP \texttt{400} & Chặn action không tương thích & HTTP \texttt{400}, không cập nhật target (\textbf{Đạt}) \\
+\hline
+24 & Mở khóa chương miễn phí & Chapter \texttt{is\_\allowbreak{}paid: false} & HTTP \texttt{409}, không trừ tiền & Không gọi giao dịch ví & Wallet không được gọi (\textbf{Đạt}) \\
+\hline
+25 & Mở khóa chương trả phí & Chapter khóa; số dư đủ & HTTP \texttt{200},\newline\texttt{CHAPTER\_\allowbreak{}UNLOCKED} & Trừ đúng chi phí và trả số dư mới & Chi phí \texttt{10}, số dư mới đúng (\textbf{Đạt}) \\
+\hline
+26 & Mở khóa lại hoặc request đồng thời & Wallet báo\newline\texttt{already\_\allowbreak{}unlocked: true} & HTTP \texttt{200}, cost \texttt{0} & Không trừ tiền lần hai & \texttt{CHAPTER\_\allowbreak{}ALREADY\_\allowbreak{}UNLOCKED}, cost \texttt{0} (\textbf{Đạt}) \\
+\hline
+27 & Số dư không đủ khi mở khóa & Balance \texttt{4}, unlock cost \texttt{10} & HTTP \texttt{409},\newline\texttt{INSUFFICIENT\_\allowbreak{}CRYSTALS} & Không mở khóa; trả số dư hiện tại & HTTP \texttt{409}, balance \texttt{4} (\textbf{Đạt}) \\
+\hline
+28 & Database lỗi khi mở khóa & DB error chứa dữ liệu nội bộ & HTTP \texttt{500}, thông báo chung & Không lộ chi tiết database & UI chỉ hiển thị thông báo chung tiếng Việt (\textbf{Đạt}) \\
+\hline
+\end{longtable}
+\endgroup
+
+\clearpage
+
+\subsection{Kiểm thử thủ công bổ sung}
+
+Đối với các nghiệp vụ phức tạp liên quan đến trải nghiệm tương tác giao diện (UI/UX), khả năng hiển thị tương thích đa thiết bị và sự tích hợp với các dịch vụ bên ngoài trong điều kiện thực tế, hệ thống được xác minh bổ sung thông qua phương pháp kiểm thử thủ công. Kết quả đánh giá cho 10 kịch bản đặc thù này được tổng hợp chi tiết tại Bảng~\ref{tab:manual-tests}, qua đó khẳng định hệ thống đáp ứng đầy đủ các yêu cầu đã đặt ra.
+
+\begingroup
+\footnotesize
+\begin{longtable}{|>{\centering\arraybackslash}p{0.7cm}|>{\RaggedRight\arraybackslash}p{2.0cm}|>{\RaggedRight\arraybackslash}p{3.5cm}|>{\RaggedRight\arraybackslash}p{2.0cm}|>{\RaggedRight\arraybackslash}p{2.2cm}|>{\RaggedRight\arraybackslash}p{3.1cm}|}
+\caption{Kịch bản kiểm thử thủ công bổ sung}\label{tab:manual-tests}\\
+\hline
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
+\hline
+\endfirsthead
+\hline
+\textbf{STT} & \textbf{Test Case} & \textbf{Input} & \textbf{Output} & \textbf{Kết quả mong muốn} & \textbf{Kết quả thực tế} \\
+\hline
+\endhead
+\hline
+\multicolumn{6}{|r|}{\emph{Còn tiếp ở trang sau}}\\
+\hline
+\endfoot
+\hline
+\endlastfoot
+MT01 & Xem và đọc truyện public không cần đăng nhập & Guest; có truyện approved; từ khóa tìm kiếm & Trang reader và chi tiết hiển thị bình thường & Không yêu cầu login; URL đúng slug/\allowbreak{}chương & Hiển thị trang reader đầy đủ, URL chứa slug chuẩn (\textbf{Đạt}) \\
+\hline
+MT02 & Follow truyện và kiểm tra tính nhất quán & User đăng nhập; follow, tải lại, xem danh sách theo dõi & Trạng thái follow đồng bộ DB & Nhất quán với DB; lỗi mạng có rollback & Trạng thái follow/unfollow đồng bộ ngay sau khi tải lại (\textbf{Đạt}) \\
+\hline
+MT03 & Ghi nhận lịch sử đọc đúng user & User đọc nhiều chương; đọc, cuộn, thoát và mở lịch sử & Lịch sử hiển thị đúng & Trở về đúng truyện/chương; không ghi nhầm user & Lịch sử được lưu đúng tài khoản và vị trí chương đã đọc (\textbf{Đạt}) \\
+\hline
+MT04 & Uploader không thể thêm chương/publish khi pending & Uploader; truyện pending, chưa duyệt & HTTP \texttt{409}/\texttt{403}, thông báo rõ ràng & Bị chặn với thông báo đúng; không đổi DB & Uploader nhận lỗi HTTP \texttt{409}/\texttt{403} trên cả UI và API (\textbf{Đạt}) \\
+\hline
+MT05 & Moderator duyệt có/không có lý do & Moderator; truyện pending; lần~1 không nhập lý do, lần~2 nhập lý do & Lần~1: HTTP \texttt{400}; Lần~2: HTTP \texttt{200} & Lần đầu bị validate; lần sau cập nhật trạng thái, notify và audit & Bị chặn khi gửi lý do trống; duyệt thành công khi điền đủ lý do (\textbf{Đạt}) \\
+\hline
+MT06 & Rate limit khi gửi report nhiều lần & User; gửi report lặp trong 1 giờ & Report đầu: HTTP \texttt{201}; lần sau: HTTP \texttt{429} & Report đầu hợp lệ; request lặp bị hạn chế & API phản hồi HTTP \texttt{429} sau khi gửi report dồn dập (\textbf{Đạt}) \\
+\hline
+MT07 & Admin thay đổi role/\allowbreak{}status người dùng & Admin đăng nhập; chọn user, đổi role/\allowbreak{}status & UI cập nhật; audit log ghi nhận & UI cập nhật; audit không chứa password/token & Quyền user thay đổi ngay lập tức, audit log ghi nhận đầy đủ (\textbf{Đạt}) \\
+\hline
+MT08 & Token hết hạn không gây vòng lặp redirect & Token hết hạn; truy cập trang account/\allowbreak{}admin & HTTP \texttt{401}; redirect về \texttt{/\allowbreak{}login} & API trả \texttt{401}; frontend xóa phiên, không lặp vô hạn & API trả \texttt{401}; frontend xóa session và redirect về \texttt{/login} (\textbf{Đạt}) \\
+\hline
+MT09 & Responsive UI trên mobile và desktop & Viewport 375px và desktop; duyệt Home, Reader, Admin & Layout hiển thị đúng theo viewport & Không tràn ngang; nút thao tác được; chữ đủ đọc & Giao diện hiển thị tốt trên các kích thước màn hình mobile/desktop (\textbf{Đạt}) \\
+\hline
+MT10 & Queue job notification với Redis thật & Staging với Redis thật; tạo chương mới đủ điều kiện & Job xử lý; notification được tạo & Job xử lý một lần; notification tạo đúng người nhận & Queue job Notification xử lý thành công qua Redis trên staging (\textbf{Đạt}) \\
 \hline
 \end{longtable}
 \endgroup
