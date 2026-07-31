@@ -16,6 +16,14 @@ import {
   faMagnifyingGlass,
   faRotateRight,
   faTriangleExclamation,
+  faYinYang,
+  faWandMagicSparkles,
+  faCity,
+  faHeart,
+  faDragon,
+  faScroll,
+  faFire,
+  FontAwesomeIcon,
 } from '../lib/icons';
 
 function StoryCardSkeleton({ compact }) {
@@ -63,12 +71,12 @@ function SectionHeading({ eyebrow, title, icon, action }) {
 }
 
 const HOT_GENRES = [
-  { slug: 'Tien Hiep', label: 'Tiên Hiệp', icon: '⚔️' },
-  { slug: 'Huyen Huyen', label: 'Huyền Huyễn', icon: '✨' },
-  { slug: 'Do Thi', label: 'Đô Thị', icon: '🏙️' },
-  { slug: 'Ngon Tinh', label: 'Ngôn Tình', icon: '💕' },
-  { slug: 'Kiem Hiep', label: 'Kiếm Hiệp', icon: '🗡️' },
-  { slug: 'Lich Su', label: 'Lịch Sử', icon: '📜' },
+  { slug: 'Tien Hiep', label: 'Tiên Hiệp', icon: faYinYang },
+  { slug: 'Huyen Huyen', label: 'Huyền Huyễn', icon: faWandMagicSparkles },
+  { slug: 'Do Thi', label: 'Đô Thị', icon: faCity },
+  { slug: 'Ngon Tinh', label: 'Ngôn Tình', icon: faHeart },
+  { slug: 'Kiem Hiep', label: 'Kiếm Hiệp', icon: faDragon },
+  { slug: 'Lich Su', label: 'Lịch Sử', icon: faScroll },
 ];
 
 function HomePage() {
@@ -265,7 +273,8 @@ function HomePage() {
           <section className="home-section hot-genres-section">
             <SectionHeading
               eyebrow="Xu hướng tìm kiếm"
-              title="🔥 Thể Loại Hot"
+              title="Thể Loại Hot"
+              icon={faFire}
               action={<Link to="/tim-truyen" className="section-action-link">Tất cả thể loại</Link>}
             />
             <div className="hot-genres-tabs">
@@ -276,7 +285,7 @@ function HomePage() {
                   className={`hot-genre-chip ${selectedHotGenre === g.slug ? 'is-active' : ''}`}
                   onClick={() => setSelectedHotGenre(g.slug)}
                 >
-                  <span className="hot-genre-icon">{g.icon}</span>
+                  <span className="hot-genre-icon"><FontAwesomeIcon icon={g.icon} /></span>
                   <span>{g.label}</span>
                 </button>
               ))}

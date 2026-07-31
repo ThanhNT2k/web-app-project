@@ -25,6 +25,8 @@ import {
   faFlag,
   faForwardStep,
   faEnvelopeOpenText,
+  faDragon,
+  faCity,
   faGaugeHigh,
   faGem,
   faGear,
@@ -43,6 +45,7 @@ import {
   faRobot,
   faRotateRight,
   faShieldHalved,
+  faScroll,
   faStar,
   faSun,
   faThumbsDown,
@@ -54,6 +57,7 @@ import {
   faUsers,
   faWandMagicSparkles,
   faXmark,
+  faYinYang,
 } from '@fortawesome/free-solid-svg-icons';
 
 export {
@@ -83,6 +87,8 @@ export {
   faFlag,
   faForwardStep,
   faEnvelopeOpenText,
+  faDragon,
+  faCity,
   faGaugeHigh,
   faGem,
   faGear,
@@ -101,6 +107,7 @@ export {
   faRobot,
   faRotateRight,
   faShieldHalved,
+  faScroll,
   faStar,
   faSun,
   faThumbsDown,
@@ -112,4 +119,5 @@ export {
   faUsers,
   faWandMagicSparkles,
   faXmark,
+  faYinYang,
 };
