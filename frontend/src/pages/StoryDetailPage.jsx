@@ -11,10 +11,16 @@ import { mockStories } from '../data/mockStories';
 import { slugify } from '../utils/slugify';
 import {
   FontAwesomeIcon,
+  faBookBookmark,
   faBookOpen,
+  faChevronLeft,
+  faChevronRight,
   faFlag,
   faForwardStep,
+  faLock,
+  faLockOpen,
   faStar,
+  faXmark,
 } from '../lib/icons';
 
 const FALLBACK_COVER =
@@ -93,7 +99,9 @@ function StoryDetailPage() {
   const [error, setError] = useState('');
   const [chapterPage, setChapterPage] = useState(1);
   const [chapterPagination, setChapterPagination] = useState({ page: 1, totalPages: 1, totalItems: 0 });
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortOrder, setSortOrder] = useState(() => {
+    return localStorage.getItem('cmc_chapter_sort_order') || 'desc';
+  });
   const [chapterSearch, setChapterSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -101,6 +109,18 @@ function StoryDetailPage() {
   const [introExpanded, setIntroExpanded] = useState(false);
   const [unlockingChapterId, setUnlockingChapterId] = useState(null);
   const debounceTimerRef = useRef(null);
+  const hasAutoJumpedRef = useRef(false);
+
+  const handleSortOrderChange = (newSortOrder) => {
+    setSortOrder(newSortOrder);
+    localStorage.setItem('cmc_chapter_sort_order', newSortOrder);
+    setChapterPage(1);
+  };
+
+  // Reset auto-jump flag when story changes
+  useEffect(() => {
+    hasAutoJumpedRef.current = false;
+  }, [story?.id]);
 
   // Debounce chapter search to avoid excessive API calls (#9)
   useEffect(() => {
@@ -220,6 +240,49 @@ function StoryDetailPage() {
       isActive = false;
     };
   }, [isAuthenticated, story?.id]);
+
+  // Auto-jump to the page containing the current reading progress on initial load
+  useEffect(() => {
+    if (!storyProgress?.chapter_number || !story?.id || hasAutoJumpedRef.current) return;
+
+    const currentChapterNum = Number(storyProgress.chapter_number);
+    if (!currentChapterNum || currentChapterNum <= 0) return;
+
+    const totalChapters = story.chapter_count || story.total_chapters || chapterPagination.totalItems || 0;
+
+    let targetPage = 1;
+    if (sortOrder === 'asc') {
+      targetPage = Math.ceil(currentChapterNum / CHAPTERS_PER_PAGE);
+    } else if (totalChapters > 0) {
+      const offsetFromLatest = totalChapters - currentChapterNum;
+      if (offsetFromLatest >= 0) {
+        targetPage = Math.floor(offsetFromLatest / CHAPTERS_PER_PAGE) + 1;
+      }
+    }
+
+    if (targetPage > 1) {
+      setChapterPage(targetPage);
+    }
+    hasAutoJumpedRef.current = true;
+  }, [storyProgress, story?.id, sortOrder, chapterPagination.totalItems]);
+
+  const saveScrollPosition = () => {
+    sessionStorage.setItem(`scroll_pos_${window.location.pathname}`, window.scrollY.toString());
+  };
+
+  // Restore scroll position when returning to this story detail page
+  useEffect(() => {
+    if (loading || chapterLoading) return;
+    const key = `scroll_pos_${window.location.pathname}`;
+    const savedPos = sessionStorage.getItem(key);
+    if (savedPos !== null) {
+      const posY = Number(savedPos);
+      sessionStorage.removeItem(key);
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: posY, behavior: 'instant' });
+      });
+    }
+  }, [loading, chapterLoading]);
 
   const filteredChapters = useMemo(() => {
     const keyword = chapterSearch.trim().toLocaleLowerCase('vi-VN');
@@ -414,6 +477,7 @@ function StoryDetailPage() {
             <Link
               to={`/${story.id}-${story.slug}/${continueChapterNumber}`}
               className="btn-cmc btn-cmc-primary storyqq-icon-action"
+              onClick={saveScrollPosition}
               aria-label={storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
               title={storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
               data-tooltip={storyProgress ? 'Tiếp tục đọc' : 'Bắt đầu đọc'}
@@ -427,6 +491,7 @@ function StoryDetailPage() {
             <Link
               to={`/${story.id}-${story.slug}/${latestChapter.chapter_number}`}
               className="btn-cmc btn-cmc-outline storyqq-icon-action"
+              onClick={saveScrollPosition}
               aria-label="Đọc chương mới nhất"
               title="Đọc chương mới nhất"
               data-tooltip="Chương mới nhất"
@@ -480,13 +545,15 @@ function StoryDetailPage() {
                 aria-label="Tìm kiếm chương"
               />
               {chapterSearch ? (
-                <button type="button" onClick={() => { setChapterSearch(''); setDebouncedSearch(''); }} aria-label="Xóa tìm kiếm chương">×</button>
+                <button type="button" onClick={() => { setChapterSearch(''); setDebouncedSearch(''); }} aria-label="Xóa tìm kiếm chương">
+                  <FontAwesomeIcon icon={faXmark} />
+                </button>
               ) : null}
             </label>
             <select
               className="form-select form-select-sm"
               value={sortOrder}
-              onChange={(e) => { setSortOrder(e.target.value); setChapterPage(1); }}
+              onChange={(e) => handleSortOrderChange(e.target.value)}
               aria-label="Sắp xếp chương"
             >
               <option value="asc">Sắp xếp: Cũ nhất</option>
@@ -538,18 +605,31 @@ function StoryDetailPage() {
                   <Link
                     to={`/${story.id}-${story.slug}/${chapter.chapter_number}`}
                     className={linkClass}
-                    onClick={(event) => handleLockedChapterClick(event, chapter)}
+                    onClick={(event) => { saveScrollPosition(); handleLockedChapterClick(event, chapter); }}
                     aria-current={isLastRead ? 'true' : undefined}
                     aria-disabled={isUnlocking ? 'true' : undefined}
                   >
                     <span>
                       Ch.{chapter.chapter_number}: {chapter.title || `Chương ${chapter.chapter_number}`}
                       {isLastRead ? (
-                        <small className="ms-2 chapter-link-last-read-badge">📖 Đang đọc</small>
+                        <small className="ms-2 chapter-link-last-read-badge">
+                          <FontAwesomeIcon icon={faBookBookmark} className="me-1" />
+                          Đang đọc
+                        </small>
                       ) : null}
                       {chapter.is_paid ? (
                         <small className="ms-2">
-                          {chapter.can_read ? '🔓 Đã mở' : `🔒 ${chapter.unlock_cost || 2} Tinh thạch`}
+                          {chapter.can_read ? (
+                            <>
+                              <FontAwesomeIcon icon={faLockOpen} className="me-1 text-success" />
+                              Đã mở
+                            </>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon icon={faLock} className="me-1 text-warning" />
+                              {chapter.unlock_cost || 2} Tinh thạch
+                            </>
+                          )}
                         </small>
                       ) : null}
                     </span>
@@ -591,7 +671,8 @@ function StoryDetailPage() {
               onClick={() => setChapterPage((p) => Math.max(p - 1, 1))}
               aria-label={`Chuyển đến trang ${Math.max(chapterPage - 1, 1)}`}
             >
-              ‹ Trước
+              <FontAwesomeIcon icon={faChevronLeft} className="me-1" />
+              Trước
             </button>
             <span className="small text-muted fw-semibold px-2">
               Trang{' '}
@@ -619,7 +700,8 @@ function StoryDetailPage() {
               onClick={() => setChapterPage((p) => Math.min(p + 1, chapterPagination.totalPages))}
               aria-label={`Chuyển đến trang ${Math.min(chapterPage + 1, chapterPagination.totalPages)}`}
             >
-              Sau ›
+              Sau
+              <FontAwesomeIcon icon={faChevronRight} className="ms-1" />
             </button>
           </div>
         ) : null}

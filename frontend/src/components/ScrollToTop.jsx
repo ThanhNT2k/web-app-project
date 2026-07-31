@@ -9,7 +9,11 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Scroll về đầu trang (0, 0) khi pathname thay đổi
+    // If there's a saved scroll position for this path, skip auto scroll-to-top
+    const savedPos = sessionStorage.getItem(`scroll_pos_${pathname}`);
+    if (savedPos !== null) {
+      return;
+    }
     window.scrollTo(0, 0);
   }, [pathname]);
 
