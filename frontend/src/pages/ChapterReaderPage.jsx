@@ -110,62 +110,62 @@ function ChapterReaderPage() {
     hasInitialRestoreRef.current = false;    
   }, [chapterNumber]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const loadChapterData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const chapterResponse = await API.chapters.getBySlugAndNumber(storySlug, chapterNumber);
+      const resolvedChapter = chapterResponse.chapter || chapterResponse;
+      setChapter(resolvedChapter);
+      setLockedChapter(null);
+
+      // Fetch all chapters for the dropdown (use story_total_chapters or a large limit)
+      const totalChapters = resolvedChapter.story_total_chapters || 100;
+      const limit = Math.max(totalChapters, 10); // At least 10, up to total
+      const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, limit);
+      setChapters(chaptersResponse.chapters || []);
+    } catch (err) {
+      if (err?.response?.data?.code === 'CHAPTER_LOCKED') {
+        const locked = err.response.data.data;
+        const previewChapter = {
+          id: locked.chapter_id,
+          story_id: locked.story_id,
+          chapter_number: locked.chapter_number,
+          title: locked.title,
+          content: locked.content || 'Nội dung chương này đang bị khóa...',
+          story_title: locked.story_title,
+          story_slug: locked.story_slug,
+          is_paid: true,
+          can_read: false,
+          is_preview: true,
+        };
+        setChapter(previewChapter);
+        setLockedChapter(locked);
+        try {
+          const response = await API.chapters.getByStory(locked.story_id, 1, 1000);
+          setChapters(response.chapters || []);
+        } catch {
+          setChapters([]);
+        }
         setError('');
-        const chapterResponse = await API.chapters.getBySlugAndNumber(storySlug, chapterNumber);
-        const resolvedChapter = chapterResponse.chapter || chapterResponse;
-        setChapter(resolvedChapter);
-        setLockedChapter(null);
-
-        // Fetch all chapters for the dropdown (use story_total_chapters or a large limit)
-        const totalChapters = resolvedChapter.story_total_chapters || 100;
-        const limit = Math.max(totalChapters, 10); // At least 10, up to total
-        const chaptersResponse = await API.chapters.getByStory(resolvedChapter.story_id, 1, limit);
-        setChapters(chaptersResponse.chapters || []);
-      } catch (err) {
-        if (err?.response?.data?.code === 'CHAPTER_LOCKED') {
-          const locked = err.response.data.data;
-          const previewChapter = {
-            id: locked.chapter_id,
-            story_id: locked.story_id,
-            chapter_number: locked.chapter_number,
-            title: locked.title,
-            content: locked.content || 'Nội dung chương này đang bị khóa...',
-            story_title: locked.story_title,
-            story_slug: locked.story_slug,
-            is_paid: true,
-            can_read: false,
-            is_preview: true,
-          };
-          setChapter(previewChapter);
-          setLockedChapter(locked);
-          try {
-            const response = await API.chapters.getByStory(locked.story_id, 1, 1000);
-            setChapters(response.chapters || []);
-          } catch {
-            setChapters([]);
-          }
-          setError('');
-          return;
-        }
-        setChapter(null);
-        setLockedChapter(null);
-        setChapters([]);
-        if (err?.response?.status === 404) {
-          setError('Chương truyện không tồn tại hoặc đã bị ẩn.');
-        } else {
-          setError('Không tải được chương từ máy chủ.');
-        }
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
-
-    fetchData();
+      setChapter(null);
+      setLockedChapter(null);
+      setChapters([]);
+      if (err?.response?.status === 404) {
+        setError('Chương truyện không tồn tại hoặc đã bị ẩn.');
+      } else {
+        setError('Không tải được chương từ máy chủ.');
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [storySlug, chapterNumber]);
+
+  useEffect(() => {
+    loadChapterData();
+  }, [loadChapterData]);
   const [storyProgress, setStoryProgress] = useState(null);
 
   useEffect(() => {
@@ -407,18 +407,34 @@ function ChapterReaderPage() {
   };
 
   const unlockAndGo = async (target) => {
-    if (!target) return;
+    const chapterIdToUnlock = lockedChapter?.chapter_id || chapter?.id || target?.chapter_id || target?.id;
+    if (!chapterIdToUnlock) {
+      setUnlockError('Không tìm thấy ID chương để mở khóa.');
+      return;
+    }
+
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+
     try {
       setUnlocking(true);
       setUnlockError('');
-      const response = await API.chapters.unlock(target.id || target.chapter_id);
-      setCrystalBalance(response.crystal_balance);
-      goToChapter(target.chapter_number);
+      const response = await API.chapters.unlock(chapterIdToUnlock);
+      if (response?.crystal_balance !== undefined && typeof setCrystalBalance === 'function') {
+        setCrystalBalance(response.crystal_balance);
+      }
+
+      // Mở khóa thành công -> Tự động nạp lại trang (F5) lập tức để hiển thị full truyện!
+      window.location.reload();
     } catch (err) {
+      console.error('[unlockAndGo error]', err?.response?.data || err);
+      const errCode = err?.response?.data?.code;
+      if (errCode === 'CHAPTER_ALREADY_UNLOCKED' || errCode === 'CHAPTER_ALREADY_FREE') {
+        window.location.reload();
+        return;
+      }
       setUnlockError(err?.response?.data?.message || 'Không thể mở khóa chương.');
     } finally {
       setUnlocking(false);
