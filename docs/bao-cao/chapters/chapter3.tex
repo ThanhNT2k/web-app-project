@@ -327,12 +327,13 @@ Tuy nhiên, fallback giữa hai mô hình có thể tạo kết quả khác nhau
 Schema chính \CodePath{backend/scripts/schema.sql} định nghĩa các nhóm dữ liệu về tài khoản, truyện và chương, lịch sử đọc, tương tác, thông báo, kiểm duyệt và nhật ký quản trị. Các script riêng bổ sung tag, liên kết truyện--tag và báo cáo vi phạm. Thiết kế sử dụng khóa chính, khóa ngoại, \CodePath{UNIQUE} và \CodePath{CHECK} để bảo đảm tính toàn vẹn dữ liệu \cite{postgresql-docs}.
 
 \begin{landscape}
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=\linewidth,height=\textheight,keepaspectratio]{images/database-erd.png}
-  \caption{Lược đồ ERD của cơ sở dữ liệu CMC Truyện}
+\vspace*{\fill}
+\begin{center}
+  \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{images/database-erd.png}
+  \captionof{figure}{Lược đồ ERD của cơ sở dữ liệu CMC Truyện}
   \label{fig:database-er}
-\end{figure}
+\end{center}
+\vspace*{\fill}
 \end{landscape}
 
 Hình~\ref{fig:database-er} thể hiện các quan hệ chính của hệ thống. \CodePath{users}, \CodePath{stories} và \CodePath{chapters} là ba thực thể trung tâm; các bảng lịch sử đọc, theo dõi, đánh giá, bình luận và thông báo liên kết hành vi người dùng với nội dung. Nhóm bảng \CodePath{reports}, \CodePath{bad_words} và \CodePath{audit_logs} phục vụ kiểm duyệt và truy vết.
