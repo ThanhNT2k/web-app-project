@@ -102,7 +102,7 @@ Trang chi tiết minh họa giao diện chi tiết truyện, hiển thị bìa, 
   {Giao diện chi tiết truyện}
   {fig:ui-customer-detail}
   {Chụp truyện có dữ liệu đầy đủ; không dùng nội dung vi phạm bản quyền hoặc thông tin chưa được phép công bố.}
-
+\clearpage
 Giao diện đọc chương và các tùy chọn đọc tập trung hiển thị nội dung rõ ràng, đồng thời cung cấp điều hướng giữa các chương và tùy chỉnh như cỡ chữ, kiểu chữ hoặc chế độ hiển thị để nâng cao trải nghiệm đọc.Khi người dùng truy cập chương trả phí chưa mở khóa, trình đọc chỉ hiển thị phần xem trước cùng thẻ thông báo khóa. Thẻ này cho biết chi phí mở khóa, số dư Tinh thạch hiện có và nút mở khóa chương. Danh sách chương tại trang chi tiết cũng phân biệt rõ chương miễn phí, chương đã mở và chương đang bị khóa để người dùng chủ động lựa chọn.
 \ReportImage[1.0\textheight]
   {images/screenshots/ui-customer-reader.png}
@@ -132,7 +132,7 @@ Giao diện quản lý người dùng cho phép quản trị viên tìm kiếm, 
   {Giao diện quản lý người dùng}
   {fig:ui-admin-users}
   {Chụp danh sách user demo và control đổi role/trạng thái; ẩn email hoặc dữ liệu thật.}
-
+\clearpage
 Giao diện quản lý bình luận hỗ trợ quản trị viên hoặc kiểm duyệt viên theo dõi, tìm kiếm và xử lý các bình luận trong hệ thống. Từ giao diện này, người quản lý có thể kiểm tra nội dung và thực hiện các thao tác phù hợp nhằm duy trì môi trường thảo luận lành mạnh.
 \ReportImage[1.0\textheight]
   {images/screenshots/ui-moderator-pending-stories.png}
@@ -192,7 +192,7 @@ Entry point frontend là \CodePath{frontend/src/main.jsx}, sau đó render \Code
 \hline
 \end{tabularx}
 \end{table}
-
+\clearpage
 \subsection{Điều hướng và bảo vệ route}
 
 \CodePath{App.jsx} chia route thành ba nhóm. Nhóm user/public dùng Navbar và Footer; nhóm Admin dùng layout riêng (\CodePath{AdminLayout}); nhóm Moderator dùng layout riêng (\CodePath{ModeratorLayout}). \CodePath{ProtectedRoute} yêu cầu đăng nhập, còn \CodePath{RoleProtectedRoute} kiểm tra role trước khi render Dashboard hoặc layout quản trị. Cấu trúc này giảm lặp và giúp sidebar/menu nhất quán trong từng khu vực.
