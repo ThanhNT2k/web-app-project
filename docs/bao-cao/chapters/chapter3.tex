@@ -103,7 +103,7 @@ Trang chi tiết minh họa giao diện chi tiết truyện, hiển thị bìa, 
   {fig:ui-customer-detail}
   {Chụp truyện có dữ liệu đầy đủ; không dùng nội dung vi phạm bản quyền hoặc thông tin chưa được phép công bố.}
 
-Giao diện đọc chương và các tùy chọn đọc tập trung hiển thị nội dung rõ ràng, đồng thời cung cấp điều hướng giữa các chương và tùy chỉnh như cỡ chữ, kiểu chữ hoặc chế độ hiển thị để nâng cao trải nghiệm đọc.
+Giao diện đọc chương và các tùy chọn đọc tập trung hiển thị nội dung rõ ràng, đồng thời cung cấp điều hướng giữa các chương và tùy chỉnh như cỡ chữ, kiểu chữ hoặc chế độ hiển thị để nâng cao trải nghiệm đọc.Khi người dùng truy cập chương trả phí chưa mở khóa, trình đọc chỉ hiển thị phần xem trước cùng thẻ thông báo khóa. Thẻ này cho biết chi phí mở khóa, số dư Tinh thạch hiện có và nút mở khóa chương. Danh sách chương tại trang chi tiết cũng phân biệt rõ chương miễn phí, chương đã mở và chương đang bị khóa để người dùng chủ động lựa chọn.
 \ReportImage[1.0\textheight]
   {images/screenshots/ui-customer-reader.png}
   {Giao diện đọc chương và tùy chọn đọc}
@@ -216,7 +216,11 @@ Route frontend không thay thế quyền backend. Nếu chỉ ẩn menu Admin nh
   {Đoạn code chính về Axios interceptor ở frontend}
   {fig:fe-api-code}
   {Chụp đoạn code thật tạo \CodePath{apiClient} và hai interceptor; che token nếu DevTools đang hiển thị giá trị thật.}
+\subsection{Mở khóa chương ở frontend}
 
+Facade API khai báo \CodePath{API.chapters.unlock(chapterId)} để gọi endpoint mở khóa. Tại \CodePath{StoryDetailPage}, chương chưa có quyền đọc được gắn nhãn khóa và người dùng xác nhận trước khi gửi request. Tại \CodePath{ChapterReaderPage}, response \CodePath{CHAPTER_LOCKED} được chuyển thành giao diện xem trước thay vì hiển thị toàn bộ nội dung. Sau khi API mở khóa thành công, \CodePath{setCrystalBalance} cập nhật số dư trong context đăng nhập và trang đọc được tải lại để lấy nội dung đầy đủ.
+
+Tùy chọn \CodePath{auto_unlock_next_chapter} hiện được lưu vào thiết lập người dùng. Tuy nhiên, phiên bản hiện tại chưa tự động gọi API mở khóa khi chuyển sang chương tiếp theo; đây là hạng mục cần hoàn thiện trước khi công bố là chức năng tự động.
 \subsection{Trạng thái giao diện và trải nghiệm}
 
 Source có skeleton screen cho trạng thái tải và optimistic UI kèm rollback ở những tương tác phù hợp như follow, rating hoặc vote. Theme và tùy chọn đọc được tách thành context/panel riêng. Khi đánh giá frontend, cần kiểm tra đủ bốn trạng thái: loading, success có dữ liệu, success rỗng và error. Một giao diện đẹp ở trạng thái thành công nhưng vỡ khi API chậm vẫn chưa phải trải nghiệm hoàn chỉnh.
@@ -305,7 +309,11 @@ Audit middleware bao quanh các thao tác làm thay đổi dữ liệu quản tr
   {Đoạn code chính về xác thực JWT và RBAC}
   {fig:be-auth-code}
   {Chụp code thật trong \CodePath{authMiddleware.js} và \CodePath{roleMiddleware.js}; không chụp giá trị secret hoặc token.}
+\subsection{Kiểm soát truy cập và mở khóa chương trả phí}
 
+Service \CodePath{chapterAccessService} quyết định quyền đọc chương. Chương miễn phí được đọc công khai; chương trả phí yêu cầu người dùng đăng nhập và có bản ghi trong \CodePath{chapter_unlocks}. Admin, Uploader, tác giả truyện và cộng tác viên được xử lý theo nhánh quyền đặc biệt của backend. Khi chưa đủ quyền, API không trả toàn bộ nội dung mà trả response \CodePath{CHAPTER_LOCKED} kèm phần xem trước, chi phí mở khóa và số dư hiện có.
+
+Route \CodePath{POST /api/chapters/<id>/unlock} yêu cầu JWT. Controller gọi \CodePath{Wallet.unlockChapter}; model sử dụng transaction \CodePath{BEGIN/COMMIT/ROLLBACK} và khóa dòng số dư bằng \CodePath{FOR UPDATE}. Trong cùng transaction, hệ thống kiểm tra chương đã mở khóa hay chưa, kiểm tra số dư, cập nhật \CodePath{users.crystal_balance}, tạo bản ghi \CodePath{chapter_unlocks} và ghi lịch sử vào \CodePath{crystal_transactions}. Ràng buộc duy nhất theo cặp người dùng--chương kết hợp với transaction giúp ngăn trừ Tinh thạch hai lần khi request được gửi đồng thời.
 \subsection{Tác vụ nền và dịch vụ AI}
 
 \CodePath{StartWorker.js} khởi động moderation worker và notification worker. Queue dùng \CodePath{REDIS_URL}; API và worker phải trỏ cùng Redis \cite{redis-docs,bullmq-docs}. Với AI, backend ưu tiên Groq rồi fallback Gemini, có timeout và cache; tóm tắt chương được lưu ở \CodePath{ai_summaries}. API key không đi xuống frontend vì mã phía client có thể được người dùng xem trực tiếp.
@@ -352,6 +360,7 @@ Hình~\ref{fig:database-er} thể hiện các quan hệ chính của hệ thốn
 Backend cấu hình PostgreSQL Pool với tối đa 20 connection, idle timeout 30 giây và connection timeout 5 giây. Môi trường production có thể dùng \CodePath{DATABASE_URL}; môi trường local có thể dùng các biến host/port/name/user/password. Index tập trung vào slug, danh sách truyện công khai, số chương, trạng thái bình luận, khóa ngoại và audit. API danh sách chương không trả trường content, qua đó giảm kích thước phản hồi.
 
 Khi một nghiệp vụ có nhiều bước ghi dữ liệu, tất cả query từ \CodePath{BEGIN} đến \CodePath{COMMIT/ROLLBACK} phải dùng cùng client lấy từ \CodePath{pool.connect()}. Nếu trộn \CodePath{pool.query()} với client trong một transaction, các query có thể chạy trên connection khác và rollback không còn bảo đảm tính nguyên tử.
+Nghiệp vụ mở khóa chương là ví dụ điển hình cho transaction nhiều bước. Model \CodePath{Wallet.unlockChapter} khóa bản ghi số dư của người dùng bằng \CodePath{FOR UPDATE}, kiểm tra bản ghi mở khóa hiện có và số dư trước khi ghi dữ liệu. Nếu bất kỳ bước nào thất bại, \CodePath{ROLLBACK} bảo đảm số dư, lịch sử giao dịch và quyền đọc không rơi vào trạng thái không nhất quán.
 
 
 
@@ -598,7 +607,7 @@ Quy trình đăng tải truyện và các bước kiểm duyệt được đánh
 
 \subsection{Nhóm 3: Chức năng người dùng}
 
-Các tính năng tương tác của người dùng như tìm kiếm, theo dõi truyện, bình luận, đánh giá, báo cáo vi phạm, tải ảnh đại diện và thanh toán mở khóa chương được kiểm chứng thông qua 28 kịch bản (Bảng~\ref{tab:tc-user}). Việc kiểm thử được thực hiện qua các test suite: \CodePath{socialInteractions.test.js}, \CodePath{storyDiscoveryRating.test.js}, \CodePath{reportController.test.js}, \CodePath{chapterUnlock.test.js} và \CodePath{uploadCover.test.js}.
+Các tính năng tương tác của người dùng như tìm kiếm, theo dõi truyện, bình luận, đánh giá, báo cáo vi phạm, tải ảnh đại diện và mở khóa chương bằng Tinh thạch được kiểm chứng thông qua 29 kịch bản (Bảng~\ref{tab:tc-user}). Việc kiểm thử được thực hiện qua các test suite: \CodePath{socialInteractions.test.js}, \CodePath{storyDiscoveryRating.test.js}, \CodePath{reportController.test.js}, \CodePath{chapterUnlock.test.js} và \CodePath{uploadCover.test.js}.
 
 \begingroup
 \footnotesize
@@ -666,11 +675,11 @@ Các tính năng tương tác của người dùng như tìm kiếm, theo dõi t
 \hline
 24 & Mở khóa chương miễn phí & Chapter \texttt{is\_\allowbreak{}paid: false} & HTTP \texttt{409}, không trừ tiền & Không gọi giao dịch ví & Wallet không được gọi (\textbf{Đạt}) \\
 \hline
-25 & Mở khóa chương trả phí & Chapter khóa; số dư đủ & HTTP \texttt{200},\newline\texttt{CHAPTER\_\allowbreak{}UNLOCKED} & Trừ đúng chi phí và trả số dư mới & Chi phí \texttt{10}, số dư mới đúng (\textbf{Đạt}) \\
+25 & Mở khóa chương trả phí & Chapter khóa; số dư đủ & HTTP \texttt{200},\newline\texttt{CHAPTER\_ALLOWBREAK{}UNLOCKED} & Trừ đúng \CodePath{UNLOCK\_COST} và trả số dư mới & Chương được mở, số dư giảm đúng chi phí cấu hình (\textbf{Đạt}) \\
 \hline
 26 & Mở khóa lại hoặc request đồng thời & Wallet báo\newline\texttt{already\_\allowbreak{}unlocked: true} & HTTP \texttt{200}, cost \texttt{0} & Không trừ tiền lần hai & \texttt{CHAPTER\_\allowbreak{}ALREADY\_\allowbreak{}UNLOCKED}, cost \texttt{0} (\textbf{Đạt}) \\
 \hline
-27 & Số dư không đủ khi mở khóa & Balance \texttt{4}, unlock cost \texttt{10} & HTTP \texttt{409},\newline\texttt{INSUFFICIENT\_\allowbreak{}CRYSTALS} & Không mở khóa; trả số dư hiện tại & HTTP \texttt{409}, balance \texttt{4} (\textbf{Đạt}) \\
+27 & Số dư không đủ khi mở khóa & Balance nhỏ hơn \CodePath{UNLOCK\_COST} & HTTP \texttt{409},\newline\texttt{INSUFFICIENT\_CRYSTALS} & Không mở khóa; trả số dư hiện tại & API trả \texttt{409}, số dư không thay đổi (\textbf{Đạt}) \\
 \hline
 28 & Database lỗi khi mở khóa & DB error chứa dữ liệu nội bộ & HTTP \texttt{500}, thông báo chung & Không lộ chi tiết database & UI chỉ hiển thị thông báo chung tiếng Việt (\textbf{Đạt}) \\
 \hline

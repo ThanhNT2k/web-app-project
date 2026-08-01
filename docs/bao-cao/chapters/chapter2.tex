@@ -17,6 +17,8 @@ Hệ thống sử dụng kiểm soát truy cập theo vai trò. Backend là lớ
 \hline
 Xem truyện/chương công khai & Có & Có & Có & Có & Có \\
 \hline
+Đọc chương trả phí & Không & Có$^{***}$ & Có & Có$^{***}$ & Có \\
+\hline
 Tìm kiếm, bảng xếp hạng & Có & Có & Có & Có & Có \\
 \hline
 Lưu lịch sử, theo dõi, bình luận & Không & Có & Có & Có & Có \\
@@ -39,7 +41,8 @@ Xem audit log & Không & Không & Không & Có$^{**}$ & Có \\
 \begin{minipage}{\textwidth}
 \footnotesize
 $^{*}$ Route tạo truyện hiện yêu cầu đúng role Uploader, trong khi một số route sửa/xóa cho phép Uploader hoặc Admin. Đây là khác biệt cần giải thích khi demo.\\
-$^{**}$ Moderator chỉ được xem phạm vi audit phù hợp theo logic backend/test, không mặc nhiên có toàn quyền như Admin.
+$^{**}$ Moderator chỉ được xem phạm vi audit phù hợp theo logic backend/test, không mặc nhiên có toàn quyền như Admin.\\
+$^{***}$ User và Moderator cần đăng nhập, có đủ Tinh thạch và mở khóa chương; Uploader và Admin được backend cho phép đọc trực tiếp theo logic kiểm tra quyền hiện tại.
 \end{minipage}
 \end{table}
 
@@ -155,7 +158,9 @@ Khi đọc chương, hệ thống gửi tiến độ đến \CodePath{POST /api/
   \item Lần truy cập sau, lịch sử cho phép quay lại truyện và chương gần nhất;
   \item Nếu request lưu thất bại, giao diện không được khẳng định đã đồng bộ.
 \end{itemize}
+\subsection{Mở khóa chương trả phí bằng Tinh thạch}
 
+Với chương có trạng thái \CodePath{is_paid}, Guest chỉ nhận được thông báo khóa và phần xem trước nội dung. Người dùng đã đăng nhập có thể chọn mở khóa bằng Tinh thạch; frontend gửi request \CodePath{POST /api/chapters/<id>/unlock}. Backend kiểm tra trạng thái chương, quyền đọc và số dư trước khi thực hiện giao dịch. Khi thành công, hệ thống ghi nhận chương đã mở khóa, trừ 2 Tinh thạch khỏi ví và trả về số dư mới để giao diện cập nhật. Nếu số dư không đủ, API trả mã \CodePath{INSUFFICIENT_CRYSTALS}; nếu chương đã mở khóa trước đó, hệ thống không trừ Tinh thạch lần hai.
 Report API áp dụng rate limiter; Moderator/Admin xử lý báo cáo và lưu kết quả giải quyết.
 \clearpage
 

@@ -1,14 +1,14 @@
 \chapter*{KẾT LUẬN}
 \addcontentsline{toc}{chapter}{Kết luận}
 
-Dự án CMC Truyện đã xây dựng một nền tảng đọc và quản lý truyện trực tuyến với các nhóm chức năng dành cho người đọc, Uploader, Moderator và Admin. Hệ thống hỗ trợ khám phá, tìm kiếm và đọc truyện; quản lý tài khoản; theo dõi, đánh giá, bình luận và báo cáo vi phạm; đăng tải nội dung, kiểm duyệt và quản trị hoạt động.
+Dự án CMC Truyện đã xây dựng một nền tảng đọc và quản lý truyện trực tuyến với các nhóm chức năng dành cho người đọc, Uploader, Moderator và Admin. Hệ thống hỗ trợ khám phá, tìm kiếm và đọc truyện; quản lý tài khoản; theo dõi, đánh giá, bình luận và báo cáo vi phạm; đăng tải nội dung, kiểm duyệt và quản trị hoạt động, cung cấp cơ chế dùng Tinh thạch để mở khóa chương trả phí.
 
 Về kỹ thuật, hệ thống được tổ chức theo kiến trúc frontend/backend tách rời: frontend sử dụng React và Vite, backend cung cấp REST API trên Express, dữ liệu lưu trữ bằng PostgreSQL, còn Redis/BullMQ và worker riêng đảm nhiệm các tác vụ nền. Các cơ chế JWT, phân quyền RBAC, audit log, validation, rate limit và quy trình kiểm duyệt góp phần bảo đảm tính an toàn và khả năng truy vết của hệ thống.
 
 \section*{Đánh giá, hạn chế và hướng hoàn thiện}
 
-Theo kết quả đã tổng hợp tại Chương 3, bộ kiểm thử mặc định đạt 157/157 test pass, gồm 121 test backend và 36 test frontend. Frontend build production thành công; 6 kịch bản E2E cho các luồng đăng nhập, tìm kiếm và đọc chương cũng đạt yêu cầu. Bên cạnh đó, kiểm thử hiệu năng cho chức năng xử lý tệp truyện đã hoàn thành trong ngân sách thời gian đã xác định. Các kết quả này cho thấy những luồng nghiệp vụ chính như xác thực, phân quyền, quản lý truyện/chương, kiểm duyệt, tương tác người dùng và báo cáo vi phạm đã được kiểm tra ở mức mã nguồn.
+Theo kết quả đã tổng hợp tại Chương 3, bộ kiểm thử mặc định đạt 157/157 test pass, gồm 121 test backend và 36 test frontend. Frontend build production thành công; 6 kịch bản E2E cho các luồng đăng nhập, tìm kiếm và đọc chương cũng đạt yêu cầu. Bên cạnh đó, kiểm thử hiệu năng cho chức năng xử lý tệp truyện đã hoàn thành trong ngân sách thời gian đã xác định. Các kết quả này cho thấy những luồng nghiệp vụ chính như xác thực, phân quyền, quản lý truyện/chương, kiểm duyệt, tương tác người dùng và báo cáo vi phạm đã được kiểm tra ở mức mã nguồn.Tính năng mở khóa chương thể hiện sự phối hợp xuyên suốt giữa giao diện, API, kiểm soát truy cập, transaction cơ sở dữ liệu và kiểm thử các trường hợp số dư không đủ hoặc request mở khóa lặp.
 
 Tuy nhiên, kết quả E2E hiện chủ yếu sử dụng API mock nên chưa thay thế cho kiểm thử tích hợp trên môi trường có PostgreSQL, Redis, email, lưu trữ và OAuth thật. Log kiểm thử vẫn ghi nhận kết nối Redis chưa được cô lập hoàn toàn và BullMQ queue cần được đóng đầy đủ sau khi chạy test. Ngoài ra, bundle JavaScript khoảng 641,96 kB vẫn vượt ngưỡng cảnh báo của Vite; hệ thống cũng cần bổ sung kiểm thử tải, security audit và accessibility audit trước khi vận hành rộng rãi.
 
-Trong giai đoạn tiếp theo, nhóm sẽ ưu tiên hoàn thiện teardown cho queue, triển khai kiểm thử tích hợp trên staging với Redis thật, tối ưu bundle bằng lazy loading và tách vendor chunk, đồng thời bổ sung giám sát vận hành. Trước khi nộp, cần xác nhận các liên kết deploy, mã nguồn và video demo đều trỏ đúng phiên bản hệ thống đã kiểm thử.
+Trong giai đoạn tiếp theo, nhóm sẽ ưu tiên hoàn thiện teardown cho queue, triển khai kiểm thử tích hợp trên staging với Redis thật, tối ưu bundle bằng lazy loading và tách vendor chunk, đồng thời bổ sung giám sát vận hành.
