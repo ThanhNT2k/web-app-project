@@ -78,7 +78,7 @@ async function createTopupTransaction(req, res) {
 async function handleWebhook(req, res) {
   try {
     // Verify Webhook signature
-    const webhookData = payos.webhooks.verify(req.body);
+    const webhookData = await payos.webhooks.verify(req.body);
     
     if (webhookData.code !== '00') { // 00 means successful transfer in webhook
       return res.json({ success: true });

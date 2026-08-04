@@ -38,6 +38,69 @@ import NotFoundPage from './pages/NotFoundPage';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheckCircle, faExclamationCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+
+function PayOSCallbackHandler() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [notification, setNotification] = useState(null);
+
+  useEffect(() => {
+    const code = searchParams.get('code');
+    const cancel = searchParams.get('cancel');
+    
+    if (code || cancel) {
+      if (cancel === 'true') {
+        setNotification({ type: 'warning', message: 'Bạn đã huỷ giao dịch nạp Tinh thạch.' });
+      } else if (code === '00') {
+        setNotification({ type: 'success', message: 'Thanh toán thành công! Tinh thạch sẽ sớm được cộng vào tài khoản.' });
+      } else {
+        setNotification({ type: 'warning', message: 'Giao dịch thanh toán thất bại hoặc có lỗi xảy ra.' });
+      }
+      
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('code');
+      newParams.delete('id');
+      newParams.delete('cancel');
+      newParams.delete('status');
+      newParams.delete('orderCode');
+      setSearchParams(newParams, { replace: true });
+      
+      setTimeout(() => setNotification(null), 7000);
+    }
+  }, [searchParams, setSearchParams]);
+
+  if (!notification) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '80px',
+      right: '20px',
+      zIndex: 9999,
+      backgroundColor: notification.type === 'success' ? '#d1e7dd' : '#fff3cd',
+      color: notification.type === 'success' ? '#0f5132' : '#856404',
+      padding: '16px 20px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      transition: 'opacity 0.3s ease-in-out'
+    }}>
+      <FontAwesomeIcon icon={notification.type === 'success' ? faCheckCircle : faExclamationCircle} size="lg" />
+      <span style={{ fontWeight: 500 }}>{notification.message}</span>
+      <button 
+        onClick={() => setNotification(null)}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '10px', color: 'inherit', fontSize: '1.2rem' }}
+      >
+        <FontAwesomeIcon icon={faTimes} />
+      </button>
+    </div>
+  );
+}
 
 function Layout() {
   return (
@@ -54,6 +117,7 @@ function RootLayout() {
     <ThemeProvider>
       <AuthProvider>
         <ScrollRestoration />
+        <PayOSCallbackHandler />
         <LegacyRedirect />
         <Outlet />
       </AuthProvider>
