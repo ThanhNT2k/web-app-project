@@ -99,6 +99,21 @@ async function unlockChapter(userId, chapterId) {
        VALUES ($1, 'CHAPTER_UNLOCK', $2, $3, $4, $5)`,
       [userId, -UNLOCK_COST, newBalance, chapterId, `Mở khóa chương ${chapter.chapter_number}`]
     );
+
+    // Revenue share for Uploader
+    const authorResult = await client.query(
+      'UPDATE users SET crystal_earned = crystal_earned + $1 WHERE id = $2 RETURNING crystal_earned',
+      [UNLOCK_COST, chapter.author_id]
+    );
+    const newEarned = authorResult.rows[0]?.crystal_earned || UNLOCK_COST;
+    
+    await client.query(
+      `INSERT INTO crystal_transactions
+         (user_id, type, amount, balance_after, chapter_id, description)
+       VALUES ($1, 'CHAPTER_REVENUE', $2, $3, $4, $5)`,
+      [chapter.author_id, UNLOCK_COST, newEarned, chapterId, `Doanh thu từ chương ${chapter.chapter_number} của ${chapter.title}`]
+    );
+
     await client.query('COMMIT');
     return { already_unlocked: false, crystal_balance: newBalance };
   } catch (error) {

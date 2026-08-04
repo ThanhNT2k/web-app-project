@@ -672,11 +672,11 @@ Các tính năng tương tác của người dùng như tìm kiếm, theo dõi t
 \hline
 24 & Mở khóa chương miễn phí & Chapter \texttt{is\_\allowbreak{}paid: false} & HTTP \texttt{409}, không trừ tiền & Không gọi giao dịch ví & Wallet không được gọi (\textbf{Đạt}) \\
 \hline
-25 & Mở khóa chương trả phí & Chapter khóa; số dư đủ & HTTP \texttt{200},\newline\texttt{CHAPTER\_ALLOWBREAK{}UNLOCKED} & Trừ đúng \CodePath{UNLOCK\_COST} và trả số dư mới & Chương được mở, số dư giảm đúng chi phí cấu hình (\textbf{Đạt}) \\
+25 & Mở khóa chương trả phí & Chapter khóa; số dư đủ & HTTP \texttt{200},\newline\texttt{CHAPTER\_\allowbreak{}UNLOCKED} & Trừ đúng \CodePath{UNLOCK_COST} và trả số dư mới & Chương được mở, số dư giảm đúng chi phí cấu hình (\textbf{Đạt}) \\
 \hline
 26 & Mở khóa lại hoặc request đồng thời & Wallet báo\newline\texttt{already\_\allowbreak{}unlocked: true} & HTTP \texttt{200}, cost \texttt{0} & Không trừ tiền lần hai & \texttt{CHAPTER\_\allowbreak{}ALREADY\_\allowbreak{}UNLOCKED}, cost \texttt{0} (\textbf{Đạt}) \\
 \hline
-27 & Số dư không đủ khi mở khóa & Balance nhỏ hơn \CodePath{UNLOCK\_COST} & HTTP \texttt{409},\newline\texttt{INSUFFICIENT\_CRYSTALS} & Không mở khóa; trả số dư hiện tại & API trả \texttt{409}, số dư không thay đổi (\textbf{Đạt}) \\
+27 & Số dư không đủ khi mở khóa & Balance nhỏ hơn \CodePath{UNLOCK_COST} & HTTP \texttt{409},\newline\texttt{INSUFFICIENT\_\allowbreak{}CRYSTALS} & Không mở khóa; trả số dư hiện tại & API trả \texttt{409}, số dư không thay đổi (\textbf{Đạt}) \\
 \hline
 28 & Database lỗi khi mở khóa & DB error chứa dữ liệu nội bộ & HTTP \texttt{500}, thông báo chung & Không lộ chi tiết database & UI chỉ hiển thị thông báo chung tiếng Việt (\textbf{Đạt}) \\
 \hline

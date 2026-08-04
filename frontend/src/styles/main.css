@@ -6732,7 +6732,7 @@ body {
   white-space: nowrap;
   backdrop-filter: blur(8px);
   transition: all 0.2s ease;
-  cursor: default;
+  cursor: pointer;
   text-shadow: none !important;
 }
 

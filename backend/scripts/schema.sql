@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
         CHECK (role IN ('Admin', 'Uploader', 'User', 'Moderator')),
     bio TEXT,
     crystal_balance INTEGER NOT NULL DEFAULT 50 CHECK (crystal_balance >= 0),
+    crystal_earned INTEGER NOT NULL DEFAULT 0 CHECK (crystal_earned >= 0),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT true
@@ -93,12 +94,23 @@ CREATE TABLE IF NOT EXISTS chapter_unlocks (
 CREATE TABLE IF NOT EXISTS crystal_transactions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(40) NOT NULL CHECK (type IN ('DEMO_GRANT', 'CHAPTER_UNLOCK')),
+    type VARCHAR(40) NOT NULL CHECK (type IN ('DEMO_GRANT', 'CHAPTER_UNLOCK', 'TOPUP', 'CHAPTER_REVENUE')),
     amount INTEGER NOT NULL,
     balance_after INTEGER NOT NULL CHECK (balance_after >= 0),
     chapter_id INTEGER REFERENCES chapters(id) ON DELETE SET NULL,
     description VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS topup_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount INTEGER NOT NULL,
+    crystal_received INTEGER NOT NULL,
+    transfer_content VARCHAR(255) NOT NULL UNIQUE,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- -----------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 
 import AuthModal from './AuthModal';
+import TopupModal from './TopupModal';
 import NotificationBell from './NotificationBell';
 import LogoMark from './LogoMark';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,6 +31,7 @@ function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [authOpen, setAuthOpen] = useState(false);
+  const [topupOpen, setTopupOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -95,7 +97,19 @@ function Navbar() {
 
           <div className="cmc-nav-actions">
             {isAuthenticated ? (
-              <span className="nav-crystal-balance" title="Số dư Tinh thạch">
+              <span 
+                className="nav-crystal-balance" 
+                title="Số dư Tinh thạch"
+                onClick={() => setTopupOpen(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setTopupOpen(true);
+                  }
+                }}
+              >
                 <FontAwesomeIcon icon={faGem} />
                 <strong>{Number(user?.crystal_balance || 0)}</strong>
               </span>
@@ -158,6 +172,18 @@ function Navbar() {
                       <FontAwesomeIcon icon={faBookOpen} />
                       <span>Truyện đang theo dõi</span>
                     </Link>
+
+                    <button
+                      type="button"
+                      className="dropdown-item-cmc"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        setTopupOpen(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faGem} />
+                      <span>Nạp Tinh thạch</span>
+                    </button>
 
                     <Link
                       to="/account/history"
@@ -235,6 +261,7 @@ function Navbar() {
       </header>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <TopupModal open={topupOpen} onClose={() => setTopupOpen(false)} />
     </>
   );
 }
